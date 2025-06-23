@@ -39,7 +39,7 @@ Our main difference to the One Flow approach is that we don't keep old release b
 
 ### Feature/Bug fix branch
 Feature and bug fix branches are handled 1:1 the same. The main difference is the naming. With this it's a bit easier for us to keep track which branch does what.
-:::mermaid
+```mermaid
 gitGraph
   commit
   branch fix/y_xxxx
@@ -54,7 +54,7 @@ gitGraph
   checkout main
   merge f/y_xxxx
 
-:::
+```
 
 #### Start
 ```bash
@@ -69,7 +69,7 @@ Creating pre-release and regular releases only differ in the version/tag you pub
 
 Our main difference to the One Flow approach is, that we don't keep old release branches, since we have to use tags for the versions. If you at some point want to implement/change something based of a specific release create a branch from this tag.
 
-:::mermaid
+```mermaid
 gitGraph
   commit
   branch release
@@ -80,7 +80,7 @@ gitGraph
   checkout main
   merge release
 
-:::
+```
 
 #### Start
 If a release branch already exists, delete it. Then create release branch based on the desired commit.
@@ -103,7 +103,7 @@ When you are ready to release the SW you have to do these steps:
 ### Hotfix branch
 For bugs, we need to fix asap.
 
-:::mermaid
+```mermaid
 gitGraph
   commit
   branch hot/y_xxxx
@@ -115,7 +115,7 @@ gitGraph
   checkout main
   merge hot/y_xxxx
 
-:::
+```
 
 #### Start
 Create Hotfix branch like this
