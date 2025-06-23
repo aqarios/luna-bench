@@ -1,0 +1,9 @@
+requires = ["tox>=4"]
+env_list = ["3.13"]
+
+[env_run_base]
+allowlist_externals = ["uv"]
+commands_pre = [["uv", "sync", "--all-groups", "--all-extras", "--active"]]
+description = "run unit tests"
+deps = []
+commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
