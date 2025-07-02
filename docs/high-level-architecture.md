@@ -128,32 +128,38 @@ config:
   theme: redux
   layout: fixed
 ---
-flowchart TD
-    n1["Filled Circle"] --> n2["More models configured <br>"]
-    n2 -- Yes <br> --> n3["Preprocess"]
-    n3 --> n2
-    n2 -- No <br> --> n4["More Algorithm conmfigured"]
-    n4 -- Yes <br> --> n5["Queue Job"]
-    n5 --> n4
-    n4 -- No <br> --> n6["Wait for results <br>"]
-    n7["More Metrics configured"] -- Yes <br> --> n8["Calculate Metric"]
-    n7 -- No <br> --> n9["More Plots configured"]
-    n8 --> n7
-    n9 -- Yes <br> --> n10["Plot"]
-    n9 -- No <br> --> n11["Untitled Node"]
-    n10 --> n9
-    n6 --> n12["More Algorithm conmfigured"]
-    n12 -- No <br> --> n7
-    n12 -- Yes <br> --> n13["Postrosessing of result"]
-    n13 --> n12
-    n1@{ shape: f-circ}
-    n2@{ shape: diam}
-    n3@{ shape: card}
-    n4@{ shape: diam}
-    n7@{ shape: diam}
-    n9@{ shape: diam}
-    n11@{ shape: fr-circ}
-    n12@{ shape: diam}
+flowchart LR
+    start["Start"] --> validate(["Validate pipeline"])
+    validate -- <br> --> features(["Compute features<br>(e.g. variables, constraints)"])
+    features -- <br> --> solvers["Run solver<br>(for each algorithm - schedule job)"]
+    solvers --> queue["Job Queue"]
+    queue --> collect>"Collect / wait for results"]
+    collect -- <br> --> metrics(["Compute metrics<br>(for each metric)"])
+    metrics -- <br> --> plots(["Generate plots<br>(for each plot)"])
+    plots --> done["Done"]
+    validate -- Load pipeline config --> db1[("SQLite DB")]
+    db1 -- Status, schema --> validate
+    features -- Store features --> db2[("SQLite DB")]
+    db2 -- Config, model data --> features
+    solvers -- Store job info --> db3[("SQLite DB")]
+    db3 -- Algorithm config --> solvers
+    collect -- Store raw results --> db4[("SQLite DB")]
+    db4 -- Job results --> collect
+    metrics -- Store metrics --> db5[("SQLite DB")]
+    db5 -- Raw results --> metrics
+    plots -- Store plots --> db6[("SQLite DB")]
+    db6 -- Metric values --> plots
+    start@{ shape: f-circ}
+    solvers@{ shape: subproc}
+    queue@{ shape: h-cyl}
+    done@{ shape: fr-circ}
+     db1:::db
+     db2:::db
+     db3:::db
+     db4:::db
+     db5:::db
+     db6:::db
+    classDef db fill:#f0f0f0,stroke:#999,stroke-width:2px
 
 ```
 ### Preprocessing
