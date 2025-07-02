@@ -46,7 +46,80 @@ mindmap
         Custom Metrics
 
 ```
+## Usecase
 
+```mermaid
+flowchart LR
+ subgraph PipelineControl["Pipeline Control"]
+        Create(["Create Pipeline"])
+        Delete(["Delete Pipeline"])
+        Run(["Run Pipeline"])
+        Rerun(["Rerun Pipeline - Ignore Previous Results"])
+        Resume{{"New Run <br>"}}
+        Retry{{"Rerun Completed Run"}}
+        n2@{ label: "<span style=\"padding-left:\">Resume Incomplete Run</span>" }
+        n1{{"Retry Recoverable Errors"}}
+  end
+ subgraph ModelInput["Add Models"]
+        AddModel(["Add Models"])
+        AddFolder{{"From Folder"}}
+        AddCode{{"By Code"}}
+  end
+ subgraph Configuration["Configuration"]
+        ModelInput
+        Algo(["Configure Algorithms"])
+        Metrics(["Configure Metrics"])
+        Plots(["Configure Plots"])
+  end
+ subgraph PluginsArea["Plugins"]
+        CustomAlgo(["Custom Algorithms"])
+        CustomMetrics(["Custom Metrics"])
+        CustomPlots(["Custom Plots"])
+  end
+ subgraph Convenience["Convenience Functions"]
+        Export(["Export Results as DataFrame"])
+  end
+ subgraph PipelineSystem["Pipeline System"]
+        PipelineControl
+        Configuration
+        PluginsArea
+        Convenience
+  end
+    User["User"] --> Create & Delete & Run & Rerun & Configuration & PluginsArea & Convenience
+    AddModel -.-> AddFolder & AddCode
+    Run -.-> Resume & Retry & n2 & n1
+    Convenience --> PipelineSystem
+
+    n2@{ shape: hexagon}
+     Create:::action
+     Delete:::action
+     Run:::action
+     Rerun:::action
+     Resume:::auto
+     Retry:::auto
+     n2:::auto
+     n1:::auto
+     AddModel:::config
+     AddFolder:::extend
+     AddCode:::extend
+     Algo:::config
+     Metrics:::config
+     Plots:::config
+     CustomAlgo:::plugin
+     CustomMetrics:::plugin
+     CustomPlots:::plugin
+     Export:::other
+     User:::actor
+     User:::actor
+    classDef actor font-size:16px,stroke:#333,fill:#fff,stroke-width:2px,font-weight:bold,icon:stickman
+    classDef action fill:#fef6e4,stroke:#666,stroke-width:1px
+    classDef auto fill:#e0f7fa,stroke:#00838f,stroke-width:1px,stroke-dasharray: 4 2
+    classDef config fill:#f3e5f5,stroke:#6a1b9a
+    classDef plugin fill:#fff3e0,stroke:#ef6c00
+    classDef other fill:#e8f5e9,stroke:#388e3c
+    classDef extend fill:#fdf3ff,stroke:#ba00b4,stroke-dasharray: 4 2,stroke-width:1.5px
+
+```
 ## Pipeline/Bench job
 
 ```mermaid
