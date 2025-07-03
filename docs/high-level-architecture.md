@@ -130,12 +130,12 @@ config:
 ---
 flowchart LR
     start["Start"] --> validate(["Validate pipeline"])
-    validate -- <br> --> features(["Compute features<br>(e.g. variables, constraints)"])
-    features -- <br> --> solvers["Run solver<br>(for each algorithm - schedule job)"]
+    validate ---> features(["Compute features<br>(e.g. nr. variables, constraints)"])
+    features --> solvers["Run solver<br>(for each algorithm - schedule job)"]
     solvers --> queue["Job Queue"]
     queue --> collect>"Collect / wait for results"]
-    collect -- <br> --> metrics(["Compute metrics<br>(for each metric)"])
-    metrics -- <br> --> plots(["Generate plots<br>(for each plot)"])
+    collect --> metrics(["Compute metrics<br>(for each metric)"])
+    metrics --> plots(["Generate plots<br>(for each plot)"])
     plots --> done["Done"]
     validate -- Load pipeline config --> db1[("SQLite DB")]
     db1 -- Status, schema --> validate
@@ -161,37 +161,6 @@ flowchart LR
      db6:::db
     classDef db fill:#f0f0f0,stroke:#999,stroke-width:2px
 
-```
-### Preprocessing
-```mermaid
----
-config:
-  theme: redux
-  layout: fixed
----
-flowchart TD
- subgraph s1["Prepare Models"]
-        n8["Load model"]
-        n9["Has preprocessing <br>"]
-        n11["Has more preprossing"]
-        n10["Preprocess"]
-        n12["Frames Circle"]
-        n13["Store preprocessed model"]
-        n14["Filled Circle"]
-  end
-    n9 -- Yes <br> --> n8
-    n10 --> n11
-    n9 -- No <br> --> n12
-    n11 -- Yes <br> --> n10
-    n11 --> n13
-    n13 --> n12
-    n14 --> n9
-    n8 --> n10
-    n8@{ shape: proc}
-    n9@{ shape: diam}
-    n11@{ shape: diam}
-    n12@{ shape: fr-circ}
-    n14@{ shape: f-circ}
 
 ```
 
@@ -205,15 +174,6 @@ flowchart TD
         n10["Signal Job Id"]
         n30["Filled Circle"]
         n32["Frames Circle"]
-  end
- subgraph s2["Sync Run"]
-        n1["Run"]
-        n2["Load Model"]
-        n3["Run User Interface"]
-        n4["Store Result"]
-        n5["Signal Done"]
-        n29["Filled Circle"]
-        n31["Frames Circle"]
   end
  subgraph s3["Async Retriever"]
         n26["Filled Circle"]
@@ -266,8 +226,38 @@ flowchart TD
 
 ## Core components
 - Model
-- Model Preprocessing
+- Model Metadata (from Compute features)
 - Algorithm
+- Solve Job Status
 - Result/Solution
 - Result/Solution Postprocessing
 - Metrik
+
+```mermaid
+erDiagram
+    BenchConfig ||--o{ Model : includes
+    BenchConfig ||--o{ AlgorithmConfig : "has config"
+    BenchConfig ||--o{ MetricConfig : "evaluates with"
+    BenchConfig ||--o{ PlotConfig : "visualizes using"
+
+    AlgorithmConfig ||--o{ SolveJob : "in combination with"
+    Model ||--o{ SolveJob : "in combination with"
+
+    SolveJob ||--|{ SolveJobRun : "runs"
+    SolveJobRun ||--o| Result : "produces"
+
+    MetricConfig ||--o{ MetricResult : "used in"
+    Result ||--o{ MetricResult : "contains"
+
+    Model ||--|| ModelMetadata : "has"
+
+```
+
+## Stuff we need
+- DB => sqlite for now
+- Queuing => [Huey](https://github.com/coleifer/huey)
+  - Looks well maintained
+  - SQLight based queues possible
+- [Returns Lib](https://pypi.org/project/returns/#description) for better error handling and cleaner code
+- Pydantic
+- Luna-Quantum
