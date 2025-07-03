@@ -248,6 +248,7 @@ erDiagram
 
 ```
 
+![img.png](https://d2slcw3kip6qmk.cloudfront.net/marketing/pages/chart/erd-symbols/ERD-Notation.PNG)
 ## Stuff we need
 - DB => sqlite for now
 - Queuing => [Huey](https://github.com/coleifer/huey)
