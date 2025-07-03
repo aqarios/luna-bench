@@ -186,10 +186,6 @@ flowchart TD
         n27["Result changed"]
         n28["Update Result"]
   end
-    n1 --> n2
-    n2 --> n3
-    n3 --> n4
-    n4 --> n5
     n7 --> n8
     n8 --> n9
     n9 --> n10
@@ -204,16 +200,12 @@ flowchart TD
     n27 -- No --> n20
     n27 --> n28
     n28 --> n20
-    n29 --> n1
     n30 --> n7
-    n5 --> n31
     n10 --> n32
+
     n9@{ shape: card}
     n30@{ shape: f-circ}
     n32@{ shape: fr-circ}
-    n3@{ shape: card}
-    n29@{ shape: f-circ}
-    n31@{ shape: fr-circ}
     n26@{ shape: f-circ}
     n18@{ shape: diam}
     n25@{ shape: fr-circ}
@@ -221,6 +213,9 @@ flowchart TD
     n20@{ shape: diam}
     n27@{ shape: diam}
     n28@{ shape: rect}
+
+
+
 
 ```
 
