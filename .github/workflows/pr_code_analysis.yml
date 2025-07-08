@@ -34,14 +34,14 @@ jobs:
 
       - name: Run Pytest
         run: |
-          uv run pytest --cov-config=pyproject.toml --cov=luna_bench --cov-report=term-missing
-      - name: "Debug: Locate .coverage"
+          uv run pytest --cov-config=pyproject.toml --cov=luna_bench --cov-report=coverage --cov-fail-under=100
+      - name: Show coverage summary in logs
         if: always()
-        run: find . -name ".coverage"
-      - name: Upload coverage report
+        run: uv run coverage report --fail-under=100
+
+      - name: Upload HTML coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
-          include-hidden-files: true
-          path: .coverage
+          name: html-coverage-report
+          path: htmlcov/
