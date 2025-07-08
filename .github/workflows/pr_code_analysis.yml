@@ -5,6 +5,7 @@ on:
       - main
 jobs:
   lint-test:
+    name: "Lint & Test"
     runs-on: ubuntu-latest
 
     steps:
@@ -22,18 +23,18 @@ jobs:
       - name: "Install the project"
         run: uv sync --locked --all-extras --dev
 
-      - name: Ruff (Linter)
+      - name: "Ruff (Linter)"
         run: uv run ruff check --config ruff.toml
 
-      - name: Ruff (Formater)
+      - name: "Ruff (Formater)"
         run: uv run ruff format --check --config ruff.toml
 
-      - name: Mypy (Type checking)
+      - name: "Mypy (Type checking)"
         run: uv run mypy --config-file .mypy.ini ./
 
       - name: Run Pytest
         run: |
-          pytest --cov=my_package --cov-report=term-missing --cov-fail-under=100
+          uv run pytest --cov=my_package --cov-report=term-missing --cov-fail-under=100
 
       - name: Upload coverage report
         if: always()
