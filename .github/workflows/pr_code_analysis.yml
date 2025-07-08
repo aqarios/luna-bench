@@ -1,0 +1,43 @@
+name: "PR Code Analysis"
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: "Set up Python"
+        run: uv python install
+
+      - name: "Install the project"
+        run: uv sync --locked --all-extras --dev
+
+      - name: Ruff (Linter)
+        run: uv run ruff check --config ruff.toml
+
+      - name: Ruff (Formater)
+        run: uv run ruff format --check --config ruff.toml
+
+      - name: Mypy (Type checking)
+        run: uv run mypy --config-file .mypy.ini ./
+
+      - name: Run Pytest
+        run: |
+          pytest --cov=my_package --cov-report=term-missing --cov-fail-under=100
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: .coverage
