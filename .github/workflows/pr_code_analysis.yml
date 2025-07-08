@@ -34,7 +34,7 @@ jobs:
 
       - name: Run Pytest
         run: |
-          uv run pytest --cov-config=pyproject.toml --cov=luna_bench --cov-report=coverage --cov-fail-under=100
+          uv run pytest --cov-config=pyproject.toml --cov=luna_bench --cov-report=term-missing -cov-report=html --cov-report=coverage --cov-fail-under=100
       - name: Show coverage summary in logs
         if: always()
         run: uv run coverage report --fail-under=100
