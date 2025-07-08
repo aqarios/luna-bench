@@ -35,6 +35,9 @@ jobs:
       - name: Run Pytest
         run: |
           uv run pytest --cov-config=pyproject.toml --cov=luna_bench --cov-report=term-missing --cov-fail-under=100
+      - name: HTML Report
+        if: always()
+        run: |
           uv run coverage html -d htmlcov
 
       - name: Show coverage summary in logs
