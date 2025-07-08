@@ -36,7 +36,7 @@ jobs:
 
       - name: Run Pytest
         run: |
-          uv run pytest --cov-config=pyproject.toml --cov=luna_bench --cov-report=term-missing:skip-covered| tee pytest-coverage.txt
+          uv run pytest --junitxml=pytest.xml --cov-config=pyproject.toml --cov=luna_bench --cov-report=term-missing:skip-covered| tee pytest-coverage.txt
       - name: Pytest coverage comment
         id: coverageComment
         uses: MishaKav/pytest-coverage-comment@main
@@ -50,5 +50,6 @@ jobs:
           report-only-changed-files: false
           remove-link-from-badge: false
           pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./pytest.xml
       - name: Fail if coverage is below 100%
         run: uv run coverage report --fail-under=100
