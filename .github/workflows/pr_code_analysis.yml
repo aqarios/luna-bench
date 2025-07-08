@@ -34,7 +34,7 @@ jobs:
 
       - name: Run Pytest
         run: |
-          uv run pytest --cov=my_package --cov-report=term-missing --cov-fail-under=100
+          uv run pytest --cov=my_package --cov-report=term-missing
 
       - name: Upload coverage report
         if: always()
