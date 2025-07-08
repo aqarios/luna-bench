@@ -38,7 +38,9 @@ jobs:
       - name: Show coverage summary in logs
         if: always()
         run: uv run coverage report --fail-under=100
-
+      - name: "Debug: List htmlcov contents"
+        if: always()
+        run: ls -la htmlcov || echo "htmlcov not found"
       - name: Upload HTML coverage report
         if: always()
         uses: actions/upload-artifact@v4
