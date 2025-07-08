@@ -34,8 +34,10 @@ jobs:
 
       - name: Run Pytest
         run: |
-          uv run pytest --cov=my_package --cov-report=term-missing
-
+          uv run pytest --cov=luna_bench --cov-report=term-missing
+      - name: "Debug: Locate .coverage"
+        if: always()
+        run: find . -name ".coverage"
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
