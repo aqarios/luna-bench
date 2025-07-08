@@ -43,7 +43,7 @@ jobs:
         uses: MishaKav/pytest-coverage-comment@main
         with:
           title: Luna-Bench coverage
-          badge-title: Luna-Bench coverage
+          badge-title: Coverage
           hide-badge: false
           hide-report: false
           create-new-comment: false
