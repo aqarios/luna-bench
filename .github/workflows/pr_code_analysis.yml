@@ -34,21 +34,18 @@ jobs:
 
       - name: Run Pytest
         run: |
-          uv run pytest --cov-config=pyproject.toml --cov=luna_bench --cov-report=term-missing --cov-fail-under=100
-      - name: HTML Report
+          uv run pytest --cov-config=pyproject.toml --cov=luna_bench --cov-report=term-missing:skip-covered --cov-fail-under=100 | tee pytest-coverage.txt
+      - name: Pytest coverage comment
         if: always()
-        run: |
-          uv run coverage html -d htmlcov
-
-      - name: Show coverage summary in logs
-        if: always()
-        run: uv run coverage report --fail-under=100
-      - name: "Debug: List htmlcov contents"
-        if: always()
-        run: ls -la htmlcov || echo "htmlcov not found"
-      - name: Upload HTML coverage report
-        if: always()
-        uses: actions/upload-artifact@v4
+        id: coverageComment
+        uses: MishaKav/pytest-coverage-comment@main
         with:
-          name: html-coverage-report
-          path: htmlcov/
+          title: Code coverage
+          badge-title: Code coverage
+          hide-badge: false
+          hide-report: false
+          create-new-comment: false
+          hide-comment: false
+          report-only-changed-files: false
+          remove-link-from-badge: false
+          pytest-coverage-path: ./pytest-coverage.txt
