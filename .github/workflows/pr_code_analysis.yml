@@ -3,6 +3,8 @@ on:
   pull_request:
     branches:
       - main
+
+
 jobs:
   lint-test:
     name: "Lint & Test"
@@ -40,8 +42,8 @@ jobs:
         id: coverageComment
         uses: MishaKav/pytest-coverage-comment@main
         with:
-          title: Code coverage
-          badge-title: Code coverage
+          title: Luna-Bench coverage
+          badge-title: Luna-Bench coverage
           hide-badge: false
           hide-report: false
           create-new-comment: false
