@@ -3,7 +3,8 @@ name: Bug report
 about: Create a report to help us fix bugs
 title: "[Bug]"
 labels: bug
-assignees: JFLXB
+assignee:
+    - Llewe
 
 ---
 
