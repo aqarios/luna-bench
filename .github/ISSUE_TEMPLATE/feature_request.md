@@ -3,7 +3,8 @@ name: Feature request
 about: Suggest a new feature, improvement, or enhancement
 title: "[Feature Request]"
 labels: feature
-assignees: JFLXB
+assignee:
+    - Llewe
 
 ---
 

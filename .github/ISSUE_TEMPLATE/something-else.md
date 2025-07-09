@@ -3,7 +3,8 @@ name: Something Else
 about: A rough idea, outlook, or any topic that isn’t a bug report or feature request
 title: "[Something Else]"
 labels: Idea
-assignees: ''
+assignee:
+    - Llewe
 
 ---
 
