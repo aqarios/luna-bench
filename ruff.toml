@@ -57,7 +57,7 @@ ignore = [
     "COM812", # conflicts when used with the formatter
     "ISC001", # conflicts when used with the formatter
 
-    "D100", # Missing docstring in public module - every file would require a docstring at the top
+    "D100", # Missing docstring in a public module - every file would require a docstring at the top
     "D104", # Missing docstring in public package - every __init__.py would require a docstring at the top
     "TD003", # Link for TODO comments
 ]
@@ -90,7 +90,7 @@ convention = "numpy"
 # reStructuredText code/literal blocks and doctests are all supported.
 docstring-code-format = true
 
-line-ending = "lf" # unix file endings > windows stuff
+line-ending = "lf" # unix file endings
 
 # Set the line length limit used when formatting code snippets in
 # docstrings.
