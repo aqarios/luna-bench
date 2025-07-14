@@ -9,6 +9,7 @@ dependencies = [
     "huey>=2.5.3",
     "luna-quantum>=1.0.1",
     "peewee>=3.18.2",
+    "pydantic-settings>=2.10.1",
     "returns[compatible-mypy]>=0.25.0",
     "rich>=14.0.0",
 ]

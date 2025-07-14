@@ -4,7 +4,6 @@ from luna_quantum import Model
 from pydantic import BaseModel
 from returns.result import Failure, Result, Success
 
-from luna_bench import ModelData
 from luna_bench._internal.entities.model_set.dao import ModelSetDAO
 from luna_bench._internal.entities.model_set.domain_models import ModelMetadataDomain, ModelSetDomain
 from luna_bench._internal.shared.database.base_model import database

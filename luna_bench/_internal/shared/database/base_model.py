@@ -1,7 +1,9 @@
 from peewee import Model, SqliteDatabase
 
+from luna_bench.configs.config import config
+
 database = SqliteDatabase(
-    # "data.db",
+config.DB_CONNECTION_STRING,
     ":memory:",
     pragmas=(
         ("cache_size", -1024 * 64),  # 64MB page-cache.
