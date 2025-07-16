@@ -8,7 +8,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.shared.database.base_model import database
 
 from .domain_models import ModelMetadataDomain, ModelSetDomain
-from .tables import ModelMetadataTable, ModelModelSetTable, ModelSetTable, ModelTable
+from .tables import ModelMetadataTable, ModelSetTable, ModelTable
 
 
 class ModelSetDAO:
@@ -22,7 +22,7 @@ class ModelSetDAO:
             return Success(ModelSetDAO._modelset_to_domain(modelset))
         except Exception as e:
             raise e
-            ModelSetDAO._logger.exception(e)
+            ModelSetDAO._logger.debug(e)
             return Failure("storing failed")
         finally:
             database.commit()
@@ -33,11 +33,12 @@ class ModelSetDAO:
 
         try:
             metadata.save()
-            model = ModelTable(model_id=metadata.model_id, encoded_model=binary)
+            print(metadata.model_id)
+            model = ModelTable(model_id=metadata, encoded_model=binary)
             model.save()
             return Success(ModelSetDAO._model_to_domain(metadata))
         except Exception as e:
-            ModelSetDAO._logger.exception(e)
+            ModelSetDAO._logger.debug(e)
             return Failure("storing failed")
         finally:
             database.commit()
@@ -47,47 +48,35 @@ class ModelSetDAO:
         try:
             modelset = ModelSetTable.get(ModelSetTable.modelset_id == modelset_id)
             model_metadata = ModelMetadataTable.get(ModelMetadataTable.model_id == model_id)
-            ModelModelSetTable.create(model=model_metadata, model_set=modelset)
+            modelset.models.add(model_metadata)
+            modelset.save()
             return Success(None)
         except Exception as e:
-            ModelSetDAO._logger.exception(e)
+            ModelSetDAO._logger.debug(e)
             return Failure("storing failed")
 
     @staticmethod
-    def load_dataset(dataset_id: int) -> Result[ModelSetDomain, str]:
+    def load_modelset(modelset_id: int) -> Result[ModelSetDomain, str]:
         try:
-            dataset = (
-                ModelSetTable.select(ModelSetTable, ModelTable)
-                .where(ModelMetadataTable.model_id == dataset_id)
-                .join(ModelModelSetTable)
-                .join(ModelMetadataTable)
-            )
-            for row in dataset.namedtuples():
-                print(row)
-            for d in dataset:
-                print(d.name)
-                print(d.modelset_id)
-                for m in d.models:
-                    print(m.model.name)
-                    print(m.model.model_id)
-                print(d)
-                print(d)
-                print(d)
-                print(d)
-                print(d)
-                print(d)
-            print(dataset.name)
-            print(dataset)
-            print(dataset.name)
-            print(dataset)
-            print(dataset)
-            print(dataset)
-            print(dataset)
+            modelset = (
+                ModelSetTable.select(ModelSetTable)
+                .where(ModelSetTable.modelset_id == modelset_id)
+            ).get()
 
-            return Success(ModelSetDAO._modelset_to_domain(dataset))
+            return Success(ModelSetDAO._modelset_to_domain(modelset))
+        except Exception as e:
+            ModelSetDAO._logger.debug(e)
+            return Failure("loading failed")
+
+    @staticmethod
+    def fetch_model(model_id: int) -> Result[bytes, str]:
+        try:
+            data = ModelTable.get(ModelTable.model_id == model_id)
+
+            return Success(data.encoded_model)
         except Exception as e:
             raise e
-            ModelSetDAO._logger.exception(e)
+            ModelSetDAO._logger.debug(e)
             return Failure("loading failed")
 
     @staticmethod
@@ -95,10 +84,9 @@ class ModelSetDAO:
         return ModelMetadataDomain(model_id=model.model_id, name=model.name, hash=model.hash)
 
     @staticmethod
-    def _modelset_to_domain(dataset: ModelSetTable) -> ModelSetDomain:
-        print(dataset)
+    def _modelset_to_domain(modelset: ModelSetTable) -> ModelSetDomain:
         return ModelSetDomain(
-            modelset_id=dataset.modelset_id,
-            name=dataset.name,
-            models=[],
+            modelset_id=modelset.modelset_id,
+            name=modelset.name,
+            models=[ModelSetDAO._model_to_domain(m)for m in modelset.models],
         )

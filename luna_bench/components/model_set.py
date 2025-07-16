@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from luna_quantum import Model
 from pydantic import BaseModel
+from pyexpat import model
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.entities.model_set.dao import ModelSetDAO
@@ -15,12 +16,24 @@ class ModelSet(BaseModel):
         model_name: str
         model_hash: int
 
+        @property
+        def model(self) -> Model:
+            result: Result[bytes, str] = ModelSetDAO.fetch_model(self.model_id)
+
+            match result:
+                case Success(encoded_model):
+                    return Model.decode(encoded_model)
+                case Failure(error):
+                    print(f"Error: {error}")
+                    raise RuntimeError(error)
+            return None
+
     id: int
     name: str
     models: list[ModelData]
 
     @staticmethod
-    def create_dataset(dataset_name: str) -> ModelSet:
+    def create(dataset_name: str) -> ModelSet:
         result: Result[None, str] = ModelSetDAO.create_set(modelset_name=dataset_name)
         match result:
             case Success(value):
@@ -34,18 +47,20 @@ class ModelSet(BaseModel):
                 # This should never be reached, but satisfies mypy
                 raise RuntimeError("Unreachable code")
 
-    # @staticmethod
-    # def load_dataset(dataset_id: int) -> ModelSet:
-    #     result: Result[ModelSetDomain, str] = ModelSetDAO.load_dataset(dataset_id=dataset_id)
-    #     match result:
-    #         case Success(value):
-    #             print(f"Success: {value}")
-    #             return ModelSet._to_data_set(value)
-    #         case Failure(error):
-    #             print(f"Error: {error}")
-    #             raise RuntimeError(error)
+    @staticmethod
+    def load(modelset_id: int) -> ModelSet:
+        result: Result[ModelSetDomain, str] = ModelSetDAO.load_modelset(modelset_id=modelset_id)
+        match result:
+            case Success(value):
+                print(f"Success: {value}")
+                return ModelSet._to_data_set(value)
+            case Failure(error):
+                print(f"Error: {error}")
+                raise RuntimeError(error)
 
-    def add_model(self, model: Model) -> None:
+        raise RuntimeError("bro")
+
+    def add(self, model: Model) -> None:
         result = ModelSetDAO.create_model(model_name=model.name, model_hash=model.__hash__(), binary=model.encode())
         with database.atomic():
             match result:
@@ -73,7 +88,10 @@ class ModelSet(BaseModel):
     @staticmethod
     def _to_model_data(model: ModelMetadataDomain) -> ModelData:
         print(model)
-        return ModelData(model_name=model.name, model_hash=model.hash)
+        return ModelSet.ModelData(
+            model_id=model.model_id,
+            model_name=model.name,
+            model_hash=model.hash)
 
     @staticmethod
     def _to_data_set(dataset: ModelSetDomain) -> ModelSet:
