@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 
 class ModelMetadataDomain(BaseModel):
-    model_id: int
+    id: int
     name: str
     hash: int
 

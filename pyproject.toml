@@ -7,7 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "dependency-injector>=4.48.1",
     "huey>=2.5.3",
-    "luna-quantum>=1.0.1",
+    "luna-quantum>=1.0.3rc2",
     "peewee>=3.18.2",
     "pydantic-settings>=2.10.1",
     "returns[compatible-mypy]>=0.25.0",
@@ -21,4 +21,5 @@ dev = [
     "pytest-cov>=6.2.1",
     "ruff>=0.12.0",
     "tox>=4.27.0",
+    "types-peewee>=3.18.2.20250710",
 ]
