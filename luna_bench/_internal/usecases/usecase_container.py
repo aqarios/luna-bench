@@ -1,5 +1,5 @@
 from dependency_injector import containers, providers
-from dependency_injector.providers import Configuration
+from dependency_injector.providers import Configuration, Provider
 
 from luna_bench._internal.entities.storage_container import StorageContainer
 
@@ -21,16 +21,18 @@ class UsecaseContainer(containers.DeclarativeContainer):
 
     storage_container = providers.Container(StorageContainer, config=config)
 
-    modelset_create_uc: ModelSetCreateUc = providers.Singleton(
+    modelset_create_uc: Provider[ModelSetCreateUc] = providers.Singleton(
         ModelSetCreateUcImpl, transaction=storage_container.transaction
     )
 
-    modelset_add_uc: ModelSetAddUc = providers.Singleton(ModelSetAddUcImpl, transaction=storage_container.transaction)
-    modelset_remove_uc: ModelSetRemoveUc = providers.Singleton(
+    modelset_add_uc: Provider[ModelSetAddUc] = providers.Singleton(
+        ModelSetAddUcImpl, transaction=storage_container.transaction
+    )
+    modelset_remove_uc: Provider[ModelSetRemoveUc] = providers.Singleton(
         ModelSetRemoveUcImpl, transaction=storage_container.transaction
     )
-    modelset_delete_uc: ModelSetDeleteUc = providers.Singleton(
+    modelset_delete_uc: Provider[ModelSetDeleteUc] = providers.Singleton(
         ModelSetDeleteUcImpl, transaction=storage_container.transaction
     )
 
-    model_all: ModelAllUc = providers.Singleton(ModelAllUcImpl, transaction=storage_container.transaction)
+    model_all: Provider[ModelAllUc] = providers.Singleton(ModelAllUcImpl, transaction=storage_container.transaction)

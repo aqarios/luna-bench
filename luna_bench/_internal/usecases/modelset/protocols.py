@@ -27,5 +27,5 @@ class ModelSetRemoveUc(Protocol):
 
 
 class ModelSetDeleteUc(Protocol):
-    def __call__(self, modelset_id: int) -> Result[ModelSetDomain, str]:
+    def __call__(self, modelset_id: int) -> Result[None, str]:
         """Delete a model set."""

@@ -1,7 +1,6 @@
 from returns.result import Result
 
 from luna_bench._internal.entities import ModelMetadataDomain, StorageTransaction
-from luna_bench.errors.modeset.model_already_exists_error import ModelAlreadyExistsError
 
 
 class ModelAllUcImpl:
@@ -12,6 +11,6 @@ class ModelAllUcImpl:
 
     def __call__(self) -> Result[list[ModelMetadataDomain], str]:
         with self.transaction as t:
-            result: Result[list[ModelMetadataDomain], ModelAlreadyExistsError | str] = t.model.get_all()
+            result: Result[list[ModelMetadataDomain], str] = t.model.get_all()
 
             return result

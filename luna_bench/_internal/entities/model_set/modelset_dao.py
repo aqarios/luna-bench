@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from logging import Logger
+from typing import cast
 
 from luna_quantum import Logging
 from returns.result import Failure, Result, Success
@@ -105,10 +106,10 @@ class ModelSetDAO:
     @staticmethod
     def load_all_models(modelset_id: int) -> Result[list[ModelMetadataDomain], str]:
         try:
-            modelset = ModelMetadataTable.select().join(ModelSetTable).where(ModelSetTable.id == modelset_id).get()
+            models = ModelMetadataTable.select().join(ModelSetTable).where(ModelSetTable.id == modelset_id).get()
 
-            print(modelset)
-
+            print(models)
+            return Success([ModelDAO.model_to_domain(m) for m in models])
         except Exception as e:
             ModelSetDAO._logger.debug(e)
             return Failure("loading failed")
@@ -116,7 +117,7 @@ class ModelSetDAO:
     @staticmethod
     def modelset_to_domain(modelset: ModelSetTable) -> ModelSetDomain:
         return ModelSetDomain(
-            id=modelset.id,
-            name=modelset.name,
+            id=cast("int", modelset.id),
+            name=cast("str", modelset.name),
             models=[ModelDAO.model_to_domain(m) for m in modelset.models],
         )

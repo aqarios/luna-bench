@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import TracebackType
 from typing import Protocol, Self
 
 from returns.result import Result
@@ -49,7 +50,7 @@ class ModelStorage(Protocol):
         pass
 
 
-class ModelSetStorage:
+class ModelSetStorage(Protocol):
     @staticmethod
     def create(name: str) -> Result[ModelSetDomain, str]:
         pass

@@ -1,5 +1,5 @@
 from .models import ModelAllUc
-from .modelset import ModelSetAddUc, ModelSetCreateUc, ModelSetDeleteUc, ModelSetListUc, ModelSetRemoveUc
+from .modelset import ModelSetAddUc, ModelSetCreateUc, ModelSetDeleteUc, ModelSetListUc
 from .usecase_container import UsecaseContainer
 
 __all__ = [
@@ -8,6 +8,5 @@ __all__ = [
     "ModelSetCreateUc",
     "ModelSetDeleteUc",
     "ModelSetListUc",
-    "ModelSetRemoveUc",
     "UsecaseContainer",
 ]

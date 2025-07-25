@@ -4,7 +4,7 @@ from luna_bench._internal.entities import ModelSetDomain, StorageTransaction
 
 
 @pytest.mark.parametrize("modelset_name", ["xD", "yD", "zD"])
-def test_model_all_returns_list_of_models(empty_transaction: StorageTransaction, modelset_name: str):
+def test_model_all_returns_list_of_models(empty_transaction: StorageTransaction, modelset_name: str) -> None:
     empty_transaction.modelset.create(modelset_name)
 
     all: list[ModelSetDomain] = empty_transaction.modelset.load_all().unwrap()
@@ -14,7 +14,7 @@ def test_model_all_returns_list_of_models(empty_transaction: StorageTransaction,
 
 
 @pytest.mark.parametrize("modelset_name", ["xD", "yD", "zD"])
-def test_model_all_returns_list_of_models2(empty_transaction: StorageTransaction, modelset_name: str):
+def test_model_all_returns_list_of_models2(empty_transaction: StorageTransaction, modelset_name: str) -> None:
     empty_transaction.modelset.create(modelset_name)
 
     all: list[ModelSetDomain] = empty_transaction.modelset.load_all().unwrap()

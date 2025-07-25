@@ -1,6 +1,6 @@
 from luna_quantum import Model
 from returns.pipeline import is_successful
-from returns.result import Result
+from returns.result import Failure, Result
 
 from luna_bench._internal.entities import ModelMetadataDomain, ModelSetDomain, StorageTransaction
 
@@ -16,9 +16,9 @@ class ModelSetRemoveUcImpl:
             get_result: Result[ModelMetadataDomain, str] = t.model.get(model_hash=model.__hash__())
 
             if not is_successful(get_result):
-                return get_result
+                return Failure(get_result.failure())
 
-            result: Result[ModelMetadataDomain, str] = t.modelset.remove_model(
+            result: Result[ModelSetDomain, str] = t.modelset.remove_model(
                 modelset_id=dataset_id, model_id=get_result.unwrap().id
             )
             return result

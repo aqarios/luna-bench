@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from logging import Logger
+from typing import cast
 
 from luna_quantum import Logging
 from returns.result import Failure, Result, Success
@@ -59,4 +60,4 @@ class ModelDAO:
 
     @staticmethod
     def model_to_domain(model: ModelMetadataTable) -> ModelMetadataDomain:
-        return ModelMetadataDomain(id=model.id, name=model.name, hash=model.hash)
+        return ModelMetadataDomain(id=cast("int", model.id), name=cast("str", model.name), hash=cast("int", model.hash))

@@ -9,9 +9,11 @@ from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Result
 
-from luna_bench import UsecaseContainer
+from luna_bench._internal import UsecaseContainer
+from luna_bench._internal.entities.model_set import ModelDAO
 from luna_bench._internal.entities.model_set.domain_models import ModelMetadataDomain, ModelSetDomain
 from luna_bench._internal.entities.model_set.modelset_dao import ModelSetDAO
+from luna_bench._internal.usecases import ModelAllUc
 from luna_bench._internal.usecases.modelset import ModelSetAddUc, ModelSetCreateUc
 from luna_bench._internal.usecases.modelset.protocols import ModelSetDeleteUc, ModelSetRemoveUc
 
@@ -23,7 +25,7 @@ class ModelData(BaseModel):
 
     @property
     def model(self) -> Model:
-        result: Result[bytes, str] = ModelSetDAO.fetch_model(self.model_id)
+        result: Result[bytes, str] = ModelDAO.fetch_model(self.id)
 
         if not is_successful(result):
             error = result.failure()
@@ -81,8 +83,10 @@ class ModelSet(BaseModel):
 
     @staticmethod
     @inject
-    def load_all_models(model_all: ModelSetAddUc = Provide[UsecaseContainer.model_all]) -> Result[list[ModelData], str]:
-        result: Result[list[ModelSetDomain], str] = model_all()
+    def load_all_models(
+        model_all: ModelAllUc = Provide[UsecaseContainer.model_all],
+    ) -> list[ModelData]:
+        result: Result[list[ModelMetadataDomain], str] = model_all()
         if not is_successful(result):
             error = result.failure()
             print(f"Error: {error}")
