@@ -1,6 +1,8 @@
-from luna_bench._internal.di.container import Container
+from luna_bench._internal.usecases import UsecaseContainer
+from luna_bench.configs.config import config
 
-_container = Container()
+_container = UsecaseContainer()
+_container.config.from_pydantic(config)
 _container.wire(
     modules=[
         "luna_bench.components",

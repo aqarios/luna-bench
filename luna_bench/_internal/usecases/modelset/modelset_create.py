@@ -1,15 +1,14 @@
 from returns.result import Result
 
-from luna_bench._internal.entities.model_set.domain_models import ModelSetDomain
-from luna_bench._internal.shared.database.transactions.storage_transaction import StorageTransaction
+from luna_bench._internal.entities import ModelSetDomain, StorageTransaction
 
 
 class ModelSetCreateUcImpl:
-    storage_transaction: StorageTransaction
+    transaction: StorageTransaction
 
-    def __init__(self, storage_transaction: StorageTransaction) -> None:
-        self.storage_transaction = storage_transaction
+    def __init__(self, transaction: StorageTransaction) -> None:
+        self.transaction = transaction
 
     def __call__(self, modelset_name: str) -> Result[ModelSetDomain, str]:
-        with self.storage_transaction as t:
-            return t.model_set.create_set(modelset_name=modelset_name)
+        with self.transaction as t:
+            return t.modelset.create(name=modelset_name)

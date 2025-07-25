@@ -1,6 +1,6 @@
 from peewee import AutoField, CharField, IntegerField
 
-from luna_bench._internal.shared.database.base_model import BaseModel
+from luna_bench._internal.entities.database.base_model import BaseModel
 
 
 class ModelMetadataTable(BaseModel):

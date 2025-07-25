@@ -9,15 +9,11 @@ from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Result
 
-from luna_bench._internal.di.container import Container
-from luna_bench._internal.entities.model_set.dao import ModelSetDAO
+from luna_bench import UsecaseContainer
 from luna_bench._internal.entities.model_set.domain_models import ModelMetadataDomain, ModelSetDomain
-from luna_bench._internal.shared.database.transactions.peewee_transaction import PeeweeTransaction
-from luna_bench._internal.shared.database.transactions.storage_transaction import StorageTransaction
+from luna_bench._internal.entities.model_set.modelset_dao import ModelSetDAO
 from luna_bench._internal.usecases.modelset import ModelSetAddUc, ModelSetCreateUc
 from luna_bench._internal.usecases.modelset.protocols import ModelSetDeleteUc, ModelSetRemoveUc
-
-storage_transaction: StorageTransaction = PeeweeTransaction()
 
 
 class ModelData(BaseModel):
@@ -49,7 +45,7 @@ class ModelSet(BaseModel):
     @staticmethod
     @inject
     def create(
-        dataset_name: str, modelset_create: ModelSetCreateUc = Provide[Container.modelset_create_uc]
+        dataset_name: str, modelset_create: ModelSetCreateUc = Provide[UsecaseContainer.modelset_create_uc]
     ) -> ModelSet:
         result: Result[ModelSetDomain, str] = modelset_create(modelset_name=dataset_name)
 
@@ -63,7 +59,7 @@ class ModelSet(BaseModel):
 
     @staticmethod
     def load(modelset_id: int) -> ModelSet:
-        result: Result[ModelSetDomain, str] = ModelSetDAO.load_modelset(modelset_id=modelset_id)
+        result: Result[ModelSetDomain, str] = ModelSetDAO.load(modelset_id=modelset_id)
 
         if not is_successful(result):
             error = result.failure()
@@ -75,7 +71,7 @@ class ModelSet(BaseModel):
 
     @staticmethod
     def load_all() -> list[ModelSet]:
-        result: Result[list[ModelSetDomain], str] = ModelSetDAO.load_all_modelsets()
+        result: Result[list[ModelSetDomain], str] = ModelSetDAO.load_all()
 
         if not is_successful(result):
             error = result.failure()
@@ -85,7 +81,7 @@ class ModelSet(BaseModel):
 
     @staticmethod
     @inject
-    def load_all_models(model_all: ModelSetAddUc = Provide[Container.model_all]) -> Result[list[ModelData], str]:
+    def load_all_models(model_all: ModelSetAddUc = Provide[UsecaseContainer.model_all]) -> Result[list[ModelData], str]:
         result: Result[list[ModelSetDomain], str] = model_all()
         if not is_successful(result):
             error = result.failure()
@@ -94,7 +90,7 @@ class ModelSet(BaseModel):
         return [ModelSet._to_model_data(m) for m in result.unwrap()]
 
     @inject
-    def add(self, model: Model, modelset_add: ModelSetAddUc = Provide[Container.modelset_add_uc]) -> None:
+    def add(self, model: Model, modelset_add: ModelSetAddUc = Provide[UsecaseContainer.modelset_add_uc]) -> None:
         result: Result[ModelSetDomain, str] = modelset_add(dataset_id=self.id, model=model)
 
         if not is_successful(result):
@@ -104,7 +100,9 @@ class ModelSet(BaseModel):
         self._update(result.unwrap())
 
     @inject
-    def remove(self, model: Model, modelset_remove: ModelSetRemoveUc = Provide[Container.modelset_remove_uc]) -> None:
+    def remove(
+        self, model: Model, modelset_remove: ModelSetRemoveUc = Provide[UsecaseContainer.modelset_remove_uc]
+    ) -> None:
         result: Result[ModelSetDomain, str] = modelset_remove(dataset_id=self.id, model=model)
 
         if not is_successful(result):
@@ -114,7 +112,7 @@ class ModelSet(BaseModel):
         self._update(result.unwrap())
 
     @inject
-    def delete(self, modelset_delete_uc: ModelSetDeleteUc = Provide[Container.modelset_delete_uc]) -> None:
+    def delete(self, modelset_delete_uc: ModelSetDeleteUc = Provide[UsecaseContainer.modelset_delete_uc]) -> None:
         result: Result[None, str] = modelset_delete_uc(modelset_id=self.id)
 
         if not is_successful(result):

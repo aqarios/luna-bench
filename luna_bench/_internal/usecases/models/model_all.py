@@ -1,18 +1,17 @@
 from returns.result import Result
 
-from luna_bench._internal.entities.model_set.domain_models import ModelMetadataDomain
-from luna_bench._internal.shared.database.transactions.storage_transaction import StorageTransaction
+from luna_bench._internal.entities import ModelMetadataDomain, StorageTransaction
 from luna_bench.errors.modeset.model_already_exists_error import ModelAlreadyExistsError
 
 
 class ModelAllUcImpl:
-    storage_transaction: StorageTransaction
+    transaction: StorageTransaction
 
-    def __init__(self, storage_transaction: StorageTransaction) -> None:
-        self.storage_transaction = storage_transaction
+    def __init__(self, transaction: StorageTransaction) -> None:
+        self.transaction = transaction
 
     def __call__(self) -> Result[list[ModelMetadataDomain], str]:
-        with self.storage_transaction as t:
-            result: Result[list[ModelMetadataDomain], ModelAlreadyExistsError | str] = t.model_set.get_all_models()
+        with self.transaction as t:
+            result: Result[list[ModelMetadataDomain], ModelAlreadyExistsError | str] = t.model.get_all()
 
             return result
