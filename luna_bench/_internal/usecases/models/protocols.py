@@ -7,4 +7,4 @@ from luna_bench._internal.entities.model_set.domain_models import ModelMetadataD
 
 class ModelAllUc(Protocol):
     def __call__(self) -> Result[list[ModelMetadataDomain], str]:
-        """A"""
+        """A."""

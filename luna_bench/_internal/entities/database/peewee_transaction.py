@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from logging import Logger
+from typing import TYPE_CHECKING
 
 from luna_quantum import Logging
 from peewee import Database, _transaction
 
-from luna_bench._internal.entities.protocols import ModelSetStorage, ModelStorage
+if TYPE_CHECKING:
+    from logging import Logger
+
+    from luna_bench._internal.entities.protocols import ModelSetStorage, ModelStorage
 
 
 class PeeweeTransaction(_transaction):

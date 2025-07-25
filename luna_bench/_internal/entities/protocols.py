@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from types import TracebackType
-from typing import Protocol, Self
+from typing import TYPE_CHECKING, Protocol, Self
 
-from returns.result import Result
+if TYPE_CHECKING:
+    from types import TracebackType
 
-from luna_bench._internal.entities.model_set import ModelMetadataDomain, ModelSetDomain
+    from returns.result import Result
+
+    from luna_bench._internal.entities.model_set import ModelMetadataDomain, ModelSetDomain
 
 
 class StorageTransaction(Protocol):

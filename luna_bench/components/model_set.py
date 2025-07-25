@@ -1,21 +1,25 @@
 from __future__ import annotations
 
-from logging import Logger
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging, Model
 from pydantic import BaseModel
 from returns.pipeline import is_successful
-from returns.result import Result
 
 from luna_bench._internal import UsecaseContainer
 from luna_bench._internal.entities.model_set import ModelDAO
-from luna_bench._internal.entities.model_set.domain_models import ModelMetadataDomain, ModelSetDomain
 from luna_bench._internal.entities.model_set.modelset_dao import ModelSetDAO
-from luna_bench._internal.usecases import ModelAllUc
-from luna_bench._internal.usecases.modelset import ModelSetAddUc, ModelSetCreateUc
-from luna_bench._internal.usecases.modelset.protocols import ModelSetDeleteUc, ModelSetRemoveUc
+
+if TYPE_CHECKING:
+    from logging import Logger
+
+    from returns.result import Result
+
+    from luna_bench._internal.entities.model_set.domain_models import ModelMetadataDomain, ModelSetDomain
+    from luna_bench._internal.usecases import ModelAllUc
+    from luna_bench._internal.usecases.modelset import ModelSetAddUc, ModelSetCreateUc
+    from luna_bench._internal.usecases.modelset.protocols import ModelSetDeleteUc, ModelSetRemoveUc
 
 
 class ModelData(BaseModel):
@@ -29,7 +33,6 @@ class ModelData(BaseModel):
 
         if not is_successful(result):
             error = result.failure()
-            print(f"Error: {error}")
             raise RuntimeError(error)
 
         success: bytes = result.unwrap()
@@ -77,7 +80,6 @@ class ModelSet(BaseModel):
 
         if not is_successful(result):
             error = result.failure()
-            print(f"Error: {error}")
             raise RuntimeError(error)
         return [ModelSet._to_data_set(m) for m in result.unwrap()]
 
@@ -89,7 +91,6 @@ class ModelSet(BaseModel):
         result: Result[list[ModelMetadataDomain], str] = model_all()
         if not is_successful(result):
             error = result.failure()
-            print(f"Error: {error}")
             raise RuntimeError(error)
         return [ModelSet._to_model_data(m) for m in result.unwrap()]
 

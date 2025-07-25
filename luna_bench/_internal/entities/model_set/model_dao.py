@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from logging import Logger
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from luna_quantum import Logging
 from returns.result import Failure, Result, Success
 
 from .domain_models import ModelMetadataDomain
 from .tables import ModelMetadataTable, ModelTable
+
+if TYPE_CHECKING:
+    from logging import Logger
 
 
 class ModelDAO:
@@ -19,7 +21,7 @@ class ModelDAO:
             model = ModelMetadataTable.get(ModelMetadataTable.hash == model_hash)
             return Success(ModelDAO.model_to_domain(model))
         except Exception as e:
-            raise e
+            raise
             ModelDAO._logger.debug(e)
             return Failure("Model does not exist")
 
@@ -29,7 +31,7 @@ class ModelDAO:
             data = ModelMetadataTable.select()
             return Success([ModelDAO.model_to_domain(d) for d in data])
         except Exception as e:
-            raise e
+            raise
             ModelDAO._logger.debug(e)
             return Failure("loading failed")
 
@@ -43,7 +45,7 @@ class ModelDAO:
 
             return Success(ModelDAO.model_to_domain(metadata))
         except Exception as e:
-            raise e
+            raise
             ModelDAO._logger.debug(e)
             return Failure("storing failed")
 
@@ -54,7 +56,7 @@ class ModelDAO:
 
             return Success(data.encoded_model)
         except Exception as e:
-            raise e
+            raise
             ModelDAO._logger.debug(e)
             return Failure("loading failed")
 

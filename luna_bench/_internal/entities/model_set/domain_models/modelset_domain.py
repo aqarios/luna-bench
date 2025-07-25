@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from pydantic import BaseModel
 
-from .model_metadata_domain import ModelMetadataDomain
+if TYPE_CHECKING:
+    from .model_metadata_domain import ModelMetadataDomain
 
 
 class ModelSetDomain(BaseModel):

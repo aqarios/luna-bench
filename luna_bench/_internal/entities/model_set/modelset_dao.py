@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from logging import Logger
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from luna_quantum import Logging
 from returns.result import Failure, Result, Success
@@ -9,6 +8,9 @@ from returns.result import Failure, Result, Success
 from .domain_models import ModelMetadataDomain, ModelSetDomain
 from .model_dao import ModelDAO
 from .tables import ModelMetadataTable, ModelSetTable
+
+if TYPE_CHECKING:
+    from logging import Logger
 
 
 class ModelSetDAO:
@@ -21,7 +23,7 @@ class ModelSetDAO:
             modelset.save()
             return Success(ModelSetDAO.modelset_to_domain(modelset))
         except Exception as e:
-            raise e
+            raise
             ModelSetDAO._logger.debug(e)
             return Failure("storing failed")
 
@@ -32,7 +34,7 @@ class ModelSetDAO:
 
             return Success(ModelSetDAO.modelset_to_domain(modelset))
         except Exception as e:
-            raise e
+            raise
             ModelSetDAO._logger.debug(e)
             return Failure("loading failed")
 
@@ -52,7 +54,7 @@ class ModelSetDAO:
 
             return Success(None)
         except Exception as e:
-            raise e
+            raise
             ModelSetDAO._logger.debug(e)
             return Failure("loading failed")
 
@@ -68,7 +70,7 @@ class ModelSetDAO:
 
             return Success(ModelSetDAO.modelset_to_domain(modelset))
         except Exception as e:
-            raise e
+            raise
             ModelSetDAO._logger.debug(e)
             return Failure("storing failed")
 
@@ -89,7 +91,7 @@ class ModelSetDAO:
             return Success(to_return)
 
         except Exception as e:
-            raise e
+            raise
             ModelSetDAO._logger.debug(e)
             return Failure("storing failed")
 
@@ -99,7 +101,7 @@ class ModelSetDAO:
             modelsets = ModelSetTable.select()
             return Success([ModelSetDAO.modelset_to_domain(m) for m in modelsets])
         except Exception as e:
-            raise e
+            raise
             ModelSetDAO._logger.debug(e)
             return Failure("loading failed")
 
@@ -108,7 +110,6 @@ class ModelSetDAO:
         try:
             models = ModelMetadataTable.select().join(ModelSetTable).where(ModelSetTable.id == modelset_id).get()
 
-            print(models)
             return Success([ModelDAO.model_to_domain(m) for m in models])
         except Exception as e:
             ModelSetDAO._logger.debug(e)
