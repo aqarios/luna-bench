@@ -23,12 +23,15 @@ if TYPE_CHECKING:
 
 
 class ModelData(BaseModel):
+    """Metadata about a model."""
+
     id: int
     model_name: str
     model_hash: int
 
     @property
     def model(self) -> Model:
+        """Fetch the model from the database."""
         result: Result[bytes, Exception] = ModelDAO.fetch_model(self.id)
 
         if not is_successful(result):
@@ -41,6 +44,8 @@ class ModelData(BaseModel):
 
 
 class ModelSet(BaseModel):
+    """A set of models."""
+
     _logger: ClassVar[Logger] = Logging.get_logger(__name__)
 
     id: int
@@ -52,6 +57,18 @@ class ModelSet(BaseModel):
     def create(
         dataset_name: str, modelset_create: ModelSetCreateUc = Provide[UsecaseContainer.modelset_create_uc]
     ) -> ModelSet:
+        """
+        A static method to create a new model set using the provided dataset name and a model
+        set creation use case. The method ensures the operation is successful and raises
+        an exception in case of an error. The successful creation returns an instance
+        of `ModelSet`.
+
+        :param dataset_name: The name of the dataset to create the model set for.
+        :param modelset_create: The `ModelSetCreateUc` dependency to handle the model set
+            creation logic.
+        :return: Returns an instance of `ModelSet` representing the successfully created
+            model set.
+        """
         result: Result[ModelSetDomain, Exception] = modelset_create(modelset_name=dataset_name)
 
         if not is_successful(result):
@@ -88,11 +105,7 @@ class ModelSet(BaseModel):
     def load_all_models(
         model_all: ModelAllUc = Provide[UsecaseContainer.model_all],
     ) -> list[ModelData]:
-        result: Result[list[ModelMetadataDomain], Exception] = model_all()
-        if not is_successful(result):
-            error = result.failure()
-            raise RuntimeError(error)
-        return [ModelSet._to_model_data(m) for m in result.unwrap()]
+        return [ModelSet._to_model_data(m) for m in model_all()]
 
     @inject
     def add(self, model: Model, modelset_add: ModelSetAddUc = Provide[UsecaseContainer.modelset_add_uc]) -> None:

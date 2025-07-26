@@ -92,6 +92,7 @@ docstring-code-format = true
 
 line-ending = "lf" # unix file endings
 
+quote-style = "double"
 # Set the line length limit used when formatting code snippets in
 # docstrings.
 #

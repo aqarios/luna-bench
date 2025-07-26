@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, cast
 from luna_quantum import Logging
 from returns.result import Failure, Result, Success
 
+from luna_bench.errors.data.data_not_exist import DataNotExistError
+
 from .domain_models import ModelMetadataDomain
 from .tables import ModelMetadataTable, ModelTable
 
@@ -16,22 +18,18 @@ class ModelDAO:
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
-    def get(model_hash: int) -> Result[ModelMetadataDomain, Exception]:
+    def get(model_hash: int) -> Result[ModelMetadataDomain, DataNotExistError]:
         try:
             model = ModelMetadataTable.get(ModelMetadataTable.hash == model_hash)
             return Success(ModelDAO.model_to_domain(model))
         except Exception as e:
             ModelDAO._logger.debug(e)
-            return Failure(e)
+            return Failure(DataNotExistError())
 
     @staticmethod
-    def get_all() -> Result[list[ModelMetadataDomain], Exception]:
-        try:
-            data = ModelMetadataTable.select()
-            return Success([ModelDAO.model_to_domain(d) for d in data])
-        except Exception as e:
-            ModelDAO._logger.debug(e)
-            return Failure(e)
+    def get_all() -> list[ModelMetadataDomain]:
+        data = ModelMetadataTable.select()
+        return [ModelDAO.model_to_domain(d) for d in data]
 
     @staticmethod
     def get_or_create(model_name: str, model_hash: int, binary: bytes) -> Result[ModelMetadataDomain, Exception]:
