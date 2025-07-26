@@ -1,2 +1,2 @@
 class BaseError(Exception):
-    pass
+    """Base class for all exceptions."""

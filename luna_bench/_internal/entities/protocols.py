@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from returns.result import Result
 
     from luna_bench._internal.entities.model_set import ModelMetadataDomain, ModelSetDomain
-    from luna_bench.errors.data.data_not_exist import DataNotExistError
+    from luna_bench.errors.storage.data_not_exist import DataNotExistError
 
 
 class StorageTransaction(Protocol):

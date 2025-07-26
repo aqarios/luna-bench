@@ -6,13 +6,41 @@ from luna_bench._internal.entities import ModelMetadataDomain, ModelSetDomain, S
 
 
 class ModelSetRemoveUcImpl:
-    transaction: StorageTransaction
+    """Implementation of the use case for removing a model from a model set."""
+
+    _transaction: StorageTransaction
 
     def __init__(self, transaction: StorageTransaction) -> None:
-        self.transaction = transaction
+        """
+        Initialize the ModelSetRemoveUcImpl with a storage transaction.
+
+        Parameters
+        ----------
+        transaction : StorageTransaction
+            The transaction object used to interact with the storage.
+        """
+        self._transaction = transaction
 
     def __call__(self, dataset_id: int, model: Model) -> Result[ModelSetDomain, Exception]:
-        with self.transaction as t:
+        """
+        Remove a model from a model set.
+
+        Retrieves the model metadata using the model hash and removes it from the specified model set.
+
+        Parameters
+        ----------
+        dataset_id : int
+            The ID of the model set to remove the model from.
+        model : Model
+            The model to remove from the model set.
+
+        Returns
+        -------
+        Result[ModelSetDomain, Exception]
+            On success: Contains the updated model set object
+            On failure: An Exception
+        """
+        with self._transaction as t:
             get_result: Result[ModelMetadataDomain, Exception] = t.model.get(model_hash=model.__hash__())
 
             if not is_successful(get_result):

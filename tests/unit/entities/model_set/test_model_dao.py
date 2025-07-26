@@ -6,7 +6,7 @@ import pytest
 from luna_quantum import Model, Variable
 from returns.result import Failure, Success
 
-from luna_bench.errors.data.data_not_exist import DataNotExistError
+from luna_bench.errors.storage.data_not_exist import DataNotExistError
 
 if TYPE_CHECKING:
     from luna_bench._internal.entities import ModelMetadataDomain, StorageTransaction
