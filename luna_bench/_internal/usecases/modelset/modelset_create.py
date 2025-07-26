@@ -9,6 +9,6 @@ class ModelSetCreateUcImpl:
     def __init__(self, transaction: StorageTransaction) -> None:
         self.transaction = transaction
 
-    def __call__(self, modelset_name: str) -> Result[ModelSetDomain, str]:
+    def __call__(self, modelset_name: str) -> Result[ModelSetDomain, Exception]:
         with self.transaction as t:
             return t.modelset.create(name=modelset_name)

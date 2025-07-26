@@ -17,49 +17,46 @@ class ModelSetDAO:
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
-    def create(name: str) -> Result[ModelSetDomain, str]:
+    def create(name: str) -> Result[ModelSetDomain, Exception]:
         modelset = ModelSetTable(name=name)
         try:
             modelset.save()
             return Success(ModelSetDAO.modelset_to_domain(modelset))
         except Exception as e:
-            raise
             ModelSetDAO._logger.debug(e)
-            return Failure("storing failed")
+            return Failure(e)
 
     @staticmethod
-    def load(modelset_id: int) -> Result[ModelSetDomain, str]:
+    def load(modelset_id: int) -> Result[ModelSetDomain, Exception]:
         try:
             modelset = (ModelSetTable.select(ModelSetTable).where(ModelSetTable.id == modelset_id)).get()
 
             return Success(ModelSetDAO.modelset_to_domain(modelset))
         except Exception as e:
-            raise
             ModelSetDAO._logger.debug(e)
-            return Failure("loading failed")
+            return Failure(e)
 
     @staticmethod
-    def delete(modelset_id: int) -> Result[None, str]:
+    def delete(modelset_id: int) -> Result[None, Exception]:
         try:
             modelset = ModelSetTable.get(ModelSetTable.id == modelset_id)
 
             models_to_check = list(modelset.models)
 
-            modelset.delete_instance(True)
+            modelset.delete_instance(recursive=True)
 
             # Check if there are any 'lose' models we need to clean up.
             for model in models_to_check:
                 if not model.modelsets.exists():
-                    model.delete_instance(True)
+                    model.delete_instance(recursive=True)
 
             return Success(None)
         except Exception as e:
-            raise
             ModelSetDAO._logger.debug(e)
-            return Failure("loading failed")
+            return Failure(e)
 
     @staticmethod
-    def add_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, str]:
+    def add_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, Exception]:
         try:
             modelset = ModelSetTable.get(ModelSetTable.id == modelset_id)
             model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)
@@ -70,12 +67,11 @@ class ModelSetDAO:
 
             return Success(ModelSetDAO.modelset_to_domain(modelset))
         except Exception as e:
-            raise
             ModelSetDAO._logger.debug(e)
-            return Failure("storing failed")
+            return Failure(e)
 
     @staticmethod
-    def remove_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, str]:
+    def remove_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, Exception]:
         try:
             modelset = ModelSetTable.get(ModelSetTable.id == modelset_id)
             model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)
@@ -86,34 +82,32 @@ class ModelSetDAO:
             remaining_count = through_model.select().where(through_model.modelmetadatatable == through_model.id).count()
 
             if remaining_count == 0:
-                model_metadata.delete_instance(True)
+                model_metadata.delete_instance(recursive=True)
 
             return Success(to_return)
 
         except Exception as e:
-            raise
             ModelSetDAO._logger.debug(e)
-            return Failure("storing failed")
+            return Failure(e)
 
     @staticmethod
-    def load_all() -> Result[list[ModelSetDomain], str]:
+    def load_all() -> Result[list[ModelSetDomain], Exception]:
         try:
             modelsets = ModelSetTable.select()
             return Success([ModelSetDAO.modelset_to_domain(m) for m in modelsets])
         except Exception as e:
-            raise
             ModelSetDAO._logger.debug(e)
-            return Failure("loading failed")
+            return Failure(e)
 
     @staticmethod
-    def load_all_models(modelset_id: int) -> Result[list[ModelMetadataDomain], str]:
+    def load_all_models(modelset_id: int) -> Result[list[ModelMetadataDomain], Exception]:
         try:
             models = ModelMetadataTable.select().join(ModelSetTable).where(ModelSetTable.id == modelset_id).get()
 
             return Success([ModelDAO.model_to_domain(m) for m in models])
         except Exception as e:
             ModelSetDAO._logger.debug(e)
-            return Failure("loading failed")
+            return Failure(e)
 
     @staticmethod
     def modelset_to_domain(modelset: ModelSetTable) -> ModelSetDomain:

@@ -29,7 +29,7 @@ class ModelData(BaseModel):
 
     @property
     def model(self) -> Model:
-        result: Result[bytes, str] = ModelDAO.fetch_model(self.id)
+        result: Result[bytes, Exception] = ModelDAO.fetch_model(self.id)
 
         if not is_successful(result):
             error = result.failure()
@@ -52,7 +52,7 @@ class ModelSet(BaseModel):
     def create(
         dataset_name: str, modelset_create: ModelSetCreateUc = Provide[UsecaseContainer.modelset_create_uc]
     ) -> ModelSet:
-        result: Result[ModelSetDomain, str] = modelset_create(modelset_name=dataset_name)
+        result: Result[ModelSetDomain, Exception] = modelset_create(modelset_name=dataset_name)
 
         if not is_successful(result):
             error = result.failure()
@@ -64,7 +64,7 @@ class ModelSet(BaseModel):
 
     @staticmethod
     def load(modelset_id: int) -> ModelSet:
-        result: Result[ModelSetDomain, str] = ModelSetDAO.load(modelset_id=modelset_id)
+        result: Result[ModelSetDomain, Exception] = ModelSetDAO.load(modelset_id=modelset_id)
 
         if not is_successful(result):
             error = result.failure()
@@ -76,7 +76,7 @@ class ModelSet(BaseModel):
 
     @staticmethod
     def load_all() -> list[ModelSet]:
-        result: Result[list[ModelSetDomain], str] = ModelSetDAO.load_all()
+        result: Result[list[ModelSetDomain], Exception] = ModelSetDAO.load_all()
 
         if not is_successful(result):
             error = result.failure()
@@ -88,7 +88,7 @@ class ModelSet(BaseModel):
     def load_all_models(
         model_all: ModelAllUc = Provide[UsecaseContainer.model_all],
     ) -> list[ModelData]:
-        result: Result[list[ModelMetadataDomain], str] = model_all()
+        result: Result[list[ModelMetadataDomain], Exception] = model_all()
         if not is_successful(result):
             error = result.failure()
             raise RuntimeError(error)
@@ -96,7 +96,7 @@ class ModelSet(BaseModel):
 
     @inject
     def add(self, model: Model, modelset_add: ModelSetAddUc = Provide[UsecaseContainer.modelset_add_uc]) -> None:
-        result: Result[ModelSetDomain, str] = modelset_add(dataset_id=self.id, model=model)
+        result: Result[ModelSetDomain, Exception] = modelset_add(dataset_id=self.id, model=model)
 
         if not is_successful(result):
             error = result.failure()
@@ -108,7 +108,7 @@ class ModelSet(BaseModel):
     def remove(
         self, model: Model, modelset_remove: ModelSetRemoveUc = Provide[UsecaseContainer.modelset_remove_uc]
     ) -> None:
-        result: Result[ModelSetDomain, str] = modelset_remove(dataset_id=self.id, model=model)
+        result: Result[ModelSetDomain, Exception] = modelset_remove(dataset_id=self.id, model=model)
 
         if not is_successful(result):
             error = result.failure()
@@ -118,7 +118,7 @@ class ModelSet(BaseModel):
 
     @inject
     def delete(self, modelset_delete_uc: ModelSetDeleteUc = Provide[UsecaseContainer.modelset_delete_uc]) -> None:
-        result: Result[None, str] = modelset_delete_uc(modelset_id=self.id)
+        result: Result[None, Exception] = modelset_delete_uc(modelset_id=self.id)
 
         if not is_successful(result):
             error = result.failure()

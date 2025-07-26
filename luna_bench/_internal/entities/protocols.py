@@ -36,47 +36,47 @@ class StorageTransaction(Protocol):
 
 class ModelStorage(Protocol):
     @staticmethod
-    def get(model_hash: int) -> Result[ModelMetadataDomain, str]:
+    def get(model_hash: int) -> Result[ModelMetadataDomain, Exception]:
         pass
 
     @staticmethod
-    def get_all() -> Result[list[ModelMetadataDomain], str]:
+    def get_all() -> Result[list[ModelMetadataDomain], Exception]:
         pass
 
     @staticmethod
-    def get_or_create(model_name: str, model_hash: int, binary: bytes) -> Result[ModelMetadataDomain, str]:
+    def get_or_create(model_name: str, model_hash: int, binary: bytes) -> Result[ModelMetadataDomain, Exception]:
         pass
 
     @staticmethod
-    def fetch_model(model_id: int) -> Result[bytes, str]:
+    def fetch_model(model_id: int) -> Result[bytes, Exception]:
         pass
 
 
 class ModelSetStorage(Protocol):
     @staticmethod
-    def create(name: str) -> Result[ModelSetDomain, str]:
+    def create(name: str) -> Result[ModelSetDomain, Exception]:
         pass
 
     @staticmethod
-    def load(modelset_id: int) -> Result[ModelSetDomain, str]:
+    def load(modelset_id: int) -> Result[ModelSetDomain, Exception]:
         pass
 
     @staticmethod
-    def delete(modelset_id: int) -> Result[None, str]:
+    def delete(modelset_id: int) -> Result[None, Exception]:
         pass
 
     @staticmethod
-    def add_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, str]:
+    def add_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, Exception]:
         pass
 
     @staticmethod
-    def remove_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, str]:
+    def remove_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, Exception]:
         pass
 
     @staticmethod
-    def load_all() -> Result[list[ModelSetDomain], str]:
+    def load_all() -> Result[list[ModelSetDomain], Exception]:
         pass
 
     @staticmethod
-    def load_all_models(modelset_id: int) -> Result[list[ModelMetadataDomain], str]:
+    def load_all_models(modelset_id: int) -> Result[list[ModelMetadataDomain], Exception]:
         pass

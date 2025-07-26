@@ -16,27 +16,25 @@ class ModelDAO:
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
-    def get(model_hash: int) -> Result[ModelMetadataDomain, str]:
+    def get(model_hash: int) -> Result[ModelMetadataDomain, Exception]:
         try:
             model = ModelMetadataTable.get(ModelMetadataTable.hash == model_hash)
             return Success(ModelDAO.model_to_domain(model))
         except Exception as e:
-            raise
             ModelDAO._logger.debug(e)
-            return Failure("Model does not exist")
+            return Failure(e)
 
     @staticmethod
-    def get_all() -> Result[list[ModelMetadataDomain], str]:
+    def get_all() -> Result[list[ModelMetadataDomain], Exception]:
         try:
             data = ModelMetadataTable.select()
             return Success([ModelDAO.model_to_domain(d) for d in data])
         except Exception as e:
-            raise
             ModelDAO._logger.debug(e)
-            return Failure("loading failed")
+            return Failure(e)
 
     @staticmethod
-    def get_or_create(model_name: str, model_hash: int, binary: bytes) -> Result[ModelMetadataDomain, str]:
+    def get_or_create(model_name: str, model_hash: int, binary: bytes) -> Result[ModelMetadataDomain, Exception]:
         try:
             metadata, created = ModelMetadataTable.get_or_create(hash=model_hash, defaults={"name": model_name})
 
@@ -45,20 +43,18 @@ class ModelDAO:
 
             return Success(ModelDAO.model_to_domain(metadata))
         except Exception as e:
-            raise
             ModelDAO._logger.debug(e)
-            return Failure("storing failed")
+            return Failure(e)
 
     @staticmethod
-    def fetch_model(model_id: int) -> Result[bytes, str]:
+    def fetch_model(model_id: int) -> Result[bytes, Exception]:
         try:
             data = ModelTable.get(ModelTable.model_id == model_id)
 
             return Success(data.encoded_model)
         except Exception as e:
-            raise
             ModelDAO._logger.debug(e)
-            return Failure("loading failed")
+            return Failure(e)
 
     @staticmethod
     def model_to_domain(model: ModelMetadataTable) -> ModelMetadataDomain:

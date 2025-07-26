@@ -8,8 +8,6 @@ _database: Database = SqliteDatabase(None)
 
 
 def setup_db_proxy(connection_string: str, tables: list[Any]) -> Database:
-    global _database
-
     _database.init(
         connection_string,
         pragmas=(

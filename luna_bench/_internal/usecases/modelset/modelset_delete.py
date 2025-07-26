@@ -9,6 +9,6 @@ class ModelSetDeleteUcImpl:
     def __init__(self, transaction: StorageTransaction) -> None:
         self.transaction = transaction
 
-    def __call__(self, modelset_id: int) -> Result[None, str]:
+    def __call__(self, modelset_id: int) -> Result[None, Exception]:
         with self.transaction as t:
             return t.modelset.delete(modelset_id=modelset_id)

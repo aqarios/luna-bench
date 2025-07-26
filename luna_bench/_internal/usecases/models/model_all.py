@@ -9,8 +9,8 @@ class ModelAllUcImpl:
     def __init__(self, transaction: StorageTransaction) -> None:
         self.transaction = transaction
 
-    def __call__(self) -> Result[list[ModelMetadataDomain], str]:
+    def __call__(self) -> Result[list[ModelMetadataDomain], Exception]:
         with self.transaction as t:
-            result: Result[list[ModelMetadataDomain], str] = t.model.get_all()
+            result: Result[list[ModelMetadataDomain], Exception] = t.model.get_all()
 
             return result

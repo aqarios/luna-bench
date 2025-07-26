@@ -11,16 +11,16 @@ class ModelSetAddUcImpl:
     def __init__(self, transaction: StorageTransaction) -> None:
         self.transaction = transaction
 
-    def __call__(self, dataset_id: int, model: Model) -> Result[ModelSetDomain, str]:
+    def __call__(self, dataset_id: int, model: Model) -> Result[ModelSetDomain, Exception]:
         with self.transaction as t:
-            result_create: Result[ModelMetadataDomain, str] = t.model.get_or_create(
+            result_create: Result[ModelMetadataDomain, Exception] = t.model.get_or_create(
                 model_name=model.name, model_hash=model.__hash__(), binary=model.encode()
             )
             if not is_successful(result_create):
                 return Failure(result_create.failure())
             success_create: ModelMetadataDomain = result_create.unwrap()
 
-            result_add: Result[ModelSetDomain, str] = t.modelset.add_model(
+            result_add: Result[ModelSetDomain, Exception] = t.modelset.add_model(
                 modelset_id=dataset_id,
                 model_id=success_create.id,
             )

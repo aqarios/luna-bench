@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from pydantic import BaseModel
 
-if TYPE_CHECKING:
-    from .model_metadata_domain import ModelMetadataDomain
+from .model_metadata_domain import ModelMetadataDomain
 
 
+# ruff: noqa: TC001 Disable typing block rule since it will break pydantic.
 class ModelSetDomain(BaseModel):
     id: int
     name: str
