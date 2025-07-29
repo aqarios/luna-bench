@@ -19,9 +19,9 @@ jobs:
     name: "Lint"
     uses: ./.github/workflows/lint-template.yml
     with:
-      runner-type: ${{ steps.config.outputs.runner-type }}
+      runner-type: ${{ github.event.inputs.runner-type }}
   test:
     name: "Test"
     uses: ./.github/workflows/test-template.yml
     with:
-      runner-type: ${{ steps.config.outputs.runner-type }}
+      runner-type: ${{ github.event.inputs.runner-type }}
