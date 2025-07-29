@@ -5,42 +5,33 @@ on:
       - main
 
 jobs:
-  lint-self-hosted:
-    name: "Lint: Try Self-Hosted"
+  choose-runner:
+    runs-on: ubuntu-latest
+    outputs:
+      runner: ${{ steps.runner.outputs.runner }}
+    steps:
+      - id: runner
+        run: |
+          if [ "${{ github.actor }}" == "ianpurton" ]; then
+            echo "runner=self-hosted" >> $GITHUB_OUTPUT
+          else
+            echo "runner=ubuntu-latest" >> $GITHUB_OUTPUT
+          fi
+
+  lint:
+    name: "Lint"
+    needs: [ choose-runner ]
     uses: ./.github/workflows/lint-template.yml
     with:
-      runner-type: "self-hosted"
-      timeout-minutes: 5
-      title-suffix: ""
-    # This will continue even if it fails
-    continue-on-error: true
-
-  lint-fallback:
-    name: "Lint: Fallback to GitHub-Hosted"
-    needs: lint-self-hosted
-    if: needs.lint-test-self-hosted.result == 'failure'
-    uses: ./.github/workflows/lint-template.yml
-    with:
-      runner-type: "ubuntu-latest"
-      timeout-minutes: 10
-      title-suffix: " (Fallback)"
-
-  test-self-hosted:
-    name: "Test: Try Self-Hosted"
-    uses: ./.github/workflows/test-template.yml
-    # This will continue even if it fails
-    continue-on-error: true
-    with:
-      runner-type: "self-hosted"
+      runner-type: ${{ needs.choose-runner.outputs.runner }}
       timeout-minutes: 5
       title-suffix: ""
 
-  test-fallback:
-    name: "Test: Fallback to GitHub-Hosted"
-    needs: test-self-hosted
-    if: needs.lint-test-self-hosted.result == 'failure'
+  test:
+    name: "Test"
+    needs: [ choose-runner ]
     uses: ./.github/workflows/test-template.yml
     with:
-      runner-type: "ubuntu-latest"
-      timeout-minutes: 10
-      title-suffix: " (Fallback)"
+      runner-type: ${{ needs.choose-runner.outputs.runner }}
+      timeout-minutes: 5
+      title-suffix: ""
