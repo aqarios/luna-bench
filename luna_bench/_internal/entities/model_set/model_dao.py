@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING, cast
 from luna_quantum import Logging
 from returns.result import Failure, Result, Success
 
-from luna_bench.errors.storage.data_not_exist import DataNotExistError
+from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
+from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 from .domain_models import ModelMetadataDomain
 from .tables import ModelMetadataTable, ModelTable
@@ -25,7 +26,7 @@ class ModelDAO:
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
-    def get(model_hash: int) -> Result[ModelMetadataDomain, DataNotExistError]:
+    def get(model_hash: int) -> Result[ModelMetadataDomain, DataNotExistError | UnknownLunaBenchError]:
         """
         Retrieve a model by its hash value.
 
@@ -45,9 +46,10 @@ class ModelDAO:
         try:
             model = ModelMetadataTable.get(ModelMetadataTable.hash == model_hash)
             return Success(ModelDAO.model_to_domain(model))
-        except Exception as e:
-            ModelDAO._logger.debug(e)
+        except ModelMetadataTable.DoesNotExist:
             return Failure(DataNotExistError())
+        except Exception as e:
+            return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
     def get_all() -> list[ModelMetadataDomain]:
@@ -95,7 +97,7 @@ class ModelDAO:
             return Failure(e)
 
     @staticmethod
-    def fetch_model(model_id: int) -> Result[bytes, Exception]:
+    def fetch_model(model_id: int) -> Result[bytes, DataNotExistError]:
         """
         Fetch the binary data of a model.
 
@@ -108,7 +110,7 @@ class ModelDAO:
 
         Returns
         -------
-        Result[bytes, Exception]
+        Result[bytes, DataNotExistError]
             On success: Contains the encoded model binary data.
             On failure: Contains an exception.
         """
@@ -118,7 +120,7 @@ class ModelDAO:
             return Success(data.encoded_model)
         except Exception as e:
             ModelDAO._logger.debug(e)
-            return Failure(e)
+            return Failure(DataNotExistError())
 
     @staticmethod
     def model_to_domain(model: ModelMetadataTable) -> ModelMetadataDomain:

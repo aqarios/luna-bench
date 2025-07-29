@@ -4,12 +4,13 @@ from luna_quantum import Model
 from returns.result import Result
 
 from luna_bench._internal.entities.model_set.domain_models import ModelSetDomain
+from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 
 
 class ModelSetCreateUc(Protocol):
     """Protocol for creating a new model set."""
 
-    def __call__(self, modelset_name: str) -> Result[ModelSetDomain, Exception]:
+    def __call__(self, modelset_name: str) -> Result[ModelSetDomain, DataNotUniqueError | Exception]:
         """
         Create a new model set with the given name.
 
@@ -20,7 +21,7 @@ class ModelSetCreateUc(Protocol):
 
         Returns
         -------
-        Result[ModelSetDomain, Exception]
+        Result[ModelSetDomain, DataNotUniqueError | Exception]
             On success: Contains the created model set object
             On failure: An Exception
         """

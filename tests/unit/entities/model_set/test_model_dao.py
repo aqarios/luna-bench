@@ -4,9 +4,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 from luna_quantum import Model, Variable
-from returns.result import Failure, Success
+from returns.pipeline import is_successful
+from returns.result import Failure, Result, Success
 
-from luna_bench.errors.storage.data_not_exist import DataNotExistError
+from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 
 if TYPE_CHECKING:
     from luna_bench._internal.entities import ModelMetadataDomain, StorageTransaction
@@ -57,7 +58,7 @@ class TestModelDAO:
         ],
     )
     def test_get_model(
-        self, setup_transaction: StorageTransaction, model_hash: int, exp: Success[Model] | Failure[Exception]
+        self, setup_transaction: StorageTransaction, model_hash: int, exp: Result[[Model], Failure[Exception]]
     ) -> None:
         result = setup_transaction.model.get(model_hash=model_hash)
 
@@ -78,3 +79,43 @@ class TestModelDAO:
 
         for i in range(len(exp)):
             TestModelDAO._check_model(exp[i], result[i])
+
+    @pytest.mark.parametrize(
+        ("model", "exp"),
+        [
+            (_dummy_model("Test"), Success(_dummy_model("Test"))),
+            (_dummy_model("M1"), Success(_dummy_model("M1"))),
+        ],
+    )
+    def test_get_or_create_model(
+        self, setup_transaction: StorageTransaction, model: Model, exp: Result[ModelMetadataDomain, Exception]
+    ) -> None:
+        model_stored = setup_transaction.model.get(model_hash=model.__hash__())
+        result = setup_transaction.model.get_or_create(
+            model_name=model.name, model_hash=model.__hash__(), binary=model.encode()
+        )
+
+        if isinstance(exp, Success):
+            new_model = result.unwrap()
+            TestModelDAO._check_model(exp.unwrap(), new_model)
+            assert new_model.id is not None
+
+            if is_successful(model_stored):
+                assert new_model.id == model_stored.unwrap().id
+            else:
+                # Model was before not stored, so let's check if the actual model was stored an not only metadata
+                assert setup_transaction.model.fetch_model(new_model.id).unwrap() == model.encode()
+        elif isinstance(exp, Failure):
+            TestModelDAO._check_exception(result.failure(), exp.failure())
+
+    def test_fetch_model(self, setup_transaction: StorageTransaction) -> None:
+        model_exists = _dummy_model("M1")
+        model_stored = setup_transaction.model.get(model_hash=model_exists.__hash__())
+
+        fetch_success = setup_transaction.model.fetch_model(model_id=model_stored.unwrap().id)
+
+        assert fetch_success.unwrap() == model_exists.encode()
+
+        fetch_failed = setup_transaction.model.fetch_model(model_id=-1)
+
+        TestModelDAO._check_exception(fetch_failed.failure(), DataNotExistError())

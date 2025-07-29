@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from luna_quantum import Logging
+from peewee import IntegrityError
 from returns.result import Failure, Result, Success
+
+from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
+from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 from .domain_models import ModelMetadataDomain, ModelSetDomain
 from .model_dao import ModelDAO
@@ -17,14 +22,16 @@ class ModelSetDAO:
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
-    def create(name: str) -> Result[ModelSetDomain, Exception]:
+    def create(name: str) -> Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError]:
         modelset = ModelSetTable(name=name)
         try:
             modelset.save()
             return Success(ModelSetDAO.modelset_to_domain(modelset))
-        except Exception as e:
-            ModelSetDAO._logger.debug(e)
-            return Failure(e)
+
+        except IntegrityError:
+            return Failure(DataNotUniqueError())
+        except Exception as e:  # pragma: no cover
+            return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
     def load(modelset_id: int) -> Result[ModelSetDomain, Exception]:
@@ -32,9 +39,11 @@ class ModelSetDAO:
             modelset = (ModelSetTable.select(ModelSetTable).where(ModelSetTable.id == modelset_id)).get()
 
             return Success(ModelSetDAO.modelset_to_domain(modelset))
+        except ModelSetTable.DoesNotExist:
+            return Failure(DataNotExistError())
         except Exception as e:
             ModelSetDAO._logger.debug(e)
-            return Failure(e)
+            return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
     def delete(modelset_id: int) -> Result[None, Exception]:
@@ -51,9 +60,10 @@ class ModelSetDAO:
                     model.delete_instance(recursive=True)
 
             return Success(None)
+        except ModelSetTable.DoesNotExist:
+            return Failure(DataNotExistError())
         except Exception as e:
-            ModelSetDAO._logger.debug(e)
-            return Failure(e)
+            return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
     def add_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, Exception]:

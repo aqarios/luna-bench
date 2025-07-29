@@ -10,6 +10,7 @@ from returns.pipeline import is_successful
 from luna_bench._internal import UsecaseContainer
 from luna_bench._internal.entities.model_set import ModelDAO
 from luna_bench._internal.entities.model_set.modelset_dao import ModelSetDAO
+from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -117,7 +118,7 @@ class ModelSet(BaseModel):
         ModelSet
             An instance of ModelSet representing the successfully created model set.
         """
-        result: Result[ModelSetDomain, Exception] = modelset_create(modelset_name=dataset_name)
+        result: Result[ModelSetDomain, DataNotUniqueError | Exception] = modelset_create(modelset_name=dataset_name)
 
         if not is_successful(result):
             error = result.failure()
