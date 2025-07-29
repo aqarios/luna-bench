@@ -3,35 +3,25 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      runner-type:
+        description: 'Choose where to run the workflow'
+        required: true
+        default: 'ubuntu-latest'
+        type: choice
+        options:
+          - self-hosted
+          - ubuntu-latest
 
 jobs:
-  choose-runner:
-    runs-on: ubuntu-latest
-    outputs:
-      runner: ${{ steps.runner.outputs.runner }}
-    steps:
-      - id: runner
-        run: |
-          if [ "${{ github.actor }}" == "ianpurton" ]; then
-            echo "runner=self-hosted" >> $GITHUB_OUTPUT
-          else
-            echo "runner=ubuntu-latest" >> $GITHUB_OUTPUT
-          fi
-
   lint:
     name: "Lint"
-    needs: [ choose-runner ]
-    uses: ./.github/workflows/lint-template.yml
+    uses: ./.github/workflows/templates/lint-template.yml
     with:
-      runner-type: ${{ needs.choose-runner.outputs.runner }}
-      timeout-minutes: 5
-      title-suffix: ""
-
+      runner-type: ${{ steps.config.outputs.runner-type }}
   test:
     name: "Test"
-    needs: [ choose-runner ]
-    uses: ./.github/workflows/test-template.yml
+    uses: ./.github/workflows/templates/test-template.yml
     with:
-      runner-type: ${{ needs.choose-runner.outputs.runner }}
-      timeout-minutes: 5
-      title-suffix: ""
+      runner-type: ${{ steps.config.outputs.runner-type }}

@@ -6,22 +6,11 @@ on:
         required: true
         type: string
         description: 'The runner to use (self-hosted or ubuntu-latest)'
-      timeout-minutes:
-        required: false
-        type: number
-        default: 1
-        description: 'Timeout in minutes'
-      title-suffix:
-        required: false
-        type: string
-        default: ''
-        description: 'Suffix for coverage comment title'
 
 jobs:
   lint-test:
-    name: "Linting{{ inputs.title-suffix }}"
+    name: "Linting"
     runs-on: ${{ inputs.runner-type }}
-    timeout-minutes: ${{ inputs.timeout-minutes }}
 
     steps:
       - name: "Checkout code"

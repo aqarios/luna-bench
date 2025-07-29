@@ -6,22 +6,11 @@ on:
         required: true
         type: string
         description: 'The runner to use (self-hosted or ubuntu-latest)'
-      timeout-minutes:
-        required: false
-        type: number
-        default: 1
-        description: 'Timeout in minutes'
-      title-suffix:
-        required: false
-        type: string
-        default: ''
-        description: 'Suffix for coverage comment title'
 
 jobs:
   lint-test:
-    name: "Test${{ inputs.title-suffix }}"
+    name: "Test"
     runs-on: ${{ inputs.runner-type }}
-    timeout-minutes: ${{ inputs.timeout-minutes }}
 
     steps:
       - name: "Checkout code"
@@ -47,7 +36,7 @@ jobs:
         id: coverageComment
         uses: MishaKav/pytest-coverage-comment@main
         with:
-          title: Luna-Bench coverage${{ inputs.title-suffix }}
+          title: Luna-Bench coverage
           badge-title: Coverage
           hide-badge: false
           hide-report: false
