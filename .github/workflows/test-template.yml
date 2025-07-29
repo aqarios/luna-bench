@@ -1,0 +1,62 @@
+name: "Test Template"
+on:
+  workflow_call:
+    inputs:
+      runner-type:
+        required: true
+        type: string
+        description: 'The runner to use (self-hosted or ubuntu-latest)'
+      timeout-minutes:
+        required: false
+        type: number
+        default: 1
+        description: 'Timeout in minutes'
+      title-suffix:
+        required: false
+        type: string
+        default: ''
+        description: 'Suffix for coverage comment title'
+
+jobs:
+  lint-test:
+    name: "Test${{ inputs.title-suffix }}"
+    runs-on: ${{ inputs.runner-type }}
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: "Set up Python"
+        run: uv python install
+
+      - name: "Install the project"
+        run: uv sync --locked --all-extras --dev
+
+      - name: Run Pytest
+        run: |
+          uv run pytest --junitxml=pytest.xml --cov-config=pyproject.toml --cov=luna_bench --cov-report=term-missing:skip-covered | tee pytest-coverage.txt
+
+      - name: Pytest coverage comment
+        if: always()
+        id: coverageComment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          title: Luna-Bench coverage${{ inputs.title-suffix }}
+          badge-title: Coverage
+          hide-badge: false
+          hide-report: false
+          create-new-comment: false
+          hide-comment: false
+          report-only-changed-files: false
+          remove-link-from-badge: false
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./pytest.xml
+
+      - name: Fail if coverage is below 100%
+        run: uv run coverage report --fail-under=100

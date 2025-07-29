@@ -4,53 +4,43 @@ on:
     branches:
       - main
 
-
 jobs:
-  lint-test:
-    name: "Lint & Test"
-    runs-on: self-hosted
+  lint-self-hosted:
+    name: "Lint: Try Self-Hosted"
+    uses: ./.github/workflows/lint-template.yml
+    with:
+      runner-type: "self-hosted"
+      timeout-minutes: 5
+      title-suffix: ""
+    # This will continue even if it fails
+    continue-on-error: true
 
-    steps:
-      - name: "Checkout code"
-        uses: actions/checkout@v4
+  lint-fallback:
+    name: "Lint: Fallback to GitHub-Hosted"
+    needs: lint-self-hosted
+    if: needs.lint-test-self-hosted.result == 'failure'
+    uses: ./.github/workflows/lint-template.yml
+    with:
+      runner-type: "ubuntu-latest"
+      timeout-minutes: 10
+      title-suffix: " (Fallback)"
 
-      - name: "Install uv"
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
+  test-self-hosted:
+    name: "Test: Try Self-Hosted"
+    uses: ./.github/workflows/test-template.yml
+    # This will continue even if it fails
+    continue-on-error: true
+    with:
+      runner-type: "self-hosted"
+      timeout-minutes: 5
+      title-suffix: ""
 
-      - name: "Set up Python"
-        run: uv python install
-
-      - name: "Install the project"
-        run: uv sync --locked --all-extras --dev
-
-      - name: "Ruff (Linter)"
-        run: uv run ruff check --config ruff.toml
-
-      - name: "Ruff (Formater)"
-        run: uv run ruff format --check --config ruff.toml
-
-      - name: "Mypy (Type checking)"
-        run: uv run mypy --config-file .mypy.ini ./
-
-      - name: Run Pytest
-        run: |
-          uv run pytest --junitxml=pytest.xml --cov-config=pyproject.toml --cov=luna_bench --cov-report=term-missing:skip-covered | tee pytest-coverage.txt
-      - name: Pytest coverage comment
-        if: always()
-        id: coverageComment
-        uses: MishaKav/pytest-coverage-comment@main
-        with:
-          title: Luna-Bench coverage
-          badge-title: Coverage
-          hide-badge: false
-          hide-report: false
-          create-new-comment: false
-          hide-comment: false
-          report-only-changed-files: false
-          remove-link-from-badge: false
-          pytest-coverage-path: ./pytest-coverage.txt
-          junitxml-path: ./pytest.xml
-      - name: Fail if coverage is below 100%
-        run: uv run coverage report --fail-under=100
+  test-fallback:
+    name: "Test: Fallback to GitHub-Hosted"
+    needs: test-self-hosted
+    if: needs.lint-test-self-hosted.result == 'failure'
+    uses: ./.github/workflows/test-template.yml
+    with:
+      runner-type: "ubuntu-latest"
+      timeout-minutes: 10
+      title-suffix: " (Fallback)"
