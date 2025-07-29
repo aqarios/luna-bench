@@ -19,9 +19,9 @@ jobs:
     name: "Lint"
     uses: ./.github/workflows/lint-template.yml
     with:
-      runner-type: ${{ github.event.inputs.runner-type || 'ubuntu-latest' }}
+      runner-type: ${{ github.event.inputs.runner-type || 'self-hosted' }}
   test:
     name: "Test"
     uses: ./.github/workflows/test-template.yml
     with:
-      runner-type: ${{ github.event.inputs.runner-type || 'ubuntu-latest'  }}
+      runner-type: ${{ github.event.inputs.runner-type || 'self-hosted'  }}
