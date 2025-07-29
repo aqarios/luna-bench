@@ -11,17 +11,17 @@ on:
         default: 'ubuntu-latest'
         type: choice
         options:
-          - self-hosted
-          - ubuntu-latest
+          - 'self-hosted'
+          - 'ubuntu-latest'
 
 jobs:
   lint:
     name: "Lint"
     uses: ./.github/workflows/lint-template.yml
     with:
-      runner-type: ${{ github.event.inputs.runner-type }}
+      runner-type: ${{ github.event.inputs.runner-type || 'ubuntu-latest' }}
   test:
     name: "Test"
     uses: ./.github/workflows/test-template.yml
     with:
-      runner-type: ${{ github.event.inputs.runner-type }}
+      runner-type: ${{ github.event.inputs.runner-type || 'ubuntu-latest'  }}
