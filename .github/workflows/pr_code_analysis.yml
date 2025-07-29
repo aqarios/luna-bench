@@ -17,11 +17,11 @@ on:
 jobs:
   lint:
     name: "Lint"
-    uses: ./.github/workflows/templates/lint-template.yml
+    uses: ./.github/workflows/lint-template.yml
     with:
       runner-type: ${{ steps.config.outputs.runner-type }}
   test:
     name: "Test"
-    uses: ./.github/workflows/templates/test-template.yml
+    uses: ./.github/workflows/test-template.yml
     with:
       runner-type: ${{ steps.config.outputs.runner-type }}
