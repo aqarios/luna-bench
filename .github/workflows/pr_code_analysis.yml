@@ -3,25 +3,53 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
-    inputs:
-      runner-type:
-        description: 'Choose where to run the workflow'
-        required: true
-        default: 'ubuntu-latest'
-        type: choice
-        options:
-          - 'self-hosted'
-          - 'ubuntu-latest'
 
 jobs:
-  lint:
-    name: "Lint"
-    uses: ./.github/workflows/lint-template.yml
-    with:
-      runner-type: ${{ github.event.inputs.runner-type || 'self-hosted' }}
-  test:
-    name: "Test"
-    uses: ./.github/workflows/test-template.yml
-    with:
-      runner-type: ${{ github.event.inputs.runner-type || 'self-hosted'  }}
+  lint-test:
+    name: "Lint & Test"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: "Set up Python"
+        run: uv python install
+
+      - name: "Install the project"
+        run: uv sync --locked --all-extras --dev
+
+      - name: "Ruff (Linter)"
+        run: uv run ruff check --config ruff.toml
+
+      - name: "Ruff (Formater)"
+        run: uv run ruff format --check --config ruff.toml
+
+      - name: "Mypy (Type checking)"
+        run: uv run mypy --config-file .mypy.ini ./
+
+      - name: Run Pytest
+        run: |
+          uv run pytest --junitxml=pytest.xml --cov-config=pyproject.toml --cov=luna_bench --cov-report=term-missing:skip-covered | tee pytest-coverage.txt
+      - name: Pytest coverage comment
+        if: always()
+        id: coverageComment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          title: Luna-Bench coverage
+          badge-title: Coverage
+          hide-badge: false
+          hide-report: false
+          create-new-comment: false
+          hide-comment: false
+          report-only-changed-files: false
+          remove-link-from-badge: false
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./pytest.xml
+      - name: Fail if coverage is below 100%
+        run: uv run coverage report --fail-under=100
