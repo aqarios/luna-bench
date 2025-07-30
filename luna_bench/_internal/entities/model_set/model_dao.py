@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from luna_quantum import Logging
+from peewee import DoesNotExist
 from returns.result import Failure, Result, Success
 
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
@@ -46,9 +47,9 @@ class ModelDAO:
         try:
             model = ModelMetadataTable.get(ModelMetadataTable.hash == model_hash)
             return Success(ModelDAO.model_to_domain(model))
-        except ModelMetadataTable.DoesNotExist:
+        except DoesNotExist:
             return Failure(DataNotExistError())
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -64,7 +65,9 @@ class ModelDAO:
         return [ModelDAO.model_to_domain(d) for d in data]
 
     @staticmethod
-    def get_or_create(model_name: str, model_hash: int, binary: bytes) -> Result[ModelMetadataDomain, Exception]:
+    def get_or_create(
+        model_name: str, model_hash: int, binary: bytes
+    ) -> Result[ModelMetadataDomain, UnknownLunaBenchError]:
         """Get an existing model or create a new one.
 
         Attempts to retrieve a model with the specified hash. If not found, creates a new model
@@ -89,15 +92,16 @@ class ModelDAO:
             metadata, created = ModelMetadataTable.get_or_create(hash=model_hash, defaults={"name": model_name})
 
             if created:
+                # The Metadata was newly created therefore, we also save the model.
                 ModelTable.create(model_id=metadata, encoded_model=binary)
 
             return Success(ModelDAO.model_to_domain(metadata))
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             ModelDAO._logger.debug(e)
-            return Failure(e)
+            return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def fetch_model(model_id: int) -> Result[bytes, DataNotExistError]:
+    def fetch_model(model_id: int) -> Result[bytes, DataNotExistError | UnknownLunaBenchError]:
         """
         Fetch the binary data of a model.
 
@@ -110,7 +114,7 @@ class ModelDAO:
 
         Returns
         -------
-        Result[bytes, DataNotExistError]
+        Result[bytes, DataNotExistError | UnknownLunaBenchError]
             On success: Contains the encoded model binary data.
             On failure: Contains an exception.
         """
@@ -118,9 +122,11 @@ class ModelDAO:
             data = ModelTable.get(ModelTable.model_id == model_id)
 
             return Success(data.encoded_model)
-        except Exception as e:
-            ModelDAO._logger.debug(e)
+        except DoesNotExist:
             return Failure(DataNotExistError())
+        except Exception as e:  # pragma: no cover
+            ModelDAO._logger.debug(e)
+            return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
     def model_to_domain(model: ModelMetadataTable) -> ModelMetadataDomain:

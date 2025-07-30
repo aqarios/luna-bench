@@ -11,6 +11,7 @@ from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 
 if TYPE_CHECKING:
     from luna_bench._internal.entities import ModelMetadataDomain, StorageTransaction
+    from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
 def _dummy_model(name: str) -> Model:
@@ -58,7 +59,10 @@ class TestModelDAO:
         ],
     )
     def test_get_model(
-        self, setup_transaction: StorageTransaction, model_hash: int, exp: Result[[Model], Failure[Exception]]
+        self,
+        setup_transaction: StorageTransaction,
+        model_hash: int,
+        exp: Result[ModelMetadataDomain, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         result = setup_transaction.model.get(model_hash=model_hash)
 

@@ -11,5 +11,5 @@ class UnknownLunaBenchError(BaseError):
         self.exception = exception
 
     def error(self) -> Exception:
-        """Returns the exception which was wrapped."""
+        """Get the exception which was wrapped."""
         return self.exception

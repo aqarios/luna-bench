@@ -12,6 +12,7 @@ from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 
 if TYPE_CHECKING:
     from luna_bench._internal.entities import StorageTransaction
+    from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
 def _dummy_model(name: str) -> Model:
@@ -51,7 +52,10 @@ class TestModelSetDAO:
         ],
     )
     def test_create_modelset(
-        self, setup_transaction: StorageTransaction, name: str, exp: Result[[ModelSetDomain], Failure[Exception]]
+        self,
+        setup_transaction: StorageTransaction,
+        name: str,
+        exp: Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError],
     ) -> None:
         result = setup_transaction.modelset.create(name=name)
 
@@ -71,7 +75,10 @@ class TestModelSetDAO:
         ],
     )
     def test_load_modelset(
-        self, setup_transaction: StorageTransaction, modelset_id: int, exp: Result[[ModelSetDomain], Failure[Exception]]
+        self,
+        setup_transaction: StorageTransaction,
+        modelset_id: int,
+        exp: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         result = setup_transaction.modelset.load(modelset_id=modelset_id)
 
@@ -91,7 +98,10 @@ class TestModelSetDAO:
         ],
     )
     def test_delete_modelset(
-        self, setup_transaction: StorageTransaction, modelset_id: int, exp: Result[[ModelSetDomain], Failure[Exception]]
+        self,
+        setup_transaction: StorageTransaction,
+        modelset_id: int,
+        exp: Result[None, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         result = setup_transaction.modelset.delete(modelset_id=modelset_id)
 
@@ -123,7 +133,7 @@ class TestModelSetDAO:
         setup_transaction: StorageTransaction,
         modelset_id: int,
         models: list[Model],
-        exp: Result[[ModelSetDomain], Failure[Exception]],
+        exp: Result[ModelSetDomain, Exception],
     ) -> None:
         result: Result[ModelSetDomain, Exception] | None = None
 
@@ -161,7 +171,7 @@ class TestModelSetDAO:
         setup_transaction: StorageTransaction,
         modelset_id: int,
         model_id: int,
-        exp: Result[[ModelSetDomain], Failure[Exception]],
+        exp: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         _stored_dummy_model(setup_transaction, modelset_id, "Test")
 
@@ -192,7 +202,7 @@ class TestModelSetDAO:
         ],
     )
     def test_load_all(
-        self, setup_transaction: StorageTransaction, exp: Result[list[ModelSetDomain], Failure[Exception]]
+        self, setup_transaction: StorageTransaction, exp: Result[list[ModelSetDomain], UnknownLunaBenchError]
     ) -> None:
         result = setup_transaction.modelset.load_all()
 
@@ -202,7 +212,7 @@ class TestModelSetDAO:
     @pytest.mark.parametrize(
         ("modelset_id", "exp"),
         [
-            (1, Success(None)),
+            (1, Success([])),
             (2, Failure(DataNotExistError())),
         ],
     )
@@ -210,7 +220,7 @@ class TestModelSetDAO:
         self,
         setup_transaction: StorageTransaction,
         modelset_id: int,
-        exp: Result[None, Failure[Exception]],
+        exp: Result[list[ModelMetadataDomain], DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         _stored_dummy_model(setup_transaction, 1, "Test1")
         _stored_dummy_model(setup_transaction, 1, "Test2")

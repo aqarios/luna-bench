@@ -10,7 +10,6 @@ from returns.pipeline import is_successful
 from luna_bench._internal import UsecaseContainer
 from luna_bench._internal.entities.model_set import ModelDAO
 from luna_bench._internal.entities.model_set.modelset_dao import ModelSetDAO
-from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -21,6 +20,7 @@ if TYPE_CHECKING:
     from luna_bench._internal.usecases import ModelAllUc
     from luna_bench._internal.usecases.modelset import ModelSetAddUc, ModelSetCreateUc
     from luna_bench._internal.usecases.modelset.protocols import ModelSetDeleteUc, ModelSetRemoveUc
+    from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 
 
 class ModelData(BaseModel):
@@ -177,7 +177,7 @@ class ModelSet(BaseModel):
     @staticmethod
     @inject
     def load_all_models(
-        model_all: ModelAllUc = Provide[UsecaseContainer.model_all],
+        model_all: ModelAllUc = Provide[UsecaseContainer.model_all_uc],
     ) -> list[ModelData]:
         """
         Load all models from the database.
@@ -234,7 +234,7 @@ class ModelSet(BaseModel):
         modelset_remove : ModelSetRemoveUc, injected
             The use case for removing models from a model set, by default provided by dependency injection.
         """
-        result: Result[ModelSetDomain, Exception] = modelset_remove(dataset_id=self.id, model=model)
+        result: Result[ModelSetDomain, Exception] = modelset_remove(modelset_id=self.id, model=model)
 
         if not is_successful(result):
             error = result.failure()

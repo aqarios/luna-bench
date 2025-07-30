@@ -4,13 +4,15 @@ from luna_quantum import Model
 from returns.result import Result
 
 from luna_bench._internal.entities.model_set.domain_models import ModelSetDomain
+from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
 class ModelSetCreateUc(Protocol):
     """Protocol for creating a new model set."""
 
-    def __call__(self, modelset_name: str) -> Result[ModelSetDomain, DataNotUniqueError | Exception]:
+    def __call__(self, modelset_name: str) -> Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError]:
         """
         Create a new model set with the given name.
 
@@ -21,7 +23,7 @@ class ModelSetCreateUc(Protocol):
 
         Returns
         -------
-        Result[ModelSetDomain, DataNotUniqueError | Exception]
+        Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError]
             On success: Contains the created model set object
             On failure: An Exception
         """
@@ -30,7 +32,9 @@ class ModelSetCreateUc(Protocol):
 class ModelSetAddUc(Protocol):
     """Protocol for adding a model to a model set."""
 
-    def __call__(self, dataset_id: int, model: Model) -> Result[ModelSetDomain, Exception]:
+    def __call__(
+        self, dataset_id: int, model: Model
+    ) -> Result[ModelSetDomain, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError]:
         """
         Add a model to the model set.
 
@@ -43,7 +47,7 @@ class ModelSetAddUc(Protocol):
 
         Returns
         -------
-        Result[ModelSetDomain, Exception]
+        Result[ModelSetDomain, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError]
             On success: Contains the updated model set object
             On failure: An Exception
         """
@@ -52,13 +56,13 @@ class ModelSetAddUc(Protocol):
 class ModelSetListUc(Protocol):
     """Protocol for listing all model sets."""
 
-    def __call__(self) -> Result[list[ModelSetDomain], Exception]:
+    def __call__(self) -> Result[list[ModelSetDomain], UnknownLunaBenchError]:
         """
         List all model sets.
 
         Returns
         -------
-        Result[list[ModelSetDomain], Exception]
+        Result[list[ModelSetDomain], UnknownLunaBenchError]
             On success: Contains a list of all model sets in storage.
             On failure: An Exception
         """
@@ -67,13 +71,15 @@ class ModelSetListUc(Protocol):
 class ModelSetRemoveUc(Protocol):
     """Protocol for removing a model from a model set."""
 
-    def __call__(self, dataset_id: int, model: Model) -> Result[ModelSetDomain, Exception]:
+    def __call__(
+        self, modelset_id: int, model: Model
+    ) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         """
         Remove a model from the model set.
 
         Parameters
         ----------
-        dataset_id : int
+        modelset_id : int
             The ID of the model set to remove the model from.
         model : Model
             The model to remove from the model set.
@@ -89,7 +95,7 @@ class ModelSetRemoveUc(Protocol):
 class ModelSetDeleteUc(Protocol):
     """Protocol for deleting a model set."""
 
-    def __call__(self, modelset_id: int) -> Result[None, Exception]:
+    def __call__(self, modelset_id: int) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         """
         Delete a model set.
 

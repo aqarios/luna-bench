@@ -35,4 +35,4 @@ class UsecaseContainer(containers.DeclarativeContainer):
         ModelSetDeleteUcImpl, transaction=storage_container.transaction
     )
 
-    model_all: Provider[ModelAllUc] = providers.Singleton(ModelAllUcImpl, transaction=storage_container.transaction)
+    model_all_uc: Provider[ModelAllUc] = providers.Singleton(ModelAllUcImpl, transaction=storage_container.transaction)

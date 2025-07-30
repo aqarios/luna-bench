@@ -21,7 +21,7 @@ class ModelSetRemoveUcImpl:
         """
         self._transaction = transaction
 
-    def __call__(self, dataset_id: int, model: Model) -> Result[ModelSetDomain, Exception]:
+    def __call__(self, modelset_id: int, model: Model) -> Result[ModelSetDomain, Exception]:
         """
         Remove a model from a model set.
 
@@ -29,7 +29,7 @@ class ModelSetRemoveUcImpl:
 
         Parameters
         ----------
-        dataset_id : int
+        modelset_id : int
             The ID of the model set to remove the model from.
         model : Model
             The model to remove from the model set.
@@ -47,6 +47,6 @@ class ModelSetRemoveUcImpl:
                 return Failure(get_result.failure())
 
             result: Result[ModelSetDomain, Exception] = t.modelset.remove_model(
-                modelset_id=dataset_id, model_id=get_result.unwrap().id
+                modelset_id=modelset_id, model_id=get_result.unwrap().id
             )
             return result
