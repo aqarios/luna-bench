@@ -91,21 +91,13 @@ class TestModelsetUc:
                     assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
-        ("modelset_id", "model", "exp"),
+        ("modelset_id","model", "exp"),
         [
-            (
-                1,
-                _dummy_model("M2"),
-                Success(
-                    ModelSetDomain(
-                        id=1,
-                        name="MS1",
-                        models=[ModelMetadataDomain(id=1, name="M1", hash=_dummy_model("M1").__hash__())],
-                    )
-                ),
-            ),
-            (1, _dummy_model("M3"), Failure(DataNotExistError())),
-            (3, _dummy_model("M1"), Failure(DataNotExistError())),
+            (1,_dummy_model("M2"), Success(ModelSetDomain(id=1, name="MS1", models=[ModelMetadataDomain(id=1, name="M1",
+                                                                                       hash= _dummy_model(
+                "M1").__hash__())]))),
+            (1,_dummy_model("M3"), Failure(DataNotExistError())),
+            (3,_dummy_model("M1"), Failure(DataNotExistError())),
         ],
     )
     def test_remove_model(
@@ -116,8 +108,8 @@ class TestModelsetUc:
         exp: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         uc: ModelSetRemoveUc = usecase.modelset_remove_uc()
-        result: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError] = uc(
-            modelset_id=modelset_id, model=model
+        result: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]= uc(
+            modelset_id=modelset_id,model=model
         )
         assert type(result) is type(exp)
 
@@ -125,6 +117,7 @@ class TestModelsetUc:
             assert result.unwrap() == exp.unwrap()
         else:
             assert isinstance(result.failure(), type(exp.failure()))
+
 
     @pytest.mark.parametrize(
         ("modelset_id", "exp"),
@@ -140,7 +133,9 @@ class TestModelsetUc:
         exp: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         uc: ModelSetDeleteUc = usecase.modelset_delete_uc()
-        result: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError] = uc(modelset_id=modelset_id)
+        result: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]= uc(
+            modelset_id=modelset_id
+        )
         assert type(result) is type(exp)
 
         if is_successful(exp):
