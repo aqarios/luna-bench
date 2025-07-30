@@ -21,7 +21,7 @@ class ModelSetAddUcImpl:
         """
         self._transaction = transaction
 
-    def __call__(self, dataset_id: int, model: Model) -> Result[ModelSetDomain, Exception]:
+    def __call__(self, modelset_id: int, model: Model) -> Result[ModelSetDomain, Exception]:
         """
         Add a model to a model set.
 
@@ -29,7 +29,7 @@ class ModelSetAddUcImpl:
 
         Parameters
         ----------
-        dataset_id : int
+        modelset_id : int
             The ID of the model set to add the model to.
         model : Model
             The model to add to the model set.
@@ -49,7 +49,7 @@ class ModelSetAddUcImpl:
             success_create: ModelMetadataDomain = result_create.unwrap()
 
             result_add: Result[ModelSetDomain, Exception] = t.modelset.add_model(
-                modelset_id=dataset_id,
+                modelset_id=modelset_id,
                 model_id=success_create.id,
             )
             return result_add

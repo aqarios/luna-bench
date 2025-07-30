@@ -33,14 +33,14 @@ class ModelSetAddUc(Protocol):
     """Protocol for adding a model to a model set."""
 
     def __call__(
-        self, dataset_id: int, model: Model
+        self, modelset_id: int, model: Model
     ) -> Result[ModelSetDomain, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError]:
         """
         Add a model to the model set.
 
         Parameters
         ----------
-        dataset_id : int
+        modelset_id : int
             The ID of the model set to add the model to.
         model : Model
             The model to add to the model set.

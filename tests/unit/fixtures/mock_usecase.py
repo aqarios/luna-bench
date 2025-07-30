@@ -1,9 +1,14 @@
+from collections.abc import Generator
+from typing import TYPE_CHECKING
+
 import pytest
 from luna_quantum import Model, Variable
 
-from luna_bench import UsecaseContainer
-from luna_bench._internal.entities import StorageTransaction
+from luna_bench._internal.usecases.usecase_container import UsecaseContainer
 from luna_bench.configs.config import Config
+
+if TYPE_CHECKING:
+    from luna_bench._internal.entities import StorageTransaction
 
 
 def _dummy_model(name: str) -> Model:
@@ -19,7 +24,7 @@ def _dummy_model(name: str) -> Model:
 
 
 @pytest.fixture()
-def usecase() -> UsecaseContainer:
+def usecase() -> Generator[UsecaseContainer]:
     """Provide a usecase fixture for testing usecases."""
     uc = UsecaseContainer()
 

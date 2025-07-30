@@ -98,7 +98,7 @@ class ModelSet(BaseModel):
     @staticmethod
     @inject
     def create(
-        dataset_name: str, modelset_create: ModelSetCreateUc = Provide[UsecaseContainer.modelset_create_uc]
+        modelset_name: str, modelset_create: ModelSetCreateUc = Provide[UsecaseContainer.modelset_create_uc]
     ) -> ModelSet:
         """
         Create a new model set with the given dataset name.
@@ -108,7 +108,7 @@ class ModelSet(BaseModel):
 
         Parameters
         ----------
-        dataset_name : str
+        modelset_name : str
             The name of the dataset.
         modelset_create : ModelSetCreateUc, injected
             The use case for creating model sets, by default, it's provided by dependency injection.
@@ -118,7 +118,7 @@ class ModelSet(BaseModel):
         ModelSet
             An instance of ModelSet representing the successfully created model set.
         """
-        result: Result[ModelSetDomain, DataNotUniqueError | Exception] = modelset_create(modelset_name=dataset_name)
+        result: Result[ModelSetDomain, DataNotUniqueError | Exception] = modelset_create(modelset_name=modelset_name)
 
         if not is_successful(result):
             error = result.failure()
@@ -210,7 +210,7 @@ class ModelSet(BaseModel):
         modelset_add : ModelSetAddUc, injected
             The use case for adding models to a model set, by default provided by dependency injection.
         """
-        result: Result[ModelSetDomain, Exception] = modelset_add(dataset_id=self.id, model=model)
+        result: Result[ModelSetDomain, Exception] = modelset_add(modelset_id=self.id, model=model)
 
         if not is_successful(result):
             error = result.failure()
