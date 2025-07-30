@@ -66,7 +66,7 @@ class ModelSetDAO:
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def add_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, Exception]:
+    def add_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, DataNotExistError| Exception]:
         try:
             modelset = ModelSetTable.get(ModelSetTable.id == modelset_id)
             model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)
@@ -76,12 +76,18 @@ class ModelSetDAO:
                 modelset.save()
 
             return Success(ModelSetDAO.modelset_to_domain(modelset))
+        except ModelSetTable.DoesNotExist:
+            return Failure(DataNotExistError())
+        except ModelMetadataTable.DoesNotExist:
+            return Failure(DataNotExistError())
+        except IntegrityError:
+            return Failure(DataNotUniqueError())
         except Exception as e:
             ModelSetDAO._logger.debug(e)
             return Failure(e)
 
     @staticmethod
-    def remove_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, Exception]:
+    def remove_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, DataNotExistError| Exception]:
         try:
             modelset = ModelSetTable.get(ModelSetTable.id == modelset_id)
             model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)
@@ -95,7 +101,10 @@ class ModelSetDAO:
                 model_metadata.delete_instance(recursive=True)
 
             return Success(to_return)
-
+        except ModelSetTable.DoesNotExist:
+            return Failure(DataNotExistError())
+        except ModelMetadataTable.DoesNotExist:
+            return Failure(DataNotExistError())
         except Exception as e:
             ModelSetDAO._logger.debug(e)
             return Failure(e)
@@ -110,11 +119,13 @@ class ModelSetDAO:
             return Failure(e)
 
     @staticmethod
-    def load_all_models(modelset_id: int) -> Result[list[ModelMetadataDomain], Exception]:
+    def load_all_models(modelset_id: int) -> Result[list[ModelMetadataDomain], DataNotExistError| Exception]:
         try:
-            models = ModelMetadataTable.select().join(ModelSetTable).where(ModelSetTable.id == modelset_id).get()
+            modelset = ModelSetTable.get(ModelSetTable.id == modelset_id)
 
-            return Success([ModelDAO.model_to_domain(m) for m in models])
+            return Success([ModelDAO.model_to_domain(modelset.models) for m in modelset.models])
+        except ModelSetTable.DoesNotExist:
+            return Failure(DataNotExistError())
         except Exception as e:
             ModelSetDAO._logger.debug(e)
             return Failure(e)
