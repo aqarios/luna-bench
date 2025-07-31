@@ -8,8 +8,10 @@ from pydantic import BaseModel
 from returns.pipeline import is_successful
 
 from luna_bench._internal import UsecaseContainer
-from luna_bench._internal.entities.model_set import ModelDAO
 from luna_bench._internal.entities.model_set.modelset_dao import ModelSetDAO
+from luna_bench._internal.usecases.models.protocols import ModelFetchUc
+from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
+from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -45,7 +47,8 @@ class ModelData(BaseModel):
     model_hash: int
 
     @property
-    def model(self) -> Model:
+    @inject
+    def model(self, model_fetch: ModelFetchUc = Provide[UsecaseContainer.model_fetch_uc]) -> Model:
         """
         Fetch the model from the database.
 
@@ -61,15 +64,13 @@ class ModelData(BaseModel):
         RuntimeError
             If the model cannot be fetched from the database.
         """
-        result: Result[bytes, Exception] = ModelDAO.fetch_model(self.id)
+        result: Result[Model, DataNotExistError | UnknownLunaBenchError] = model_fetch(model_id=self.id)
 
         if not is_successful(result):
             error = result.failure()
             raise RuntimeError(error)
 
-        success: bytes = result.unwrap()
-
-        return Model.decode(success)
+        return result.unwrap()
 
 
 class ModelSet(BaseModel):
