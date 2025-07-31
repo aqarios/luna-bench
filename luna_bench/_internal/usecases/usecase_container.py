@@ -41,6 +41,5 @@ class UsecaseContainer(containers.DeclarativeContainer):
     # Model usecases
     model_all_uc: Provider[ModelAllUc] = providers.Singleton(ModelAllUcImpl, transaction=storage_container.transaction)
 
-    model_fetch_uc: Provider[ModelFetchUc] = providers.Singleton(
-        ModelFetchUcImpl, transaction=storage_container.transaction
-    )
+    model_fetch_uc: Provider[ModelFetchUc] = providers.Singleton(ModelFetchUcImpl,
+                                                               transaction=storage_container.transaction)
