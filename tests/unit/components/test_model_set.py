@@ -16,7 +16,6 @@ from tests.unit.fixtures.mock_usecase import _dummy_model
 
 
 class TestModelData:
-
     @pytest.mark.parametrize(
         ("return_value", "exp"),
         [
@@ -28,9 +27,9 @@ class TestModelData:
         ],
     )
     def test_create(
-        self, return_value: Result[ModelSetDomain, DataNotUniqueError | Exception], exp: AbstractContextManager[
-                ModelSet|RuntimeError
-            ]
+        self,
+        return_value: Result[ModelSetDomain, DataNotUniqueError | Exception],
+        exp: AbstractContextManager[ModelSet | RuntimeError],
     ) -> None:
         mock: Mock = Mock(spec=ModelSetCreateUc)
         mock.return_value = return_value
@@ -67,9 +66,9 @@ class TestModelData:
             (Failure(DataNotExistError()), pytest.raises(RuntimeError)),
         ],
     )
-    def test_add_model(self, return_value: Result[ModelSetDomain, Exception], exp: AbstractContextManager[
-                ModelSet|RuntimeError
-            ]) -> None:
+    def test_add_model(
+        self, return_value: Result[ModelSetDomain, Exception], exp: AbstractContextManager[ModelSet | RuntimeError]
+    ) -> None:
         mock: Mock = Mock(spec=ModelSetAddUc)
         mock.return_value = return_value
         modelset = ModelSet(id=1, name="B", models=[])
@@ -79,3 +78,14 @@ class TestModelData:
             modelset.add(model=model, modelset_add=mock)
             mock.assert_called_with(modelset_id=1, model=model)
             assert e == modelset
+
+
+
+    def test_load(self)-> None:
+        pass
+
+    def test_load_all(self)-> None:
+        pass
+
+    def test_list_all(self)-> None:
+        pass

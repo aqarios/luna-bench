@@ -1,10 +1,13 @@
 from typing import TYPE_CHECKING
 
 import pytest
-from returns.result import Success
+from luna_quantum import Model
+from returns.result import Failure, Result, Success
 
 from luna_bench._internal.usecases.models.protocols import ModelFetchUc
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
+from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
+from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from tests.unit.fixtures.mock_usecase import _dummy_model
 
 if TYPE_CHECKING:
@@ -17,17 +20,19 @@ class TestModelUc:
         assert len(uc()) == 2
 
     @pytest.mark.parametrize(
-        ("modelset_name", "exp"),
+        ("model_id", "exp"),
         [
-            (1, Success(_dummy_model())),
-            (3, Success(ModelSetDomain(id=2, name="MS2", models=[]))),
+            (1, Success(_dummy_model("M1"))),
+            (3, Failure(DataNotExistError())),
         ],
     )
-    def test_create(
-            self,
-            usecase: UsecaseContainer,
-            modelset_name: str,
-            exp: Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError],
+    def test_model_fetch(
+        self, usecase: UsecaseContainer, model_id: int, exp: Result[Model, DataNotExistError | UnknownLunaBenchError]
     ) -> None:
-    def test_model_fetch(self, usecase: UsecaseContainer) -> None:
         uc: ModelFetchUc = usecase.model_fetch_uc()
+        result: Result[Model, DataNotExistError | UnknownLunaBenchError] = uc(model_id=model_id)
+        assert type(result) is type(exp)
+        if isinstance(exp, Success):
+            assert result.unwrap().encode() == exp.unwrap().encode()
+        else:
+            assert isinstance(result.failure(), type(exp.failure()))

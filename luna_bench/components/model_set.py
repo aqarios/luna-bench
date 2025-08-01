@@ -46,9 +46,8 @@ class ModelData(BaseModel):
     model_name: str
     model_hash: int
 
-    @property
     @inject
-    def model(self, model_fetch: ModelFetchUc = Provide[UsecaseContainer.model_fetch_uc]) -> Model:
+    def _fetch_model(self, model_fetch: ModelFetchUc = Provide[UsecaseContainer.model_fetch_uc]) -> Model:
         """
         Fetch the model from the database.
 
@@ -64,6 +63,7 @@ class ModelData(BaseModel):
         RuntimeError
             If the model cannot be fetched from the database.
         """
+        print(model_fetch)
         result: Result[Model, DataNotExistError | UnknownLunaBenchError] = model_fetch(model_id=self.id)
 
         if not is_successful(result):
@@ -71,6 +71,25 @@ class ModelData(BaseModel):
             raise RuntimeError(error)
 
         return result.unwrap()
+
+    @property
+    def model(self) -> Model:
+        """
+        Fetch the model from the database.
+
+        Retrieves the model from the database using the model ID, decodes it, and returns a Model object.
+
+        Returns
+        -------
+        Model
+            The decoded model object.
+
+        Raises
+        ------
+        RuntimeError
+            If the model cannot be fetched from the database.
+        """
+        return self._fetch_model()
 
 
 class ModelSet(BaseModel):
