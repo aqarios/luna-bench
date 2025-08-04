@@ -1,3 +1,3 @@
-from .model_set import ModelSet
+from .model_set import ModelData, ModelSet
 
-__all__ = ["ModelSet"]
+__all__ = ["ModelData", "ModelSet"]

@@ -16,6 +16,9 @@ from .modelset import (
     ModelSetRemoveUc,
     ModelSetRemoveUcImpl,
 )
+from .modelset.modelset_load import ModelSetLoadUcImpl
+from .modelset.modelset_load_all import ModelSetLoadAllUcImpl
+from .modelset.protocols import ModelSetLoadAllUc, ModelSetLoadUc
 
 
 class UsecaseContainer(containers.DeclarativeContainer):
@@ -26,6 +29,12 @@ class UsecaseContainer(containers.DeclarativeContainer):
     # ModelSet usecases
     modelset_create_uc: Provider[ModelSetCreateUc] = providers.Singleton(
         ModelSetCreateUcImpl, transaction=storage_container.transaction
+    )
+    modelset_load_uc: Provider[ModelSetLoadUc] = providers.Singleton(
+        ModelSetLoadUcImpl, transaction=storage_container.transaction
+    )
+    modelset_load_all_uc: Provider[ModelSetLoadAllUc] = providers.Singleton(
+        ModelSetLoadAllUcImpl, transaction=storage_container.transaction
     )
 
     modelset_add_uc: Provider[ModelSetAddUc] = providers.Singleton(
@@ -41,5 +50,6 @@ class UsecaseContainer(containers.DeclarativeContainer):
     # Model usecases
     model_all_uc: Provider[ModelAllUc] = providers.Singleton(ModelAllUcImpl, transaction=storage_container.transaction)
 
-    model_fetch_uc: Provider[ModelFetchUc] = providers.Singleton(ModelFetchUcImpl,
-                                                               transaction=storage_container.transaction)
+    model_fetch_uc: Provider[ModelFetchUc] = providers.Singleton(
+        ModelFetchUcImpl, transaction=storage_container.transaction
+    )

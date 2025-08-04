@@ -1,18 +1,18 @@
 from returns.result import Result
 
-from luna_bench._internal.entities import StorageTransaction
+from luna_bench._internal.entities import ModelSetDomain, StorageTransaction
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-class ModelSetDeleteUcImpl:
-    """Implementation of the use case for deleting a model set."""
+class ModelSetLoadUcImpl:
+    """Implementation of the use case for loading a specific model set."""
 
     _transaction: StorageTransaction
 
     def __init__(self, transaction: StorageTransaction) -> None:
         """
-        Initialize the ModelSetDeleteUcImpl with a storage transaction.
+        Initialize the ModelSetLoadUcImpl with a storage transaction.
 
         Parameters
         ----------
@@ -21,22 +21,20 @@ class ModelSetDeleteUcImpl:
         """
         self._transaction = transaction
 
-    def __call__(self, modelset_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+    def __call__(self, modelset_name: str) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         """
-        Delete a model set.
-
-        Permanently removes the specified model set from the database.
+        Load a specific model set.
 
         Parameters
         ----------
         modelset_name : str
-            The name of the model set to delete.
+            The name of the model set to load.
 
         Returns
         -------
-        Result[None, DataNotExistError | UnknownLunaBenchError]
-            On success: Nothing
+        Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]
+            On success: Contains the model set object
             On failure: An Exception
         """
         with self._transaction as t:
-            return t.modelset.delete(modelset_name=modelset_name)
+            return t.modelset.load(modelset_name=modelset_name)

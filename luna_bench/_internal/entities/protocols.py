@@ -59,24 +59,26 @@ class ModelStorage(Protocol):
 
 class ModelSetStorage(Protocol):
     @staticmethod
-    def create(name: str) -> Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError]:
+    def create(modelset_name: str) -> Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError]:
         pass
 
     @staticmethod
-    def load(modelset_id: int) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
+    def load(modelset_name: str) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         pass
 
     @staticmethod
-    def delete(modelset_id: int) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+    def delete(modelset_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         pass
 
     @staticmethod
-    def add_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
+    def add_model(
+        modelset_name: str, model_id: int
+    ) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         pass
 
     @staticmethod
     def remove_model(
-        modelset_id: int, model_id: int
+        modelset_name: str, model_id: int
     ) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         pass
 
@@ -86,6 +88,6 @@ class ModelSetStorage(Protocol):
 
     @staticmethod
     def load_all_models(
-        modelset_id: int,
+        modelset_name: str,
     ) -> Result[list[ModelMetadataDomain], DataNotExistError | UnknownLunaBenchError]:
         pass

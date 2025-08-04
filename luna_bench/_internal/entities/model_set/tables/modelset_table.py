@@ -6,6 +6,6 @@ from luna_bench._internal.entities.model_set.tables import ModelMetadataTable
 
 class ModelSetTable(BaseModel):
     id = AutoField(primary_key=True)
-    name = CharField(max_length=255, unique=True)
+    name = CharField(max_length=255, unique=True, collation="NOCASE")
 
     models = ManyToManyField(ModelMetadataTable, backref="modelsets")

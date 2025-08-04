@@ -1,4 +1,6 @@
+from contextlib import nullcontext
 from typing import TYPE_CHECKING
+from unittest.mock import Mock
 
 import pytest
 from luna_quantum import Model
@@ -15,6 +17,7 @@ from tests.unit.fixtures.mock_usecase import _dummy_model
 if TYPE_CHECKING:
     from luna_bench._internal.usecases import ModelSetAddUc, ModelSetCreateUc, ModelSetDeleteUc
     from luna_bench._internal.usecases.modelset import ModelSetRemoveUc
+    from luna_bench._internal.usecases.modelset.protocols import ModelSetLoadAllUc, ModelSetLoadUc
 
 
 class TestModelsetUc:
@@ -43,24 +46,24 @@ class TestModelsetUc:
             assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
-        ("modelset_id", "model", "models_after_add", "exp"),
+        ("modelset_name", "model", "models_after_add", "exp"),
         [
-            (1, _dummy_model("M3"), 3, Success(None)),
-            (1, _dummy_model("M1"), 2, Success(None)),
-            (3, _dummy_model("M3"), 2, Failure(DataNotExistError())),
+            ("MS1", _dummy_model("M3"), 3, Success(None)),
+            ("MS1", _dummy_model("M1"), 2, Success(None)),
+            ("MS3", _dummy_model("M3"), 2, Failure(DataNotExistError())),
         ],
     )
     def test_add_model(
         self,
         usecase: UsecaseContainer,
-        modelset_id: int,
+        modelset_name: str,
         model: Model,
         models_after_add: int,
         exp: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         uc: ModelSetAddUc = usecase.modelset_add_uc()
-        result: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError] = uc(
-            modelset_id=modelset_id, model=model
+        result: Result[ModelSetDomain, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError] = uc(
+            modelset_name=modelset_name, model=model
         )
         assert type(result) is type(exp)
 
@@ -69,6 +72,23 @@ class TestModelsetUc:
             assert len(modelset.models) == models_after_add
         else:
             assert isinstance(result.failure(), type(exp.failure()))
+
+    def test_add_model_storage_issue(
+        self,
+        usecase: UsecaseContainer,
+    ) -> None:
+        uc: ModelSetAddUc = usecase.modelset_add_uc()
+
+        translation_mock = Mock()
+        translation_mock.model.get_or_create = Mock(
+            return_value=Failure(UnknownLunaBenchError(exception=RuntimeError()))
+        )
+        uc._transaction = nullcontext(translation_mock)  # type: ignore[attr-defined] # Overwrite the var so we can return a failure here
+
+        result: Result[ModelSetDomain, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError] = uc(
+            modelset_name="A", model=_dummy_model("M3")
+        )
+        assert isinstance(result.failure(), UnknownLunaBenchError)
 
     @pytest.mark.parametrize(
         ("modelset_name", "exp"),
@@ -95,10 +115,10 @@ class TestModelsetUc:
             assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
-        ("modelset_id", "model", "exp"),
+        ("modelset_name", "model", "exp"),
         [
             (
-                1,
+                "MS1",
                 _dummy_model("M2"),
                 Success(
                     ModelSetDomain(
@@ -108,20 +128,20 @@ class TestModelsetUc:
                     )
                 ),
             ),
-            (1, _dummy_model("M3"), Failure(DataNotExistError())),
-            (3, _dummy_model("M1"), Failure(DataNotExistError())),
+            ("MS1", _dummy_model("M3"), Failure(DataNotExistError())),
+            ("MS3", _dummy_model("M1"), Failure(DataNotExistError())),
         ],
     )
     def test_remove_model(
         self,
         usecase: UsecaseContainer,
-        modelset_id: int,
+        modelset_name: str,
         model: Model,
         exp: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         uc: ModelSetRemoveUc = usecase.modelset_remove_uc()
         result: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError] = uc(
-            modelset_id=modelset_id, model=model
+            modelset_name=modelset_name, model=model
         )
         assert type(result) is type(exp)
 
@@ -131,23 +151,61 @@ class TestModelsetUc:
             assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
-        ("modelset_id", "exp"),
+        ("modelset_name", "exp"),
         [
-            (1, Success(None)),
-            (2, Failure(DataNotExistError())),
+            ("MS1", Success(None)),
+            ("MS2", Failure(DataNotExistError())),
         ],
     )
     def test_delete(
         self,
         usecase: UsecaseContainer,
-        modelset_id: int,
-        exp: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
+        modelset_name: str,
+        exp: Result[None, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         uc: ModelSetDeleteUc = usecase.modelset_delete_uc()
-        result: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError] = uc(modelset_id=modelset_id)
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = uc(modelset_name=modelset_name)
         assert type(result) is type(exp)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
         else:
             assert isinstance(result.failure(), type(exp.failure()))
+
+    @pytest.mark.parametrize(
+        ("modelset_name", "exp"),
+        [
+            ("MS1", Success(ModelSetDomain(id=1, name="MS1", models=[]))),
+            ("MS2", Failure(DataNotExistError())),
+        ],
+    )
+    def test_modelset_load(
+        self,
+        usecase: UsecaseContainer,
+        modelset_name: str,
+        exp: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
+    ) -> None:
+        uc: ModelSetLoadUc = usecase.modelset_load_uc()
+        result: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError] = uc(modelset_name=modelset_name)
+        assert type(result) is type(exp)
+
+        if is_successful(exp):
+            ms1 = result.unwrap()
+            ex_modelset = exp.unwrap()
+            assert ms1.name == ex_modelset.name
+            assert ms1.id == ex_modelset.id
+            assert len(ms1.models) == 2
+
+        else:
+            assert isinstance(result.failure(), type(exp.failure()))
+
+    def test_modelset_load_all(
+        self,
+        usecase: UsecaseContainer,
+    ) -> None:
+        uc: ModelSetLoadAllUc = usecase.modelset_load_all_uc()
+        result: Result[list[ModelSetDomain], UnknownLunaBenchError] = uc()
+
+        assert is_successful(result)
+
+        assert len(result.unwrap()) == 1

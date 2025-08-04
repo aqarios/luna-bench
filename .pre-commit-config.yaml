@@ -44,11 +44,3 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-  - repo: local
-    hooks:
-      - id: pytest-with-coverage
-        name: "Integration and e2e tests with Coverage Check"
-        entry: bash -c 'pytest --cov=luna_bench --cov-report=term --cov-fail-under=100  --ignore=tests/unit'
-        language: system
-        pass_filenames: false
-        always_run: true

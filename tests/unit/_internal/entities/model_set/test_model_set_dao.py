@@ -27,12 +27,12 @@ def _dummy_model(name: str) -> Model:
     return model
 
 
-def _stored_dummy_model(transaction: StorageTransaction, modelset_id: int, model_name: str) -> ModelMetadataDomain:
+def _stored_dummy_model(transaction: StorageTransaction, modelset_name: str, model_name: str) -> ModelMetadataDomain:
     model = _dummy_model(model_name)
     model_metadata = transaction.model.get_or_create(
         model_name=model.name, model_hash=model.__hash__(), binary=model.encode()
     ).unwrap()
-    transaction.modelset.add_model(modelset_id=modelset_id, model_id=model_metadata.id)
+    transaction.modelset.add_model(modelset_name=modelset_name, model_id=model_metadata.id)
     return model_metadata
 
 
@@ -41,7 +41,7 @@ class TestModelSetDAO:
     @staticmethod
     def setup_transaction(empty_transaction: StorageTransaction) -> StorageTransaction:
         """Provide a transaction fixture with a default model for testing the ModelDAOs."""
-        empty_transaction.modelset.create(name="Existing")
+        empty_transaction.modelset.create(modelset_name="Existing")
         return empty_transaction
 
     @pytest.mark.parametrize(
@@ -57,7 +57,7 @@ class TestModelSetDAO:
         name: str,
         exp: Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError],
     ) -> None:
-        result = setup_transaction.modelset.create(name=name)
+        result = setup_transaction.modelset.create(modelset_name=name)
 
         assert type(result) is type(exp)
 
@@ -68,19 +68,21 @@ class TestModelSetDAO:
             assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
-        ("modelset_id", "exp"),
+        ("modelset_name", "exp"),
         [
-            (1, Success(ModelSetDomain(id=1, name="Existing", models=[]))),
+            ("Existing", Success(ModelSetDomain(id=1, name="Existing", models=[]))),
+            ("existing", Success(ModelSetDomain(id=1, name="Existing", models=[]))),
+            ("exiSTing", Success(ModelSetDomain(id=1, name="Existing", models=[]))),
             (2, Failure(DataNotExistError())),
         ],
     )
     def test_load_modelset(
         self,
         setup_transaction: StorageTransaction,
-        modelset_id: int,
+        modelset_name: str,
         exp: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
-        result = setup_transaction.modelset.load(modelset_id=modelset_id)
+        result = setup_transaction.modelset.load(modelset_name=modelset_name)
 
         assert type(result) is type(exp)
 
@@ -91,47 +93,47 @@ class TestModelSetDAO:
             assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
-        ("modelset_id", "exp"),
+        ("modelset_name", "exp"),
         [
-            (1, Success(None)),
-            (2, Failure(DataNotExistError())),
+            ("Existing", Success(None)),
+            ("NotExisting", Failure(DataNotExistError())),
         ],
     )
     def test_delete_modelset(
         self,
         setup_transaction: StorageTransaction,
-        modelset_id: int,
+        modelset_name: str,
         exp: Result[None, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
-        result = setup_transaction.modelset.delete(modelset_id=modelset_id)
+        result = setup_transaction.modelset.delete(modelset_name=modelset_name)
 
         assert type(result) is type(exp)
 
         if isinstance(exp, Success):
             assert result.unwrap() == exp.unwrap()
 
-            get_result = setup_transaction.modelset.load(modelset_id=modelset_id)
+            get_result = setup_transaction.modelset.load(modelset_name=modelset_name)
             assert isinstance(get_result.failure(), DataNotExistError)
 
         elif isinstance(exp, Failure):
             assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
-        ("modelset_id", "models", "exp"),
+        ("modelset_name", "models", "exp"),
         [
-            (1, [_dummy_model("Test")], Success(ModelSetDomain(id=1, name="Existing", models=[]))),
+            ("Existing", [_dummy_model("Test")], Success(ModelSetDomain(id=1, name="Existing", models=[]))),
             (
-                1,
+                "Existing",
                 [_dummy_model("Test"), _dummy_model("Test2")],
                 Success(ModelSetDomain(id=1, name="Existing", models=[])),
             ),
-            (1, [], Failure(DataNotExistError())),
+            ("Existing", [], Failure(DataNotExistError())),
         ],
     )
     def test_add_model(
         self,
         setup_transaction: StorageTransaction,
-        modelset_id: int,
+        modelset_name: str,
         models: list[Model],
         exp: Result[ModelSetDomain, Exception],
     ) -> None:
@@ -141,12 +143,12 @@ class TestModelSetDAO:
             model_stored = setup_transaction.model.get_or_create(
                 model_name=model.name, model_hash=model.__hash__(), binary=model.encode()
             ).unwrap()
-            result = setup_transaction.modelset.add_model(modelset_id=modelset_id, model_id=model_stored.id)
+            result = setup_transaction.modelset.add_model(modelset_name=modelset_name, model_id=model_stored.id)
 
         if result is None:
-            result = setup_transaction.modelset.add_model(modelset_id=modelset_id, model_id=10)
+            result = setup_transaction.modelset.add_model(modelset_name=modelset_name, model_id=10)
 
-        loaded_modelset = setup_transaction.modelset.load(modelset_id=modelset_id)
+        loaded_modelset = setup_transaction.modelset.load(modelset_name=modelset_name)
 
         assert type(result) is type(exp)
 
@@ -160,30 +162,30 @@ class TestModelSetDAO:
             assert len(loaded_modelset.unwrap().models) == 0
 
     @pytest.mark.parametrize(
-        ("modelset_id", "model_id", "exp"),
+        ("modelset_name", "model_id", "exp"),
         [
-            (1, 1, Success(ModelSetDomain(id=1, name="Existing", models=[]))),
-            (1, 2, Failure(DataNotExistError())),
+            ("Existing", 1, Success(ModelSetDomain(id=1, name="Existing", models=[]))),
+            ("Existing", 2, Failure(DataNotExistError())),
         ],
     )
     def test_remove_model(
         self,
         setup_transaction: StorageTransaction,
-        modelset_id: int,
+        modelset_name: str,
         model_id: int,
         exp: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
-        _stored_dummy_model(setup_transaction, modelset_id, "Test")
+        _stored_dummy_model(setup_transaction, modelset_name, "Test")
 
-        result = setup_transaction.modelset.remove_model(modelset_id=modelset_id, model_id=model_id)
-        loaded_modelset = setup_transaction.modelset.load(modelset_id=modelset_id)
+        result = setup_transaction.modelset.remove_model(modelset_name=modelset_name, model_id=model_id)
+        loaded_modelset = setup_transaction.modelset.load(modelset_name=modelset_name)
         assert type(result) is type(exp)
 
         if isinstance(exp, Success):
             assert loaded_modelset.unwrap() == exp.unwrap()
             assert result.unwrap() == exp.unwrap()
             assert result.unwrap().models == []
-            assert result.unwrap().id == modelset_id
+            assert result.unwrap().name == modelset_name
 
         elif isinstance(exp, Failure):
             assert isinstance(result.failure(), type(exp.failure()))
@@ -210,22 +212,22 @@ class TestModelSetDAO:
         assert result.unwrap() == exp.unwrap()
 
     @pytest.mark.parametrize(
-        ("modelset_id", "exp"),
+        ("modelset_name", "exp"),
         [
-            (1, Success([])),
-            (2, Failure(DataNotExistError())),
+            ("Existing", Success([])),
+            ("NotExisting", Failure(DataNotExistError())),
         ],
     )
     def test_load_all_models(
         self,
         setup_transaction: StorageTransaction,
-        modelset_id: int,
+        modelset_name: str,
         exp: Result[list[ModelMetadataDomain], DataNotExistError | UnknownLunaBenchError],
     ) -> None:
-        _stored_dummy_model(setup_transaction, 1, "Test1")
-        _stored_dummy_model(setup_transaction, 1, "Test2")
+        _stored_dummy_model(setup_transaction, modelset_name, "Test1")
+        _stored_dummy_model(setup_transaction, modelset_name, "Test2")
 
-        result = setup_transaction.modelset.load_all_models(modelset_id=modelset_id)
+        result = setup_transaction.modelset.load_all_models(modelset_name=modelset_name)
 
         assert type(result) is type(exp)
 

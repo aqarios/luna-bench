@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import AbstractContextManager, nullcontext
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from luna_quantum import Model
@@ -34,6 +34,7 @@ class TestModelData:
         with exp as e:
             fetched_model = modeldata._fetch_model(model_fetch=mock)
             mock.assert_called_with(model_id=modeldata.id)
+            assert isinstance(e, Model)
             assert e.encode() == fetched_model.encode()
 
     def test_model_calls_fetch_model(self) -> None:
@@ -41,7 +42,6 @@ class TestModelData:
         mock.return_value = "this is a test"
 
         modeldata = ModelData(id=1, model_name="A", model_hash=0)
-        modeldata._fetch_model = mock
-
-        assert modeldata.model == "this is a test"
-        mock.assert_called_with()
+        with patch.object(modeldata, "_fetch_model", mock):
+            assert modeldata.model == "this is a test"
+            mock.assert_called_with()

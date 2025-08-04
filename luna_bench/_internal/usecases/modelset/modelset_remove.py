@@ -3,6 +3,8 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result
 
 from luna_bench._internal.entities import ModelMetadataDomain, ModelSetDomain, StorageTransaction
+from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
+from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
 class ModelSetRemoveUcImpl:
@@ -21,7 +23,9 @@ class ModelSetRemoveUcImpl:
         """
         self._transaction = transaction
 
-    def __call__(self, modelset_id: int, model: Model) -> Result[ModelSetDomain, Exception]:
+    def __call__(
+        self, modelset_name: str, model: Model
+    ) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         """
         Remove a model from a model set.
 
@@ -29,24 +33,26 @@ class ModelSetRemoveUcImpl:
 
         Parameters
         ----------
-        modelset_id : int
+        modelset_name : str
             The ID of the model set to remove the model from.
         model : Model
             The model to remove from the model set.
 
         Returns
         -------
-        Result[ModelSetDomain, Exception]
+        Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]
             On success: Contains the updated model set object
             On failure: An Exception
         """
         with self._transaction as t:
-            get_result: Result[ModelMetadataDomain, Exception] = t.model.get(model_hash=model.__hash__())
+            get_result: Result[ModelMetadataDomain, DataNotExistError | UnknownLunaBenchError] = t.model.get(
+                model_hash=model.__hash__()
+            )
 
             if not is_successful(get_result):
                 return Failure(get_result.failure())
 
-            result: Result[ModelSetDomain, Exception] = t.modelset.remove_model(
-                modelset_id=modelset_id, model_id=get_result.unwrap().id
+            result: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError] = t.modelset.remove_model(
+                modelset_name=modelset_name, model_id=get_result.unwrap().id
             )
             return result

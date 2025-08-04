@@ -8,10 +8,6 @@ from pydantic import BaseModel
 from returns.pipeline import is_successful
 
 from luna_bench._internal import UsecaseContainer
-from luna_bench._internal.entities.model_set.modelset_dao import ModelSetDAO
-from luna_bench._internal.usecases.models.protocols import ModelFetchUc
-from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
-from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -20,9 +16,17 @@ if TYPE_CHECKING:
 
     from luna_bench._internal.entities.model_set.domain_models import ModelMetadataDomain, ModelSetDomain
     from luna_bench._internal.usecases import ModelAllUc
+    from luna_bench._internal.usecases.models.protocols import ModelFetchUc
     from luna_bench._internal.usecases.modelset import ModelSetAddUc, ModelSetCreateUc
-    from luna_bench._internal.usecases.modelset.protocols import ModelSetDeleteUc, ModelSetRemoveUc
+    from luna_bench._internal.usecases.modelset.protocols import (
+        ModelSetDeleteUc,
+        ModelSetLoadAllUc,
+        ModelSetLoadUc,
+        ModelSetRemoveUc,
+    )
+    from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
     from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
+    from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
 class ModelData(BaseModel):
@@ -63,7 +67,6 @@ class ModelData(BaseModel):
         RuntimeError
             If the model cannot be fetched from the database.
         """
-        print(model_fetch)
         result: Result[Model, DataNotExistError | UnknownLunaBenchError] = model_fetch(model_id=self.id)
 
         if not is_successful(result):
@@ -149,7 +152,8 @@ class ModelSet(BaseModel):
         return ModelSet._to_data_set(success)
 
     @staticmethod
-    def load(modelset_id: int) -> ModelSet:
+    @inject
+    def load(name: str, modelset_load: ModelSetLoadUc = Provide[UsecaseContainer.modelset_load_uc]) -> ModelSet:
         """
         Load a model set by its ID.
 
@@ -157,15 +161,17 @@ class ModelSet(BaseModel):
 
         Parameters
         ----------
-        modelset_id : int
-            The unique identifier of the model set to load.
+        name : str
+            The unique name of the model set to load.
+        modelset_load : ModelSetLoadUc, injected
+            The use case for loading model sets, by default provided by dependency injection.
 
         Returns
         -------
         ModelSet
             The loaded model set.
         """
-        result: Result[ModelSetDomain, Exception] = ModelSetDAO.load(modelset_id=modelset_id)
+        result: Result[ModelSetDomain, Exception] = modelset_load(modelset_name=name)
 
         if not is_successful(result):
             error = result.failure()
@@ -176,7 +182,10 @@ class ModelSet(BaseModel):
         return ModelSet._to_data_set(success)
 
     @staticmethod
-    def load_all() -> list[ModelSet]:
+    @inject
+    def load_all(
+        modelset_load_all: ModelSetLoadAllUc = Provide[UsecaseContainer.modelset_load_all_uc],
+    ) -> list[ModelSet]:
         """
         Load all model sets from the database.
 
@@ -187,7 +196,7 @@ class ModelSet(BaseModel):
         list[ModelSet]
             A list of all model sets.
         """
-        result: Result[list[ModelSetDomain], Exception] = ModelSetDAO.load_all()
+        result: Result[list[ModelSetDomain], Exception] = modelset_load_all()
 
         if not is_successful(result):
             error = result.failure()
@@ -230,7 +239,7 @@ class ModelSet(BaseModel):
         modelset_add : ModelSetAddUc, injected
             The use case for adding models to a model set, by default provided by dependency injection.
         """
-        result: Result[ModelSetDomain, Exception] = modelset_add(modelset_id=self.id, model=model)
+        result: Result[ModelSetDomain, Exception] = modelset_add(modelset_name=self.name, model=model)
 
         if not is_successful(result):
             error = result.failure()
@@ -239,7 +248,7 @@ class ModelSet(BaseModel):
         self._update(result.unwrap())
 
     @inject
-    def remove(
+    def remove_model(
         self, model: Model, modelset_remove: ModelSetRemoveUc = Provide[UsecaseContainer.modelset_remove_uc]
     ) -> None:
         """
@@ -254,7 +263,7 @@ class ModelSet(BaseModel):
         modelset_remove : ModelSetRemoveUc, injected
             The use case for removing models from a model set, by default provided by dependency injection.
         """
-        result: Result[ModelSetDomain, Exception] = modelset_remove(modelset_id=self.id, model=model)
+        result: Result[ModelSetDomain, Exception] = modelset_remove(modelset_name=self.name, model=model)
 
         if not is_successful(result):
             error = result.failure()
@@ -274,7 +283,7 @@ class ModelSet(BaseModel):
         modelset_delete_uc : ModelSetDeleteUc, injected
             The use case for deleting model sets, by default provided by dependency injection.
         """
-        result: Result[None, Exception] = modelset_delete_uc(modelset_id=self.id)
+        result: Result[None, Exception] = modelset_delete_uc(modelset_name=self.name)
 
         if not is_successful(result):
             error = result.failure()

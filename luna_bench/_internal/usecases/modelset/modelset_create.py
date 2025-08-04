@@ -2,6 +2,7 @@ from returns.result import Result
 
 from luna_bench._internal.entities import ModelSetDomain, StorageTransaction
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
 class ModelSetCreateUcImpl:
@@ -20,7 +21,7 @@ class ModelSetCreateUcImpl:
         """
         self._transaction = transaction
 
-    def __call__(self, modelset_name: str) -> Result[ModelSetDomain, DataNotUniqueError | Exception]:
+    def __call__(self, modelset_name: str) -> Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError]:
         """
         Create a new model set with the given name.
 
@@ -31,9 +32,9 @@ class ModelSetCreateUcImpl:
 
         Returns
         -------
-        Result[ModelSetDomain, Exception]
+        Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError]
             On success: Contains the created model set object
             On failure: An Exception
         """
         with self._transaction as t:
-            return t.modelset.create(name=modelset_name)
+            return t.modelset.create(modelset_name=modelset_name)

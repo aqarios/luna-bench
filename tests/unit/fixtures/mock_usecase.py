@@ -48,9 +48,9 @@ def usecase() -> Generator[UsecaseContainer]:
         m2 = t.model.get_or_create(
             model_name="M2", model_hash=_dummy_model("M2").__hash__(), binary=_dummy_model("M2").encode()
         ).unwrap()
-        ms1 = t.modelset.create(name="MS1").unwrap()
-        t.modelset.add_model(modelset_id=ms1.id, model_id=m1.id)
-        t.modelset.add_model(modelset_id=ms1.id, model_id=m2.id)
+        ms1 = t.modelset.create(modelset_name="MS1").unwrap()
+        t.modelset.add_model(modelset_name=ms1.name, model_id=m1.id)
+        t.modelset.add_model(modelset_name=ms1.name, model_id=m2.id)
 
     with db.atomic() as db_txn:
         try:

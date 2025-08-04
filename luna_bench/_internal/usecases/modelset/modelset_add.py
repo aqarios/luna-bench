@@ -3,6 +3,8 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result
 
 from luna_bench._internal.entities import ModelMetadataDomain, ModelSetDomain, StorageTransaction
+from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
+from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
 class ModelSetAddUcImpl:
@@ -21,7 +23,9 @@ class ModelSetAddUcImpl:
         """
         self._transaction = transaction
 
-    def __call__(self, modelset_id: int, model: Model) -> Result[ModelSetDomain, Exception]:
+    def __call__(
+        self, modelset_name: str, model: Model
+    ) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         """
         Add a model to a model set.
 
@@ -29,27 +33,27 @@ class ModelSetAddUcImpl:
 
         Parameters
         ----------
-        modelset_id : int
+        modelset_name : str
             The ID of the model set to add the model to.
         model : Model
             The model to add to the model set.
 
         Returns
         -------
-        Result[ModelSetDomain, Exception]
+        Result[ModelSetDomain, UnknownLunaBenchError]
             On success: Contains the updated model set object
             On failure: An Exception
         """
         with self._transaction as t:
-            result_create: Result[ModelMetadataDomain, Exception] = t.model.get_or_create(
+            result_create: Result[ModelMetadataDomain, UnknownLunaBenchError] = t.model.get_or_create(
                 model_name=model.name, model_hash=model.__hash__(), binary=model.encode()
             )
             if not is_successful(result_create):
                 return Failure(result_create.failure())
             success_create: ModelMetadataDomain = result_create.unwrap()
 
-            result_add: Result[ModelSetDomain, Exception] = t.modelset.add_model(
-                modelset_id=modelset_id,
+            result_add: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError] = t.modelset.add_model(
+                modelset_name=modelset_name,
                 model_id=success_create.id,
             )
             return result_add

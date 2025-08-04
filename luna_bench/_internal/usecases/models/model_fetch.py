@@ -1,6 +1,6 @@
 from luna_quantum import Model
 from returns.pipeline import is_successful
-from returns.result import Result, Success
+from returns.result import Failure, Result, Success
 
 from luna_bench._internal.entities import StorageTransaction
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
@@ -43,4 +43,4 @@ class ModelFetchUcImpl:
 
             if is_successful(result):
                 return Success(Model.decode(result.unwrap()))
-            return result
+            return Failure(result.failure())

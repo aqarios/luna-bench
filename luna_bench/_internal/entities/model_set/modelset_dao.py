@@ -22,8 +22,8 @@ class ModelSetDAO:
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
-    def create(name: str) -> Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError]:
-        modelset = ModelSetTable(name=name)
+    def create(modelset_name: str) -> Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError]:
+        modelset = ModelSetTable(name=modelset_name)
         try:
             modelset.save()
             return Success(ModelSetDAO.modelset_to_domain(modelset))
@@ -34,9 +34,9 @@ class ModelSetDAO:
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def load(modelset_id: int) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
+    def load(modelset_name: str) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = (ModelSetTable.select(ModelSetTable).where(ModelSetTable.id == modelset_id)).get()
+            modelset = (ModelSetTable.select(ModelSetTable).where(ModelSetTable.name == modelset_name)).get()
 
             return Success(ModelSetDAO.modelset_to_domain(modelset))
         except DoesNotExist:
@@ -46,9 +46,9 @@ class ModelSetDAO:
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def delete(modelset_id: int) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+    def delete(modelset_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = ModelSetTable.get(ModelSetTable.id == modelset_id)
+            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
 
             models_to_check = list(modelset.models)
 
@@ -67,9 +67,11 @@ class ModelSetDAO:
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def add_model(modelset_id: int, model_id: int) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
+    def add_model(
+        modelset_name: str, model_id: int
+    ) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = ModelSetTable.get(ModelSetTable.id == modelset_id)
+            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
             model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)
 
             if model_metadata not in modelset.models:
@@ -85,10 +87,10 @@ class ModelSetDAO:
 
     @staticmethod
     def remove_model(
-        modelset_id: int, model_id: int
+        modelset_name: str, model_id: int
     ) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = ModelSetTable.get(ModelSetTable.id == modelset_id)
+            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
             model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)
             modelset.models.remove(model_metadata)
             modelset.save()
@@ -117,10 +119,10 @@ class ModelSetDAO:
 
     @staticmethod
     def load_all_models(
-        modelset_id: int,
+        modelset_name: str,
     ) -> Result[list[ModelMetadataDomain], DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = ModelSetTable.get(ModelSetTable.id == modelset_id)
+            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
 
             return Success([ModelDAO.model_to_domain(m) for m in modelset.models])
         except DoesNotExist:
