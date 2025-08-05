@@ -2,7 +2,6 @@ from collections.abc import Generator
 
 import pytest
 
-from luna_bench import _container
 from luna_bench._internal.entities import StorageTransaction
 from luna_bench._internal.entities.storage_container import StorageContainer
 from luna_bench.configs.config import Config
@@ -20,13 +19,10 @@ def empty_transaction() -> Generator[StorageTransaction]:
     sc.reset_singletons()
     sc.wire()
 
-    # Get the transaction from the container
-    transaction = _container.storage_container.transaction()
-    db = _container.storage_container.database()
-    # Create tables
+    transaction: StorageTransaction = sc.transaction()
 
-    with db.atomic() as db_txn:
+    with transaction as t:
         try:
-            yield transaction
+            yield t
         finally:
-            db_txn.rollback()
+            t.rollback()

@@ -2,7 +2,7 @@ from luna_bench.errors.base_error import BaseError
 
 
 class UnknownLunaBenchError(BaseError):
-    """Raised when the inserted/create data is not unique."""
+    """Raised when an unknown or unexpected error occurs."""
 
     exception: Exception
 

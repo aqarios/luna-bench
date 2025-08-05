@@ -79,11 +79,11 @@ class TestModelsetUc:
     ) -> None:
         uc: ModelSetAddUc = usecase.modelset_add_uc()
 
-        translation_mock = Mock()
-        translation_mock.model.get_or_create = Mock(
+        transaction_mock = Mock()
+        transaction_mock.model.get_or_create = Mock(
             return_value=Failure(UnknownLunaBenchError(exception=RuntimeError()))
         )
-        uc._transaction = nullcontext(translation_mock)  # type: ignore[attr-defined] # Overwrite the var so we can return a failure here
+        uc._transaction = nullcontext(transaction_mock)  # type: ignore[attr-defined] # Overwrite the var so we can return a failure here
 
         result: Result[ModelSetDomain, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError] = uc(
             modelset_name="A", model=_dummy_model("M3")
