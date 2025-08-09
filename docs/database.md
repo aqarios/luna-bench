@@ -11,13 +11,48 @@ erDiagram
 
     ModelMetadata {
         int id PK
-        string name
+        string name UK
         int varcount
     }
 
     ModelSet {
         int id PK
-        string name
+        string name UK
+    }
+
+    Benchmark {
+        int id PK
+        string name UK
+    }
+
+    MetricModelConfig {
+        int id PK
+        string name UK
+    }
+
+    MetricModelResult {
+        int id PK
+    }
+
+    MetricConfig {
+        int id PK
+        string name UK
+    }
+
+    MetricResult {
+        int id PK
+    }
+
+    AlgorithmConfig {
+        int id PK
+    }
+
+    BackendConfig {
+        int id PK
+    }
+
+    AlgorithmModelResult {
+        int id PK
     }
 
 

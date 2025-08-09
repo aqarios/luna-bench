@@ -10,6 +10,7 @@ from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
+from . import ModelSetStorage
 from .domain_models import ModelMetadataDomain, ModelSetDomain
 from .model_dao import ModelDAO
 from .tables import ModelMetadataTable, ModelSetTable
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
     from logging import Logger
 
 
-class ModelSetDAO:
+class ModelSetDAO(ModelSetStorage):
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
