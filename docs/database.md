@@ -3,6 +3,18 @@ erDiagram
     Model ||--|| ModelMetadata: has
     Model }|..|{ ModelSet: "belongs to"
     ModelMetadata }|..|{ ModelSet: "related to"
+    
+    Benchmark ||..o{ ModelSet: "has one"
+    Benchmark }o--|| MetricModelConfig: "0 or n metrics"
+    Benchmark }o--|| AlgorithmConfig: "0 or n algorithms"
+    Benchmark }o--|| MetricConfig: "0 or n metrics"
+    Benchmark }o--|| PlotConfig: "0 or n plots"
+    
+    MetricModelConfig |o--|| MetricModelResult: "if calculated"
+    AlgorithmConfig }o--|| AlgorithmModelResult: "if calculated"
+    MetricConfig }o--|| MetricResult: "if calculated"
+    
+    
 
     Model {
         int id PK
@@ -47,11 +59,11 @@ erDiagram
         int id PK
     }
 
-    BackendConfig {
+    AlgorithmModelResult {
         int id PK
     }
 
-    AlgorithmModelResult {
+    PlotConfig {
         int id PK
     }
 
