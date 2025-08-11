@@ -221,21 +221,22 @@ dev = [
 
 [[package]]
 name = "luna-quantum"
-version = "1.0.2"
+version = "1.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "numpy" },
     { name = "pydantic", extra = ["email"] },
+    { name = "pydantic-settings" },
     { name = "python-dateutil" },
     { name = "rich" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/45/e3/da732ffb5d164640d64d83e7b3941c57173122598224bee63f396d22aaaa/luna_quantum-1.0.2-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:72be634c65bf9b12c26201a0c89c4e6e5a8bc0ce6376ca53395fa768e801ab3a", size = 2058211, upload-time = "2025-07-16T12:07:06.925Z" },
-    { url = "https://files.pythonhosted.org/packages/57/b6/eb9d1d4785669d750559846cf738e53d7cb61f5b1753f94915e41cf4328d/luna_quantum-1.0.2-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:b4f4e73eb38e5ca6a7532c53d8e153f03babb29e692d02f0a1bb80bd83e85669", size = 1872839, upload-time = "2025-07-16T12:07:08.384Z" },
-    { url = "https://files.pythonhosted.org/packages/a1/f6/57f85d357a09eb4d1d19af4b8fbfd9f37f9f23e1492f96984b425add8f82/luna_quantum-1.0.2-cp313-cp313-manylinux_2_34_x86_64.whl", hash = "sha256:c4253ce3284b8991826dd8750be64f641519b229003819331425041fa1c14cf9", size = 2205011, upload-time = "2025-07-16T12:07:10.308Z" },
-    { url = "https://files.pythonhosted.org/packages/ac/6a/df24be7d24493d08320543c15abfc694219e402b150dc9d1ba98025bb5c3/luna_quantum-1.0.2-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:bd0750138b5d66f0e201395e5a81854756604f277cc2da44b83f4394b39ad29a", size = 2283157, upload-time = "2025-07-16T12:07:11.66Z" },
-    { url = "https://files.pythonhosted.org/packages/0f/f4/db940846acf16db1364d4a74cc11c933e6c571ee3ec77d41a23cd32dc5e2/luna_quantum-1.0.2-cp313-cp313-win_amd64.whl", hash = "sha256:624be4c88102aa49f9ced4636c1721fcdbc494282f958537c9e527d8488f6c97", size = 1934037, upload-time = "2025-07-16T12:07:13.408Z" },
+    { url = "https://files.pythonhosted.org/packages/94/e7/c56d5be27a6dc85a8202616fdcd970f528de5e64a29b06fae171ed021ab1/luna_quantum-1.0.3-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:3be8b0b3296c945d1ddfd35297b1f8930a89cc3418fe1c207c745c8bbb015e29", size = 2180360, upload-time = "2025-08-04T09:50:18.09Z" },
+    { url = "https://files.pythonhosted.org/packages/33/08/c87ef912a2074b2fbfc22b8320b6561b09d2be58124c09566d0054aac575/luna_quantum-1.0.3-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:8dda08345836946f6e5da86f08944a2d2d3db23547226addf5e1d762ebb3abc0", size = 1974730, upload-time = "2025-08-04T09:50:19.786Z" },
+    { url = "https://files.pythonhosted.org/packages/68/53/6f0334a6c204a0b6701024fa71a45a4d4e96ac48b9a292527c03ee31228b/luna_quantum-1.0.3-cp313-cp313-manylinux_2_34_x86_64.whl", hash = "sha256:2fa1a4d65048815e1b704ac18314f509f876d5943db9e2daf3094559898136ff", size = 2332050, upload-time = "2025-08-04T09:50:21.268Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/b3/b05a048405037d50bdb636b17a07afd5699e6b422c170c647eccaa6ac836/luna_quantum-1.0.3-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:3287f705175e0e8621a8a34fa5dcac3d528dbb4b86d13a0d9ad76e614cb21664", size = 2414566, upload-time = "2025-08-04T09:50:22.649Z" },
+    { url = "https://files.pythonhosted.org/packages/15/29/743355ef4d44ca48f362cdd3fed994fc7364a43485f65ed83936ec31e1fc/luna_quantum-1.0.3-cp313-cp313-win_amd64.whl", hash = "sha256:ee24fef40f2a8fd33cacca8c73ccd121c9d4e891f0442cd42955a487fc02bcbb", size = 2130623, upload-time = "2025-08-04T09:50:23.997Z" },
 ]
 
 [[package]]
@@ -409,6 +410,20 @@ wheels = [
 ]
 
 [[package]]
+name = "pydantic-settings"
+version = "2.10.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "typing-inspection" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/68/85/1ea668bbab3c50071ca613c6ab30047fb36ab0da1b92fa8f17bbc38fd36c/pydantic_settings-2.10.1.tar.gz", hash = "sha256:06f0062169818d0f5524420a360d632d5857b83cffd4d42fe29597807a1614ee", size = 172583, upload-time = "2025-06-24T13:26:46.841Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/58/f0/427018098906416f580e3cf1366d3b1abfb408a0652e9f31600c24a1903c/pydantic_settings-2.10.1-py3-none-any.whl", hash = "sha256:a60952460b99cf661dc25c29c0ef171721f98bfcb52ef8d9ea4c943d7c8cc796", size = 45235, upload-time = "2025-06-24T13:26:45.485Z" },
+]
+
+[[package]]
 name = "pygments"
 version = "2.19.2"
 source = { registry = "https://pypi.org/simple" }
@@ -469,6 +484,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3", size = 342432, upload-time = "2024-03-01T18:36:20.211Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427", size = 229892, upload-time = "2024-03-01T18:36:18.57Z" },
+]
+
+[[package]]
+name = "python-dotenv"
+version = "1.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f6/b0/4bc07ccd3572a2f9df7e6782f52b0c6c90dcbb803ac4a167702d7d0dfe1e/python_dotenv-1.1.1.tar.gz", hash = "sha256:a8a6399716257f45be6a007360200409fce5cda2661e3dec71d23dc15f6189ab", size = 41978, upload-time = "2025-06-24T04:21:07.341Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5f/ed/539768cf28c661b5b068d66d96a2f155c4971a5d55684a514c1a0e0dec2f/python_dotenv-1.1.1-py3-none-any.whl", hash = "sha256:31f23644fe2602f88ff55e1f5c79ba497e01224ee7737937930c448e4d0e24dc", size = 20556, upload-time = "2025-06-24T04:21:06.073Z" },
 ]
 
 [[package]]
