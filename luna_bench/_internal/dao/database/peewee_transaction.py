@@ -8,7 +8,7 @@ from peewee import Database, _transaction
 if TYPE_CHECKING:
     from logging import Logger
 
-    from luna_bench._internal.entities.protocols import ModelSetStorage, ModelStorage
+    from ..protocols import ModelSetStorage, ModelStorage
 
 
 class PeeweeTransaction(_transaction):

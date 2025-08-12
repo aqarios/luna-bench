@@ -21,6 +21,6 @@ def setup_db_proxy(connection_string: str, tables: list[Any]) -> Database:
     return _database
 
 
-class BaseModel(Model):
+class BaseTable(Model):
     class Meta:
         database = _database

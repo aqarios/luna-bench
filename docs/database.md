@@ -5,11 +5,11 @@ erDiagram
     ModelMetadata }|..|{ ModelSet: "related to"
     Benchmark ||..o{ ModelSet: "has one"
     Benchmark }o--|| MetricModelConfig: "0 or n metrics"
-    Benchmark }o--|| AlgorithmConfig: "0 or n algorithms"
+    Benchmark }o--|| SolveJobConfig: "0 or n algorithms"
     Benchmark }o--|| MetricConfig: "0 or n metrics"
     Benchmark }o--|| PlotConfig: "0 or n plots"
     MetricModelConfig |o--|| MetricModelResult: "if calculated"
-    AlgorithmConfig }o--|| AlgorithmModelResult: "if calculated"
+    SolveJobConfig }o--|| SolveJobModelResult: "if calculated"
     MetricConfig }o--|| MetricResult: "if calculated"
 
     Model {
@@ -31,11 +31,13 @@ erDiagram
     Benchmark {
         int id PK
         string name UK
+        string status
     }
 
     MetricModelConfig {
         int id PK
         string name UK "UK (benchmark, name), max 45chars"
+        string status
         JSONField config_data
     }
 
@@ -47,6 +49,7 @@ erDiagram
     MetricConfig {
         int id PK
         string name UK "UK (benchmark, name), max 45chars"
+        string status
         JSONField config_data
     }
 
@@ -55,13 +58,14 @@ erDiagram
         JSONField result_data
     }
 
-    AlgorithmConfig {
+    SolveJobConfig {
         int id PK
         string name UK "UK (benchmark, name), max 45chars"
+        string status
         JSONField config_data
     }
 
-    AlgorithmModelResult {
+    SolveJobModelResult {
         int id PK
         JSONField meta_data
         bytes encoded_solution
@@ -70,6 +74,7 @@ erDiagram
     PlotConfig {
         int id PK
         string name UK "UK (benchmark, name), max 45chars"
+        string status
         JSONField config_data
     }
 

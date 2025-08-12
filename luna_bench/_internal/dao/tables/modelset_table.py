@@ -1,7 +1,7 @@
 from peewee import AutoField, CharField, ManyToManyField
+from pydantic import BaseModel
 
-from luna_bench._internal.entities.database.base_model import BaseModel
-from luna_bench._internal.entities.model_set.tables import ModelMetadataTable
+from luna_bench._internal.dao.tables import ModelMetadataTable
 
 
 class ModelSetTable(BaseModel):

@@ -1,4 +1,4 @@
-from .metadata_table import ModelMetadataTable
+from .model_metadata_table import ModelMetadataTable
 from .model_table import ModelTable
 from .modelset_table import ModelSetTable
 
