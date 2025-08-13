@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
-
+from .base_domain import BaseDomain
 from .model_metadata_domain import ModelMetadataDomain
 
 
 # ruff: noqa: TC001 Disable typing block rule since it will break pydantic.
-class ModelSetDomain(BaseModel):
+class ModelSetDomain(BaseDomain):
     """
     Domain model representing a set of models.
 

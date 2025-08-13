@@ -4,7 +4,7 @@ from .base_domain import BaseDomain
 from .job_status_enum import JobStatus
 
 
-class PlotConfigDomain(BaseDomain):
+class SolveJobConfigDomain(BaseDomain):
     id: int
     name: str
 

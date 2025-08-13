@@ -10,4 +10,4 @@ class Benchmark(BaseTable):
 
     status = CharField(max_length=16)
 
-    modelset = ForeignKeyField(ModelSetTable, backref="benchmarks")
+    modelset = ForeignKeyField(ModelSetTable, backref="benchmarks", null=True, on_delete="SET NULL")

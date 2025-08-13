@@ -1,9 +1,9 @@
 from typing import Any
 
-from pydantic import BaseModel
+from .base_domain import BaseDomain
 
 
-class ModelMetadataDomain(BaseModel):
+class ModelMetadataDomain(BaseDomain):
     """
     Domain model representing metadata for a model.
 
@@ -27,4 +27,4 @@ class ModelMetadataDomain(BaseModel):
     name: str
     hash: int
 
-    model: Any = None
+    model: Any | None = None

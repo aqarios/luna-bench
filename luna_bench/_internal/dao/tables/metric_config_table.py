@@ -4,6 +4,7 @@ from playhouse.sqlite_ext import JSONField
 from luna_bench._internal.dao.tables.base_table import BaseTable
 
 from .benchmark_table import Benchmark
+from .metric_result_table import MetricResultTable
 
 
 class MetricConfigTable(BaseTable):
@@ -17,6 +18,8 @@ class MetricConfigTable(BaseTable):
         backref="metrics",
         on_delete="CASCADE",
     )
+
+    result = ForeignKeyField(MetricResultTable, backref="metric_config", null=True, on_delete="SET NULL")
 
     config_data = JSONField()
 

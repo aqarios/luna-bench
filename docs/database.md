@@ -3,12 +3,12 @@ erDiagram
     Model ||--|| ModelMetadata: has
     Model }|..|{ ModelSet: "belongs to"
     ModelMetadata }|..|{ ModelSet: "related to"
-    Benchmark ||..o{ ModelSet: "has one"
-    Benchmark }o--|| MetricModelConfig: "0 or n metrics"
+    Benchmark o|..o{ ModelSet: "has one or none"
+    Benchmark }o--|| ModelmetricConfig: "0 or n metrics"
     Benchmark }o--|| SolveJobConfig: "0 or n algorithms"
     Benchmark }o--|| MetricConfig: "0 or n metrics"
     Benchmark }o--|| PlotConfig: "0 or n plots"
-    MetricModelConfig |o--|| MetricModelResult: "if calculated"
+    ModelmetricConfig |o--|| ModelmetricResult: "if calculated"
     SolveJobConfig }o--|| SolveJobModelResult: "if calculated"
     MetricConfig }o--|| MetricResult: "if calculated"
 
@@ -34,14 +34,14 @@ erDiagram
         string status
     }
 
-    MetricModelConfig {
+    ModelmetricConfig {
         int id PK
         string name UK "UK (benchmark, name), max 45chars"
         string status
         JSONField config_data
     }
 
-    MetricModelResult {
+    ModelmetricResult {
         int id PK
         JSONField result_data
     }
