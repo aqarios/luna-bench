@@ -6,10 +6,10 @@ from luna_quantum import Logging
 from peewee import DoesNotExist
 from returns.result import Failure, Result, Success
 
+from luna_bench._internal.domain_models import ModelMetadataDomain
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
-from ..domain_models import ModelMetadataDomain
 from .tables import ModelMetadataTable, ModelTable
 
 if TYPE_CHECKING:

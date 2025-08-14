@@ -3,7 +3,7 @@ from playhouse.sqlite_ext import JSONField
 
 from luna_bench._internal.dao.tables.base_table import BaseTable
 
-from .benchmark_table import Benchmark
+from .benchmark_table import BenchmarkTable
 from .modelmetric_result_table import ModelmetricResultTable
 
 
@@ -14,7 +14,7 @@ class ModelmetricConfigTable(BaseTable):
     status = CharField(max_length=16)
 
     benchmark = ForeignKeyField(
-        Benchmark,
+        BenchmarkTable,
         backref="metric_models",
         on_delete="CASCADE",
     )
