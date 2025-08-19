@@ -1,4 +1,5 @@
-from luna_bench._internal.entities import ModelMetadataDomain, StorageTransaction
+from luna_bench._internal.dao import StorageTransaction
+from luna_bench._internal.domain_models import ModelMetadataDomain
 
 
 class ModelAllUcImpl:

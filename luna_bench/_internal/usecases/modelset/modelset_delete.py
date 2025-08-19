@@ -1,6 +1,6 @@
 from returns.result import Result
 
-from luna_bench._internal.entities import StorageTransaction
+from luna_bench._internal.dao import StorageTransaction
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 

@@ -2,8 +2,7 @@ from collections.abc import Generator
 
 import pytest
 
-from luna_bench._internal.entities import StorageTransaction
-from luna_bench._internal.entities.storage_container import StorageContainer
+from luna_bench._internal.dao import StorageContainer, StorageTransaction
 from luna_bench.configs.config import Config
 
 

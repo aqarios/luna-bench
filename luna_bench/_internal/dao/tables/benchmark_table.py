@@ -1,7 +1,7 @@
 from peewee import AutoField, CharField, ForeignKeyField
 
-from luna_bench._internal.dao.tables import ModelSetTable
 from luna_bench._internal.dao.tables.base_table import BaseTable
+from luna_bench._internal.dao.tables.modelset_table import ModelSetTable
 
 
 class BenchmarkTable(BaseTable):

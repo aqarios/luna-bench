@@ -7,7 +7,7 @@ import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.entities import ModelMetadataDomain, ModelSetDomain
+from luna_bench._internal.domain_models import ModelMetadataDomain, ModelSetDomain
 from luna_bench._internal.usecases import ModelAllUc, ModelSetAddUc, ModelSetCreateUc
 from luna_bench._internal.usecases.modelset.protocols import ModelSetDeleteUc, ModelSetLoadAllUc, ModelSetRemoveUc
 from luna_bench.components import ModelSet

@@ -1,6 +1,7 @@
 from returns.result import Result
 
-from luna_bench._internal.entities import ModelSetDomain, StorageTransaction
+from luna_bench._internal.dao import StorageTransaction
+from luna_bench._internal.domain_models import ModelSetDomain
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 

@@ -1,7 +1,7 @@
 from dependency_injector import containers, providers
 from dependency_injector.providers import Configuration, Provider
 
-from luna_bench._internal.entities.storage_container import StorageContainer
+from luna_bench._internal.dao import StorageContainer
 
 from .models import ModelAllUc, ModelAllUcImpl
 from .models.model_fetch import ModelFetchUcImpl

@@ -3,28 +3,18 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from luna_quantum import Model, Variable
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.entities import ModelMetadataDomain, ModelSetDomain
+from luna_bench._internal.domain_models import ModelMetadataDomain, ModelSetDomain
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
+from tests.unit.fixtures.mock_model import _dummy_model
 
 if TYPE_CHECKING:
-    from luna_bench._internal.entities import StorageTransaction
+    from luna_quantum import Model
+
+    from luna_bench._internal.dao import StorageTransaction
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
-
-
-def _dummy_model(name: str) -> Model:
-    model = Model(name)
-    with model.environment:
-        x = Variable("x")
-        y = Variable("y")
-    model.objective = x * y + x
-    model.constraints += x >= 0
-    model.constraints += y <= 5
-
-    return model
 
 
 def _stored_dummy_model(transaction: StorageTransaction, modelset_name: str, model_name: str) -> ModelMetadataDomain:

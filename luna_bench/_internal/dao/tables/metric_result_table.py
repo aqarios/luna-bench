@@ -2,8 +2,7 @@ from peewee import AutoField, ForeignKeyField
 from playhouse.sqlite_ext import JSONField
 
 from luna_bench._internal.dao.tables.base_table import BaseTable
-
-from .metric_config_table import MetricConfigTable
+from luna_bench._internal.dao.tables.metric_config_table import MetricConfigTable
 
 
 class MetricResultTable(BaseTable):

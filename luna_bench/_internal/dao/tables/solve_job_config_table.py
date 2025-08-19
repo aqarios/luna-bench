@@ -4,7 +4,6 @@ from playhouse.sqlite_ext import JSONField
 from luna_bench._internal.dao.tables.base_table import BaseTable
 
 from .benchmark_table import BenchmarkTable
-from .solve_job_result_table import SolveJobResultTable
 
 
 class SolveJobConfigTable(BaseTable):
@@ -18,7 +17,6 @@ class SolveJobConfigTable(BaseTable):
         backref="solve_jobs",
         on_delete="CASCADE",
     )
-    result = ForeignKeyField(SolveJobResultTable, backref="solve_job_config", null=True, on_delete="SET NULL")
 
     config_data = JSONField()
 

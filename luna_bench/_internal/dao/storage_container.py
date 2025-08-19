@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from dependency_injector import containers, providers
 
+from .benchmark_dao import BenchmarkDAO
 from .database.peewee_transaction import PeeweeTransaction
 from .model_dao import ModelDAO
 from .modelset_dao import ModelSetDAO
@@ -25,7 +26,7 @@ from .tables.base_table import setup_db_proxy
 if TYPE_CHECKING:
     from dependency_injector.providers import Provider
 
-    from luna_bench._internal.dao.protocols import ModelSetStorage, ModelStorage, StorageTransaction
+    from luna_bench._internal.dao.protocols import BenchmarkStorage, ModelSetStorage, ModelStorage, StorageTransaction
 
 
 class StorageContainer(containers.DeclarativeContainer):
@@ -33,6 +34,7 @@ class StorageContainer(containers.DeclarativeContainer):
 
     model_storage: Provider[ModelStorage] = providers.Singleton(ModelDAO)
     modelset_storage: Provider[ModelSetStorage] = providers.Singleton(ModelSetDAO)
+    benchmark_storage: Provider[BenchmarkStorage] = providers.Singleton(BenchmarkDAO)
 
     tables = providers.List(
         BenchmarkTable,
@@ -52,5 +54,9 @@ class StorageContainer(containers.DeclarativeContainer):
     database = providers.Callable(setup_db_proxy, connection_string=config.DB_CONNECTION_STRING, tables=tables)
 
     transaction: Provider[StorageTransaction] = providers.Singleton(
-        PeeweeTransaction, database=database, model_storage=model_storage, modelset_storage=modelset_storage
+        PeeweeTransaction,
+        database=database,
+        model_storage=model_storage,
+        modelset_storage=modelset_storage,
+        benchmark_storage=benchmark_storage,
     )

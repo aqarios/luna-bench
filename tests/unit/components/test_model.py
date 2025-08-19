@@ -10,7 +10,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.usecases.models.protocols import ModelFetchUc
 from luna_bench.components.model_set import ModelData
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
-from tests.unit.fixtures.mock_usecase import _dummy_model
+from tests.unit.fixtures.mock_model import _dummy_model
 
 
 class TestModelData:

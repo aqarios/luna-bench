@@ -2,25 +2,14 @@ from collections.abc import Generator
 from typing import TYPE_CHECKING
 
 import pytest
-from luna_quantum import Model, Variable
 
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
 from luna_bench.configs.config import Config
 
+from .mock_model import _dummy_model
+
 if TYPE_CHECKING:
-    from luna_bench._internal.entities import StorageTransaction
-
-
-def _dummy_model(name: str) -> Model:
-    model = Model(name)
-    with model.environment:
-        x = Variable("x")
-        y = Variable("y")
-    model.objective = x * y + x
-    model.constraints += x >= 0
-    model.constraints += y <= 5
-
-    return model
+    from luna_bench._internal.dao import StorageTransaction
 
 
 @pytest.fixture()

@@ -7,7 +7,7 @@ from luna_quantum import Model
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.entities import ModelMetadataDomain, ModelSetDomain
+from luna_bench._internal.domain_models import ModelMetadataDomain, ModelSetDomain
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError

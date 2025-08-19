@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
-from luna_quantum.solve.interfaces.backend_i import IBackend
+from typing import TYPE_CHECKING
 
-from luna_bench.components import ModelSet
-from luna_bench.components.job import Job
-from luna_bench.components.metric import Metric
-from luna_bench.components.model_metric import ModelMetric
-from luna_bench.components.plot import Plot
+if TYPE_CHECKING:
+    from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
+    from luna_quantum.solve.interfaces.backend_i import IBackend
+
+    from luna_bench.components import ModelSet
+    from luna_bench.components.job import Job
+    from luna_bench.components.metric import Metric
+    from luna_bench.components.model_metric import ModelMetric
+    from luna_bench.components.plot import Plot
 
 
 class Benchmark:
