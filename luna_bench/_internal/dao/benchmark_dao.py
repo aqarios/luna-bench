@@ -91,7 +91,7 @@ class BenchmarkDAO(BenchmarkStorage):
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
-        except Exception as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover 
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -100,7 +100,7 @@ class BenchmarkDAO(BenchmarkStorage):
 
         models_set_domain: ModelSetDomain | None = None
         if modelset:
-            models_set_domain = ModelSetDAO.modelset_to_domain(modelset)
+           models_set_domain = ModelSetDAO.modelset_to_domain(modelset)
 
         return BenchmarkDomain(
             id=benchmark.id,
