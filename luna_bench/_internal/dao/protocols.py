@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self
 
+from pydantic import BaseModel
+
 if TYPE_CHECKING:
     from types import TracebackType
 
@@ -86,6 +88,10 @@ class BenchmarkStorage(Protocol):
 
     @staticmethod
     def remove_modelset(benchmark_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+        pass
+
+    @staticmethod
+    def add_plot(benchmark_name: str, plot_name: str, plot_config: BaseModel) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         pass
 
 

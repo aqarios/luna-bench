@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError
+from pydantic import BaseModel
 from returns.result import Failure, Success
 
 from luna_bench._internal.domain_models import BenchmarkDomain, BenchmarkStatus, ModelSetDomain
@@ -13,7 +14,7 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 from .modelset_dao import ModelSetDAO
 from .protocols import BenchmarkStorage
-from .tables import BenchmarkTable, ModelSetTable
+from .tables import BenchmarkTable, ModelSetTable, PlotConfigTable
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -91,7 +92,26 @@ class BenchmarkDAO(BenchmarkStorage):
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
-        except Exception as e:  # pragma: no cover 
+        except Exception as e:  # pragma: no cover
+            return Failure(UnknownLunaBenchError(e))
+
+    @staticmethod
+    def add_plot(
+        benchmark_name: str, plot_name: str, plot_config: BaseModel
+    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+        try:
+            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            plot = PlotConfigTable(
+                name=plot_name,
+                status=BenchmarkStatus.CREATED,
+                config_data=plot_config.model_dump_json(),
+                benchmark=benchmark,
+            )
+            plot.save()
+            return Success(None)
+        except DoesNotExist:
+            return Failure(DataNotExistError())
+        except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -100,7 +120,7 @@ class BenchmarkDAO(BenchmarkStorage):
 
         models_set_domain: ModelSetDomain | None = None
         if modelset:
-           models_set_domain = ModelSetDAO.modelset_to_domain(modelset)
+            models_set_domain = ModelSetDAO.modelset_to_domain(modelset)
 
         return BenchmarkDomain(
             id=benchmark.id,

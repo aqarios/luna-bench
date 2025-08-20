@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -23,7 +24,6 @@ class TestBenchmarkDAO:
         empty_transaction.benchmark.create(benchmark_name="existing")
         empty_transaction.modelset.create(modelset_name="existing")
         return empty_transaction
-
 
     @pytest.mark.parametrize(
         ("name", "exp"),
@@ -48,10 +48,7 @@ class TestBenchmarkDAO:
         ],
     )
     @staticmethod
-    def test_create(
-        setup_transaction: StorageTransaction, name: str, exp: Result
-    ) -> None:
-
+    def test_create(setup_transaction: StorageTransaction, name: str, exp: Result) -> None:
         result: Result[BenchmarkDomain, DataNotUniqueError | UnknownLunaBenchError] = (
             setup_transaction.benchmark.create(name)
         )
@@ -85,12 +82,9 @@ class TestBenchmarkDAO:
         ],
     )
     @staticmethod
-    def test_load(
-        setup_transaction: StorageTransaction, name: str, exp: Result
-    ) -> None:
-
-        result: Result[BenchmarkDomain, DataNotExistError | UnknownLunaBenchError] = (
-            setup_transaction.benchmark.load(name)
+    def test_load(setup_transaction: StorageTransaction, name: str, exp: Result) -> None:
+        result: Result[BenchmarkDomain, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.load(
+            name
         )
 
         assert type(result) is type(exp)
@@ -111,7 +105,7 @@ class TestBenchmarkDAO:
         ],
     )
     @staticmethod
-    def test_delete(setup_transaction: StorageTransaction, name: str, exp: Result)-> None:
+    def test_delete(setup_transaction: StorageTransaction, name: str, exp: Result) -> None:
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.delete(name)
 
         assert type(result) is type(exp)
@@ -123,7 +117,7 @@ class TestBenchmarkDAO:
 
     @staticmethod
     def test_load_all(setup_transaction: StorageTransaction) -> None:
-        result:Result[list[BenchmarkDomain], UnknownLunaBenchError] = setup_transaction.benchmark.load_all()
+        result: Result[list[BenchmarkDomain], UnknownLunaBenchError] = setup_transaction.benchmark.load_all()
 
         benchmarks = result.unwrap()
         assert len(benchmarks) == 1
@@ -135,22 +129,20 @@ class TestBenchmarkDAO:
         benchmarks = result.unwrap()
         assert len(benchmarks) == 0
 
-
     @pytest.mark.parametrize(
-        ("name","modelset_name", "exp"),
+        ("name", "modelset_name", "exp"),
         [
             (
-                "existing","existing",
+                "existing",
+                "existing",
                 Success(None),
             ),
-            ("existing","non-existing", Failure(DataNotExistError())),
-            ("non-existing","existing", Failure(DataNotExistError())),
+            ("existing", "non-existing", Failure(DataNotExistError())),
+            ("non-existing", "existing", Failure(DataNotExistError())),
         ],
     )
     @staticmethod
-    def test_add_modelset(
-        setup_transaction: StorageTransaction, name: str,modelset_name: str, exp: Result
-    ) -> None:
+    def test_add_modelset(setup_transaction: StorageTransaction, name: str, modelset_name: str, exp: Result) -> None:
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.set_modelset(
             name, modelset_name
         )
@@ -164,27 +156,49 @@ class TestBenchmarkDAO:
         else:
             assert isinstance(result.failure(), type(exp.failure()))
 
-
-
     @pytest.mark.parametrize(
-        ("benchmark_add_name","benchmark_remove_name", "exp"),
+        ("benchmark_add_name", "benchmark_remove_name", "exp"),
         [
             (
-                "existing","existing",
+                "existing",
+                "existing",
                 Success(None),
             ),
-            ("existing","non-existing", Failure(DataNotExistError())),
+            ("existing", "non-existing", Failure(DataNotExistError())),
         ],
     )
     @staticmethod
     def test_remove_modelset(
-        setup_transaction: StorageTransaction,benchmark_add_name: str, benchmark_remove_name: str, exp: Result
+        setup_transaction: StorageTransaction, benchmark_add_name: str, benchmark_remove_name: str, exp: Result
     ) -> None:
         setup_transaction.benchmark.set_modelset(benchmark_add_name, "existing")
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.remove_modelset(
             benchmark_remove_name
         )
 
+        assert type(result) is type(exp)
+
+        if is_successful(exp):
+            assert result.unwrap() == exp.unwrap()
+        else:
+            assert isinstance(result.failure(), type(exp.failure()))
+
+    @pytest.mark.parametrize(
+        ("name", "exp"),
+        [
+            (
+                "existing",
+                Success(None),
+            ),
+            ("non-existing", Failure(DataNotExistError())),
+        ],
+    )
+    @staticmethod
+    def test_add_plot(setup_transaction: StorageTransaction, name: str, exp: Result) -> None:
+        class ABaseModel(BaseModel):
+            tester: str
+
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.add_plot(name, "existing", ABaseModel(tester="tester"))
         assert type(result) is type(exp)
 
         if is_successful(exp):
