@@ -9,7 +9,12 @@ if TYPE_CHECKING:
 
     from returns.result import Result
 
-    from luna_bench._internal.domain_models import BenchmarkDomain, ModelMetadataDomain, ModelSetDomain
+    from luna_bench._internal.domain_models import (
+        BenchmarkDomain,
+        ModelMetadataDomain,
+        ModelSetDomain,
+        PlotConfigDomain,
+    )
     from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
     from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -91,7 +96,17 @@ class BenchmarkStorage(Protocol):
         pass
 
     @staticmethod
-    def add_plot(benchmark_name: str, plot_name: str, plot_config: BaseModel) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+    def add_plot(
+        benchmark_name: str, plot_name: str, plot_config: BaseModel
+    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+        pass
+
+    @staticmethod
+    def remove_plot(benchmark_name: str, plot_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+        pass
+
+    @staticmethod
+    def plots(benchmark_name: str) -> Result[list[PlotConfigDomain] | UnknownLunaBenchError]:
         pass
 
 

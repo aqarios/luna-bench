@@ -7,7 +7,7 @@ from peewee import DoesNotExist, IntegrityError
 from pydantic import BaseModel
 from returns.result import Failure, Success
 
-from luna_bench._internal.domain_models import BenchmarkDomain, BenchmarkStatus, ModelSetDomain
+from luna_bench._internal.domain_models import BenchmarkDomain, BenchmarkStatus, ModelSetDomain, PlotConfigDomain
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -113,6 +113,36 @@ class BenchmarkDAO(BenchmarkStorage):
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
+
+    @staticmethod
+    def remove_plot(benchmark_name: str, plot_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+        try:
+            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)
+            plot.delete_instance()
+            return Success(None)
+        except DoesNotExist:
+            return Failure(DataNotExistError())
+        except Exception as e:  # pragma: no cover
+            return Failure(UnknownLunaBenchError(e))
+
+    @staticmethod
+    def plots(benchmark_name: str) -> Result[list[PlotConfigDomain], UnknownLunaBenchError]:
+        try:
+            plots = PlotConfigTable.select().join(BenchmarkTable).where(BenchmarkTable.name == benchmark_name)
+
+            return Success([BenchmarkDAO.plot_to_domain(p) for p in plots])
+        except Exception as e:  # pragma: no cover
+            return Failure(UnknownLunaBenchError(e))
+
+    @staticmethod
+    def plot_to_domain(plot: PlotConfigTable) -> PlotConfigDomain:
+        return PlotConfigDomain(
+            id=plot.id,
+            name=plot.name,
+            status=plot.status,
+            config_data=PlotConfigDomain.PlotConfig.model_validate_json(plot.config_data),
+        )
 
     @staticmethod
     def benchmark_to_domain(benchmark: BenchmarkTable) -> BenchmarkDomain:
