@@ -221,7 +221,7 @@ dev = [
 
 [[package]]
 name = "luna-quantum"
-version = "1.0.3"
+version = "1.0.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -232,11 +232,11 @@ dependencies = [
     { name = "rich" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/94/e7/c56d5be27a6dc85a8202616fdcd970f528de5e64a29b06fae171ed021ab1/luna_quantum-1.0.3-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:3be8b0b3296c945d1ddfd35297b1f8930a89cc3418fe1c207c745c8bbb015e29", size = 2180360, upload-time = "2025-08-04T09:50:18.09Z" },
-    { url = "https://files.pythonhosted.org/packages/33/08/c87ef912a2074b2fbfc22b8320b6561b09d2be58124c09566d0054aac575/luna_quantum-1.0.3-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:8dda08345836946f6e5da86f08944a2d2d3db23547226addf5e1d762ebb3abc0", size = 1974730, upload-time = "2025-08-04T09:50:19.786Z" },
-    { url = "https://files.pythonhosted.org/packages/68/53/6f0334a6c204a0b6701024fa71a45a4d4e96ac48b9a292527c03ee31228b/luna_quantum-1.0.3-cp313-cp313-manylinux_2_34_x86_64.whl", hash = "sha256:2fa1a4d65048815e1b704ac18314f509f876d5943db9e2daf3094559898136ff", size = 2332050, upload-time = "2025-08-04T09:50:21.268Z" },
-    { url = "https://files.pythonhosted.org/packages/a8/b3/b05a048405037d50bdb636b17a07afd5699e6b422c170c647eccaa6ac836/luna_quantum-1.0.3-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:3287f705175e0e8621a8a34fa5dcac3d528dbb4b86d13a0d9ad76e614cb21664", size = 2414566, upload-time = "2025-08-04T09:50:22.649Z" },
-    { url = "https://files.pythonhosted.org/packages/15/29/743355ef4d44ca48f362cdd3fed994fc7364a43485f65ed83936ec31e1fc/luna_quantum-1.0.3-cp313-cp313-win_amd64.whl", hash = "sha256:ee24fef40f2a8fd33cacca8c73ccd121c9d4e891f0442cd42955a487fc02bcbb", size = 2130623, upload-time = "2025-08-04T09:50:23.997Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/9d/4220e8816337f08735992639385253831bb4169ab3eae8166763fbcfd7cd/luna_quantum-1.0.4-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:69aecd8063cdb043435f933cff0f66a0bc9812be3d00685fe700464f57848196", size = 2413057, upload-time = "2025-08-18T12:40:30.448Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/3a/1cbc7029b3b3db55a6e69492152c2736877a5dddd8ab188576d1b51f9122/luna_quantum-1.0.4-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:e13b1bfbf693aba9f0cf495681f9fb97837ee51b8d4905708f218b9761f165ea", size = 2192323, upload-time = "2025-08-18T12:40:31.853Z" },
+    { url = "https://files.pythonhosted.org/packages/e1/3c/67b414649f367d29d428a4de8c2729774ed307918da1ec8639e5511f80da/luna_quantum-1.0.4-cp313-cp313-manylinux_2_34_x86_64.whl", hash = "sha256:3091ef873a53b126842ad45a25e54b58e2a5ba7d13120c1731e8171b5b297d33", size = 2566056, upload-time = "2025-08-18T12:40:33.458Z" },
+    { url = "https://files.pythonhosted.org/packages/39/2e/5f0e2cf0688f697557736e355808622cef3143a9dc3126d9c2f8c508a642/luna_quantum-1.0.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:da989a37189ed1d366dbbb778815fbff0111582de488c2f5cb8d62951509a906", size = 2646614, upload-time = "2025-08-18T12:40:35.439Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/57/6c8808cd19e4585e24454c850654bb7535650e71b7291071f2fd1c52dfad/luna_quantum-1.0.4-cp313-cp313-win_amd64.whl", hash = "sha256:e0b58c5d3fe2bc11b2d75ad5923c18369be3fdc3d4f84478a1844b1137008ab4", size = 2367768, upload-time = "2025-08-18T12:40:36.96Z" },
 ]
 
 [[package]]
