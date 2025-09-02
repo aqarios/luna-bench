@@ -6,7 +6,7 @@ import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.domain_models import BenchmarkDomain, BenchmarkStatus, JobStatus, PlotConfigDomain
+from luna_bench._internal.domain_models import BenchmarkDomain, BenchmarkStatus
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 
@@ -150,8 +150,9 @@ class TestBenchmarkDAO:
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
-
-            assert setup_transaction.benchmark.load(name).unwrap().modelset.name == modelset_name
+            modelset = setup_transaction.benchmark.load(name).unwrap().modelset
+            assert modelset is not None
+            assert modelset.name == modelset_name
         else:
             assert isinstance(result.failure(), type(exp.failure()))
 
@@ -179,95 +180,5 @@ class TestBenchmarkDAO:
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
-        else:
-            assert isinstance(result.failure(), type(exp.failure()))
-
-    @pytest.mark.parametrize(
-        ("name", "exp"),
-        [
-            (
-                "existing",
-                Success(None),
-            ),
-            ("non-existing", Failure(DataNotExistError())),
-        ],
-    )
-    @staticmethod
-    def test_add_plot(setup_transaction: StorageTransaction, name: str, exp: Result) -> None:
-        result: Result[None, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.add_plot(
-            name, "existing", PlotConfigDomain.PlotConfig(tester="tester")
-        )
-        assert type(result) is type(exp)
-
-        if is_successful(exp):
-            assert result.unwrap() == exp.unwrap()
-            assert len(setup_transaction.benchmark.plots(name).unwrap()) == 1
-        else:
-            assert isinstance(result.failure(), type(exp.failure()))
-
-    @pytest.mark.parametrize(
-        ("name", "exp"),
-        [
-            (
-                "existing",
-                Success(
-                    [
-                        PlotConfigDomain(
-                            id=1,
-                            config_data=PlotConfigDomain.PlotConfig(tester="tester"),
-                            name="existing",
-                            status=JobStatus.CREATED,
-                        )
-                    ]
-                ),
-            ),
-            ("non-existing", Success([])),
-        ],
-    )
-    @staticmethod
-    def test_list_plot(setup_transaction: StorageTransaction, name: str, exp: Result) -> None:
-        result_add: Result[None, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.add_plot(
-            "existing", "existing", PlotConfigDomain.PlotConfig(tester="tester")
-        )
-        assert type(result_add) is type(Success(None))
-
-        result: Result[list[PlotConfigDomain], DataNotExistError | UnknownLunaBenchError] = (
-            setup_transaction.benchmark.plots(name)
-        )
-        assert type(result) is type(exp)
-        if is_successful(exp):
-            assert result.unwrap() == exp.unwrap()
-        else:
-            assert isinstance(result.failure(), type(exp.failure()))
-
-    @pytest.mark.parametrize(
-        ("benchmark_name", "plot_name", "exp"),
-        [
-            (
-                "existing",
-                "existing",
-                Success(None),
-            ),
-            ("non-existing", "existing", Failure(DataNotExistError())),
-            ("existing", "non-existing", Failure(DataNotExistError())),
-        ],
-    )
-    @staticmethod
-    def test_remove_plot(
-        setup_transaction: StorageTransaction, benchmark_name: str, plot_name: str, exp: Result
-    ) -> None:
-        result_add: Result[None, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.add_plot(
-            "existing", "existing", PlotConfigDomain.PlotConfig(tester="tester")
-        )
-        assert type(result_add) is type(Success(None))
-        assert len(setup_transaction.benchmark.plots("existing").unwrap()) == 1
-
-        result: Result[None, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.remove_plot(
-            benchmark_name, plot_name
-        )
-
-        if is_successful(exp):
-            assert result.unwrap() == exp.unwrap()
-            assert len(setup_transaction.benchmark.plots("existing").unwrap()) == 0
         else:
             assert isinstance(result.failure(), type(exp.failure()))

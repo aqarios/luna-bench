@@ -6,7 +6,7 @@ from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError
 from returns.result import Failure, Success
 
-from luna_bench._internal.domain_models import BenchmarkStatus
+from luna_bench._internal.domain_models import BenchmarkStatus, SolveJobConfigDomain
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -138,3 +138,12 @@ class SolveJobDAO(SolveJobStorage):
             return Failure(DataNotExistError())
         except Exception as e:
             return Failure(UnknownLunaBenchError(e))
+
+    @staticmethod
+    def solvejob_to_domain(solvejob: SolveJobConfigTable) -> SolveJobConfigDomain:
+        return SolveJobConfigDomain(
+            id=solvejob.id,
+            name=solvejob.name,
+            status=solvejob.status,
+            config_data=SolveJobConfigDomain.SolveJobConfig.model_validate_json(solvejob.config_data),
+        )

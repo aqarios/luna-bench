@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError
@@ -11,15 +11,15 @@ from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
-from ..domain_models import BenchmarkStatus
-from .protocols import ModelMetricStorage
+from ..domain_models import BenchmarkStatus, JobStatus, ModelmetricConfigDomain
+from .protocols import ModelmetricStorage
 from .tables import BenchmarkTable, ModelmetricConfigTable, ModelmetricResultTable
 
 if TYPE_CHECKING:
     from logging import Logger
 
 
-class ModelMetricDAO(ModelMetricStorage):
+class ModelmetricDAO(ModelmetricStorage):
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
@@ -137,3 +137,12 @@ class ModelMetricDAO(ModelMetricStorage):
             return Failure(DataNotExistError())
         except Exception as e:
             return Failure(UnknownLunaBenchError(e))
+
+    @staticmethod
+    def modelmetric_to_domain(modelmetric: ModelmetricConfigTable) -> ModelmetricConfigDomain:
+        return ModelmetricConfigDomain(
+            id=cast("int", modelmetric.id),
+            name=cast("str", modelmetric.name),
+            status=JobStatus(modelmetric.status),
+            config_data=ModelmetricConfigDomain.ModelmetricConfig.model_validate_json(modelmetric.config_data),
+        )

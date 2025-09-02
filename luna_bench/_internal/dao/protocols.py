@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self
 
+from luna_bench._internal.domain_models.metric_config_domain import MetricConfigDomain
+
 if TYPE_CHECKING:
     from types import TracebackType
 
@@ -40,6 +42,18 @@ class StorageTransaction(Protocol):
     @property
     def benchmark(self) -> BenchmarkStorage: ...
 
+    @property
+    def model_metric(self) -> ModelmetricStorage: ...
+
+    @property
+    def metric(self) -> MetricStorage: ...
+
+    @property
+    def solve_job(self) -> SolveJobStorage: ...
+
+    @property
+    def plot(self) -> PlotStorage: ...
+
 
 class ModelStorage(Protocol):
     @staticmethod
@@ -77,7 +91,7 @@ class PlotStorage(Protocol):
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
 
-class ModelMetricStorage(Protocol):
+class ModelmetricStorage(Protocol):
     @staticmethod
     def add_modelmetric(
         benchmark_name: str, modelmetric_name: str, modelmetric_config: BaseModel
@@ -112,7 +126,7 @@ class ModelMetricStorage(Protocol):
 class MetricStorage(Protocol):
     @staticmethod
     def add_metric(
-        benchmark_name: str, metric_name: str, metric_config: BaseModel
+        benchmark_name: str, metric_name: str, metric_config: MetricConfigDomain.MetricConfig
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod

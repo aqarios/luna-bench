@@ -53,7 +53,7 @@ class TestModelDAO:
         self,
         setup_transaction: StorageTransaction,
         model_hash: int,
-        exp: Result[ModelMetadataDomain, DataNotExistError | UnknownLunaBenchError],
+        exp: Result[Model, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         result = setup_transaction.model.get(model_hash=model_hash)
 
@@ -83,7 +83,7 @@ class TestModelDAO:
         ],
     )
     def test_get_or_create_model(
-        self, setup_transaction: StorageTransaction, model: Model, exp: Result[ModelMetadataDomain, Exception]
+        self, setup_transaction: StorageTransaction, model: Model, exp: Result[Model, Exception]
     ) -> None:
         model_stored = setup_transaction.model.get(model_hash=model.__hash__())
         result = setup_transaction.model.get_or_create(

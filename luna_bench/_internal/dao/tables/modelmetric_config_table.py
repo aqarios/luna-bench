@@ -14,7 +14,7 @@ class ModelmetricConfigTable(BaseTable):
 
     benchmark = ForeignKeyField(
         BenchmarkTable,
-        backref="metric_models",
+        backref="modelmetrics",
         on_delete="CASCADE",
     )
 

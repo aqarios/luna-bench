@@ -6,6 +6,9 @@ from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError
 from returns.result import Failure, Success
 
+from luna_bench._internal.dao.metric_dao import MetricDAO
+from luna_bench._internal.dao.modelmetric_dao import ModelmetricDAO
+from luna_bench._internal.dao.solvejob_dao import SolveJobDAO
 from luna_bench._internal.domain_models import BenchmarkDomain, BenchmarkStatus, ModelSetDomain
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
@@ -126,8 +129,8 @@ class BenchmarkDAO(BenchmarkStorage):
             name=benchmark.name,
             status=benchmark.status,
             modelset=models_set_domain,
-            modelmetrics=[],
-            solve_jobs=[],
-            metrics=[],
+            modelmetrics=[ModelmetricDAO.modelmetric_to_domain(modelmetric) for modelmetric in benchmark.modelmetrics],
+            solve_jobs=[SolveJobDAO.solvejob_to_domain(solvejob) for solvejob in benchmark.solve_jobs],
+            metrics=[MetricDAO.metric_to_domain(metric) for metric in benchmark.metrics],
             plots=[PlotDAO.plot_to_domain(plot) for plot in benchmark.plots],
         )

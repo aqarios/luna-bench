@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from luna_quantum import Logging
 from peewee import DoesNotExist
 from returns.result import Failure, Success
 
-from luna_bench._internal.domain_models import BenchmarkStatus
+from luna_bench._internal.domain_models import BenchmarkStatus, MetricConfigDomain
+from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -29,7 +30,7 @@ class MetricDAO(MetricStorage):
 
     @staticmethod
     def add_metric(
-        benchmark_name: str, metric_name: str, metric_config: BaseModel
+        benchmark_name: str, metric_name: str, metric_config: MetricConfigDomain.MetricConfig
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
@@ -138,3 +139,12 @@ class MetricDAO(MetricStorage):
             return Failure(DataNotExistError())
         except Exception as e:
             return Failure(UnknownLunaBenchError(e))
+
+    @staticmethod
+    def metric_to_domain(metric: MetricConfigTable) -> MetricConfigDomain:
+        return MetricConfigDomain(
+            id=cast("int", metric.id),
+            name=cast("str", metric.name),
+            status=JobStatus(metric.status),
+            config_data=MetricConfigDomain.MetricConfig.model_validate_json(metric.config_data),
+        )

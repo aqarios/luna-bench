@@ -6,8 +6,12 @@ from dependency_injector import containers, providers
 
 from .benchmark_dao import BenchmarkDAO
 from .database.peewee_transaction import PeeweeTransaction
+from .metric_dao import MetricDAO
 from .model_dao import ModelDAO
+from .modelmetric_dao import ModelmetricDAO
 from .modelset_dao import ModelSetDAO
+from .plot_dao import PlotDAO
+from .solvejob_dao import SolveJobDAO
 from .tables import (
     BenchmarkTable,
     MetricConfigTable,
@@ -26,7 +30,16 @@ from .tables.base_table import setup_db_proxy
 if TYPE_CHECKING:
     from dependency_injector.providers import Provider
 
-    from luna_bench._internal.dao.protocols import BenchmarkStorage, ModelSetStorage, ModelStorage, StorageTransaction
+    from luna_bench._internal.dao.protocols import (
+        BenchmarkStorage,
+        MetricStorage,
+        ModelmetricStorage,
+        ModelSetStorage,
+        ModelStorage,
+        PlotStorage,
+        SolveJobStorage,
+        StorageTransaction,
+    )
 
 
 class StorageContainer(containers.DeclarativeContainer):
@@ -35,6 +48,10 @@ class StorageContainer(containers.DeclarativeContainer):
     model_storage: Provider[ModelStorage] = providers.Singleton(ModelDAO)
     modelset_storage: Provider[ModelSetStorage] = providers.Singleton(ModelSetDAO)
     benchmark_storage: Provider[BenchmarkStorage] = providers.Singleton(BenchmarkDAO)
+    modelmetric_storage: Provider[ModelmetricStorage] = providers.Singleton(ModelmetricDAO)
+    metric_storage: Provider[MetricStorage] = providers.Singleton(MetricDAO)
+    solvejob_storage: Provider[SolveJobStorage] = providers.Singleton(SolveJobDAO)
+    plot_storage: Provider[PlotStorage] = providers.Singleton(PlotDAO)
 
     tables = providers.List(
         BenchmarkTable,
@@ -59,4 +76,8 @@ class StorageContainer(containers.DeclarativeContainer):
         model_storage=model_storage,
         modelset_storage=modelset_storage,
         benchmark_storage=benchmark_storage,
+        metric_storage=metric_storage,
+        modelmetric_storage=modelmetric_storage,
+        solvejob_storage=solvejob_storage,
+        plot_storage=plot_storage,
     )
