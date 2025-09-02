@@ -40,9 +40,7 @@ class TestMetricDAO:
     )
     @staticmethod
     def test_add_metric(setup_transaction: StorageTransaction, metric_name: str, exp: Result) -> None:
-        result = setup_transaction.metric.add_metric(
-            "existing", metric_name, MetricConfigDomain.MetricConfig(something="xD")
-        )
+        result = setup_transaction.metric.add_metric("existing", metric_name, MetricConfigDomain.MetricConfig(something="xD"))
         assert type(result) is type(exp)
 
         if is_successful(exp):
@@ -50,6 +48,7 @@ class TestMetricDAO:
             assert len(setup_transaction.benchmark.load("existing").unwrap().metrics) == 1
         else:
             assert isinstance(result.failure(), type(exp.failure()))
+
 
     @pytest.mark.parametrize(
         ("benchmark_name", "metric_name", "exp"),
@@ -67,8 +66,10 @@ class TestMetricDAO:
     def test_remove_metric(
         setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
-        result = setup_transaction.metric.remove_metric("existing", "existing")
-
+        result = setup_transaction.metric.remove_metric(
+            "existing", "existing"
+        )
+    
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
             assert len(setup_transaction.benchmark.load("existing").unwrap().plots) == 0
