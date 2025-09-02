@@ -9,7 +9,7 @@ from .modelmetric_config_table import ModelmetricConfigTable
 class ModelmetricResultTable(BaseTable):
     id = AutoField(primary_key=True)
 
-    config = ForeignKeyField(
+    modelmetric = ForeignKeyField(
         ModelmetricConfigTable,
         backref="result",
         unique=True,

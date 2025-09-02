@@ -9,13 +9,13 @@ class PlotConfigTable(BaseTable):
     id = AutoField(primary_key=True)
     name = CharField(max_length=45, unique=True, collation="NOCASE")
 
-    status = CharField(max_length=16, unique=True, collation="NOCASE")
+    status = CharField(max_length=16, collation="NOCASE")
 
     config_data = JSONField()
 
     benchmark = ForeignKeyField(
         BenchmarkTable,
-        backref="metric_models",
+        backref="plots",
         on_delete="CASCADE",
     )
 

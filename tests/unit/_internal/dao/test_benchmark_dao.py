@@ -236,7 +236,6 @@ class TestBenchmarkDAO:
         )
         assert type(result) is type(exp)
         if is_successful(exp):
-            print(result.unwrap())
             assert result.unwrap() == exp.unwrap()
         else:
             assert isinstance(result.failure(), type(exp.failure()))

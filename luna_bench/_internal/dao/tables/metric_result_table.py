@@ -8,7 +8,7 @@ from luna_bench._internal.dao.tables.metric_config_table import MetricConfigTabl
 class MetricResultTable(BaseTable):
     id = AutoField(primary_key=True)
 
-    config = ForeignKeyField(
+    metric = ForeignKeyField(
         MetricConfigTable,
         backref="result",
         unique=True,

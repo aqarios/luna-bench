@@ -27,6 +27,7 @@ class ModelSetCreateUc(Protocol):
             On success: Contains the created model set object
             On failure: An Exception
         """
+        ...
 
 
 class ModelSetLoadUc(Protocol):
@@ -47,6 +48,7 @@ class ModelSetLoadUc(Protocol):
             On success: Contains the model set object
             On failure: An Exception
         """
+        ...
 
 
 class ModelSetAddUc(Protocol):
@@ -71,6 +73,7 @@ class ModelSetAddUc(Protocol):
             On success: Contains the updated model set object
             On failure: An Exception
         """
+        ...
 
 
 class ModelSetListUc(Protocol):
@@ -86,6 +89,7 @@ class ModelSetListUc(Protocol):
             On success: Contains a list of all model sets in storage.
             On failure: An Exception
         """
+        ...
 
 
 class ModelSetRemoveUc(Protocol):
@@ -110,6 +114,7 @@ class ModelSetRemoveUc(Protocol):
             On success: Contains the updated model set object
             On failure: An Exception
         """
+        ...
 
 
 class ModelSetDeleteUc(Protocol):
@@ -130,6 +135,7 @@ class ModelSetDeleteUc(Protocol):
             On success: Nothing
             On failure: An Exception
         """
+        ...
 
 
 class ModelSetLoadAllUc(Protocol):
@@ -145,3 +151,4 @@ class ModelSetLoadAllUc(Protocol):
             On success: Contains the list of all model sets
             On failure: An Exception
         """
+        ...

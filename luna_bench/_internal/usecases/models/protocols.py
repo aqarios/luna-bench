@@ -20,6 +20,7 @@ class ModelAllUc(Protocol):
         list[ModelMetadataDomain]
             A list of all model metadata domain objects.
         """
+        ...
 
 
 class ModelFetchUc(Protocol):
@@ -40,3 +41,4 @@ class ModelFetchUc(Protocol):
             On Success: The model data fetched from the database.
             On Failure: An error.
         """
+        ...

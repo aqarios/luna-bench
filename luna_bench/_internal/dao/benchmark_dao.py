@@ -4,17 +4,20 @@ from typing import TYPE_CHECKING
 
 from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError
-from pydantic import BaseModel
 from returns.result import Failure, Success
 
-from luna_bench._internal.domain_models import BenchmarkDomain, BenchmarkStatus, ModelSetDomain, PlotConfigDomain
+from luna_bench._internal.domain_models import BenchmarkDomain, BenchmarkStatus, ModelSetDomain
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 from .modelset_dao import ModelSetDAO
+from .plot_dao import PlotDAO
 from .protocols import BenchmarkStorage
-from .tables import BenchmarkTable, ModelSetTable, PlotConfigTable
+from .tables import (
+    BenchmarkTable,
+    ModelSetTable,
+)
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -96,53 +99,19 @@ class BenchmarkDAO(BenchmarkStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def add_plot(
-        benchmark_name: str, plot_name: str, plot_config: BaseModel
+    def update_modelset(
+        benchmark_name: str, modelset_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
-            plot = PlotConfigTable(
-                name=plot_name,
-                status=BenchmarkStatus.CREATED,
-                config_data=plot_config.model_dump_json(),
-                benchmark=benchmark,
-            )
-            plot.save()
+            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
+            benchmark.modelset = modelset
+            benchmark.save()
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             return Failure(UnknownLunaBenchError(e))
-
-    @staticmethod
-    def remove_plot(benchmark_name: str, plot_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
-            plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)
-            plot.delete_instance()
-            return Success(None)
-        except DoesNotExist:
-            return Failure(DataNotExistError())
-        except Exception as e:  # pragma: no cover
-            return Failure(UnknownLunaBenchError(e))
-
-    @staticmethod
-    def plots(benchmark_name: str) -> Result[list[PlotConfigDomain], UnknownLunaBenchError]:
-        try:
-            plots = PlotConfigTable.select().join(BenchmarkTable).where(BenchmarkTable.name == benchmark_name)
-
-            return Success([BenchmarkDAO.plot_to_domain(p) for p in plots])
-        except Exception as e:  # pragma: no cover
-            return Failure(UnknownLunaBenchError(e))
-
-    @staticmethod
-    def plot_to_domain(plot: PlotConfigTable) -> PlotConfigDomain:
-        return PlotConfigDomain(
-            id=plot.id,
-            name=plot.name,
-            status=plot.status,
-            config_data=PlotConfigDomain.PlotConfig.model_validate_json(plot.config_data),
-        )
 
     @staticmethod
     def benchmark_to_domain(benchmark: BenchmarkTable) -> BenchmarkDomain:
@@ -160,5 +129,5 @@ class BenchmarkDAO(BenchmarkStorage):
             modelmetrics=[],
             solve_jobs=[],
             metrics=[],
-            plots=[],
+            plots=[PlotDAO.plot_to_domain(plot) for plot in benchmark.plots],
         )
