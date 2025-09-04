@@ -6,7 +6,7 @@ import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.domain_models import MetricConfigDomain
+from luna_bench._internal.domain_models import BenchmarkStatus, MetricConfigDomain
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 
@@ -15,40 +15,70 @@ if TYPE_CHECKING:
 
 
 class TestMetricDAO:
+    _saved_metric_domain: MetricConfigDomain
+    
     @pytest.fixture()
     @staticmethod
     def setup_transaction(empty_transaction: StorageTransaction) -> StorageTransaction:
         """Provide a transaction fixture with a default model for testing the ModelDAOs."""
         empty_transaction.benchmark.create(benchmark_name="existing")
-        empty_transaction.metric.add_metric(
+        TestMetricDAO._saved_metric_domain = empty_transaction.metric.add_metric(
             benchmark_name="existing",
             metric_name="existing",
             metric_config=MetricConfigDomain.MetricConfig(something="xD"),
-        )
+        ).unwrap()
 
         return empty_transaction
 
     @pytest.mark.parametrize(
-        ("metric_name", "exp"),
+        ("benchmark_name","metric_name", "exp"),
         [
             (
+                "existing",
                 "non-existing",
                 Success(None),
             ),
-            ("existing", Failure(DataNotUniqueError())),
+            ("existing", "existing", Failure(DataNotUniqueError())),
+            ("non-existing", "non-existing", Failure(DataNotExistError())),
         ],
     )
     @staticmethod
-    def test_add_metric(setup_transaction: StorageTransaction, metric_name: str, exp: Result) -> None:
-        result = setup_transaction.metric.add_metric("existing", metric_name, MetricConfigDomain.MetricConfig(something="xD"))
+    def test_add_metric(
+        setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
+    ) -> None:
+        result = setup_transaction.metric.add_metric(
+            benchmark_name, metric_name, MetricConfigDomain.MetricConfig(something="xD")
+        )
         assert type(result) is type(exp)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
-            assert len(setup_transaction.benchmark.load("existing").unwrap().metrics) == 1
+            assert len(setup_transaction.benchmark.load(benchmark_name).unwrap().metrics) == 2
         else:
             assert isinstance(result.failure(), type(exp.failure()))
 
+    @pytest.mark.parametrize(
+        ("benchmark_name","metric_name", "exp"),
+        [
+            (
+                "existing","existing",
+                Success(TestMetricDAO._saved_metric_domain),
+            ),
+            ("existing", "non-existing", Failure(DataNotExistError())),
+            ("non-existing", "non-existing", Failure(DataNotExistError())),
+        ],
+    )
+    @staticmethod
+    def test_load_metric(
+        setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
+    ) -> None:
+        result = setup_transaction.metric.load(benchmark_name, metric_name)
+        assert type(result) is type(exp)
+
+        if is_successful(exp):
+            assert result.unwrap() == exp.unwrap()
+        else:
+            assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
         ("benchmark_name", "metric_name", "exp"),
@@ -66,12 +96,36 @@ class TestMetricDAO:
     def test_remove_metric(
         setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
-        result = setup_transaction.metric.remove_metric(
-            "existing", "existing"
-        )
-    
+        result = setup_transaction.metric.remove_metric(benchmark_name, metric_name)
+
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
-            assert len(setup_transaction.benchmark.load("existing").unwrap().plots) == 0
+            assert len(setup_transaction.benchmark.load(benchmark_name).unwrap().metrics) == 0
         else:
             assert isinstance(result.failure(), type(exp.failure()))
+
+    @pytest.mark.parametrize(
+        ("benchmark_name", "metric_name", "exp"),
+        [
+            (
+                "existing",
+                "existing",
+                Success(None),
+            ),
+            ("non-existing", "existing", Failure(DataNotExistError())),
+            ("existing", "non-existing", Failure(DataNotExistError())),
+        ],
+    )
+    @staticmethod
+    def test_update_metric_status(
+        setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
+    ) -> None:
+        result = setup_transaction.metric.update_metric_status(benchmark_name, metric_name, BenchmarkStatus.DONE)
+        assert type(result) is type(exp)
+
+        if is_successful(exp):
+            assert result.unwrap() == exp.unwrap()
+            assert setup_transaction.benchmark.load(benchmark_name).unwrap().metrics[0].status == BenchmarkStatus.DONE
+        else:
+            assert isinstance(result.failure(), type(exp.failure()))
+            
