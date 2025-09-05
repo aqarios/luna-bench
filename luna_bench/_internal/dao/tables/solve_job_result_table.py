@@ -9,7 +9,7 @@ from .solve_job_config_table import SolveJobConfigTable
 class SolveJobResultTable(BaseTable):
     id = AutoField(primary_key=True)
 
-    config = ForeignKeyField(
+    solve_job = ForeignKeyField(
         SolveJobConfigTable,
         backref="result",
         unique=True,

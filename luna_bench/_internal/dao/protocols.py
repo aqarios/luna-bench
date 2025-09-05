@@ -17,6 +17,7 @@ if TYPE_CHECKING:
         ModelMetadataDomain,
         ModelSetDomain,
         PlotConfigDomain,
+        SolveJobConfigDomain,
     )
     from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
     from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
@@ -175,7 +176,7 @@ class SolveJobStorage(Protocol):
     @staticmethod
     def add_solvejob(
         benchmark_name: str, solvejob_name: str, solvejob_config: BaseModel
-    ) -> Result[None, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
+    ) -> Result[SolveJobConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def remove_solvejob(
@@ -191,6 +192,11 @@ class SolveJobStorage(Protocol):
     def update_solvejob_status(
         benchmark_name: str, solvejob_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
+
+    @staticmethod
+    def load(
+        benchmark_name: str, solvejob_name: str
+    ) -> Result[SolveJobConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def set_result_solvejob(

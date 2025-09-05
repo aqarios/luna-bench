@@ -1,13 +1,14 @@
 from luna_quantum import Solution
-from pydantic import BaseModel, PrivateAttr
+from pydantic import ConfigDict, PrivateAttr
 
 from .base_domain import BaseDomain
 
 
 class SolveJobResultDomain(BaseDomain):
-    id: int
+    class SolveJobResultMetadata(BaseDomain):
+        model_config = ConfigDict(extra="allow")
 
-    meta_data: BaseModel
+    meta_data: SolveJobResultMetadata
     _solution_bytes: bytes = PrivateAttr(b"")
 
     @property
