@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, Self
 
 from luna_bench._internal.domain_models.metric_config_domain import MetricConfigDomain
+from luna_bench._internal.domain_models.modelmetric_config_domain import ModelmetricConfigDomain
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -90,12 +91,17 @@ class PlotStorage(Protocol):
         benchmark_name: str, plot_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
+    @staticmethod
+    def load(
+        benchmark_name: str, plot_name: str
+    ) -> Result[PlotConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
+
 
 class ModelmetricStorage(Protocol):
     @staticmethod
     def add_modelmetric(
-        benchmark_name: str, modelmetric_name: str, modelmetric_config: BaseModel
-    ) -> Result[None, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
+        benchmark_name: str, modelmetric_name: str, modelmetric_config: ModelmetricConfigDomain.ModelmetricConfig
+    ) -> Result[ModelmetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def remove_modelmetric(
@@ -122,12 +128,17 @@ class ModelmetricStorage(Protocol):
         benchmark_name: str, modelmetric_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
+    @staticmethod
+    def load(
+        benchmark_name: str, metric_name: str
+    ) -> Result[ModelmetricConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
+
 
 class MetricStorage(Protocol):
     @staticmethod
     def add_metric(
         benchmark_name: str, metric_name: str, metric_config: MetricConfigDomain.MetricConfig
-    ) -> Result[None, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
+    ) -> Result[MetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def remove_metric(
@@ -153,10 +164,11 @@ class MetricStorage(Protocol):
     def remove_result_metric(
         benchmark_name: str, metric_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
-    
+
     @staticmethod
-    def load(benchmark_name: str, metric_name: str) -> Result[MetricConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
-    
+    def load(
+        benchmark_name: str, metric_name: str
+    ) -> Result[MetricConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
 
 
 class SolveJobStorage(Protocol):

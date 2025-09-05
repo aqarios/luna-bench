@@ -90,6 +90,19 @@ class PlotDAO(PlotStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
+    def load(
+        benchmark_name: str, plot_name: str
+    ) -> Result[PlotConfigDomain, DataNotExistError | UnknownLunaBenchError]:
+        try:
+            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)
+            return Success(PlotDAO.plot_to_domain(plot))
+        except DoesNotExist:
+            return Failure(DataNotExistError())
+        except Exception as e:
+            return Failure(UnknownLunaBenchError(e))
+
+    @staticmethod
     def plot_to_domain(plot: PlotConfigTable) -> PlotConfigDomain:
         return PlotConfigDomain(
             id=plot.id,

@@ -2,6 +2,7 @@ from luna_quantum.client.schemas.enums.status import StatusEnum
 from pydantic import BaseModel, ConfigDict
 
 from .base_domain import BaseDomain
+from .modelmetric_result_domain import ModelmetricResultDomain
 
 
 class ModelmetricConfigDomain(BaseDomain):
@@ -12,5 +13,6 @@ class ModelmetricConfigDomain(BaseDomain):
     name: str
 
     status: StatusEnum
+    result: ModelmetricResultDomain | None
 
     config_data: ModelmetricConfig

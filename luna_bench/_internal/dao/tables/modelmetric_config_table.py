@@ -1,4 +1,6 @@
-from peewee import AutoField, CharField, ForeignKeyField
+from typing import TYPE_CHECKING
+
+from peewee import AutoField, CharField, ForeignKeyField, ModelSelect
 from playhouse.sqlite_ext import JSONField
 
 from luna_bench._internal.dao.tables.base_table import BaseTable
@@ -19,6 +21,11 @@ class ModelmetricConfigTable(BaseTable):
     )
 
     config_data = JSONField()
+
+    if TYPE_CHECKING:
+        from .modelmetric_result_table import ModelmetricResultTable
+
+        result: ModelSelect[ModelmetricResultTable]
 
     class Meta:
         # Ensures uniqueness of name within each benchmark

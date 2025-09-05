@@ -28,7 +28,14 @@ class TestPlotDAO:
         [
             (
                 "existing",
-                Success(None),
+                Success(
+                    PlotConfigDomain(
+                        id=1,
+                        name="existing",
+                        status=JobStatus.CREATED,
+                        config_data=PlotConfigDomain.PlotConfig(tester="tester"),
+                    )
+                ),
             ),
             ("non-existing", Failure(DataNotExistError())),
         ],
@@ -40,7 +47,7 @@ class TestPlotDAO:
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
-            assert len(setup_transaction.plot.plots(name).unwrap()) == 1
+            assert len(setup_transaction.benchmark.load(name).unwrap().plots) == 1
         else:
             assert isinstance(result.failure(), type(exp.failure()))
 
@@ -50,28 +57,26 @@ class TestPlotDAO:
             (
                 "existing",
                 Success(
-                    [
-                        PlotConfigDomain(
-                            id=1,
-                            config_data=PlotConfigDomain.PlotConfig(tester="tester"),
-                            name="existing",
-                            status=JobStatus.CREATED,
-                        )
-                    ]
+                    PlotConfigDomain(
+                        id=1,
+                        config_data=PlotConfigDomain.PlotConfig(tester="tester"),
+                        name="existing",
+                        status=JobStatus.CREATED,
+                    )
                 ),
             ),
-            ("non-existing", Success([])),
+            ("non-existing", Failure(DataNotExistError())),
         ],
     )
     @staticmethod
-    def test_list_plot(setup_transaction: StorageTransaction, name: str, exp: Result) -> None:
+    def test_load_plot(setup_transaction: StorageTransaction, name: str, exp: Result) -> None:
         result_add = setup_transaction.plot.add_plot(
             "existing", "existing", PlotConfigDomain.PlotConfig(tester="tester")
         )
         assert type(result_add) is type(Success(None))
 
-        result: Result[list[PlotConfigDomain], DataNotExistError | UnknownLunaBenchError] = setup_transaction.plot.load(
-            name
+        result: Result[PlotConfigDomain, DataNotExistError | UnknownLunaBenchError] = setup_transaction.plot.load(
+            "existing", name
         )
         assert type(result) is type(exp)
         if is_successful(exp):

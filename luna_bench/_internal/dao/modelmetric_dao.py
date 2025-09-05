@@ -11,7 +11,7 @@ from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
-from ..domain_models import BenchmarkStatus, JobStatus, ModelmetricConfigDomain
+from ..domain_models import BenchmarkStatus, JobStatus, ModelmetricConfigDomain, ModelmetricResultDomain
 from .protocols import ModelmetricStorage
 from .tables import BenchmarkTable, ModelmetricConfigTable, ModelmetricResultTable
 
@@ -24,8 +24,8 @@ class ModelmetricDAO(ModelmetricStorage):
 
     @staticmethod
     def add_modelmetric(
-        benchmark_name: str, modelmetric_name: str, modelmetric_config: BaseModel
-    ) -> Result[None, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
+        benchmark_name: str, modelmetric_name: str, modelmetric_config: ModelmetricConfigDomain.ModelmetricConfig
+    ) -> Result[ModelmetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
             modelmetric = ModelmetricConfigTable(
@@ -37,7 +37,7 @@ class ModelmetricDAO(ModelmetricStorage):
             modelmetric.status = BenchmarkStatus.CREATED
             modelmetric.config_data = modelmetric_config.model_dump_json()
             modelmetric.save()
-            return Success(None)
+            return Success(ModelmetricDAO.modelmetric_to_domain(modelmetric))
         except IntegrityError:
             return Failure(DataNotUniqueError())
         except DoesNotExist:
@@ -58,7 +58,7 @@ class ModelmetricDAO(ModelmetricStorage):
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -76,7 +76,7 @@ class ModelmetricDAO(ModelmetricStorage):
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -93,7 +93,7 @@ class ModelmetricDAO(ModelmetricStorage):
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -108,7 +108,7 @@ class ModelmetricDAO(ModelmetricStorage):
 
             result = ModelmetricResultTable(
                 modelmetric=metric,
-                result=result.model_dump_json(),
+                result_data=result.model_dump_json(),
             )
             result.save()
             metric.status = BenchmarkStatus.DONE
@@ -116,7 +116,7 @@ class ModelmetricDAO(ModelmetricStorage):
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -128,21 +128,44 @@ class ModelmetricDAO(ModelmetricStorage):
             metric = ModelmetricConfigTable.get(
                 ModelmetricConfigTable.name == modelmetric_name, ModelmetricConfigTable.benchmark == benchmark
             )
-            result = ModelmetricResultTable.get(ModelmetricResultTable.metric == metric)
+            result = ModelmetricResultTable.get(ModelmetricResultTable.modelmetric == metric)
             result.delete_instance()
             metric.status = BenchmarkStatus.CREATED
             metric.save()
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
+            return Failure(UnknownLunaBenchError(e))
+
+    @staticmethod
+    def load(
+        benchmark_name: str, metric_name: str
+    ) -> Result[ModelmetricConfigDomain, DataNotExistError | UnknownLunaBenchError]:
+        try:
+            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            metric = ModelmetricConfigTable.get(
+                ModelmetricConfigTable.name == metric_name, ModelmetricConfigTable.benchmark == benchmark
+            )
+
+            return Success(ModelmetricDAO.modelmetric_to_domain(metric))
+        except DoesNotExist:
+            return Failure(DataNotExistError())
+        except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
     def modelmetric_to_domain(modelmetric: ModelmetricConfigTable) -> ModelmetricConfigDomain:
+        result_data: ModelmetricResultDomain | None = (
+            ModelmetricResultDomain.model_validate_json(modelmetric.result.first().result_data)
+            if modelmetric.result.first()
+            else None
+        )
+
         return ModelmetricConfigDomain(
             id=cast("int", modelmetric.id),
             name=cast("str", modelmetric.name),
             status=JobStatus(modelmetric.status),
             config_data=ModelmetricConfigDomain.ModelmetricConfig.model_validate_json(modelmetric.config_data),
+            result=result_data,
         )
