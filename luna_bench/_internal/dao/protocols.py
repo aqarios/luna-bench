@@ -18,6 +18,7 @@ if TYPE_CHECKING:
         ModelSetDomain,
         PlotConfigDomain,
         SolveJobConfigDomain,
+        SolveJobResultDomain,
     )
     from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
     from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
@@ -76,7 +77,7 @@ class ModelStorage(Protocol):
 class PlotStorage(Protocol):
     @staticmethod
     def add_plot(
-        benchmark_name: str, plot_name: str, plot_config: BaseModel
+        benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
     ) -> Result[PlotConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
@@ -84,7 +85,7 @@ class PlotStorage(Protocol):
 
     @staticmethod
     def update_plot(
-        benchmark_name: str, plot_name: str, plot_config: BaseModel
+        benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
@@ -200,7 +201,7 @@ class SolveJobStorage(Protocol):
 
     @staticmethod
     def set_result_solvejob(
-        benchmark_name: str, solvejob_name: str, result: BaseModel
+        benchmark_name: str, solvejob_name: str, result: SolveJobResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
@@ -229,11 +230,6 @@ class BenchmarkStorage(Protocol):
 
     @staticmethod
     def remove_modelset(benchmark_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
-
-    @staticmethod
-    def update_modelset(
-        benchmark_name: str, modelset_name: str
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
 
 class ModelSetStorage(Protocol):

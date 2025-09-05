@@ -102,21 +102,6 @@ class BenchmarkDAO(BenchmarkStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def update_modelset(
-        benchmark_name: str, modelset_name: str
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
-            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
-            benchmark.modelset = modelset
-            benchmark.save()
-            return Success(None)
-        except DoesNotExist:
-            return Failure(DataNotExistError())
-        except Exception as e:
-            return Failure(UnknownLunaBenchError(e))
-
-    @staticmethod
     def benchmark_to_domain(benchmark: BenchmarkTable) -> BenchmarkDomain:
         modelset: ModelSetTable | None = benchmark.modelset
 

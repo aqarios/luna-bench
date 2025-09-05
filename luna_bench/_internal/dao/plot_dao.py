@@ -20,7 +20,6 @@ from .tables import (
 if TYPE_CHECKING:
     from logging import Logger
 
-    from pydantic import BaseModel
     from returns.result import Result
 
 
@@ -29,7 +28,7 @@ class PlotDAO(PlotStorage):
 
     @staticmethod
     def add_plot(
-        benchmark_name: str, plot_name: str, plot_config: BaseModel
+        benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
     ) -> Result[PlotConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
@@ -62,7 +61,7 @@ class PlotDAO(PlotStorage):
 
     @staticmethod
     def update_plot(
-        benchmark_name: str, plot_name: str, plot_config: BaseModel
+        benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
@@ -73,6 +72,8 @@ class PlotDAO(PlotStorage):
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
+        except Exception as e:  # pragma: no cover
+            return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
     def update_plot_status(
@@ -86,7 +87,7 @@ class PlotDAO(PlotStorage):
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -99,7 +100,7 @@ class PlotDAO(PlotStorage):
             return Success(PlotDAO.plot_to_domain(plot))
         except DoesNotExist:
             return Failure(DataNotExistError())
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod

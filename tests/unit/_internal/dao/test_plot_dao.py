@@ -8,6 +8,7 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models import JobStatus, PlotConfigDomain
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
+from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 
 if TYPE_CHECKING:
     from luna_bench._internal.dao import StorageTransaction
@@ -20,46 +21,61 @@ class TestPlotDAO:
     def setup_transaction(empty_transaction: StorageTransaction) -> StorageTransaction:
         """Provide a transaction fixture with a default model for testing the ModelDAOs."""
         empty_transaction.benchmark.create(benchmark_name="existing")
-        empty_transaction.modelset.create(modelset_name="existing")
+
+        empty_transaction.benchmark.create(benchmark_name="existing")
+        empty_transaction.plot.add_plot(
+            benchmark_name="existing",
+            plot_name="existing",
+            plot_config=PlotConfigDomain.PlotConfig(something="xD"),
+        ).unwrap()
+
         return empty_transaction
 
     @pytest.mark.parametrize(
-        ("name", "exp"),
+        ("benchmark_name", "plot_name", "exp"),
         [
             (
                 "existing",
+                "existing",
+                Failure(DataNotUniqueError()),
+            ),
+            (
+                "existing",
+                "non-existing",
                 Success(
                     PlotConfigDomain(
-                        id=1,
-                        name="existing",
+                        id=2,
+                        name="non-existing",
                         status=JobStatus.CREATED,
                         config_data=PlotConfigDomain.PlotConfig(tester="tester"),
                     )
                 ),
             ),
-            ("non-existing", Failure(DataNotExistError())),
+            ("non-existing", "existing", Failure(DataNotExistError())),
         ],
     )
     @staticmethod
-    def test_add_plot(setup_transaction: StorageTransaction, name: str, exp: Result) -> None:
-        result = setup_transaction.plot.add_plot(name, "existing", PlotConfigDomain.PlotConfig(tester="tester"))
+    def test_add_plot(setup_transaction: StorageTransaction, benchmark_name: str, plot_name: str, exp: Result) -> None:
+        result = setup_transaction.plot.add_plot(
+            benchmark_name, plot_name, PlotConfigDomain.PlotConfig(tester="tester")
+        )
         assert type(result) is type(exp)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
-            assert len(setup_transaction.benchmark.load(name).unwrap().plots) == 1
+            assert len(setup_transaction.benchmark.load(benchmark_name).unwrap().plots) == 2
         else:
             assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
-        ("name", "exp"),
+        ("plot_name", "exp"),
         [
             (
                 "existing",
                 Success(
                     PlotConfigDomain(
                         id=1,
-                        config_data=PlotConfigDomain.PlotConfig(tester="tester"),
+                        config_data=PlotConfigDomain.PlotConfig(something="xD"),
                         name="existing",
                         status=JobStatus.CREATED,
                     )
@@ -69,14 +85,9 @@ class TestPlotDAO:
         ],
     )
     @staticmethod
-    def test_load_plot(setup_transaction: StorageTransaction, name: str, exp: Result) -> None:
-        result_add = setup_transaction.plot.add_plot(
-            "existing", "existing", PlotConfigDomain.PlotConfig(tester="tester")
-        )
-        assert type(result_add) is type(Success(None))
-
+    def test_load_plot(setup_transaction: StorageTransaction, plot_name: str, exp: Result) -> None:
         result: Result[PlotConfigDomain, DataNotExistError | UnknownLunaBenchError] = setup_transaction.plot.load(
-            "existing", name
+            "existing", plot_name
         )
         assert type(result) is type(exp)
         if is_successful(exp):
@@ -100,16 +111,63 @@ class TestPlotDAO:
     def test_remove_plot(
         setup_transaction: StorageTransaction, benchmark_name: str, plot_name: str, exp: Result
     ) -> None:
-        result_add = setup_transaction.plot.add_plot(
-            "existing", "existing", PlotConfigDomain.PlotConfig(tester="tester")
-        )
-        assert type(result_add) is type(Success(None))
-        assert len(setup_transaction.benchmark.load("existing").unwrap().plots) == 1
-
         result = setup_transaction.plot.remove_plot(benchmark_name, plot_name)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
             assert len(setup_transaction.benchmark.load("existing").unwrap().plots) == 0
+        else:
+            assert isinstance(result.failure(), type(exp.failure()))
+
+    @pytest.mark.parametrize(
+        ("benchmark_name", "plot_name", "exp"),
+        [
+            (
+                "existing",
+                "existing",
+                Success(None),
+            ),
+            ("non-existing", "existing", Failure(DataNotExistError())),
+            ("existing", "non-existing", Failure(DataNotExistError())),
+        ],
+    )
+    @staticmethod
+    def test_update_plot(
+        setup_transaction: StorageTransaction, benchmark_name: str, plot_name: str, exp: Result
+    ) -> None:
+        result = setup_transaction.plot.update_plot(
+            benchmark_name, plot_name, PlotConfigDomain.PlotConfig(something="xD2")
+        )
+        assert type(result) is type(exp)
+
+        if is_successful(exp):
+            assert result.unwrap() == exp.unwrap()
+            assert setup_transaction.benchmark.load(benchmark_name).unwrap().plots[0].status == JobStatus.CREATED
+            assert setup_transaction.benchmark.load(benchmark_name).unwrap().plots[0].config_data.something == "xD2"
+        else:
+            assert isinstance(result.failure(), type(exp.failure()))
+
+    @pytest.mark.parametrize(
+        ("benchmark_name", "plot_name", "exp"),
+        [
+            (
+                "existing",
+                "existing",
+                Success(None),
+            ),
+            ("non-existing", "existing", Failure(DataNotExistError())),
+            ("existing", "non-existing", Failure(DataNotExistError())),
+        ],
+    )
+    @staticmethod
+    def test_update_plot_status(
+        setup_transaction: StorageTransaction, benchmark_name: str, plot_name: str, exp: Result
+    ) -> None:
+        result = setup_transaction.plot.update_plot_status(benchmark_name, plot_name, JobStatus.DONE)
+        assert type(result) is type(exp)
+
+        if is_successful(exp):
+            assert result.unwrap() == exp.unwrap()
+            assert setup_transaction.plot.load(benchmark_name, plot_name).unwrap().status == JobStatus.DONE
         else:
             assert isinstance(result.failure(), type(exp.failure()))
