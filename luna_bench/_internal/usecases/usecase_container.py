@@ -3,6 +3,32 @@ from dependency_injector.providers import Configuration, Provider
 
 from luna_bench._internal.dao import StorageContainer
 
+from .benchmark.benchmark_add_metric import BenchmarkAddMetricUcImpl
+from .benchmark.benchmark_add_modelmetric import BenchmarkAddModelMetricUcImpl
+from .benchmark.benchmark_add_plot import BenchmarkAddPlotUcImpl
+from .benchmark.benchmark_add_solvejob import BenchmarkAddSolveJobUcImpl
+from .benchmark.benchmark_create import BenchmarkCreateUcImpl
+from .benchmark.benchmark_delete import BenchmarkDeleteUcImpl
+from .benchmark.benchmark_load import BenchmarkLoadUcImpl
+from .benchmark.benchmark_load_all import BenchmarkLoadAllUcImpl
+from .benchmark.benchmark_remove_metric import BenchmarkRemoveMetricUcImpl
+from .benchmark.benchmark_remove_modelmetric import BenchmarkRemoveModelMetricUcImpl
+from .benchmark.benchmark_remove_plot import BenchmarkRemovePlotUcImpl
+from .benchmark.benchmark_remove_solvejob import BenchmarkRemoveSolveJobUcImpl
+from .benchmark.protocols import (
+    BenchmarkAddMetricUc,
+    BenchmarkAddModelMetricUc,
+    BenchmarkAddPlotUc,
+    BenchmarkAddSolveJobUc,
+    BenchmarkCreateUc,
+    BenchmarkDeleteUc,
+    BenchmarkLoadAllUc,
+    BenchmarkLoadUc,
+    BenchmarkRemoveMetricUc,
+    BenchmarkRemoveModelMetricUc,
+    BenchmarkRemovePlotUc,
+    BenchmarkRemoveSolveJobUc,
+)
 from .models import ModelAllUc, ModelAllUcImpl
 from .models.model_fetch import ModelFetchUcImpl
 from .models.protocols import ModelFetchUc
@@ -52,4 +78,43 @@ class UsecaseContainer(containers.DeclarativeContainer):
 
     model_fetch_uc: Provider[ModelFetchUc] = providers.Singleton(
         ModelFetchUcImpl, transaction=storage_container.transaction
+    )
+
+    # Benchmark usecases
+    benchmark_create_uc: Provider[BenchmarkCreateUc] = providers.Singleton(
+        BenchmarkCreateUcImpl, transaction=storage_container.transaction
+    )
+    benchmark_delete_uc: Provider[BenchmarkDeleteUc] = providers.Singleton(
+        BenchmarkDeleteUcImpl, transaction=storage_container.transaction
+    )
+    benchmark_load_uc: Provider[BenchmarkLoadUc] = providers.Singleton(
+        BenchmarkLoadUcImpl, transaction=storage_container.transaction
+    )
+    benchmark_load_all_uc: Provider[BenchmarkLoadAllUc] = providers.Singleton(
+        BenchmarkLoadAllUcImpl, transaction=storage_container.transaction
+    )
+    benchmark_add_metric_uc: Provider[BenchmarkAddMetricUc] = providers.Singleton(
+        BenchmarkAddMetricUcImpl, transaction=storage_container.transaction
+    )
+    benchmark_add_modelmetric_uc: Provider[BenchmarkAddModelMetricUc] = providers.Singleton(
+        BenchmarkAddModelMetricUcImpl, transaction=storage_container.transaction
+    )
+    benchmark_add_plot_uc: Provider[BenchmarkAddPlotUc] = providers.Singleton(
+        BenchmarkAddPlotUcImpl, transaction=storage_container.transaction
+    )
+    benchmark_add_solvejob_uc: Provider[BenchmarkAddSolveJobUc] = providers.Singleton(
+        BenchmarkAddSolveJobUcImpl, transaction=storage_container.transaction
+    )
+
+    benchmark_remove_modelmetric_uc: Provider[BenchmarkRemoveModelMetricUc] = providers.Singleton(
+        BenchmarkRemoveModelMetricUcImpl, transaction=storage_container.transaction
+    )
+    benchmark_remove_metric_uc: Provider[BenchmarkRemoveMetricUc] = providers.Singleton(
+        BenchmarkRemoveMetricUcImpl, transaction=storage_container.transaction
+    )
+    bechmark_remove_plot_uc: Provider[BenchmarkRemovePlotUc] = providers.Singleton(
+        BenchmarkRemovePlotUcImpl, transaction=storage_container.transaction
+    )
+    benchmark_remove_solvejob: Provider[BenchmarkRemoveSolveJobUc] = providers.Singleton(
+        BenchmarkRemoveSolveJobUcImpl, transaction=storage_container.transaction
     )

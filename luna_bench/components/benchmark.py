@@ -2,6 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from dependency_injector.wiring import Provide, inject
+
+from luna_bench import UsecaseContainer
+from luna_bench._internal.usecases.benchmark.protocols import BenchmarkCreateUc
+
 if TYPE_CHECKING:
     from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
     from luna_quantum.solve.interfaces.backend_i import IBackend
@@ -22,7 +27,10 @@ class Benchmark:
     plots: list[Plot]
 
     @staticmethod
-    def create(name: str) -> Benchmark: ...
+    @inject
+    def create(
+        name: str, benchmark_create: BenchmarkCreateUc = Provide[UsecaseContainer.benchmark_create_uc]
+    ) -> Benchmark: ...
 
     @staticmethod
     def import_from_file(file_path: str) -> Benchmark: ...

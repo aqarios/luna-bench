@@ -101,8 +101,6 @@ class BenchmarkDAO(BenchmarkStorage):
         except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
-
-
     @staticmethod
     def benchmark_to_domain(benchmark: BenchmarkTable) -> BenchmarkDomain:
         modelset: ModelSetTable | None = benchmark.modelset
