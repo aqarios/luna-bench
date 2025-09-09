@@ -3,22 +3,32 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from dependency_injector.wiring import Provide, inject
+from luna_quantum import Logging
+from pydantic import BaseModel
+from returns.pipeline import is_successful
+from returns.result import Result
 
 from luna_bench import UsecaseContainer
+from luna_bench._internal.domain_models.benchmark_domain import BenchmarkDomain
 from luna_bench._internal.usecases.benchmark.protocols import BenchmarkCreateUc
+from luna_bench.components.job import Job
+from luna_bench.components.metric import Metric
+from luna_bench.components.model_metric import ModelMetric
+from luna_bench.components.model_set import ModelSet
+from luna_bench.components.plot import Plot
+from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
     from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
     from luna_quantum.solve.interfaces.backend_i import IBackend
 
-    from luna_bench.components import ModelSet
-    from luna_bench.components.job import Job
-    from luna_bench.components.metric import Metric
-    from luna_bench.components.model_metric import ModelMetric
-    from luna_bench.components.plot import Plot
 
 
-class Benchmark:
+
+class Benchmark(BaseModel):
+    _logger = Logging.get_logger(__name__)
+
     name: str
     modelset: ModelSet
     model_metrics: list[ModelMetric]
@@ -30,7 +40,16 @@ class Benchmark:
     @inject
     def create(
         name: str, benchmark_create: BenchmarkCreateUc = Provide[UsecaseContainer.benchmark_create_uc]
-    ) -> Benchmark: ...
+    ) -> Benchmark:
+        result: Result[BenchmarkDomain, DataNotUniqueError | UnknownLunaBenchError] = benchmark_create(name)
+
+        if not is_successful(result):
+            error = result.failure()
+            Benchmark._logger.error(f"Failed to create benchmark: {error}")
+            raise RuntimeError(error)
+
+        success: BenchmarkDomain = result.unwrap()
+        return Benchmark._to_benchmark(success)
 
     @staticmethod
     def import_from_file(file_path: str) -> Benchmark: ...
@@ -79,3 +98,14 @@ class Benchmark:
     def run_metrics(self) -> None: ...
     def run_plots(self) -> None: ...
     def run_jobs(self) -> None: ...
+
+    @staticmethod
+    def _to_benchmark(benchmark: BenchmarkDomain) -> Benchmark:
+        return Benchmark(
+            name=benchmark.name,
+            modelset=ModelSet._to_data_set(benchmark.modelset),
+            model_metrics=[],
+            metrics=[],
+            jobs=[],
+            plots=[],
+        )
