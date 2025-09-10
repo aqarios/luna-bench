@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self
 
+from luna_quantum.solve.domain.abstract import LunaAlgorithm
+from luna_quantum.solve.interfaces.algorithm_i import BACKEND_TYPE
+from luna_quantum.solve.interfaces.backend_i import IBackend
+
 from luna_bench._internal.domain_models.metric_config_domain import MetricConfigDomain
 from luna_bench._internal.domain_models.modelmetric_config_domain import ModelmetricConfigDomain
 
@@ -176,7 +180,9 @@ class MetricStorage(Protocol):
 class SolveJobStorage(Protocol):
     @staticmethod
     def add_solvejob(
-        benchmark_name: str, solvejob_name: str, solvejob_config: BaseModel
+        benchmark_name: str, solvejob_name: str, 
+        backend: BACKEND_TYPE,
+        algorithm: LunaAlgorithm[BACKEND_TYPE]
     ) -> Result[SolveJobConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod

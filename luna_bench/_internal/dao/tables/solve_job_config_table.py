@@ -18,7 +18,8 @@ class SolveJobConfigTable(BaseTable):
         on_delete="CASCADE",
     )
 
-    config_data = JSONField()
+    backend= JSONField()
+    algorithm = JSONField()
 
     class Meta:
         # Ensures uniqueness of name within each benchmark

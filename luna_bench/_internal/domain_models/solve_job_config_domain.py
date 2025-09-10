@@ -1,3 +1,5 @@
+from luna_quantum.solve.domain.abstract import LunaAlgorithm
+from luna_quantum.solve.interfaces.backend_i import IBackend
 from pydantic import BaseModel, ConfigDict
 
 from .base_domain import BaseDomain
@@ -6,13 +8,13 @@ from .solve_job_result_domain import SolveJobResultDomain
 
 
 class SolveJobConfigDomain(BaseDomain):
-    class SolveJobConfig(BaseModel):
-        model_config = ConfigDict(extra="allow")
 
     id: int
     name: str
 
     status: JobStatus
 
-    config_data: SolveJobConfig
     result: SolveJobResultDomain | None
+
+    backend: IBackend
+    algorithm: LunaAlgorithm
