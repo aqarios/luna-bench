@@ -18,8 +18,8 @@ class SolveJobConfigTable(BaseTable):
         on_delete="CASCADE",
     )
 
-    backend= JSONField()
     algorithm = JSONField()
+    backend = JSONField(json_dumps=lambda x: x.model_dump_json() if x else None, )
 
     class Meta:
         # Ensures uniqueness of name within each benchmark

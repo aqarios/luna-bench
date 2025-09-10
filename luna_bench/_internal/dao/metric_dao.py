@@ -38,11 +38,10 @@ class MetricDAO(MetricStorage):
             metric = MetricConfigTable(
                 name=metric_name,
                 status=BenchmarkStatus.CREATED,
-                config_data=metric_config.model_dump_json(),
+                config_data=metric_config,
                 benchmark=benchmark,
             )
             metric.status = BenchmarkStatus.CREATED
-            metric.config_data = metric_config.model_dump_json()
             metric.save()
             return Success(MetricDAO.metric_to_domain(metric))
         except IntegrityError:
@@ -76,7 +75,7 @@ class MetricDAO(MetricStorage):
                 MetricConfigTable.name == metric_name, MetricConfigTable.benchmark == benchmark
             )
             metric.status = BenchmarkStatus.CREATED
-            metric.config_data = metric_config.model_dump_json()
+            metric.config_data = metric_config
             metric.save()
             return Success(None)
         except DoesNotExist:
@@ -168,6 +167,6 @@ class MetricDAO(MetricStorage):
             id=cast("int", metric.id),
             name=cast("str", metric.name),
             status=JobStatus(metric.status),
-            config_data=MetricConfigDomain.MetricConfig.model_validate_json(metric.config_data),
+            config_data=metric.config_data,
             result=result_data,
         )

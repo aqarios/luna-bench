@@ -180,9 +180,9 @@ class MetricStorage(Protocol):
 class SolveJobStorage(Protocol):
     @staticmethod
     def add_solvejob(
-        benchmark_name: str, solvejob_name: str, 
-        backend: BACKEND_TYPE,
-        algorithm: LunaAlgorithm[BACKEND_TYPE]
+        benchmark_name: str, solvejob_name: str,
+        algorithm: LunaAlgorithm[BACKEND_TYPE],
+        backend: BACKEND_TYPE | None = None,
     ) -> Result[SolveJobConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod

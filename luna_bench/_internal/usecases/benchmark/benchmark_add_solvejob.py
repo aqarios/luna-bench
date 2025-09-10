@@ -1,3 +1,5 @@
+from luna_quantum.solve.domain.abstract import LunaAlgorithm
+from luna_quantum.solve.interfaces.algorithm_i import BACKEND_TYPE
 from returns.result import Result
 
 from luna_bench._internal.dao import StorageTransaction
@@ -24,7 +26,9 @@ class BenchmarkAddSolveJobUcImpl(BenchmarkAddSolveJobUc):
         self._transaction = transaction
 
     def __call__(
-        self, benchmark_name: str, solve_job_name: str, solve_job_config: SolveJobConfigDomain.SolveJobConfig
+        self, benchmark_name: str, solve_job_name: str, 
+        algorithm: LunaAlgorithm[BACKEND_TYPE],
+        backend: BACKEND_TYPE | None = None,
     ) -> Result[SolveJobConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         with self._transaction as t:
-            return t.solve_job.add_solvejob(benchmark_name, solve_job_name, solve_job_config)
+            return t.solve_job.add_solvejob(benchmark_name, solve_job_name, algorithm, backend)

@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from luna_quantum import Logging
 from luna_quantum.solve.domain.abstract import LunaAlgorithm
 from luna_quantum.solve.interfaces.algorithm_i import BACKEND_TYPE
-from luna_quantum.solve.interfaces.backend_i import IBackend
 from peewee import DoesNotExist, IntegrityError
 from returns.result import Failure, Success
 
@@ -33,16 +32,19 @@ class SolveJobDAO(SolveJobStorage):
 
     @staticmethod
     def add_solvejob(
-        benchmark_name: str, solve_job_name: str,
-        algorithm: LunaAlgorithm[BACKEND_TYPE]
+        benchmark_name: str,
+        solve_job_name: str,
+        algorithm: LunaAlgorithm[BACKEND_TYPE],
+        backend: BACKEND_TYPE | None = None,
     ) -> Result[SolveJobConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
             solve_job = SolveJobConfigTable(
                 name=solve_job_name,
                 status=BenchmarkStatus.CREATED,
-                config_data=solve_job_config.model_dump_json(),
                 benchmark=benchmark,
+                algorithm=algorithm,
+                backend=backend.model_dump_json() if backend else None,
             )
             solve_job.save()
             return Success(SolveJobDAO.solvejob_to_domain(solve_job))
@@ -71,7 +73,9 @@ class SolveJobDAO(SolveJobStorage):
 
     @staticmethod
     def update_solvejob(
-        benchmark_name: str, solve_job_name: str, solve_job_config: BaseModel
+        benchmark_name: str, solve_job_name: str,
+        algorithm: LunaAlgorithm[BACKEND_TYPE],
+        backend: BACKEND_TYPE | None = None,
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         # TODO: delete results
         try:

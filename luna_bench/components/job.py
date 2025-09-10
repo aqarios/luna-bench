@@ -11,7 +11,7 @@ class Job(BaseModel):
     name: str
     status: JobStatus
     
-    backend: IBackend
+    backend: IBackend | None
     algorithm: LunaAlgorithm
 
     def run(self) -> None: ...
