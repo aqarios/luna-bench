@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from logging import Logger
-from typing import ClassVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
@@ -110,6 +110,9 @@ class Benchmark(BaseModel):
         model_metric: ModelMetric,
         benchmark_add_modelmetric: BenchmarkAddModelMetricUc = Provide[UsecaseContainer.benchmark_add_modelmetric_uc],
     ) -> None:
+        """
+
+        """
         result: Result[ModelmetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError] = (
             benchmark_add_modelmetric(self.name, model_metric.name, model_metric._to_domain_config())
         )
@@ -177,11 +180,41 @@ class Benchmark(BaseModel):
 
         self._remove_name_from_list(self.metrics, metric_name)
 
-    def add_job(self, algorithm: IAlgorithm, backend: IBackend | None = None) -> None: ...
-    def remove_job(self, algorithm: IAlgorithm, backend: IBackend | None = None) -> None: ...
+    def add_job(self, algorithm: IAlgorithm, backend: IBackend | None = None) -> None:
+        """
+        This function allows users to add a new algorithm to the benchmark. It takes an algorithm and a optional bakcend as input.
 
-    def add_plot(self, plot: Plot) -> None: ...
-    def remove_plot(self, plot: Plot) -> None: ...
+        Example:
+            from luna_quantum import algorithms, backends
+            sa = algorithms.SimulatedAnnealing(num_reads= 100)
+            bench.add_algorithm('my_simulated_annealing', sa, backends.LocalBackend())
+        """
+
+    def remove_job(self, algorithm: IAlgorithm, backend: IBackend | None = None) -> None:
+        """
+        This function removes an algorithm from the benchmark.
+
+        Example:
+            bench.remove_algorithm('my_simulated_annealing')
+        """
+
+    def add_plot(self, plot: Plot) -> None:
+        """
+        Adds a plot the benchmark, which will be generated when the benchmark is evaluated.
+
+        Example:
+            from luna_bench.plots import BarChart
+
+            bench.add_plot(name='bar_chart', BarChart(name='my_plot'))
+        """
+
+    def remove_plot(self, plot: Plot) -> None:
+        """
+        Removes a plot from the benchmark.
+
+        Example:
+            bench.remove_plot(name='bar_chart')
+        """
 
     def run_model_metrics(self) -> None: ...
     def run_metrics(self) -> None: ...
