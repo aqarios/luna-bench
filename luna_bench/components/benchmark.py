@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from logging import Logger
-from typing import ClassVar, TYPE_CHECKING
+from typing import ClassVar
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
@@ -10,18 +10,26 @@ from returns.pipeline import is_successful
 from returns.result import Result
 
 from luna_bench import UsecaseContainer
-from luna_bench._internal.domain_models import MetricConfigDomain, ModelmetricConfigDomain
+from luna_bench._internal.domain_models import (
+    AlgorithmConfigDomain,
+    MetricConfigDomain,
+    ModelmetricConfigDomain,
+    PlotConfigDomain,
+)
 from luna_bench._internal.domain_models.benchmark_domain import BenchmarkDomain
 from luna_bench._internal.usecases.benchmark.protocols import (
+    BenchmarkAddAlgorithmUc,
     BenchmarkAddMetricUc,
     BenchmarkAddModelMetricUc,
+    BenchmarkAddPlotUc,
     BenchmarkCreateUc,
     BenchmarkLoadAllUc,
     BenchmarkLoadUc,
     BenchmarkRemoveMetricUc,
     BenchmarkRemoveModelMetricUc,
+    BenchmarkRemovePlotUc,
 )
-from luna_bench.components.job import Job
+from luna_bench.components.algorithm import Algorithm
 from luna_bench.components.metric import Metric
 from luna_bench.components.model_metric import ModelMetric
 from luna_bench.components.model_set import ModelSet
@@ -29,10 +37,6 @@ from luna_bench.components.plot import Plot
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
-
-if TYPE_CHECKING:
-    from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
-    from luna_quantum.solve.interfaces.backend_i import IBackend
 
 
 class Benchmark(BaseModel):
@@ -43,7 +47,7 @@ class Benchmark(BaseModel):
 
     model_metrics: list[ModelMetric]
     metrics: list[Metric]
-    jobs: list[Job]
+    algorithms: list[Algorithm]
     plots: list[Plot]
 
     @staticmethod
@@ -141,7 +145,6 @@ class Benchmark(BaseModel):
 
         self._remove_name_from_list(self.model_metrics, model_metric_name)
 
-
     @inject
     def add_metric(
         self,
@@ -153,10 +156,10 @@ class Benchmark(BaseModel):
         )
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to add model metric to benchmark: {error}")
+            Benchmark._logger.error(f"Failed to add metric to benchmark: {error}")
             raise RuntimeError(error)
         success: MetricConfigDomain = result.unwrap()
-        self.model_metrics.append(Metric._from_domain(success))
+        self.metrics.append(Metric._from_domain(success))
 
     @inject
     def remove_metric(
@@ -172,16 +175,76 @@ class Benchmark(BaseModel):
 
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to add model metric to benchmark: {error}")
+            Benchmark._logger.error(f"Failed to add metric to benchmark: {error}")
             raise RuntimeError(error)
 
         self._remove_name_from_list(self.metrics, metric_name)
 
-    def add_algorithm(self,name:str, algorithm: IAlgorithm, backend: IBackend | None = None) -> None: ...
-    def remove_algorithm (self,name:str) -> None: ...
+    @inject
+    def add_algorithm(
+        self,
+        algorithm: Algorithm,
+        benchmark_add_algorithm: BenchmarkAddAlgorithmUc = Provide[UsecaseContainer.benchmark_add_algorithm_uc],
+    ) -> None:
+        result: Result[AlgorithmConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError] = (
+            benchmark_add_algorithm(self.name, algorithm.name, 
+                                    algorithm._to_domain_algorithm(),
+                                    algorithm._to_domain_backend()
+                                    )
+        )
+        if not is_successful(result):
+            error = result.failure()
+            Benchmark._logger.error(f"Failed to add algorithm to benchmark: {error}")
+            raise RuntimeError(error)
+        success: AlgorithmConfigDomain = result.unwrap()
+        self.algorithms.append(Algorithm._from_domain(success))
 
-    def add_plot(self,name:str, plot: Plot) -> None: ...
-    def remove_plot(self, name:str) -> None: ...
+
+
+    def remove_algorithm(self, algorithm: str| Algorithm,
+                         benchmark_remove_algorithm: BenchmarkRemoveMetricUc = Provide[UsecaseContainer.benchmark_remove_algorithm_uc] ) -> None:
+
+        algorithm_name = algorithm.name if isinstance(algorithm, Algorithm) else algorithm
+
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_remove_algorithm(
+            self.name, algorithm_name
+        )
+
+        if not is_successful(result):
+            error = result.failure()
+            Benchmark._logger.error(f"Failed to add algorithm to benchmark: {error}")
+            raise RuntimeError(error)
+
+        self._remove_name_from_list(self.algorithms, algorithm_name)
+
+    def add_plot(self, plot: Plot,
+        benchmark_add_plot: BenchmarkAddPlotUc = Provide[UsecaseContainer.benchmark_add_plot_uc]
+    ) -> None:
+        result: Result[PlotConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError] = (
+            benchmark_add_plot(self.name, plot.name, plot._to_domain_config())
+        )
+        if not is_successful(result):
+            error = result.failure()
+            Benchmark._logger.error(f"Failed to add plot to benchmark: {error}")
+            raise RuntimeError(error)
+        success: PlotConfigDomain = result.unwrap()
+        self.plots.append(Plot._from_domain(success))
+
+    def remove_plot(self, plot: str| Plot,
+                         benchmark_remove_plot: BenchmarkRemovePlotUc = Provide[UsecaseContainer.benchmark_remove_plot_uc] ) -> None:
+
+        plot_name = plot.name if isinstance(plot, Plot) else plot
+
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_remove_plot(
+            self.name, plot_name
+        )
+
+        if not is_successful(result):
+            error = result.failure()
+            Benchmark._logger.error(f"Failed to remove plot to benchmark: {error}")
+            raise RuntimeError(error)
+
+        self._remove_name_from_list(self.plots, plot_name)
 
     def run_model_metrics(self) -> None: ...
     def run_metrics(self) -> None: ...
@@ -199,10 +262,10 @@ class Benchmark(BaseModel):
         return Benchmark(
             name=benchmark.name,
             modelset=ModelSet._to_data_set(benchmark.modelset) if benchmark.modelset else None,
-            model_metrics=[],
-            metrics=[],
-            jobs=[],
-            plots=[],
+            model_metrics=[ModelMetric._from_domain(m) for m in benchmark.modelmetrics],
+            metrics=[Metric._from_domain(m) for m in benchmark.metrics],
+            algorithms=[Algorithm._from_domain(a) for a in benchmark.algorithms],
+            plots=[Plot._from_domain(p) for p in benchmark.plots],
         )
 
     @staticmethod
@@ -214,7 +277,7 @@ class Benchmark(BaseModel):
         # TODO remove no longer present thing, add new ones, update existing ones
         old_benchmark.model_metrics = []
         old_benchmark.metrics = []
-        old_benchmark.jobs = []
+        old_benchmark.algorithms = []
         old_benchmark.plots = []
         return old_benchmark
 

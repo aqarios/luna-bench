@@ -3,20 +3,20 @@ from luna_quantum.solve.interfaces.algorithm_i import BACKEND_TYPE
 from returns.result import Result
 
 from luna_bench._internal.dao import StorageTransaction
-from luna_bench._internal.domain_models.solve_job_config_domain import SolveJobConfigDomain
+from luna_bench._internal.domain_models.algorithm_config_domain import AlgorithmConfigDomain
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
-from .protocols import BenchmarkAddSolveJobUc
+from .protocols import BenchmarkAddAlgorithmUc
 
 
-class BenchmarkAddSolveJobUcImpl(BenchmarkAddSolveJobUc):
+class BenchmarkAddAlgorithmUcImpl(BenchmarkAddAlgorithmUc):
     _transaction: StorageTransaction
 
     def __init__(self, transaction: StorageTransaction) -> None:
         """
-        Initialize the BenchmarkAddSolveJobUc with a storage transaction.
+        Initialize the BenchmarkAddAlgorithmUcImpl with a storage transaction.
 
         Parameters
         ----------
@@ -26,9 +26,11 @@ class BenchmarkAddSolveJobUcImpl(BenchmarkAddSolveJobUc):
         self._transaction = transaction
 
     def __call__(
-        self, benchmark_name: str, solve_job_name: str, 
-        algorithm: LunaAlgorithm[BACKEND_TYPE],
-        backend: BACKEND_TYPE | None = None,
-    ) -> Result[SolveJobConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
+        self,
+        benchmark_name: str,
+        solve_job_name: str,
+        algorithm: AlgorithmConfigDomain.Algorithm,
+        backend:AlgorithmConfigDomain.Backend | None = None,
+    ) -> Result[AlgorithmConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         with self._transaction as t:
-            return t.solve_job.add_solvejob(benchmark_name, solve_job_name, algorithm, backend)
+            return t.solve_job.add(benchmark_name, solve_job_name, algorithm, backend)

@@ -4,11 +4,11 @@ from pydantic import ConfigDict, PrivateAttr
 from .base_domain import BaseDomain
 
 
-class SolveJobResultDomain(BaseDomain):
-    class SolveJobResultMetadata(BaseDomain):
+class AlgorithmResultDomain(BaseDomain):
+    class AlgorithmResultMetadata(BaseDomain):
         model_config = ConfigDict(extra="allow")
 
-    meta_data: SolveJobResultMetadata
+    meta_data: AlgorithmResultMetadata
     _solution_bytes: bytes = PrivateAttr(b"")
 
     @property

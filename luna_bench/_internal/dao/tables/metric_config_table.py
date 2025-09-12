@@ -5,8 +5,8 @@ from playhouse.sqlite_ext import JSONField
 
 from luna_bench._internal.dao.tables.base_table import BaseTable
 
-from .benchmark_table import BenchmarkTable
 from ...domain_models import MetricConfigDomain
+from .benchmark_table import BenchmarkTable
 
 
 class MetricConfigTable(BaseTable):

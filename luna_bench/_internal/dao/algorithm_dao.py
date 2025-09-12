@@ -8,61 +8,64 @@ from luna_quantum.solve.interfaces.algorithm_i import BACKEND_TYPE
 from peewee import DoesNotExist, IntegrityError
 from returns.result import Failure, Success
 
-from luna_bench._internal.domain_models import BenchmarkStatus, SolveJobConfigDomain, SolveJobResultDomain
+from luna_bench._internal.domain_models import AlgorithmConfigDomain, AlgorithmResultDomain, BenchmarkStatus
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
-from .protocols import SolveJobStorage
+from .protocols import AlgorithmStorage
 from .tables import (
+    AlgorithmConfigTable,
+    AlgorithmResultTable,
     BenchmarkTable,
-    SolveJobConfigTable,
-    SolveJobResultTable,
 )
 
 if TYPE_CHECKING:
     from logging import Logger
 
-    from pydantic import BaseModel
     from returns.result import Result
 
 
-class SolveJobDAO(SolveJobStorage):
+class AlgorithmDAO(AlgorithmStorage):
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
-    def add_solvejob(
+    def add(
         benchmark_name: str,
         solve_job_name: str,
-        algorithm: LunaAlgorithm[BACKEND_TYPE],
-        backend: BACKEND_TYPE | None = None,
-    ) -> Result[SolveJobConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
+        algorithm: AlgorithmConfigDomain.Algorithm,
+        backend: AlgorithmConfigDomain.Backend | None = None,
+    ) -> Result[AlgorithmConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
-            solve_job = SolveJobConfigTable(
+            solve_job = AlgorithmConfigTable(
                 name=solve_job_name,
                 status=BenchmarkStatus.CREATED,
                 benchmark=benchmark,
                 algorithm=algorithm,
-                backend=backend.model_dump_json() if backend else None,
+                backend=backend,
             )
             solve_job.save()
-            return Success(SolveJobDAO.solvejob_to_domain(solve_job))
+            return Success(AlgorithmDAO.solvejob_to_domain(solve_job))
         except IntegrityError:
             return Failure(DataNotUniqueError())
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
+
+            print(e)
+            print(e)
+            print(e)
+            print(e)
+            print(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def remove_solvejob(
-        benchmark_name: str, solve_job_name: str
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+    def remove(benchmark_name: str, solve_job_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
-            solve_job = SolveJobConfigTable.get(
-                SolveJobConfigTable.name == solve_job_name, SolveJobConfigTable.benchmark == benchmark
+            solve_job = AlgorithmConfigTable.get(
+                AlgorithmConfigTable.name == solve_job_name, AlgorithmConfigTable.benchmark == benchmark
             )
             solve_job.delete_instance()
             return Success(None)
@@ -72,16 +75,17 @@ class SolveJobDAO(SolveJobStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def update_solvejob(
-        benchmark_name: str, solve_job_name: str,
+    def update(
+        benchmark_name: str,
+        solve_job_name: str,
         algorithm: LunaAlgorithm[BACKEND_TYPE],
         backend: BACKEND_TYPE | None = None,
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         # TODO: delete results
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
-            solve_job = SolveJobConfigTable.get(
-                SolveJobConfigTable.name == solve_job_name, SolveJobConfigTable.benchmark == benchmark
+            solve_job = AlgorithmConfigTable.get(
+                AlgorithmConfigTable.name == solve_job_name, AlgorithmConfigTable.benchmark == benchmark
             )
             solve_job.status = BenchmarkStatus.CREATED
             solve_job.config_data = solve_job_config.model_dump_json()
@@ -93,13 +97,13 @@ class SolveJobDAO(SolveJobStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def update_solvejob_status(
+    def update_status(
         benchmark_name: str, solve_job_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
-            solve_job = SolveJobConfigTable.get(
-                SolveJobConfigTable.name == solve_job_name, SolveJobConfigTable.benchmark == benchmark
+            solve_job = AlgorithmConfigTable.get(
+                AlgorithmConfigTable.name == solve_job_name, AlgorithmConfigTable.benchmark == benchmark
             )
             solve_job.status = status
             solve_job.save()
@@ -112,13 +116,13 @@ class SolveJobDAO(SolveJobStorage):
     @staticmethod
     def load(
         benchmark_name: str, solvejob_name: str
-    ) -> Result[SolveJobConfigDomain, DataNotExistError | UnknownLunaBenchError]:
+    ) -> Result[AlgorithmConfigDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
-            solve_job = SolveJobConfigTable.get(
-                SolveJobConfigTable.name == solvejob_name, SolveJobConfigTable.benchmark == benchmark
+            solve_job = AlgorithmConfigTable.get(
+                AlgorithmConfigTable.name == solvejob_name, AlgorithmConfigTable.benchmark == benchmark
             )
-            return Success(SolveJobDAO.solvejob_to_domain(solve_job))
+            return Success(AlgorithmDAO.solvejob_to_domain(solve_job))
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
@@ -126,15 +130,15 @@ class SolveJobDAO(SolveJobStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def set_result_solvejob(
-        benchmark_name: str, solve_job_name: str, result: SolveJobResultDomain
+    def set_result(
+        benchmark_name: str, solve_job_name: str, result: AlgorithmResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
-            solve_job = SolveJobConfigTable.get(
-                SolveJobConfigTable.name == solve_job_name, SolveJobConfigTable.benchmark == benchmark
+            solve_job = AlgorithmConfigTable.get(
+                AlgorithmConfigTable.name == solve_job_name, AlgorithmConfigTable.benchmark == benchmark
             )
-            result = SolveJobResultTable(
+            result = AlgorithmResultTable(
                 solve_job=solve_job,
                 meta_data=result.model_dump_json(),
                 encoded_solution=result._solution_bytes,
@@ -148,15 +152,15 @@ class SolveJobDAO(SolveJobStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def remove_result_solvejob(
+    def remove_result(
         benchmark_name: str, solvejob_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
-            solve_job = SolveJobConfigTable.get(
-                SolveJobConfigTable.name == solvejob_name, SolveJobConfigTable.benchmark == benchmark
+            solve_job = AlgorithmConfigTable.get(
+                AlgorithmConfigTable.name == solvejob_name, AlgorithmConfigTable.benchmark == benchmark
             )
-            result = SolveJobResultTable.get(SolveJobResultTable.solve_job == solve_job)
+            result = AlgorithmResultTable.get(AlgorithmResultTable.algorithm == solve_job)
             result.delete_instance()
             return Success(None)
         except DoesNotExist:
@@ -167,21 +171,22 @@ class SolveJobDAO(SolveJobStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def solvejob_to_domain(solvejob: SolveJobConfigTable) -> SolveJobConfigDomain:
-        result_data: SolveJobResultDomain | None
+    def solvejob_to_domain(solvejob: AlgorithmConfigTable) -> AlgorithmConfigDomain:
+        result_data: AlgorithmResultDomain | None
 
         selected_data = solvejob.result.first()
         if selected_data:
-            result_data = SolveJobResultDomain.model_validate_json(selected_data.meta_data)
+            result_data = AlgorithmResultDomain.model_validate_json(selected_data.meta_data)
 
             result_data._solution_bytes = selected_data.encoded_solution
         else:
             result_data = None
 
-        return SolveJobConfigDomain(
+        return AlgorithmConfigDomain(
             id=solvejob.id,
             name=solvejob.name,
             status=solvejob.status,
-            config_data=SolveJobConfigDomain.SolveJobConfig.model_validate_json(solvejob.config_data),
+            algorithm=solvejob.algorithm,
+            backend=solvejob.backend,
             result=result_data,
         )

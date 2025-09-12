@@ -1,13 +1,13 @@
 from __future__ import annotations
-from luna_quantum.client.schemas.enums.status import StatusEnum
+
 from pydantic import BaseModel, ConfigDict
 
-from luna_bench._internal.domain_models import MetricConfigDomain
+from luna_bench._internal.domain_models import JobStatus, MetricConfigDomain
 
 
 class Metric(BaseModel):
     name: str
-    status: StatusEnum
+    status: JobStatus
 
     model_config = ConfigDict(extra="allow")
 
@@ -20,9 +20,7 @@ class Metric(BaseModel):
     def reset(self) -> None: ...
 
     def _to_domain_config(self) -> MetricConfigDomain.MetricConfig:
-        return MetricConfigDomain.MetricConfig.model_validate_json(
-            self.model_dump_json(exclude={"status", "name"})
-        )
+        return MetricConfigDomain.MetricConfig.model_validate_json(self.model_dump_json(exclude={"status", "name"}))
 
     @staticmethod
     def _from_domain(metric_config_domain: MetricConfigDomain) -> Metric:

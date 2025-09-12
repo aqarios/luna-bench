@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from dependency_injector import containers, providers
 
+from .algorithm_dao import AlgorithmDAO
 from .benchmark_dao import BenchmarkDAO
 from .database.peewee_transaction import PeeweeTransaction
 from .metric_dao import MetricDAO
@@ -11,8 +12,9 @@ from .model_dao import ModelDAO
 from .modelmetric_dao import ModelmetricDAO
 from .modelset_dao import ModelSetDAO
 from .plot_dao import PlotDAO
-from .solvejob_dao import SolveJobDAO
 from .tables import (
+    AlgorithmConfigTable,
+    AlgorithmResultTable,
     BenchmarkTable,
     MetricConfigTable,
     MetricResultTable,
@@ -22,8 +24,6 @@ from .tables import (
     ModelSetTable,
     ModelTable,
     PlotConfigTable,
-    SolveJobConfigTable,
-    SolveJobResultTable,
 )
 from .tables.base_table import setup_db_proxy
 
@@ -31,13 +31,13 @@ if TYPE_CHECKING:
     from dependency_injector.providers import Provider
 
     from luna_bench._internal.dao.protocols import (
+        AlgorithmStorage,
         BenchmarkStorage,
         MetricStorage,
         ModelmetricStorage,
         ModelSetStorage,
         ModelStorage,
         PlotStorage,
-        SolveJobStorage,
         StorageTransaction,
     )
 
@@ -50,7 +50,7 @@ class StorageContainer(containers.DeclarativeContainer):
     benchmark_storage: Provider[BenchmarkStorage] = providers.Singleton(BenchmarkDAO)
     modelmetric_storage: Provider[ModelmetricStorage] = providers.Singleton(ModelmetricDAO)
     metric_storage: Provider[MetricStorage] = providers.Singleton(MetricDAO)
-    solvejob_storage: Provider[SolveJobStorage] = providers.Singleton(SolveJobDAO)
+    solvejob_storage: Provider[AlgorithmStorage] = providers.Singleton(AlgorithmDAO)
     plot_storage: Provider[PlotStorage] = providers.Singleton(PlotDAO)
 
     tables = providers.List(
@@ -63,8 +63,8 @@ class StorageContainer(containers.DeclarativeContainer):
         ModelmetricConfigTable,
         ModelmetricResultTable,
         PlotConfigTable,
-        SolveJobConfigTable,
-        SolveJobResultTable,
+        AlgorithmConfigTable,
+        AlgorithmResultTable,
         ModelSetTable.models.get_through_model(),
     )
 

@@ -35,7 +35,7 @@ class PlotDAO(PlotStorage):
             plot = PlotConfigTable(
                 name=plot_name,
                 status=BenchmarkStatus.CREATED,
-                config_data=plot_config.model_dump_json(),
+                config_data=plot_config,
                 benchmark=benchmark,
             )
             plot.save()
@@ -67,7 +67,7 @@ class PlotDAO(PlotStorage):
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
             plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)
             plot.status = BenchmarkStatus.CREATED
-            plot.config_data = plot_config.model_dump_json()
+            plot.config_data = plot_config
             plot.save()
             return Success(None)
         except DoesNotExist:
@@ -109,5 +109,5 @@ class PlotDAO(PlotStorage):
             id=plot.id,
             name=plot.name,
             status=plot.status,
-            config_data=PlotConfigDomain.PlotConfig.model_validate_json(plot.config_data),
+            config_data=plot.config_data,
         )

@@ -3,14 +3,14 @@ from playhouse.sqlite_ext import JSONField
 
 from luna_bench._internal.dao.tables.base_table import BaseTable
 
-from .solve_job_config_table import SolveJobConfigTable
+from .algorithm_config_table import AlgorithmConfigTable
 
 
-class SolveJobResultTable(BaseTable):
+class AlgorithmResultTable(BaseTable):
     id = AutoField(primary_key=True)
 
-    solve_job = ForeignKeyField(
-        SolveJobConfigTable,
+    algorithm = ForeignKeyField(
+        AlgorithmConfigTable,
         backref="result",
         unique=True,
         on_delete="CASCADE",

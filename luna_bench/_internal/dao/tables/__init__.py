@@ -1,3 +1,5 @@
+from .algorithm_config_table import AlgorithmConfigTable
+from .algorithm_result_table import AlgorithmResultTable
 from .benchmark_table import BenchmarkTable
 from .metric_config_table import MetricConfigTable
 from .metric_result_table import MetricResultTable
@@ -7,10 +9,10 @@ from .modelmetric_config_table import ModelmetricConfigTable
 from .modelmetric_result_table import ModelmetricResultTable
 from .modelset_table import ModelSetTable
 from .plot_config_table import PlotConfigTable
-from .solve_job_config_table import SolveJobConfigTable
-from .solve_job_result_table import SolveJobResultTable
 
 __all__ = [
+    "AlgorithmConfigTable",
+    "AlgorithmResultTable",
     "BenchmarkTable",
     "MetricConfigTable",
     "MetricResultTable",
@@ -20,6 +22,4 @@ __all__ = [
     "ModelmetricConfigTable",
     "ModelmetricResultTable",
     "PlotConfigTable",
-    "SolveJobConfigTable",
-    "SolveJobResultTable",
 ]

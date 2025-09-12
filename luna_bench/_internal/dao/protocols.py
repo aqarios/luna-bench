@@ -2,10 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self
 
-from luna_quantum.solve.domain.abstract import LunaAlgorithm
-from luna_quantum.solve.interfaces.algorithm_i import BACKEND_TYPE
-from luna_quantum.solve.interfaces.backend_i import IBackend
-
 from luna_bench._internal.domain_models.metric_config_domain import MetricConfigDomain
 from luna_bench._internal.domain_models.modelmetric_config_domain import ModelmetricConfigDomain
 
@@ -16,13 +12,13 @@ if TYPE_CHECKING:
     from returns.result import Result
 
     from luna_bench._internal.domain_models import (
+        AlgorithmConfigDomain,
+        AlgorithmResultDomain,
         BenchmarkDomain,
         BenchmarkStatus,
         ModelMetadataDomain,
         ModelSetDomain,
         PlotConfigDomain,
-        SolveJobConfigDomain,
-        SolveJobResultDomain,
     )
     from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
     from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
@@ -56,7 +52,7 @@ class StorageTransaction(Protocol):
     def metric(self) -> MetricStorage: ...
 
     @property
-    def solve_job(self) -> SolveJobStorage: ...
+    def solve_job(self) -> AlgorithmStorage: ...
 
     @property
     def plot(self) -> PlotStorage: ...
@@ -177,41 +173,42 @@ class MetricStorage(Protocol):
     ) -> Result[MetricConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
 
 
-class SolveJobStorage(Protocol):
+class AlgorithmStorage(Protocol):
     @staticmethod
-    def add_solvejob(
-        benchmark_name: str, solvejob_name: str,
-        algorithm: LunaAlgorithm[BACKEND_TYPE],
-        backend: BACKEND_TYPE | None = None,
-    ) -> Result[SolveJobConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
+    def add(
+        benchmark_name: str,
+        solvejob_name: str,
+        algorithm: AlgorithmConfigDomain.Algorithm,
+        backend: AlgorithmConfigDomain.Backend | None = None,
+    ) -> Result[AlgorithmConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def remove_solvejob(
+    def remove(
         benchmark_name: str, solvejob_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def update_solvejob(
+    def update(
         benchmark_name: str, solvejob_name: str, solvejob_config: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def update_solvejob_status(
+    def update_status(
         benchmark_name: str, solvejob_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def load(
         benchmark_name: str, solvejob_name: str
-    ) -> Result[SolveJobConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
+    ) -> Result[AlgorithmConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def set_result_solvejob(
-        benchmark_name: str, solvejob_name: str, result: SolveJobResultDomain
+    def set_result(
+        benchmark_name: str, solvejob_name: str, result: AlgorithmResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def remove_result_solvejob(
+    def remove_result(
         benchmark_name: str, solvejob_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
