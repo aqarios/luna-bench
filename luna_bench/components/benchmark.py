@@ -187,7 +187,7 @@ class Benchmark(BaseModel):
         benchmark_add_algorithm: BenchmarkAddAlgorithmUc = Provide[UsecaseContainer.benchmark_add_algorithm_uc],
     ) -> None:
         result: Result[AlgorithmConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError] = (
-            benchmark_add_algorithm(self.name, algorithm.name, 
+            benchmark_add_algorithm(self.name, algorithm.name,
                                     algorithm._to_domain_algorithm(),
                                     algorithm._to_domain_backend()
                                     )

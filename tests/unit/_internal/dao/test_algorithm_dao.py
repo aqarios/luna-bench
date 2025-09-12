@@ -19,18 +19,19 @@ _result_obj = AlgorithmResultDomain(meta_data=(AlgorithmResultDomain.AlgorithmRe
 _result_obj.solution = b"abc"
 
 
-class TestSolveJobDAO:
-    _saved_solvejob_domain: AlgorithmConfigDomain
+class TestAlgorithmDAO:
+    _saved_algorithm_domain: AlgorithmConfigDomain
 
     @pytest.fixture()
     @staticmethod
     def setup_transaction(empty_transaction: StorageTransaction) -> StorageTransaction:
         """Provide a transaction fixture with a default model for testing the ModelDAOs."""
         empty_transaction.benchmark.create(benchmark_name="existing")
-        TestSolveJobDAO._saved_solvejob_domain = empty_transaction.solve_job.add(
+        TestAlgorithmDAO._saved_algorithm_domain = empty_transaction.solve_job.add(
             benchmark_name="existing",
             solve_job_name="existing",
-            solve_job_config=AlgorithmConfigDomain.SolveJobConfig(something="xD"),
+            algorithm=AlgorithmConfigDomain.Algorithm(),
+            backend=None,
         ).unwrap()
 
         return empty_transaction
@@ -47,7 +48,7 @@ class TestSolveJobDAO:
                         name="non-existing",
                         status=BenchmarkStatus.CREATED,
                         result=None,
-                        algorithm=SimulatedAnnealing(),
+                        algorithm=AlgorithmConfigDomain.Algorithm(something="xD"),
                         backend=None,
                     )
                 ),
@@ -61,7 +62,7 @@ class TestSolveJobDAO:
         setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
         result = setup_transaction.solve_job.add(
-            benchmark_name, metric_name, AlgorithmConfigDomain.SolveJobConfig(something="xD")
+            benchmark_name, metric_name, AlgorithmConfigDomain.Algorithm(something="xD")
         )
         assert type(result) is type(exp)
 
@@ -91,7 +92,7 @@ class TestSolveJobDAO:
         assert type(result) is type(exp)
 
         if is_successful(exp):
-            assert result.unwrap() == TestSolveJobDAO._saved_solvejob_domain
+            assert result.unwrap() == TestAlgorithmDAO._saved_algorithm_domain
         else:
             assert isinstance(result.failure(), type(exp.failure()))
 
@@ -136,7 +137,7 @@ class TestSolveJobDAO:
         setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
         result = setup_transaction.solve_job.update(
-            benchmark_name, metric_name, AlgorithmConfigDomain.SolveJobConfig(something="xD2")
+            benchmark_name, metric_name, AlgorithmConfigDomain.Algorithm(something="xD2")
         )
         assert type(result) is type(exp)
 
@@ -147,7 +148,7 @@ class TestSolveJobDAO:
                 == BenchmarkStatus.CREATED
             )
             assert (
-                    setup_transaction.benchmark.load(benchmark_name).unwrap().algorithms[0].config_data.something == "xD2"
+                    setup_transaction.benchmark.load(benchmark_name).unwrap().algorithms[0].algorithm.something == "xD2"
             )
         else:
             assert isinstance(result.failure(), type(exp.failure()))

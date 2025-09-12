@@ -88,7 +88,8 @@ class AlgorithmDAO(AlgorithmStorage):
                 AlgorithmConfigTable.name == solve_job_name, AlgorithmConfigTable.benchmark == benchmark
             )
             solve_job.status = BenchmarkStatus.CREATED
-            solve_job.config_data = solve_job_config.model_dump_json()
+            solve_job.algorithm = algorithm
+            solve_job.backend = backend
             solve_job.save()
             return Success(None)
         except DoesNotExist:
@@ -122,16 +123,16 @@ class AlgorithmDAO(AlgorithmStorage):
             solve_job = AlgorithmConfigTable.get(
                 AlgorithmConfigTable.name == solvejob_name, AlgorithmConfigTable.benchmark == benchmark
             )
+            a = AlgorithmDAO.solvejob_to_domain(solve_job)
             return Success(AlgorithmDAO.solvejob_to_domain(solve_job))
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
-            print(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
     def set_result(
-        benchmark_name: str, solve_job_name: str, result: AlgorithmResultDomain
+        benchmark_name: str, solve_job_name: str, result_domain: AlgorithmResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
@@ -140,8 +141,9 @@ class AlgorithmDAO(AlgorithmStorage):
             )
             result = AlgorithmResultTable(
                 solve_job=solve_job,
-                meta_data=result.model_dump_json(),
-                encoded_solution=result._solution_bytes,
+                meta_data=result_domain,
+                encoded_solution=result_domain._solution_bytes,
+                algorithm=solve_job,
             )
             result.save()
             return Success(None)
@@ -176,7 +178,9 @@ class AlgorithmDAO(AlgorithmStorage):
 
         selected_data = solvejob.result.first()
         if selected_data:
-            result_data = AlgorithmResultDomain.model_validate_json(selected_data.meta_data)
+            result_data =AlgorithmResultDomain.model_validate(
+                 selected_data.meta_data
+            )
 
             result_data._solution_bytes = selected_data.encoded_solution
         else:

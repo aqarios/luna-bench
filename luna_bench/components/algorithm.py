@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from luna_quantum.solve.domain.abstract import LunaAlgorithm
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from luna_quantum.solve.interfaces.backend_i import IBackend
 from pydantic import BaseModel
@@ -29,9 +28,9 @@ class Algorithm(BaseModel):
 
     @staticmethod
     def _from_domain(modelmetric_config_domain: AlgorithmConfigDomain) -> Algorithm:
-         
+
         # TODO here we need to figure out which class is the correct IAlgorithm instance
-        
+
         return Algorithm(
             name=modelmetric_config_domain.name,
             status=modelmetric_config_domain.status,

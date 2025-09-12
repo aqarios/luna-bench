@@ -189,7 +189,9 @@ class AlgorithmStorage(Protocol):
 
     @staticmethod
     def update(
-        benchmark_name: str, solvejob_name: str, solvejob_config: BaseModel
+        benchmark_name: str, solvejob_name: str, 
+        algorithm: AlgorithmConfigDomain.Algorithm,
+        backend: AlgorithmConfigDomain.Backend | None = None,
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod

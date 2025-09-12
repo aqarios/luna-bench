@@ -1,5 +1,3 @@
-from luna_quantum.solve.domain.abstract import LunaAlgorithm
-from luna_quantum.solve.interfaces.algorithm_i import BACKEND_TYPE
 from returns.result import Result
 
 from luna_bench._internal.dao import StorageTransaction
