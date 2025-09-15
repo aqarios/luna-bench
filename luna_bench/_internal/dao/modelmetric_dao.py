@@ -31,11 +31,10 @@ class ModelmetricDAO(ModelmetricStorage):
             modelmetric = ModelmetricConfigTable(
                 name=modelmetric_name,
                 status=BenchmarkStatus.CREATED,
-                config_data=modelmetric_config.model_dump_json(),
+                config_data=modelmetric_config,
                 benchmark=benchmark,
             )
             modelmetric.status = BenchmarkStatus.CREATED
-            modelmetric.config_data = modelmetric_config.model_dump_json()
             modelmetric.save()
             return Success(ModelmetricDAO.modelmetric_to_domain(modelmetric))
         except IntegrityError:
@@ -71,7 +70,7 @@ class ModelmetricDAO(ModelmetricStorage):
                 ModelmetricConfigTable.name == modelmetric_name, ModelmetricConfigTable.benchmark == benchmark
             )
             modelmetric.status = BenchmarkStatus.CREATED
-            modelmetric.config_data = modelmetric_config.model_dump_json()
+            modelmetric.config_data = modelmetric_config
             modelmetric.save()
             return Success(None)
         except DoesNotExist:
@@ -166,6 +165,6 @@ class ModelmetricDAO(ModelmetricStorage):
             id=cast("int", modelmetric.id),
             name=cast("str", modelmetric.name),
             status=JobStatus(modelmetric.status),
-            config_data=ModelmetricConfigDomain.ModelmetricConfig.model_validate_json(modelmetric.config_data),
+            config_data=modelmetric.config_data,
             result=result_data,
         )

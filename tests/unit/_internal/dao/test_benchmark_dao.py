@@ -36,7 +36,7 @@ class TestBenchmarkDAO:
                         status=BenchmarkStatus.CREATED,
                         modelset=None,
                         modelmetrics=[],
-                        solve_jobs=[],
+                        algorithms=[],
                         metrics=[],
                         plots=[],
                     )
@@ -71,7 +71,7 @@ class TestBenchmarkDAO:
                         status=BenchmarkStatus.CREATED,
                         modelset=None,
                         modelmetrics=[],
-                        solve_jobs=[],
+                        algorithms=[],
                         metrics=[],
                         plots=[],
                     )

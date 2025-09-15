@@ -3,10 +3,11 @@ from playhouse.sqlite_ext import JSONField
 
 from luna_bench._internal.dao.tables.base_table import BaseTable
 
+from ...domain_models import AlgorithmConfigDomain
 from .benchmark_table import BenchmarkTable
 
 
-class SolveJobConfigTable(BaseTable):
+class AlgorithmConfigTable(BaseTable):
     id = AutoField(primary_key=True)
     name = CharField(max_length=45, unique=True, collation="NOCASE")
 
@@ -18,8 +19,15 @@ class SolveJobConfigTable(BaseTable):
         on_delete="CASCADE",
     )
 
-    backend= JSONField()
-    algorithm = JSONField()
+    algorithm = JSONField(
+        json_loads=lambda x: AlgorithmConfigDomain.Algorithm.model_validate_json(x),
+        json_dumps=lambda x: x.model_dump_json(),
+    )
+    backend = JSONField(
+        json_loads=lambda x: AlgorithmConfigDomain.Backend.model_validate_json(x) if x else None,
+        json_dumps=lambda x: x.model_dump_json() if x else None,
+        null=True,
+    )
 
     class Meta:
         # Ensures uniqueness of name within each benchmark

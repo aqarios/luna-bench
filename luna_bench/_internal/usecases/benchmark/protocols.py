@@ -1,12 +1,14 @@
 from typing import Protocol
 
+from luna_quantum.solve.domain.abstract import LunaAlgorithm
+from luna_quantum.solve.interfaces.algorithm_i import BACKEND_TYPE
 from returns.result import Result
 
 from luna_bench._internal.domain_models import (
+    AlgorithmConfigDomain,
     MetricConfigDomain,
     ModelmetricConfigDomain,
     PlotConfigDomain,
-    SolveJobConfigDomain,
 )
 from luna_bench._internal.domain_models.benchmark_domain import BenchmarkDomain
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
@@ -48,10 +50,14 @@ class BenchmarkAddPlotUc(Protocol):
     ) -> Result[PlotConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
 
-class BenchmarkAddSolveJobUc(Protocol):
+class BenchmarkAddAlgorithmUc(Protocol):
     def __call__(
-        self, benchmark_name: str, solve_job_name: str, solve_job_config: SolveJobConfigDomain.SolveJobConfig
-    ) -> Result[SolveJobConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
+        self,
+        benchmark_name: str,
+        solve_job_name: str,
+        algorithm: LunaAlgorithm[BACKEND_TYPE],
+        backend: BACKEND_TYPE | None = None,
+    ) -> Result[AlgorithmConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
 
 class BenchmarkRemoveMetricUc(Protocol):
@@ -76,7 +82,7 @@ class BenchmarkRemovePlotUc(Protocol):
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
 
-class BenchmarkRemoveSolveJobUc(Protocol):
+class BenchmarkRemoveAlgorithmUc(Protocol):
     def __call__(
         self, benchmark_name: str, solvejob_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...

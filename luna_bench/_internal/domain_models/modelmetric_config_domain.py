@@ -1,7 +1,7 @@
-from luna_quantum.client.schemas.enums.status import StatusEnum
 from pydantic import BaseModel, ConfigDict
 
 from .base_domain import BaseDomain
+from .job_status_enum import JobStatus
 from .modelmetric_result_domain import ModelmetricResultDomain
 
 
@@ -12,7 +12,7 @@ class ModelmetricConfigDomain(BaseDomain):
     id: int
     name: str
 
-    status: StatusEnum
+    status: JobStatus
     result: ModelmetricResultDomain | None
 
     config_data: ModelmetricConfig

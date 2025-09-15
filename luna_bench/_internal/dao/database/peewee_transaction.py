@@ -6,10 +6,10 @@ from luna_quantum import Logging
 from peewee import Database, _transaction
 
 from luna_bench._internal.dao.protocols import (
+    AlgorithmStorage,
     MetricStorage,
     ModelmetricStorage,
     PlotStorage,
-    SolveJobStorage,
     StorageTransaction,
 )
 
@@ -27,7 +27,7 @@ class PeeweeTransaction(_transaction, StorageTransaction):
     _benchmark_storage: BenchmarkStorage
     _metric_storage: MetricStorage
     _modelmetric_storage: ModelmetricStorage
-    _solvejob_storage: SolveJobStorage
+    _solvejob_storage: AlgorithmStorage
     _plot_storage: PlotStorage
 
     def __init__(
@@ -38,7 +38,7 @@ class PeeweeTransaction(_transaction, StorageTransaction):
         benchmark_storage: BenchmarkStorage,
         metric_storage: MetricStorage,
         modelmetric_storage: ModelmetricStorage,
-        solvejob_storage: SolveJobStorage,
+        solvejob_storage: AlgorithmStorage,
         plot_storage: PlotStorage,
     ) -> None:
         super().__init__(database)
@@ -73,7 +73,7 @@ class PeeweeTransaction(_transaction, StorageTransaction):
         return self._modelmetric_storage
 
     @property
-    def solve_job(self) -> SolveJobStorage:
+    def solve_job(self) -> AlgorithmStorage:
         return self._solvejob_storage
 
     @property

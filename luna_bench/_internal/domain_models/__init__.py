@@ -1,3 +1,5 @@
+from .algorithm_config_domain import AlgorithmConfigDomain
+from .algorithm_result_domain import AlgorithmResultDomain
 from .benchmark_domain import BenchmarkDomain
 from .benchmark_status_enum import BenchmarkStatus
 from .job_status_enum import JobStatus
@@ -8,10 +10,10 @@ from .modelmetric_config_domain import ModelmetricConfigDomain
 from .modelmetric_result_domain import ModelmetricResultDomain
 from .modelset_domain import ModelSetDomain
 from .plot_config_domain import PlotConfigDomain
-from .solve_job_config_domain import SolveJobConfigDomain
-from .solve_job_result_domain import SolveJobResultDomain
 
 __all__ = [
+    "AlgorithmConfigDomain",
+    "AlgorithmResultDomain",
     "BenchmarkDomain",
     "BenchmarkStatus",
     "JobStatus",
@@ -22,6 +24,4 @@ __all__ = [
     "ModelmetricConfigDomain",
     "ModelmetricResultDomain",
     "PlotConfigDomain",
-    "SolveJobConfigDomain",
-    "SolveJobResultDomain",
 ]

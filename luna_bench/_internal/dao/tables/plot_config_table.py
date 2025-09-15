@@ -3,6 +3,7 @@ from playhouse.sqlite_ext import JSONField
 
 from luna_bench._internal.dao.tables import BenchmarkTable
 from luna_bench._internal.dao.tables.base_table import BaseTable
+from luna_bench._internal.domain_models import PlotConfigDomain
 
 
 class PlotConfigTable(BaseTable):
@@ -11,7 +12,10 @@ class PlotConfigTable(BaseTable):
 
     status = CharField(max_length=16, collation="NOCASE")
 
-    config_data = JSONField()
+    config_data = JSONField(
+        json_dumps=lambda x: x.model_dump_json(),
+        json_loads=lambda x: PlotConfigDomain.PlotConfig.model_validate_json(x),
+    )
 
     benchmark = ForeignKeyField(
         BenchmarkTable,

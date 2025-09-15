@@ -5,6 +5,7 @@ from playhouse.sqlite_ext import JSONField
 
 from luna_bench._internal.dao.tables.base_table import BaseTable
 
+from ...domain_models import MetricConfigDomain
 from .benchmark_table import BenchmarkTable
 
 
@@ -20,7 +21,10 @@ class MetricConfigTable(BaseTable):
         on_delete="CASCADE",
     )
 
-    config_data = JSONField()
+    config_data = JSONField(
+        json_dumps=lambda x: x.model_dump_json(),
+        json_loads=lambda x: MetricConfigDomain.MetricConfig.model_validate_json(x),
+    )
 
     if TYPE_CHECKING:
         from .metric_result_table import MetricResultTable
