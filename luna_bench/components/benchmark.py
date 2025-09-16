@@ -187,10 +187,9 @@ class Benchmark(BaseModel):
         benchmark_add_algorithm: BenchmarkAddAlgorithmUc = Provide[UsecaseContainer.benchmark_add_algorithm_uc],
     ) -> None:
         result: Result[AlgorithmConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError] = (
-            benchmark_add_algorithm(self.name, algorithm.name,
-                                    algorithm._to_domain_algorithm(),
-                                    algorithm._to_domain_backend()
-                                    )
+            benchmark_add_algorithm(
+                self.name, algorithm.name, algorithm._to_domain_algorithm(), algorithm._to_domain_backend()
+            )
         )
         if not is_successful(result):
             error = result.failure()
@@ -199,11 +198,11 @@ class Benchmark(BaseModel):
         success: AlgorithmConfigDomain = result.unwrap()
         self.algorithms.append(Algorithm._from_domain(success))
 
-
-
-    def remove_algorithm(self, algorithm: str| Algorithm,
-                         benchmark_remove_algorithm: BenchmarkRemoveMetricUc = Provide[UsecaseContainer.benchmark_remove_algorithm_uc] ) -> None:
-
+    def remove_algorithm(
+        self,
+        algorithm: str | Algorithm,
+        benchmark_remove_algorithm: BenchmarkRemoveMetricUc = Provide[UsecaseContainer.benchmark_remove_algorithm_uc],
+    ) -> None:
         algorithm_name = algorithm.name if isinstance(algorithm, Algorithm) else algorithm
 
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_remove_algorithm(
@@ -217,8 +216,8 @@ class Benchmark(BaseModel):
 
         self._remove_name_from_list(self.algorithms, algorithm_name)
 
-    def add_plot(self, plot: Plot,
-        benchmark_add_plot: BenchmarkAddPlotUc = Provide[UsecaseContainer.benchmark_add_plot_uc]
+    def add_plot(
+        self, plot: Plot, benchmark_add_plot: BenchmarkAddPlotUc = Provide[UsecaseContainer.benchmark_add_plot_uc]
     ) -> None:
         result: Result[PlotConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError] = (
             benchmark_add_plot(self.name, plot.name, plot._to_domain_config())
@@ -230,14 +229,14 @@ class Benchmark(BaseModel):
         success: PlotConfigDomain = result.unwrap()
         self.plots.append(Plot._from_domain(success))
 
-    def remove_plot(self, plot: str| Plot,
-                         benchmark_remove_plot: BenchmarkRemovePlotUc = Provide[UsecaseContainer.benchmark_remove_plot_uc] ) -> None:
-
+    def remove_plot(
+        self,
+        plot: str | Plot,
+        benchmark_remove_plot: BenchmarkRemovePlotUc = Provide[UsecaseContainer.benchmark_remove_plot_uc],
+    ) -> None:
         plot_name = plot.name if isinstance(plot, Plot) else plot
 
-        result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_remove_plot(
-            self.name, plot_name
-        )
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_remove_plot(self.name, plot_name)
 
         if not is_successful(result):
             error = result.failure()

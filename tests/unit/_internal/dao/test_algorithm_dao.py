@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from luna_quantum.solve.parameters.algorithms import SimulatedAnnealing
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -147,9 +146,7 @@ class TestAlgorithmDAO:
                 setup_transaction.benchmark.load(benchmark_name).unwrap().algorithms[0].status
                 == BenchmarkStatus.CREATED
             )
-            assert (
-                    setup_transaction.benchmark.load(benchmark_name).unwrap().algorithms[0].algorithm.something == "xD2"
-            )
+            assert setup_transaction.benchmark.load(benchmark_name).unwrap().algorithms[0].algorithm.something == "xD2"
         else:
             assert isinstance(result.failure(), type(exp.failure()))
 
@@ -175,7 +172,7 @@ class TestAlgorithmDAO:
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
             assert (
-                    setup_transaction.benchmark.load(benchmark_name).unwrap().algorithms[0].status == BenchmarkStatus.DONE
+                setup_transaction.benchmark.load(benchmark_name).unwrap().algorithms[0].status == BenchmarkStatus.DONE
             )
         else:
             assert isinstance(result.failure(), type(exp.failure()))
@@ -204,7 +201,9 @@ class TestAlgorithmDAO:
         set_result = setup_transaction.solve_job.set_result(benchmark_name, metric_name, result)
         assert type(set_result) is type(exp)
         if is_successful(exp):
-            assert setup_transaction.solve_job.load(benchmark_name, metric_name).unwrap().result == result
+            a = setup_transaction.solve_job.load(benchmark_name, metric_name)
+            assert a.unwrap().result == result
+
         else:
             assert isinstance(set_result.failure(), type(exp.failure()))
 

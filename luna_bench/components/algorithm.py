@@ -20,15 +20,14 @@ class Algorithm(BaseModel):
 
     def reset(self) -> None: ...
 
-    def _to_domain_algorithm(self)-> AlgorithmConfigDomain.Algorithm:
+    def _to_domain_algorithm(self) -> AlgorithmConfigDomain.Algorithm:
         return AlgorithmConfigDomain.Algorithm.model_validate(self.algorithm.model_dump())
 
-    def _to_domain_backend(self)-> AlgorithmConfigDomain.Backend | None:
+    def _to_domain_backend(self) -> AlgorithmConfigDomain.Backend | None:
         return AlgorithmConfigDomain.Backend.model_validate(self.backend.model_dump()) if self.backend else None
 
     @staticmethod
     def _from_domain(modelmetric_config_domain: AlgorithmConfigDomain) -> Algorithm:
-
         # TODO here we need to figure out which class is the correct IAlgorithm instance
 
         return Algorithm(

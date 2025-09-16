@@ -183,13 +183,12 @@ class AlgorithmStorage(Protocol):
     ) -> Result[AlgorithmConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def remove(
-        benchmark_name: str, solvejob_name: str
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
+    def remove(benchmark_name: str, solvejob_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def update(
-        benchmark_name: str, solvejob_name: str, 
+        benchmark_name: str,
+        solvejob_name: str,
         algorithm: AlgorithmConfigDomain.Algorithm,
         backend: AlgorithmConfigDomain.Backend | None = None,
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...

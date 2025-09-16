@@ -3,8 +3,8 @@ from playhouse.sqlite_ext import JSONField
 
 from luna_bench._internal.dao.tables.base_table import BaseTable
 
-from .algorithm_config_table import AlgorithmConfigTable
 from ...domain_models import AlgorithmResultDomain
+from .algorithm_config_table import AlgorithmConfigTable
 
 
 class AlgorithmResultTable(BaseTable):
@@ -20,7 +20,6 @@ class AlgorithmResultTable(BaseTable):
     meta_data = JSONField(
         json_dumps=lambda x: x.model_dump_json(),
         json_loads=lambda x: AlgorithmResultDomain.AlgorithmResultMetadata.model_validate_json(x),
-        
     )
 
     encoded_solution = BlobField()

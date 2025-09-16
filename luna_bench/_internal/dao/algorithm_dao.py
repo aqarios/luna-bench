@@ -52,7 +52,6 @@ class AlgorithmDAO(AlgorithmStorage):
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
-
             print(e)
             print(e)
             print(e)
@@ -128,6 +127,7 @@ class AlgorithmDAO(AlgorithmStorage):
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
+            print(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -141,7 +141,7 @@ class AlgorithmDAO(AlgorithmStorage):
             )
             result = AlgorithmResultTable(
                 solve_job=solve_job,
-                meta_data=result_domain,
+                meta_data=result_domain.meta_data,
                 encoded_solution=result_domain._solution_bytes,
                 algorithm=solve_job,
             )
@@ -178,9 +178,7 @@ class AlgorithmDAO(AlgorithmStorage):
 
         selected_data = solvejob.result.first()
         if selected_data:
-            result_data =AlgorithmResultDomain.model_validate(
-                 selected_data.meta_data
-            )
+            result_data = AlgorithmResultDomain(meta_data=selected_data.meta_data)
 
             result_data._solution_bytes = selected_data.encoded_solution
         else:

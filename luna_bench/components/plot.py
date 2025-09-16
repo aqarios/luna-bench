@@ -11,10 +11,7 @@ class Plot(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-
-
     def run(self) -> None: ...
-
 
     def _to_domain_config(self) -> PlotConfigDomain.PlotConfig:
         return PlotConfigDomain.PlotConfig.model_validate_json(self.model_dump_json(exclude={"status", "name"}))

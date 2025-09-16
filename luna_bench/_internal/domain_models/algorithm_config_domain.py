@@ -10,8 +10,10 @@ from .job_status_enum import JobStatus
 class AlgorithmConfigDomain(BaseDomain):
     class Algorithm(BaseModel):
         model_config = ConfigDict(extra="allow")
+
     class Backend(BaseModel):
         model_config = ConfigDict(extra="allow")
+
     id: int
     name: str
 

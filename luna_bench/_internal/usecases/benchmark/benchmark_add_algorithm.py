@@ -28,7 +28,7 @@ class BenchmarkAddAlgorithmUcImpl(BenchmarkAddAlgorithmUc):
         benchmark_name: str,
         solve_job_name: str,
         algorithm: AlgorithmConfigDomain.Algorithm,
-        backend:AlgorithmConfigDomain.Backend | None = None,
+        backend: AlgorithmConfigDomain.Backend | None = None,
     ) -> Result[AlgorithmConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         with self._transaction as t:
             return t.solve_job.add(benchmark_name, solve_job_name, algorithm, backend)
