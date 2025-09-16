@@ -178,7 +178,9 @@ class AlgorithmDAO(AlgorithmStorage):
 
         selected_data = solvejob.result.first()
         if selected_data:
-            result_data = AlgorithmResultDomain(meta_data=selected_data.meta_data)
+            result_data = AlgorithmResultDomain(
+                meta_data=selected_data.meta_data
+            )
 
             result_data._solution_bytes = selected_data.encoded_solution
         else:
