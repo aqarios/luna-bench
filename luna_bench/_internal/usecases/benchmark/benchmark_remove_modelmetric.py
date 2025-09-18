@@ -25,4 +25,4 @@ class BenchmarkRemoveModelMetricUcImpl(BenchmarkRemoveModelMetricUc):
         self, benchmark_name: str, modelmetric_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         with self._transaction as t:
-            return t.model_metric.remove_modelmetric(benchmark_name, modelmetric_name)
+            return t.model_metric.remove(benchmark_name, modelmetric_name)

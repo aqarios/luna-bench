@@ -27,4 +27,4 @@ class BenchmarkAddModelMetricUcImpl(BenchmarkAddModelMetricUc):
         self, benchmark_name: str, modelmetric_name: str, modelmetric_config: ModelmetricConfigDomain.ModelmetricConfig
     ) -> Result[ModelmetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         with self._transaction as t:
-            return t.model_metric.add_modelmetric(benchmark_name, modelmetric_name, modelmetric_config)
+            return t.model_metric.add(benchmark_name, modelmetric_name, modelmetric_config)

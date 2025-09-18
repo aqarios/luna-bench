@@ -99,7 +99,7 @@ class TestModelDAO:
                 assert new_model.id == model_stored.unwrap().id
             else:
                 # Model was before not stored, so let's check if the actual model was stored an not only metadata
-                assert setup_transaction.model.fetch_model(new_model.id).unwrap() == model.encode()
+                assert setup_transaction.model.load(new_model.id).unwrap() == model.encode()
         elif isinstance(exp, Failure):
             TestModelDAO._check_exception(result.failure(), exp.failure())
 
@@ -107,10 +107,10 @@ class TestModelDAO:
         model_exists = _dummy_model("M1")
         model_stored = setup_transaction.model.get(model_hash=model_exists.__hash__())
 
-        fetch_success = setup_transaction.model.fetch_model(model_id=model_stored.unwrap().id)
+        fetch_success = setup_transaction.model.load(model_id=model_stored.unwrap().id)
 
         assert fetch_success.unwrap() == model_exists.encode()
 
-        fetch_failed = setup_transaction.model.fetch_model(model_id=-1)
+        fetch_failed = setup_transaction.model.load(model_id=-1)
 
         TestModelDAO._check_exception(fetch_failed.failure(), DataNotExistError())

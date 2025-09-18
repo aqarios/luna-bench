@@ -30,7 +30,7 @@ class MetricDAO(MetricStorage):
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
-    def add_metric(
+    def add(
         benchmark_name: str, metric_name: str, metric_config: MetricConfigDomain.MetricConfig
     ) -> Result[MetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
@@ -52,7 +52,7 @@ class MetricDAO(MetricStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def remove_metric(benchmark_name: str, metric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+    def remove(benchmark_name: str, metric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
             metric = MetricConfigTable.get(
@@ -66,7 +66,7 @@ class MetricDAO(MetricStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def update_metric(
+    def update(
         benchmark_name: str, metric_name: str, metric_config: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
@@ -101,7 +101,7 @@ class MetricDAO(MetricStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def set_result_metric(
+    def set_result(
         benchmark_name: str, metric_name: str, result: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
@@ -123,7 +123,7 @@ class MetricDAO(MetricStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def remove_result_metric(
+    def remove_result(
         benchmark_name: str, metric_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:

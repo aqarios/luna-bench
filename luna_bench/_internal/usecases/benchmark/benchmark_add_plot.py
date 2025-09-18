@@ -27,4 +27,4 @@ class BenchmarkAddPlotUcImpl(BenchmarkAddPlotUc):
         self, benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
     ) -> Result[PlotConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         with self._transaction as t:
-            return t.plot.add_plot(benchmark_name, plot_name, plot_config)
+            return t.plot.add(benchmark_name, plot_name, plot_config)

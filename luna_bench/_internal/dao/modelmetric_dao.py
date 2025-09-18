@@ -23,7 +23,7 @@ class ModelmetricDAO(ModelmetricStorage):
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
-    def add_modelmetric(
+    def add(
         benchmark_name: str, modelmetric_name: str, modelmetric_config: ModelmetricConfigDomain.ModelmetricConfig
     ) -> Result[ModelmetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
@@ -45,7 +45,7 @@ class ModelmetricDAO(ModelmetricStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def remove_modelmetric(
+    def remove(
         benchmark_name: str, modelmetric_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
@@ -61,7 +61,7 @@ class ModelmetricDAO(ModelmetricStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def update_modelmetric(
+    def update(
         benchmark_name: str, modelmetric_name: str, modelmetric_config: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
@@ -79,7 +79,7 @@ class ModelmetricDAO(ModelmetricStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def update_modelmetric_status(
+    def update_status(
         benchmark_name: str, modelmetric_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
@@ -96,7 +96,7 @@ class ModelmetricDAO(ModelmetricStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def set_result_modelmetric(
+    def set_result(
         benchmark_name: str, modelmetric_name: str, result: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
@@ -119,7 +119,7 @@ class ModelmetricDAO(ModelmetricStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def remove_result_modelmetric(
+    def remove_result(
         benchmark_name: str, modelmetric_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:

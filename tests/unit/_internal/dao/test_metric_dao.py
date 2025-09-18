@@ -22,7 +22,7 @@ class TestMetricDAO:
     def setup_transaction(empty_transaction: StorageTransaction) -> StorageTransaction:
         """Provide a transaction fixture with a default model for testing the ModelDAOs."""
         empty_transaction.benchmark.create(benchmark_name="existing")
-        TestMetricDAO._saved_metric_domain = empty_transaction.metric.add_metric(
+        TestMetricDAO._saved_metric_domain = empty_transaction.metric.add(
             benchmark_name="existing",
             metric_name="existing",
             metric_config=MetricConfigDomain.MetricConfig(something="xD"),
@@ -54,7 +54,7 @@ class TestMetricDAO:
     def test_add_metric(
         setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
-        result = setup_transaction.metric.add_metric(
+        result = setup_transaction.metric.add(
             benchmark_name, metric_name, MetricConfigDomain.MetricConfig(something="xD")
         )
         assert type(result) is type(exp)
@@ -105,7 +105,7 @@ class TestMetricDAO:
     def test_remove_metric(
         setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
-        result = setup_transaction.metric.remove_metric(benchmark_name, metric_name)
+        result = setup_transaction.metric.remove(benchmark_name, metric_name)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
@@ -129,7 +129,7 @@ class TestMetricDAO:
     def test_update_metric(
         setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
-        result = setup_transaction.metric.update_metric(
+        result = setup_transaction.metric.update(
             benchmark_name, metric_name, MetricConfigDomain.MetricConfig(something="xD2")
         )
         assert type(result) is type(exp)
@@ -189,14 +189,14 @@ class TestMetricDAO:
         result: MetricResultDomain,
         exp: Result,
     ):
-        set_result = setup_transaction.metric.set_result_metric(benchmark_name, metric_name, result)
+        set_result = setup_transaction.metric.set_result(benchmark_name, metric_name, result)
         assert type(set_result) is type(exp)
         if is_successful(exp):
             assert setup_transaction.metric.load(benchmark_name, metric_name).unwrap().result == result
         else:
             assert isinstance(set_result.failure(), type(exp.failure()))
 
-        remove = setup_transaction.metric.remove_result_metric(benchmark_name, metric_name)
+        remove = setup_transaction.metric.remove_result(benchmark_name, metric_name)
         assert type(remove) is type(exp)
         if is_successful(exp):
             assert setup_transaction.metric.load(benchmark_name, metric_name).unwrap().result is None

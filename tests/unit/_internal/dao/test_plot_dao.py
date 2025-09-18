@@ -23,7 +23,7 @@ class TestPlotDAO:
         empty_transaction.benchmark.create(benchmark_name="existing")
 
         empty_transaction.benchmark.create(benchmark_name="existing")
-        empty_transaction.plot.add_plot(
+        empty_transaction.plot.add(
             benchmark_name="existing",
             plot_name="existing",
             plot_config=PlotConfigDomain.PlotConfig(something="xD"),
@@ -56,7 +56,7 @@ class TestPlotDAO:
     )
     @staticmethod
     def test_add_plot(setup_transaction: StorageTransaction, benchmark_name: str, plot_name: str, exp: Result) -> None:
-        result = setup_transaction.plot.add_plot(
+        result = setup_transaction.plot.add(
             benchmark_name, plot_name, PlotConfigDomain.PlotConfig(tester="tester")
         )
         assert type(result) is type(exp)
@@ -111,7 +111,7 @@ class TestPlotDAO:
     def test_remove_plot(
         setup_transaction: StorageTransaction, benchmark_name: str, plot_name: str, exp: Result
     ) -> None:
-        result = setup_transaction.plot.remove_plot(benchmark_name, plot_name)
+        result = setup_transaction.plot.remove(benchmark_name, plot_name)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
@@ -135,7 +135,7 @@ class TestPlotDAO:
     def test_update_plot(
         setup_transaction: StorageTransaction, benchmark_name: str, plot_name: str, exp: Result
     ) -> None:
-        result = setup_transaction.plot.update_plot(
+        result = setup_transaction.plot.update(
             benchmark_name, plot_name, PlotConfigDomain.PlotConfig(something="xD2")
         )
         assert type(result) is type(exp)
@@ -163,7 +163,7 @@ class TestPlotDAO:
     def test_update_plot_status(
         setup_transaction: StorageTransaction, benchmark_name: str, plot_name: str, exp: Result
     ) -> None:
-        result = setup_transaction.plot.update_plot_status(benchmark_name, plot_name, JobStatus.DONE)
+        result = setup_transaction.plot.update_status(benchmark_name, plot_name, JobStatus.DONE)
         assert type(result) is type(exp)
 
         if is_successful(exp):

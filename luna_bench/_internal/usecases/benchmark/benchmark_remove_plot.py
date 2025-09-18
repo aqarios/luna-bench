@@ -23,4 +23,4 @@ class BenchmarkRemovePlotUcImpl(BenchmarkRemovePlotUc):
 
     def __call__(self, benchmark_name: str, plot_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         with self._transaction as t:
-            return t.plot.remove_plot(benchmark_name, plot_name)
+            return t.plot.remove(benchmark_name, plot_name)

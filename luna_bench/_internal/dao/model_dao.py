@@ -9,6 +9,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.domain_models import ModelMetadataDomain
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from .protocols import ModelStorage
 
 from .tables import ModelMetadataTable, ModelTable
 
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     from logging import Logger
 
 
-class ModelDAO:
+class ModelDAO(ModelStorage):
     """
     Data Access Object for model operations.
 
@@ -101,7 +102,7 @@ class ModelDAO:
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def fetch_model(model_id: int) -> Result[bytes, DataNotExistError | UnknownLunaBenchError]:
+    def load(model_id: int) -> Result[bytes, DataNotExistError | UnknownLunaBenchError]:
         """
         Fetch the binary data of a model.
 

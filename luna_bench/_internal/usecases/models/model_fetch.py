@@ -39,7 +39,7 @@ class ModelFetchUcImpl:
             On Failure: An error.
         """
         with self.transaction as t:
-            result = t.model.fetch_model(model_id)
+            result = t.model.load(model_id)
 
             if is_successful(result):
                 return Success(Model.decode(result.unwrap()))

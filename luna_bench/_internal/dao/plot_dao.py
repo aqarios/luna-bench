@@ -27,7 +27,7 @@ class PlotDAO(PlotStorage):
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
-    def add_plot(
+    def add(
         benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
     ) -> Result[PlotConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
@@ -48,7 +48,7 @@ class PlotDAO(PlotStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def remove_plot(benchmark_name: str, plot_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+    def remove(benchmark_name: str, plot_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
             plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)
@@ -60,7 +60,7 @@ class PlotDAO(PlotStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def update_plot(
+    def update(
         benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
@@ -76,7 +76,7 @@ class PlotDAO(PlotStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def update_plot_status(
+    def update_status(
         benchmark_name: str, plot_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:

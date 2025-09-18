@@ -71,25 +71,25 @@ class ModelStorage(Protocol):
     ) -> Result[ModelMetadataDomain, UnknownLunaBenchError]: ...
 
     @staticmethod
-    def fetch_model(model_id: int) -> Result[bytes, DataNotExistError | UnknownLunaBenchError]: ...
+    def load(model_id: int) -> Result[bytes, DataNotExistError | UnknownLunaBenchError]: ...
 
 
 class PlotStorage(Protocol):
     @staticmethod
-    def add_plot(
+    def add(
         benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
     ) -> Result[PlotConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def remove_plot(benchmark_name: str, plot_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
+    def remove(benchmark_name: str, plot_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def update_plot(
+    def update(
         benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def update_plot_status(
+    def update_status(
         benchmark_name: str, plot_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
@@ -101,32 +101,32 @@ class PlotStorage(Protocol):
 
 class ModelmetricStorage(Protocol):
     @staticmethod
-    def add_modelmetric(
+    def add(
         benchmark_name: str, modelmetric_name: str, modelmetric_config: ModelmetricConfigDomain.ModelmetricConfig
     ) -> Result[ModelmetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def remove_modelmetric(
+    def remove(
         benchmark_name: str, modelmetric_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def update_modelmetric(
+    def update(
         benchmark_name: str, modelmetric_name: str, modelmetric_config: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def update_modelmetric_status(
+    def update_status(
         benchmark_name: str, modelmetric_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def set_result_modelmetric(
+    def set_result(
         benchmark_name: str, modelmetric_name: str, result: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def remove_result_modelmetric(
+    def remove_result(
         benchmark_name: str, modelmetric_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
@@ -138,32 +138,32 @@ class ModelmetricStorage(Protocol):
 
 class MetricStorage(Protocol):
     @staticmethod
-    def add_metric(
+    def add(
         benchmark_name: str, metric_name: str, metric_config: MetricConfigDomain.MetricConfig
     ) -> Result[MetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def remove_metric(
+    def remove(
         benchmark_name: str, metric_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def update_metric(
+    def update(
         benchmark_name: str, metric_name: str, metric_config: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def update_metric_status(
+    def update_status(
         benchmark_name: str, metric_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def set_result_metric(
+    def set_result(
         benchmark_name: str, metric_name: str, result: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def remove_result_metric(
+    def remove_result(
         benchmark_name: str, metric_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 

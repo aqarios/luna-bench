@@ -52,11 +52,6 @@ class AlgorithmDAO(AlgorithmStorage):
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
-            print(e)
-            print(e)
-            print(e)
-            print(e)
-            print(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
