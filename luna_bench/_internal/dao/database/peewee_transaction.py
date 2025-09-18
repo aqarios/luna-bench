@@ -6,40 +6,40 @@ from luna_quantum import Logging
 from peewee import Database, _transaction
 
 from luna_bench._internal.dao.protocols import (
-    AlgorithmStorage,
-    MetricStorage,
-    ModelmetricStorage,
-    PlotStorage,
-    StorageTransaction,
+    AlgorithmDao,
+    DaoTransaction,
+    MetricDao,
+    ModelmetricDao,
+    PlotDao,
 )
 
 if TYPE_CHECKING:
     from logging import Logger
 
-    from luna_bench._internal.dao.protocols import BenchmarkStorage, ModelSetStorage, ModelStorage
+    from luna_bench._internal.dao.protocols import BenchmarkDao, ModelDao, ModelSetDao
 
 
-class PeeweeTransaction(_transaction, StorageTransaction):
+class PeeweeTransaction(_transaction, DaoTransaction):
     _logger: Logger
 
-    _modelset_storage: ModelSetStorage
-    _model_storage: ModelStorage
-    _benchmark_storage: BenchmarkStorage
-    _metric_storage: MetricStorage
-    _modelmetric_storage: ModelmetricStorage
-    _solvejob_storage: AlgorithmStorage
-    _plot_storage: PlotStorage
+    _modelset_storage: ModelSetDao
+    _model_storage: ModelDao
+    _benchmark_storage: BenchmarkDao
+    _metric_storage: MetricDao
+    _modelmetric_storage: ModelmetricDao
+    _solvejob_storage: AlgorithmDao
+    _plot_storage: PlotDao
 
     def __init__(
         self,
         database: Database,
-        modelset_storage: ModelSetStorage,
-        model_storage: ModelStorage,
-        benchmark_storage: BenchmarkStorage,
-        metric_storage: MetricStorage,
-        modelmetric_storage: ModelmetricStorage,
-        solvejob_storage: AlgorithmStorage,
-        plot_storage: PlotStorage,
+        modelset_storage: ModelSetDao,
+        model_storage: ModelDao,
+        benchmark_storage: BenchmarkDao,
+        metric_storage: MetricDao,
+        modelmetric_storage: ModelmetricDao,
+        solvejob_storage: AlgorithmDao,
+        plot_storage: PlotDao,
     ) -> None:
         super().__init__(database)
         self._logger = Logging.get_logger(__name__)
@@ -53,29 +53,29 @@ class PeeweeTransaction(_transaction, StorageTransaction):
         self._plot_storage = plot_storage
 
     @property
-    def modelset(self) -> ModelSetStorage:
+    def modelset(self) -> ModelSetDao:
         return self._modelset_storage
 
     @property
-    def model(self) -> ModelStorage:
+    def model(self) -> ModelDao:
         return self._model_storage
 
     @property
-    def benchmark(self) -> BenchmarkStorage:
+    def benchmark(self) -> BenchmarkDao:
         return self._benchmark_storage
 
     @property
-    def metric(self) -> MetricStorage:
+    def metric(self) -> MetricDao:
         return self._metric_storage
 
     @property
-    def model_metric(self) -> ModelmetricStorage:
+    def model_metric(self) -> ModelmetricDao:
         return self._modelmetric_storage
 
     @property
-    def solve_job(self) -> AlgorithmStorage:
+    def algorithm(self) -> AlgorithmDao:
         return self._solvejob_storage
 
     @property
-    def plot(self) -> PlotStorage:
+    def plot(self) -> PlotDao:
         return self._plot_storage

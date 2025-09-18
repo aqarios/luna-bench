@@ -9,7 +9,7 @@ from luna_bench.configs.config import Config
 from .mock_model import _dummy_model
 
 if TYPE_CHECKING:
-    from luna_bench._internal.dao import StorageTransaction
+    from luna_bench._internal.dao import DaoTransaction
 
 
 @pytest.fixture()
@@ -26,7 +26,7 @@ def usecase() -> Generator[UsecaseContainer]:
     uc.wire()
 
     # Get the transaction from the container
-    transaction: StorageTransaction = uc.storage_container.transaction()
+    transaction: DaoTransaction = uc.storage_container.transaction()
     db = uc.storage_container.database()
     # Create tables
 

@@ -6,17 +6,17 @@ from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError
 from returns.result import Failure, Success
 
-from luna_bench._internal.dao.algorithm_dao import AlgorithmDAO
-from luna_bench._internal.dao.metric_dao import MetricDAO
-from luna_bench._internal.dao.modelmetric_dao import ModelmetricDAO
+from luna_bench._internal.dao.algorithm_sql_dao import AlgorithmSqlDao
+from luna_bench._internal.dao.metric_sql_dao import MetricSqlDao
+from luna_bench._internal.dao.modelmetric_sql_dao import ModelmetricSqlDao
 from luna_bench._internal.domain_models import BenchmarkDomain, BenchmarkStatus, ModelSetDomain
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
-from .modelset_dao import ModelSetDAO
-from .plot_dao import PlotDAO
-from .protocols import BenchmarkStorage
+from .modelset_sql_dao import ModelSetSqlDao
+from .plot_sql_dao import PlotSqlDao
+from .protocols import BenchmarkDao
 from .tables import (
     BenchmarkTable,
     ModelSetTable,
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from returns.result import Result
 
 
-class BenchmarkDAO(BenchmarkStorage):
+class BenchmarkSqlDao(BenchmarkDao):
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
@@ -36,7 +36,7 @@ class BenchmarkDAO(BenchmarkStorage):
         benchmark = BenchmarkTable(name=benchmark_name, status=BenchmarkStatus.CREATED, modelset=None)
         try:
             benchmark.save()
-            return Success(BenchmarkDAO.benchmark_to_domain(benchmark))
+            return Success(BenchmarkSqlDao.benchmark_to_domain(benchmark))
         except IntegrityError:
             return Failure(DataNotUniqueError())
         except Exception as e:  # pragma: no cover
@@ -46,7 +46,7 @@ class BenchmarkDAO(BenchmarkStorage):
     def load(benchmark_name: str) -> Result[BenchmarkDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
-            return Success(BenchmarkDAO.benchmark_to_domain(benchmark))
+            return Success(BenchmarkSqlDao.benchmark_to_domain(benchmark))
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
@@ -67,7 +67,7 @@ class BenchmarkDAO(BenchmarkStorage):
     def load_all() -> Result[list[BenchmarkDomain], UnknownLunaBenchError]:
         try:
             benchmarks = BenchmarkTable.select()
-            return Success([BenchmarkDAO.benchmark_to_domain(b) for b in benchmarks])
+            return Success([BenchmarkSqlDao.benchmark_to_domain(b) for b in benchmarks])
         except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
@@ -107,15 +107,17 @@ class BenchmarkDAO(BenchmarkStorage):
 
         models_set_domain: ModelSetDomain | None = None
         if modelset:
-            models_set_domain = ModelSetDAO.modelset_to_domain(modelset)
+            models_set_domain = ModelSetSqlDao.modelset_to_domain(modelset)
 
         return BenchmarkDomain(
             id=benchmark.id,
             name=benchmark.name,
             status=benchmark.status,
             modelset=models_set_domain,
-            modelmetrics=[ModelmetricDAO.modelmetric_to_domain(modelmetric) for modelmetric in benchmark.modelmetrics],
-            algorithms=[AlgorithmDAO.solvejob_to_domain(solvejob) for solvejob in benchmark.solve_jobs],
-            metrics=[MetricDAO.metric_to_domain(metric) for metric in benchmark.metrics],
-            plots=[PlotDAO.plot_to_domain(plot) for plot in benchmark.plots],
+            modelmetrics=[
+                ModelmetricSqlDao.modelmetric_to_domain(modelmetric) for modelmetric in benchmark.modelmetrics
+            ],
+            algorithms=[AlgorithmSqlDao.solvejob_to_domain(solvejob) for solvejob in benchmark.algorithms],
+            metrics=[MetricSqlDao.metric_to_domain(metric) for metric in benchmark.metrics],
+            plots=[PlotSqlDao.plot_to_domain(plot) for plot in benchmark.plots],
         )

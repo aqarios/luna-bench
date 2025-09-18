@@ -1,19 +1,19 @@
-from luna_bench._internal.dao import StorageTransaction
+from luna_bench._internal.dao import DaoTransaction
 from luna_bench._internal.domain_models import ModelMetadataDomain
 
 
 class ModelAllUcImpl:
     """Implementation of the use case for retrieving the metadata of all models."""
 
-    transaction: StorageTransaction
+    transaction: DaoTransaction
 
-    def __init__(self, transaction: StorageTransaction) -> None:
+    def __init__(self, transaction: DaoTransaction) -> None:
         """
         Initialize the ModelAllUcImpl with a storage transaction.
 
         Parameters
         ----------
-        transaction : StorageTransaction
+        transaction : DaoTransaction
             The transaction object used to interact with the storage.
         """
         self.transaction = transaction

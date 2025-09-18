@@ -12,14 +12,14 @@ from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 from ..domain_models import BenchmarkStatus, JobStatus, ModelmetricConfigDomain, ModelmetricResultDomain
-from .protocols import ModelmetricStorage
+from .protocols import ModelmetricDao
 from .tables import BenchmarkTable, ModelmetricConfigTable, ModelmetricResultTable
 
 if TYPE_CHECKING:
     from logging import Logger
 
 
-class ModelmetricDAO(ModelmetricStorage):
+class ModelmetricSqlDao(ModelmetricDao):
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
@@ -36,7 +36,7 @@ class ModelmetricDAO(ModelmetricStorage):
             )
             modelmetric.status = BenchmarkStatus.CREATED
             modelmetric.save()
-            return Success(ModelmetricDAO.modelmetric_to_domain(modelmetric))
+            return Success(ModelmetricSqlDao.modelmetric_to_domain(modelmetric))
         except IntegrityError:
             return Failure(DataNotUniqueError())
         except DoesNotExist:
@@ -45,9 +45,7 @@ class ModelmetricDAO(ModelmetricStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def remove(
-        benchmark_name: str, modelmetric_name: str
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+    def remove(benchmark_name: str, modelmetric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
             modelmetric = ModelmetricConfigTable.get(
@@ -147,7 +145,7 @@ class ModelmetricDAO(ModelmetricStorage):
                 ModelmetricConfigTable.name == metric_name, ModelmetricConfigTable.benchmark == benchmark
             )
 
-            return Success(ModelmetricDAO.modelmetric_to_domain(metric))
+            return Success(ModelmetricSqlDao.modelmetric_to_domain(metric))
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover

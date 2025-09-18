@@ -12,7 +12,7 @@ from tests.unit.fixtures.mock_model import _dummy_model
 if TYPE_CHECKING:
     from luna_quantum import Model
 
-    from luna_bench._internal.dao import StorageTransaction
+    from luna_bench._internal.dao import DaoTransaction
     from luna_bench._internal.domain_models import ModelMetadataDomain
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class TestModelDAO:
     @pytest.fixture()
     @staticmethod
-    def setup_transaction(empty_transaction: StorageTransaction) -> StorageTransaction:
+    def setup_transaction(empty_transaction: DaoTransaction) -> DaoTransaction:
         """Provide a transaction fixture with a default model for testing the ModelDAOs."""
         model: Model = _dummy_model("M1")
         model2: Model = _dummy_model("M2")
@@ -51,7 +51,7 @@ class TestModelDAO:
     )
     def test_get_model(
         self,
-        setup_transaction: StorageTransaction,
+        setup_transaction: DaoTransaction,
         model_hash: int,
         exp: Result[Model, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
@@ -66,7 +66,7 @@ class TestModelDAO:
             TestModelDAO._check_exception(result.failure(), exp.failure())
 
     @pytest.mark.parametrize("exp", [([_dummy_model("M1"), _dummy_model("M2")])])
-    def test_get_all_model(self, setup_transaction: StorageTransaction, exp: list[Model]) -> None:
+    def test_get_all_model(self, setup_transaction: DaoTransaction, exp: list[Model]) -> None:
         result: list[ModelMetadataDomain] = setup_transaction.model.get_all()
 
         result = sorted(result, key=lambda x: x.name)
@@ -83,7 +83,7 @@ class TestModelDAO:
         ],
     )
     def test_get_or_create_model(
-        self, setup_transaction: StorageTransaction, model: Model, exp: Result[Model, Exception]
+        self, setup_transaction: DaoTransaction, model: Model, exp: Result[Model, Exception]
     ) -> None:
         model_stored = setup_transaction.model.get(model_hash=model.__hash__())
         result = setup_transaction.model.get_or_create(
@@ -103,7 +103,7 @@ class TestModelDAO:
         elif isinstance(exp, Failure):
             TestModelDAO._check_exception(result.failure(), exp.failure())
 
-    def test_fetch_model(self, setup_transaction: StorageTransaction) -> None:
+    def test_fetch_model(self, setup_transaction: DaoTransaction) -> None:
         model_exists = _dummy_model("M1")
         model_stored = setup_transaction.model.get(model_hash=model_exists.__hash__())
 

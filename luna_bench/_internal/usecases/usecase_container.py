@@ -1,7 +1,7 @@
 from dependency_injector import containers, providers
 from dependency_injector.providers import Configuration, Provider
 
-from luna_bench._internal.dao import StorageContainer
+from luna_bench._internal.dao import DaoContainer
 
 from .benchmark.benchmark_add_algorithm import BenchmarkAddAlgorithmUcImpl
 from .benchmark.benchmark_add_metric import BenchmarkAddMetricUcImpl
@@ -50,7 +50,7 @@ from .modelset.protocols import ModelSetLoadAllUc, ModelSetLoadUc
 class UsecaseContainer(containers.DeclarativeContainer):
     config: Configuration = providers.Configuration()
 
-    storage_container = providers.Container(StorageContainer, config=config)
+    storage_container = providers.Container(DaoContainer, config=config)
 
     # ModelSet usecases
     modelset_create_uc: Provider[ModelSetCreateUc] = providers.Singleton(

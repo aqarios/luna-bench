@@ -13,7 +13,7 @@ from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
-from .protocols import AlgorithmStorage
+from .protocols import AlgorithmDao
 from .tables import (
     AlgorithmConfigTable,
     AlgorithmResultTable,
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from returns.result import Result
 
 
-class AlgorithmDAO(AlgorithmStorage):
+class AlgorithmSqlDao(AlgorithmDao):
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
@@ -46,7 +46,7 @@ class AlgorithmDAO(AlgorithmStorage):
                 backend=backend,
             )
             solve_job.save()
-            return Success(AlgorithmDAO.solvejob_to_domain(solve_job))
+            return Success(AlgorithmSqlDao.solvejob_to_domain(solve_job))
         except IntegrityError:
             return Failure(DataNotUniqueError())
         except DoesNotExist:
@@ -117,8 +117,8 @@ class AlgorithmDAO(AlgorithmStorage):
             solve_job = AlgorithmConfigTable.get(
                 AlgorithmConfigTable.name == solvejob_name, AlgorithmConfigTable.benchmark == benchmark
             )
-            a = AlgorithmDAO.solvejob_to_domain(solve_job)
-            return Success(AlgorithmDAO.solvejob_to_domain(solve_job))
+            a = AlgorithmSqlDao.solvejob_to_domain(solve_job)
+            return Success(AlgorithmSqlDao.solvejob_to_domain(solve_job))
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
@@ -173,9 +173,7 @@ class AlgorithmDAO(AlgorithmStorage):
 
         selected_data = solvejob.result.first()
         if selected_data:
-            result_data = AlgorithmResultDomain(
-                meta_data=selected_data.meta_data
-            )
+            result_data = AlgorithmResultDomain(meta_data=selected_data.meta_data)
 
             result_data._solution_bytes = selected_data.encoded_solution
         else:

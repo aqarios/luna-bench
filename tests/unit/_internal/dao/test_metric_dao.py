@@ -11,7 +11,7 @@ from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 
 if TYPE_CHECKING:
-    from luna_bench._internal.dao import StorageTransaction
+    from luna_bench._internal.dao import DaoTransaction
 
 
 class TestMetricDAO:
@@ -19,7 +19,7 @@ class TestMetricDAO:
 
     @pytest.fixture()
     @staticmethod
-    def setup_transaction(empty_transaction: StorageTransaction) -> StorageTransaction:
+    def setup_transaction(empty_transaction: DaoTransaction) -> DaoTransaction:
         """Provide a transaction fixture with a default model for testing the ModelDAOs."""
         empty_transaction.benchmark.create(benchmark_name="existing")
         TestMetricDAO._saved_metric_domain = empty_transaction.metric.add(
@@ -51,9 +51,7 @@ class TestMetricDAO:
         ],
     )
     @staticmethod
-    def test_add_metric(
-        setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
-    ) -> None:
+    def test_add_metric(setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result) -> None:
         result = setup_transaction.metric.add(
             benchmark_name, metric_name, MetricConfigDomain.MetricConfig(something="xD")
         )
@@ -78,9 +76,7 @@ class TestMetricDAO:
         ],
     )
     @staticmethod
-    def test_load_metric(
-        setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
-    ) -> None:
+    def test_load_metric(setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result) -> None:
         result = setup_transaction.metric.load(benchmark_name, metric_name)
         assert type(result) is type(exp)
 
@@ -103,7 +99,7 @@ class TestMetricDAO:
     )
     @staticmethod
     def test_remove_metric(
-        setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
+        setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
         result = setup_transaction.metric.remove(benchmark_name, metric_name)
 
@@ -127,7 +123,7 @@ class TestMetricDAO:
     )
     @staticmethod
     def test_update_metric(
-        setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
+        setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
         result = setup_transaction.metric.update(
             benchmark_name, metric_name, MetricConfigDomain.MetricConfig(something="xD2")
@@ -157,7 +153,7 @@ class TestMetricDAO:
     )
     @staticmethod
     def test_update_metric_status(
-        setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
+        setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
         result = setup_transaction.metric.update_metric_status(benchmark_name, metric_name, BenchmarkStatus.DONE)
         assert type(result) is type(exp)
@@ -183,7 +179,7 @@ class TestMetricDAO:
     )
     def test_result_storage(
         self,
-        setup_transaction: StorageTransaction,
+        setup_transaction: DaoTransaction,
         benchmark_name: str,
         metric_name: str,
         result: MetricResultDomain,

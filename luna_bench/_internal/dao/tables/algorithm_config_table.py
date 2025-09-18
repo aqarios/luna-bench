@@ -15,7 +15,7 @@ class AlgorithmConfigTable(BaseTable):
 
     benchmark = ForeignKeyField(
         BenchmarkTable,
-        backref="solve_jobs",
+        backref="algorithms",
         on_delete="CASCADE",
     )
 

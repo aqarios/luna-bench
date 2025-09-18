@@ -2,14 +2,14 @@ from collections.abc import Generator
 
 import pytest
 
-from luna_bench._internal.dao import StorageContainer, StorageTransaction
+from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench.configs.config import Config
 
 
 @pytest.fixture()
-def empty_transaction() -> Generator[StorageTransaction]:
+def empty_transaction() -> Generator[DaoTransaction]:
     """Provide a transaction fixture for testing DAOs."""
-    sc = StorageContainer()
+    sc = DaoContainer()
 
     cnf = Config()
     cnf.DB_CONNECTION_STRING = ":memory:"
@@ -18,7 +18,7 @@ def empty_transaction() -> Generator[StorageTransaction]:
     sc.reset_singletons()
     sc.wire()
 
-    transaction: StorageTransaction = sc.transaction()
+    transaction: DaoTransaction = sc.transaction()
 
     with transaction as t:
         try:

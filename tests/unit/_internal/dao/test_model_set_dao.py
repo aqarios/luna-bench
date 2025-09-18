@@ -13,11 +13,11 @@ from tests.unit.fixtures.mock_model import _dummy_model
 if TYPE_CHECKING:
     from luna_quantum import Model
 
-    from luna_bench._internal.dao import StorageTransaction
+    from luna_bench._internal.dao import DaoTransaction
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-def _stored_dummy_model(transaction: StorageTransaction, modelset_name: str, model_name: str) -> ModelMetadataDomain:
+def _stored_dummy_model(transaction: DaoTransaction, modelset_name: str, model_name: str) -> ModelMetadataDomain:
     model = _dummy_model(model_name)
     model_metadata = transaction.model.get_or_create(
         model_name=model.name, model_hash=model.__hash__(), binary=model.encode()
@@ -29,7 +29,7 @@ def _stored_dummy_model(transaction: StorageTransaction, modelset_name: str, mod
 class TestModelSetDAO:
     @pytest.fixture()
     @staticmethod
-    def setup_transaction(empty_transaction: StorageTransaction) -> StorageTransaction:
+    def setup_transaction(empty_transaction: DaoTransaction) -> DaoTransaction:
         """Provide a transaction fixture with a default model for testing the ModelDAOs."""
         empty_transaction.modelset.create(modelset_name="Existing")
         return empty_transaction
@@ -43,7 +43,7 @@ class TestModelSetDAO:
     )
     def test_create_modelset(
         self,
-        setup_transaction: StorageTransaction,
+        setup_transaction: DaoTransaction,
         name: str,
         exp: Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError],
     ) -> None:
@@ -68,7 +68,7 @@ class TestModelSetDAO:
     )
     def test_load_modelset(
         self,
-        setup_transaction: StorageTransaction,
+        setup_transaction: DaoTransaction,
         modelset_name: str,
         exp: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
@@ -91,7 +91,7 @@ class TestModelSetDAO:
     )
     def test_delete_modelset(
         self,
-        setup_transaction: StorageTransaction,
+        setup_transaction: DaoTransaction,
         modelset_name: str,
         exp: Result[None, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
@@ -122,7 +122,7 @@ class TestModelSetDAO:
     )
     def test_add_model(
         self,
-        setup_transaction: StorageTransaction,
+        setup_transaction: DaoTransaction,
         modelset_name: str,
         models: list[Model],
         exp: Result[ModelSetDomain, Exception],
@@ -160,7 +160,7 @@ class TestModelSetDAO:
     )
     def test_remove_model(
         self,
-        setup_transaction: StorageTransaction,
+        setup_transaction: DaoTransaction,
         modelset_name: str,
         model_id: int,
         exp: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
@@ -194,7 +194,7 @@ class TestModelSetDAO:
         ],
     )
     def test_load_all(
-        self, setup_transaction: StorageTransaction, exp: Result[list[ModelSetDomain], UnknownLunaBenchError]
+        self, setup_transaction: DaoTransaction, exp: Result[list[ModelSetDomain], UnknownLunaBenchError]
     ) -> None:
         result = setup_transaction.modelset.load_all()
 
@@ -210,7 +210,7 @@ class TestModelSetDAO:
     )
     def test_load_all_models(
         self,
-        setup_transaction: StorageTransaction,
+        setup_transaction: DaoTransaction,
         modelset_name: str,
         exp: Result[list[ModelMetadataDomain], DataNotExistError | UnknownLunaBenchError],
     ) -> None:

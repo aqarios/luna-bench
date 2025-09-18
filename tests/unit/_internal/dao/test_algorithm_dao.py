@@ -12,7 +12,7 @@ from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 
 if TYPE_CHECKING:
-    from luna_bench._internal.dao import StorageTransaction
+    from luna_bench._internal.dao import DaoTransaction
 
 _result_obj = AlgorithmResultDomain(meta_data=(AlgorithmResultDomain.AlgorithmResultMetadata(something="xD")))
 _result_obj.solution = b"abc"
@@ -23,10 +23,10 @@ class TestAlgorithmDAO:
 
     @pytest.fixture()
     @staticmethod
-    def setup_transaction(empty_transaction: StorageTransaction) -> StorageTransaction:
+    def setup_transaction(empty_transaction: DaoTransaction) -> DaoTransaction:
         """Provide a transaction fixture with a default model for testing the ModelDAOs."""
         empty_transaction.benchmark.create(benchmark_name="existing")
-        TestAlgorithmDAO._saved_algorithm_domain = empty_transaction.solve_job.add(
+        TestAlgorithmDAO._saved_algorithm_domain = empty_transaction.algorithm.add(
             benchmark_name="existing",
             solve_job_name="existing",
             algorithm=AlgorithmConfigDomain.Algorithm(),
@@ -57,10 +57,10 @@ class TestAlgorithmDAO:
         ],
     )
     @staticmethod
-    def test_add_solvejob(
-        setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
+    def test_add_algorithm(
+        setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
-        result = setup_transaction.solve_job.add(
+        result = setup_transaction.algorithm.add(
             benchmark_name, metric_name, AlgorithmConfigDomain.Algorithm(something="xD")
         )
         assert type(result) is type(exp)
@@ -84,10 +84,10 @@ class TestAlgorithmDAO:
         ],
     )
     @staticmethod
-    def test_load_solvejob(
-        setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
+    def test_load_algorithm(
+        setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
-        result = setup_transaction.solve_job.load(benchmark_name, metric_name)
+        result = setup_transaction.algorithm.load(benchmark_name, metric_name)
         assert type(result) is type(exp)
 
         if is_successful(exp):
@@ -108,10 +108,10 @@ class TestAlgorithmDAO:
         ],
     )
     @staticmethod
-    def test_remove_solvejob(
-        setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
+    def test_remove_algorithm(
+        setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
-        result = setup_transaction.solve_job.remove(benchmark_name, metric_name)
+        result = setup_transaction.algorithm.remove(benchmark_name, metric_name)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
@@ -132,10 +132,10 @@ class TestAlgorithmDAO:
         ],
     )
     @staticmethod
-    def test_update_solvejob(
-        setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
+    def test_update_algorithm(
+        setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
-        result = setup_transaction.solve_job.update(
+        result = setup_transaction.algorithm.update(
             benchmark_name, metric_name, AlgorithmConfigDomain.Algorithm(something="xD2")
         )
         assert type(result) is type(exp)
@@ -164,9 +164,9 @@ class TestAlgorithmDAO:
     )
     @staticmethod
     def test_update_modelmetric_status(
-        setup_transaction: StorageTransaction, benchmark_name: str, metric_name: str, exp: Result
+        setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result
     ) -> None:
-        result = setup_transaction.solve_job.update_status(benchmark_name, metric_name, BenchmarkStatus.DONE)
+        result = setup_transaction.algorithm.update_status(benchmark_name, metric_name, BenchmarkStatus.DONE)
         assert type(result) is type(exp)
 
         if is_successful(exp):
@@ -192,24 +192,24 @@ class TestAlgorithmDAO:
     )
     def test_result_storage(
         self,
-        setup_transaction: StorageTransaction,
+        setup_transaction: DaoTransaction,
         benchmark_name: str,
         metric_name: str,
         result: AlgorithmResultDomain,
         exp: Result,
     ):
-        set_result = setup_transaction.solve_job.set_result(benchmark_name, metric_name, result)
+        set_result = setup_transaction.algorithm.set_result(benchmark_name, metric_name, result)
         assert type(set_result) is type(exp)
         if is_successful(exp):
-            a = setup_transaction.solve_job.load(benchmark_name, metric_name)
+            a = setup_transaction.algorithm.load(benchmark_name, metric_name)
             assert a.unwrap().result == result
 
         else:
             assert isinstance(set_result.failure(), type(exp.failure()))
 
-        remove = setup_transaction.solve_job.remove_result(benchmark_name, metric_name)
+        remove = setup_transaction.algorithm.remove_result(benchmark_name, metric_name)
         assert type(remove) is type(exp)
         if is_successful(exp):
-            assert setup_transaction.solve_job.load(benchmark_name, metric_name).unwrap().result is None
+            assert setup_transaction.algorithm.load(benchmark_name, metric_name).unwrap().result is None
         else:
             assert isinstance(remove.failure(), type(exp.failure()))

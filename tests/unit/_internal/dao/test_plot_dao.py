@@ -11,14 +11,14 @@ from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 
 if TYPE_CHECKING:
-    from luna_bench._internal.dao import StorageTransaction
+    from luna_bench._internal.dao import DaoTransaction
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
 class TestPlotDAO:
     @pytest.fixture()
     @staticmethod
-    def setup_transaction(empty_transaction: StorageTransaction) -> StorageTransaction:
+    def setup_transaction(empty_transaction: DaoTransaction) -> DaoTransaction:
         """Provide a transaction fixture with a default model for testing the ModelDAOs."""
         empty_transaction.benchmark.create(benchmark_name="existing")
 
@@ -55,10 +55,8 @@ class TestPlotDAO:
         ],
     )
     @staticmethod
-    def test_add_plot(setup_transaction: StorageTransaction, benchmark_name: str, plot_name: str, exp: Result) -> None:
-        result = setup_transaction.plot.add(
-            benchmark_name, plot_name, PlotConfigDomain.PlotConfig(tester="tester")
-        )
+    def test_add_plot(setup_transaction: DaoTransaction, benchmark_name: str, plot_name: str, exp: Result) -> None:
+        result = setup_transaction.plot.add(benchmark_name, plot_name, PlotConfigDomain.PlotConfig(tester="tester"))
         assert type(result) is type(exp)
 
         if is_successful(exp):
@@ -85,7 +83,7 @@ class TestPlotDAO:
         ],
     )
     @staticmethod
-    def test_load_plot(setup_transaction: StorageTransaction, plot_name: str, exp: Result) -> None:
+    def test_load_plot(setup_transaction: DaoTransaction, plot_name: str, exp: Result) -> None:
         result: Result[PlotConfigDomain, DataNotExistError | UnknownLunaBenchError] = setup_transaction.plot.load(
             "existing", plot_name
         )
@@ -108,9 +106,7 @@ class TestPlotDAO:
         ],
     )
     @staticmethod
-    def test_remove_plot(
-        setup_transaction: StorageTransaction, benchmark_name: str, plot_name: str, exp: Result
-    ) -> None:
+    def test_remove_plot(setup_transaction: DaoTransaction, benchmark_name: str, plot_name: str, exp: Result) -> None:
         result = setup_transaction.plot.remove(benchmark_name, plot_name)
 
         if is_successful(exp):
@@ -132,12 +128,8 @@ class TestPlotDAO:
         ],
     )
     @staticmethod
-    def test_update_plot(
-        setup_transaction: StorageTransaction, benchmark_name: str, plot_name: str, exp: Result
-    ) -> None:
-        result = setup_transaction.plot.update(
-            benchmark_name, plot_name, PlotConfigDomain.PlotConfig(something="xD2")
-        )
+    def test_update_plot(setup_transaction: DaoTransaction, benchmark_name: str, plot_name: str, exp: Result) -> None:
+        result = setup_transaction.plot.update(benchmark_name, plot_name, PlotConfigDomain.PlotConfig(something="xD2"))
         assert type(result) is type(exp)
 
         if is_successful(exp):
@@ -161,7 +153,7 @@ class TestPlotDAO:
     )
     @staticmethod
     def test_update_plot_status(
-        setup_transaction: StorageTransaction, benchmark_name: str, plot_name: str, exp: Result
+        setup_transaction: DaoTransaction, benchmark_name: str, plot_name: str, exp: Result
     ) -> None:
         result = setup_transaction.plot.update_status(benchmark_name, plot_name, JobStatus.DONE)
         assert type(result) is type(exp)

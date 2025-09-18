@@ -12,7 +12,7 @@ from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 from ...errors.storage.data_not_unique_error import DataNotUniqueError
-from .protocols import MetricStorage
+from .protocols import MetricDao
 from .tables import (
     BenchmarkTable,
     MetricConfigTable,
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from returns.result import Result
 
 
-class MetricDAO(MetricStorage):
+class MetricSqlDao(MetricDao):
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
@@ -43,7 +43,7 @@ class MetricDAO(MetricStorage):
             )
             metric.status = BenchmarkStatus.CREATED
             metric.save()
-            return Success(MetricDAO.metric_to_domain(metric))
+            return Success(MetricSqlDao.metric_to_domain(metric))
         except IntegrityError:
             return Failure(DataNotUniqueError())
         except DoesNotExist:
@@ -123,9 +123,7 @@ class MetricDAO(MetricStorage):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def remove_result(
-        benchmark_name: str, metric_name: str
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+    def remove_result(benchmark_name: str, metric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
             metric = MetricConfigTable.get(
@@ -151,7 +149,7 @@ class MetricDAO(MetricStorage):
                 MetricConfigTable.name == metric_name, MetricConfigTable.benchmark == benchmark
             )
 
-            return Success(MetricDAO.metric_to_domain(metric))
+            return Success(MetricSqlDao.metric_to_domain(metric))
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover

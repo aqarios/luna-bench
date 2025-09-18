@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-class StorageTransaction(Protocol):
+class DaoTransaction(Protocol):
     def __enter__(self) -> Self: ...
 
     def __exit__(
@@ -37,28 +37,28 @@ class StorageTransaction(Protocol):
     def rollback(self) -> None: ...
 
     @property
-    def modelset(self) -> ModelSetStorage: ...
+    def modelset(self) -> ModelSetDao: ...
 
     @property
-    def model(self) -> ModelStorage: ...
+    def model(self) -> ModelDao: ...
 
     @property
-    def benchmark(self) -> BenchmarkStorage: ...
+    def benchmark(self) -> BenchmarkDao: ...
 
     @property
-    def model_metric(self) -> ModelmetricStorage: ...
+    def model_metric(self) -> ModelmetricDao: ...
 
     @property
-    def metric(self) -> MetricStorage: ...
+    def metric(self) -> MetricDao: ...
 
     @property
-    def solve_job(self) -> AlgorithmStorage: ...
+    def algorithm(self) -> AlgorithmDao: ...
 
     @property
-    def plot(self) -> PlotStorage: ...
+    def plot(self) -> PlotDao: ...
 
 
-class ModelStorage(Protocol):
+class ModelDao(Protocol):
     @staticmethod
     def get(model_hash: int) -> Result[ModelMetadataDomain, DataNotExistError | UnknownLunaBenchError]: ...
 
@@ -74,7 +74,7 @@ class ModelStorage(Protocol):
     def load(model_id: int) -> Result[bytes, DataNotExistError | UnknownLunaBenchError]: ...
 
 
-class PlotStorage(Protocol):
+class PlotDao(Protocol):
     @staticmethod
     def add(
         benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
@@ -99,7 +99,7 @@ class PlotStorage(Protocol):
     ) -> Result[PlotConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
 
 
-class ModelmetricStorage(Protocol):
+class ModelmetricDao(Protocol):
     @staticmethod
     def add(
         benchmark_name: str, modelmetric_name: str, modelmetric_config: ModelmetricConfigDomain.ModelmetricConfig
@@ -136,16 +136,14 @@ class ModelmetricStorage(Protocol):
     ) -> Result[ModelmetricConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
 
 
-class MetricStorage(Protocol):
+class MetricDao(Protocol):
     @staticmethod
     def add(
         benchmark_name: str, metric_name: str, metric_config: MetricConfigDomain.MetricConfig
     ) -> Result[MetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def remove(
-        benchmark_name: str, metric_name: str
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
+    def remove(benchmark_name: str, metric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def update(
@@ -173,7 +171,7 @@ class MetricStorage(Protocol):
     ) -> Result[MetricConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
 
 
-class AlgorithmStorage(Protocol):
+class AlgorithmDao(Protocol):
     @staticmethod
     def add(
         benchmark_name: str,
@@ -214,7 +212,7 @@ class AlgorithmStorage(Protocol):
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
 
-class BenchmarkStorage(Protocol):
+class BenchmarkDao(Protocol):
     @staticmethod
     def create(benchmark_name: str) -> Result[BenchmarkDomain, DataNotUniqueError | UnknownLunaBenchError]: ...
 
@@ -236,7 +234,7 @@ class BenchmarkStorage(Protocol):
     def remove_modelset(benchmark_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
 
-class ModelSetStorage(Protocol):
+class ModelSetDao(Protocol):
     @staticmethod
     def create(modelset_name: str) -> Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError]: ...
 

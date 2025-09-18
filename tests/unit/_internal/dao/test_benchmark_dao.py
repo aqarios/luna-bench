@@ -11,14 +11,14 @@ from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 
 if TYPE_CHECKING:
-    from luna_bench._internal.dao import StorageTransaction
+    from luna_bench._internal.dao import DaoTransaction
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
 class TestBenchmarkDAO:
     @pytest.fixture()
     @staticmethod
-    def setup_transaction(empty_transaction: StorageTransaction) -> StorageTransaction:
+    def setup_transaction(empty_transaction: DaoTransaction) -> DaoTransaction:
         """Provide a transaction fixture with a default model for testing the ModelDAOs."""
         empty_transaction.benchmark.create(benchmark_name="existing")
         empty_transaction.modelset.create(modelset_name="existing")
@@ -47,7 +47,7 @@ class TestBenchmarkDAO:
         ],
     )
     @staticmethod
-    def test_create(setup_transaction: StorageTransaction, name: str, exp: Result) -> None:
+    def test_create(setup_transaction: DaoTransaction, name: str, exp: Result) -> None:
         result: Result[BenchmarkDomain, DataNotUniqueError | UnknownLunaBenchError] = (
             setup_transaction.benchmark.create(name)
         )
@@ -81,7 +81,7 @@ class TestBenchmarkDAO:
         ],
     )
     @staticmethod
-    def test_load(setup_transaction: StorageTransaction, name: str, exp: Result) -> None:
+    def test_load(setup_transaction: DaoTransaction, name: str, exp: Result) -> None:
         result: Result[BenchmarkDomain, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.load(
             name
         )
@@ -104,7 +104,7 @@ class TestBenchmarkDAO:
         ],
     )
     @staticmethod
-    def test_delete(setup_transaction: StorageTransaction, name: str, exp: Result) -> None:
+    def test_delete(setup_transaction: DaoTransaction, name: str, exp: Result) -> None:
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.delete(name)
 
         assert type(result) is type(exp)
@@ -115,7 +115,7 @@ class TestBenchmarkDAO:
             assert isinstance(result.failure(), type(exp.failure()))
 
     @staticmethod
-    def test_load_all(setup_transaction: StorageTransaction) -> None:
+    def test_load_all(setup_transaction: DaoTransaction) -> None:
         result: Result[list[BenchmarkDomain], UnknownLunaBenchError] = setup_transaction.benchmark.load_all()
 
         benchmarks = result.unwrap()
@@ -141,7 +141,7 @@ class TestBenchmarkDAO:
         ],
     )
     @staticmethod
-    def test_add_modelset(setup_transaction: StorageTransaction, name: str, modelset_name: str, exp: Result) -> None:
+    def test_add_modelset(setup_transaction: DaoTransaction, name: str, modelset_name: str, exp: Result) -> None:
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.set_modelset(
             name, modelset_name
         )
@@ -169,7 +169,7 @@ class TestBenchmarkDAO:
     )
     @staticmethod
     def test_remove_modelset(
-        setup_transaction: StorageTransaction, benchmark_add_name: str, benchmark_remove_name: str, exp: Result
+        setup_transaction: DaoTransaction, benchmark_add_name: str, benchmark_remove_name: str, exp: Result
     ) -> None:
         setup_transaction.benchmark.set_modelset(benchmark_add_name, "existing")
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.remove_modelset(

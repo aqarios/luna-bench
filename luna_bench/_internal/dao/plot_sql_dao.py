@@ -11,7 +11,7 @@ from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
-from .protocols import PlotStorage
+from .protocols import PlotDao
 from .tables import (
     BenchmarkTable,
     PlotConfigTable,
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from returns.result import Result
 
 
-class PlotDAO(PlotStorage):
+class PlotSqlDao(PlotDao):
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
@@ -39,7 +39,7 @@ class PlotDAO(PlotStorage):
                 benchmark=benchmark,
             )
             plot.save()
-            return Success(PlotDAO.plot_to_domain(plot))
+            return Success(PlotSqlDao.plot_to_domain(plot))
         except IntegrityError:
             return Failure(DataNotUniqueError())
         except DoesNotExist:
@@ -97,7 +97,7 @@ class PlotDAO(PlotStorage):
         try:
             benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
             plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)
-            return Success(PlotDAO.plot_to_domain(plot))
+            return Success(PlotSqlDao.plot_to_domain(plot))
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover

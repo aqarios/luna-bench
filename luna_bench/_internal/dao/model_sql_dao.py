@@ -9,15 +9,15 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.domain_models import ModelMetadataDomain
 from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
-from .protocols import ModelStorage
 
+from .protocols import ModelDao
 from .tables import ModelMetadataTable, ModelTable
 
 if TYPE_CHECKING:
     from logging import Logger
 
 
-class ModelDAO(ModelStorage):
+class ModelSqlDao(ModelDao):
     """
     Data Access Object for model operations.
 
@@ -47,7 +47,7 @@ class ModelDAO(ModelStorage):
         """
         try:
             model = ModelMetadataTable.get(ModelMetadataTable.hash == model_hash)
-            return Success(ModelDAO.model_to_domain(model))
+            return Success(ModelSqlDao.model_to_domain(model))
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
@@ -63,7 +63,7 @@ class ModelDAO(ModelStorage):
             A metadata list of all model objects in the database.
         """
         data = ModelMetadataTable.select()
-        return [ModelDAO.model_to_domain(d) for d in data]
+        return [ModelSqlDao.model_to_domain(d) for d in data]
 
     @staticmethod
     def get_or_create(
@@ -96,9 +96,9 @@ class ModelDAO(ModelStorage):
                 # The Metadata was newly created therefore, we also save the model.
                 ModelTable.create(model_id=metadata, encoded_model=binary)
 
-            return Success(ModelDAO.model_to_domain(metadata))
+            return Success(ModelSqlDao.model_to_domain(metadata))
         except Exception as e:  # pragma: no cover
-            ModelDAO._logger.debug(e)
+            ModelSqlDao._logger.debug(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -126,7 +126,7 @@ class ModelDAO(ModelStorage):
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
-            ModelDAO._logger.debug(e)
+            ModelSqlDao._logger.debug(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod

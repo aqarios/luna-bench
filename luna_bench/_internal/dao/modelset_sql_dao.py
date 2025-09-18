@@ -11,15 +11,15 @@ from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
 from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
-from . import ModelSetStorage
-from .model_dao import ModelDAO
+from . import ModelSetDao
+from .model_sql_dao import ModelSqlDao
 from .tables import ModelMetadataTable, ModelSetTable
 
 if TYPE_CHECKING:
     from logging import Logger
 
 
-class ModelSetDAO(ModelSetStorage):
+class ModelSetSqlDao(ModelSetDao):
     _logger: Logger = Logging.get_logger(__name__)
 
     @staticmethod
@@ -27,7 +27,7 @@ class ModelSetDAO(ModelSetStorage):
         modelset = ModelSetTable(name=modelset_name)
         try:
             modelset.save()
-            return Success(ModelSetDAO.modelset_to_domain(modelset))
+            return Success(ModelSetSqlDao.modelset_to_domain(modelset))
 
         except IntegrityError:
             return Failure(DataNotUniqueError())
@@ -39,11 +39,11 @@ class ModelSetDAO(ModelSetStorage):
         try:
             modelset = (ModelSetTable.select(ModelSetTable).where(ModelSetTable.name == modelset_name)).get()
 
-            return Success(ModelSetDAO.modelset_to_domain(modelset))
+            return Success(ModelSetSqlDao.modelset_to_domain(modelset))
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
-            ModelSetDAO._logger.debug(e)
+            ModelSetSqlDao._logger.debug(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -64,7 +64,7 @@ class ModelSetDAO(ModelSetStorage):
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
-            ModelSetDAO._logger.debug(e)
+            ModelSetSqlDao._logger.debug(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -79,11 +79,11 @@ class ModelSetDAO(ModelSetStorage):
                 modelset.models.add(model_metadata)
                 modelset.save()
 
-            return Success(ModelSetDAO.modelset_to_domain(modelset))
+            return Success(ModelSetSqlDao.modelset_to_domain(modelset))
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
-            ModelSetDAO._logger.debug(e)
+            ModelSetSqlDao._logger.debug(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -95,7 +95,7 @@ class ModelSetDAO(ModelSetStorage):
             model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)
             modelset.models.remove(model_metadata)
             modelset.save()
-            to_return = ModelSetDAO.modelset_to_domain(modelset)
+            to_return = ModelSetSqlDao.modelset_to_domain(modelset)
             through_model = ModelSetTable.models.get_through_model()
             remaining_count = through_model.select().where(through_model.modelmetadatatable == through_model.id).count()
 
@@ -106,16 +106,16 @@ class ModelSetDAO(ModelSetStorage):
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
-            ModelSetDAO._logger.debug(e)
+            ModelSetSqlDao._logger.debug(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
     def load_all() -> Result[list[ModelSetDomain], UnknownLunaBenchError]:
         try:
             modelsets = ModelSetTable.select()
-            return Success([ModelSetDAO.modelset_to_domain(m) for m in modelsets])
+            return Success([ModelSetSqlDao.modelset_to_domain(m) for m in modelsets])
         except Exception as e:  # pragma: no cover
-            ModelSetDAO._logger.debug(e)
+            ModelSetSqlDao._logger.debug(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -125,11 +125,11 @@ class ModelSetDAO(ModelSetStorage):
         try:
             modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
 
-            return Success([ModelDAO.model_to_domain(m) for m in modelset.models])
+            return Success([ModelSqlDao.model_to_domain(m) for m in modelset.models])
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
-            ModelSetDAO._logger.debug(e)
+            ModelSetSqlDao._logger.debug(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -137,5 +137,5 @@ class ModelSetDAO(ModelSetStorage):
         return ModelSetDomain(
             id=cast("int", modelset.id),
             name=cast("str", modelset.name),
-            models=[ModelDAO.model_to_domain(m) for m in modelset.models],
+            models=[ModelSqlDao.model_to_domain(m) for m in modelset.models],
         )
