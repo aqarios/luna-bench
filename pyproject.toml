@@ -5,15 +5,21 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "luna-quantum>=1.0.0",
+    "dependency-injector>=4.48.1",
+    "huey>=2.5.3",
+    "luna-quantum>=1.0.5-rc.2",
+    "peewee>=3.18.2",
+    "pydantic-settings>=2.10.1",
+    "returns[compatible-mypy]>=0.25.0",
     "rich>=14.0.0",
 ]
 
 [dependency-groups]
 dev = [
-    "mypy>=1.16.1",
+    "mypy>=1.15.0",
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
     "ruff>=0.12.0",
     "tox>=4.27.0",
+    "types-peewee>=3.18.2.20250710",
 ]

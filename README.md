@@ -9,7 +9,7 @@ Why Luna Bench?
 🎯 Developer-First: Streamline your workflow with intuitive APIs and proper type hints \
 🔄 Reproducibility: Ensure consistent results across different environments and runs \
 🧩 Extensibility: Open-source plugin architecture for custom solvers and metrics \
-🔍 Standardization: Compare algorithms fairly with unified benchmarking protocols 
+🔍 Standardization: Compare algorithms fairly with unified benchmarking protocols
 
 #🎯 Key Features
 Core Capabilities

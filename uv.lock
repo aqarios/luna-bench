@@ -114,6 +114,21 @@ wheels = [
 ]
 
 [[package]]
+name = "dependency-injector"
+version = "4.48.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/26/7c/5062c4a7ffd32bf210ff55fab9d279a5beeae350fb09533d3536811e13b6/dependency_injector-4.48.1.tar.gz", hash = "sha256:1805185e4522effad6d5e348c255d27e80d3f8adc89701daf13d743367392978", size = 1100885, upload-time = "2025-06-20T10:21:52.248Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/92/f9/c9b77652f724aece8856e281f7a71e5af544049b3c068df70c68868e43be/dependency_injector-4.48.1-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:a6f73011d532f3ea59689aad85c7999be6da3f30393041a745d5861cdcdc02e4", size = 1631637, upload-time = "2025-06-20T10:21:24.729Z" },
+    { url = "https://files.pythonhosted.org/packages/ea/f0/d91c9cdabb1f2354762aca588757d1aa341f3cbccbc8636dd2c06acac10b/dependency_injector-4.48.1-cp38-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:ac09f508fa9aee06a036ebf3e3d3b2a210276aba1993e9993cec7f1fdc5fd89e", size = 1855944, upload-time = "2025-06-20T10:21:26.753Z" },
+    { url = "https://files.pythonhosted.org/packages/57/ee/d69c4758a12653edbe6ee15c0bf4195981c9820650a1cfa762cbb838485b/dependency_injector-4.48.1-cp38-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1b05a4a980096b53ad90a87965c5450183bfbb8bbe36615d7cea97537086d622", size = 1811989, upload-time = "2025-06-20T10:21:28.293Z" },
+    { url = "https://files.pythonhosted.org/packages/cf/6d/d2a257402c8c3f7a9c61f1b8a0482ec4373f1ef7fdfe784a91e883506e3b/dependency_injector-4.48.1-cp38-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:0506e98440ee6c48fe660016d602961b1b3ecc0a8227838a2221048ed11e2fca", size = 1826408, upload-time = "2025-06-20T10:21:29.789Z" },
+    { url = "https://files.pythonhosted.org/packages/65/f9/2a408d460eedb264f7ea919754c526c8f3a18c026496cacb7dd6960766d2/dependency_injector-4.48.1-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:1994622eae8917138626303b176cba4c74e625ba1e588cb09d673ca175d299a2", size = 1863948, upload-time = "2025-06-20T10:21:31.951Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/8a/2edaef77e725dd8b1a625c84cbccb0f445afe58277c7b243cbf58784826a/dependency_injector-4.48.1-cp38-abi3-win32.whl", hash = "sha256:58d4d81f92e3267c331f160cbbb517fd7644b95ee57a0d6e4b01f53a7e437a4a", size = 1516768, upload-time = "2025-06-20T10:21:33.747Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/41/4bf523af7e1b7f367499f8b8709e0e807e9a14c7d1674b0442d7f84403c8/dependency_injector-4.48.1-cp38-abi3-win_amd64.whl", hash = "sha256:572b22b7db9b103718ea52634b5ca1ef763278338310254334f4633a57c9f0e7", size = 1639850, upload-time = "2025-06-20T10:21:35.639Z" },
+]
+
+[[package]]
 name = "distlib"
 version = "0.3.9"
 source = { registry = "https://pypi.org/simple" }
@@ -191,6 +206,12 @@ wheels = [
 ]
 
 [[package]]
+name = "huey"
+version = "2.5.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/86/8c/2dfecf3705f5e522097b4e9fb6fb38e627a0340f8362cc05bd7a845e4279/huey-2.5.3.tar.gz", hash = "sha256:089fc72b97fd26a513f15b09925c56fad6abe4a699a1f0e902170b37e85163c7", size = 836918, upload-time = "2025-03-19T14:46:51.614Z" }
+
+[[package]]
 name = "idna"
 version = "3.10"
 source = { registry = "https://pypi.org/simple" }
@@ -213,7 +234,12 @@ name = "luna-bench"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "dependency-injector" },
+    { name = "huey" },
     { name = "luna-quantum" },
+    { name = "peewee" },
+    { name = "pydantic-settings" },
+    { name = "returns", extra = ["compatible-mypy"] },
     { name = "rich" },
 ]
 
@@ -224,26 +250,33 @@ dev = [
     { name = "pytest-cov" },
     { name = "ruff" },
     { name = "tox" },
+    { name = "types-peewee" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "luna-quantum", specifier = ">=1.0.0" },
+    { name = "dependency-injector", specifier = ">=4.48.1" },
+    { name = "huey", specifier = ">=2.5.3" },
+    { name = "luna-quantum", specifier = ">=1.0.5rc2" },
+    { name = "peewee", specifier = ">=3.18.2" },
+    { name = "pydantic-settings", specifier = ">=2.10.1" },
+    { name = "returns", extras = ["compatible-mypy"], specifier = ">=0.25.0" },
     { name = "rich", specifier = ">=14.0.0" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "mypy", specifier = ">=1.16.1" },
+    { name = "mypy", specifier = ">=1.15.0" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "pytest-cov", specifier = ">=6.2.1" },
     { name = "ruff", specifier = ">=0.12.0" },
     { name = "tox", specifier = ">=4.27.0" },
+    { name = "types-peewee", specifier = ">=3.18.2.20250710" },
 ]
 
 [[package]]
 name = "luna-quantum"
-version = "1.0.4"
+version = "1.0.5rc2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -254,11 +287,11 @@ dependencies = [
     { name = "rich" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/9d/4220e8816337f08735992639385253831bb4169ab3eae8166763fbcfd7cd/luna_quantum-1.0.4-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:69aecd8063cdb043435f933cff0f66a0bc9812be3d00685fe700464f57848196", size = 2413057, upload-time = "2025-08-18T12:40:30.448Z" },
-    { url = "https://files.pythonhosted.org/packages/7b/3a/1cbc7029b3b3db55a6e69492152c2736877a5dddd8ab188576d1b51f9122/luna_quantum-1.0.4-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:e13b1bfbf693aba9f0cf495681f9fb97837ee51b8d4905708f218b9761f165ea", size = 2192323, upload-time = "2025-08-18T12:40:31.853Z" },
-    { url = "https://files.pythonhosted.org/packages/e1/3c/67b414649f367d29d428a4de8c2729774ed307918da1ec8639e5511f80da/luna_quantum-1.0.4-cp313-cp313-manylinux_2_34_x86_64.whl", hash = "sha256:3091ef873a53b126842ad45a25e54b58e2a5ba7d13120c1731e8171b5b297d33", size = 2566056, upload-time = "2025-08-18T12:40:33.458Z" },
-    { url = "https://files.pythonhosted.org/packages/39/2e/5f0e2cf0688f697557736e355808622cef3143a9dc3126d9c2f8c508a642/luna_quantum-1.0.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:da989a37189ed1d366dbbb778815fbff0111582de488c2f5cb8d62951509a906", size = 2646614, upload-time = "2025-08-18T12:40:35.439Z" },
-    { url = "https://files.pythonhosted.org/packages/a9/57/6c8808cd19e4585e24454c850654bb7535650e71b7291071f2fd1c52dfad/luna_quantum-1.0.4-cp313-cp313-win_amd64.whl", hash = "sha256:e0b58c5d3fe2bc11b2d75ad5923c18369be3fdc3d4f84478a1844b1137008ab4", size = 2367768, upload-time = "2025-08-18T12:40:36.96Z" },
+    { url = "https://files.pythonhosted.org/packages/de/c4/f6be80eadb341212d201c832c25aa98134cb5e3206da272554366f47fa2f/luna_quantum-1.0.5rc2-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:4658afd97edc8f1a1e0453260d20326d361f4bc111952684451cdfccb4604b3d", size = 2407478, upload-time = "2025-09-10T15:30:32.653Z" },
+    { url = "https://files.pythonhosted.org/packages/19/03/96e00a8c1607fe172d02b3f8cee43e8d50c94c5b4d01132d142bbacec5ea/luna_quantum-1.0.5rc2-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:bbc929ebcc9a8b8975e49a6180f6f28900dd6cbbcb3b0b68bf60b278a04387a1", size = 2195662, upload-time = "2025-09-10T15:30:34.306Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/e3/faf34224be80560d00f6a2584372a17b6b18c87e6ebdaf46146625684878/luna_quantum-1.0.5rc2-cp313-cp313-manylinux_2_34_x86_64.whl", hash = "sha256:d63b0e276928fcf52bfbdfdd9d9bd00c62b66b70fa7f1885f853e4fafdf8f1f5", size = 2571299, upload-time = "2025-09-10T15:30:35.691Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/a5/d3e34729fb4015217cb413d3cf48893661ab2c28075d148edc572444c138/luna_quantum-1.0.5rc2-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:1248559d94a9642e63e1617302f5ce9d22b0f3b7c636965c7c09a5b122e3740e", size = 2651794, upload-time = "2025-09-10T15:30:37.37Z" },
+    { url = "https://files.pythonhosted.org/packages/de/00/11349f5664af0474e676af0af23be9ccc843d4505dffe739d03276360afa/luna_quantum-1.0.5rc2-cp313-cp313-win_amd64.whl", hash = "sha256:ab9d8753e07dd3d5febda6d5af9f6d34619647763fbce2ac8a744c7c65155ab2", size = 2374001, upload-time = "2025-09-10T15:30:38.699Z" },
 ]
 
 [[package]]
@@ -364,6 +397,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/ca/bc/f35b8446f4531a7cb
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cc/20/ff623b09d963f88bfde16306a54e12ee5ea43e9b597108672ff3a408aad6/pathspec-0.12.1-py3-none-any.whl", hash = "sha256:a0d503e138a4c123b27490a4f7beda6a01c6f288df0e4a8b79c7eb0dc7b4cc08", size = 31191, upload-time = "2023-12-10T22:30:43.14Z" },
 ]
+
+[[package]]
+name = "peewee"
+version = "3.18.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/04/89/76f6f1b744c8608e0d416b588b9d63c2a500ff800065ae610f7c80f532d6/peewee-3.18.2.tar.gz", hash = "sha256:77a54263eb61aff2ea72f63d2eeb91b140c25c1884148e28e4c0f7c4f64996a0", size = 949220, upload-time = "2025-07-08T12:52:03.941Z" }
 
 [[package]]
 name = "platformdirs"
@@ -518,6 +557,23 @@ wheels = [
 ]
 
 [[package]]
+name = "returns"
+version = "0.26.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/06/c2/6dda7ef39464568152e35c766a8b49ab1cdb1b03a5891441a7c2fa40dc61/returns-0.26.0.tar.gz", hash = "sha256:180320e0f6e9ea9845330ccfc020f542330f05b7250941d9b9b7c00203fcc3da", size = 105300, upload-time = "2025-07-24T13:11:21.772Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/57/4d/a7545bf6c62b0dbe5795f22ea9e88cc070fdced5c34663ebc5bed2f610c0/returns-0.26.0-py3-none-any.whl", hash = "sha256:7cae94c730d6c56ffd9d0f583f7a2c0b32cfe17d141837150c8e6cff3eb30d71", size = 160515, upload-time = "2025-07-24T13:11:20.041Z" },
+]
+
+[package.optional-dependencies]
+compatible-mypy = [
+    { name = "mypy" },
+]
+
+[[package]]
 name = "rich"
 version = "14.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -592,6 +648,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/da/b7/ba4e391cd112c18338aef270abcda2a25783f90509fa6806c8f2a1ea842e/tox-4.30.2.tar.gz", hash = "sha256:772925ad6c57fe35c7ed5ac3e958ac5ced21dff597e76fc40c1f5bf3cd1b6a2e", size = 202622, upload-time = "2025-09-04T16:24:49.602Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4e/28/8212e633612f959e9b61f3f1e3103e651e33d808a097623495590a42f1a4/tox-4.30.2-py3-none-any.whl", hash = "sha256:efd261a42e8c82a59f9026320a80a067f27f44cad2e72a6712010c311d31176b", size = 175527, upload-time = "2025-09-04T16:24:47.694Z" },
+]
+
+[[package]]
+name = "types-peewee"
+version = "3.18.2.20250710"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/89/5f/37fc1ae26b0b75f0bd4fa9ddd14d2188c74aae140eee2b41372746b057b6/types_peewee-3.18.2.20250710.tar.gz", hash = "sha256:8fc803df43f42f663798300d36cd5015478960c8cca5e27de9676c42ff3b74f1", size = 20722, upload-time = "2025-07-10T03:15:43.097Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1a/bf/307bae454876eb9f8536217572d1adfc23fa6bf5ee4ef8665a911028e918/types_peewee-3.18.2.20250710-py3-none-any.whl", hash = "sha256:f4fa6f849247a9167abf11e5908354efbd41c1f5f2cca66abf6900d2332b03c3", size = 19090, upload-time = "2025-07-10T03:15:42.015Z" },
 ]
 
 [[package]]
