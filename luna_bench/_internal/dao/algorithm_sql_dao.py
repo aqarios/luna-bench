@@ -50,7 +50,6 @@ class AlgorithmSqlDao(AlgorithmDao):
         except IntegrityError as e:
             return Failure(AlgorithmConfigTable.map_integrity_error(e))
         except Exception as e:  # pragma: no cover
-            print(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -121,7 +120,6 @@ class AlgorithmSqlDao(AlgorithmDao):
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
-            print(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -144,7 +142,6 @@ class AlgorithmSqlDao(AlgorithmDao):
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
-            print(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
@@ -160,10 +157,8 @@ class AlgorithmSqlDao(AlgorithmDao):
             result.delete_instance()
             return Success(None)
         except DoesNotExist:
-            print("DOES NOT EXIST")
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
-            print(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
