@@ -10,8 +10,8 @@ from luna_bench._internal.dao.algorithm_sql_dao import AlgorithmSqlDao
 from luna_bench._internal.dao.metric_sql_dao import MetricSqlDao
 from luna_bench._internal.dao.modelmetric_sql_dao import ModelmetricSqlDao
 from luna_bench._internal.domain_models import BenchmarkDomain, BenchmarkStatus, ModelSetDomain
-from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
-from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
+from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 from .modelset_sql_dao import ModelSetSqlDao

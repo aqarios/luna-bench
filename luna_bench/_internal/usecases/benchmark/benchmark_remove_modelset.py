@@ -1,7 +1,7 @@
 from returns.result import Result
 
 from luna_bench._internal.dao import DaoTransaction
-from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
+from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 from .protocols import BenchmarkRemoveModelsetUc
@@ -12,12 +12,12 @@ class BenchmarkRemoveModelsetUcImpl(BenchmarkRemoveModelsetUc):
 
     def __init__(self, transaction: DaoTransaction) -> None:
         """
-        Initialize the BenchmarkRemoveModelsetUc with a storage transaction.
+        Initialize the BenchmarkRemoveModelsetUc with a dao transaction.
 
         Parameters
         ----------
         transaction : DaoTransaction
-            The transaction object used to interact with the storage.
+            The transaction object used to interact with the dao.
         """
         self._transaction = transaction
 

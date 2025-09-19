@@ -9,18 +9,18 @@ class ModelAllUcImpl:
 
     def __init__(self, transaction: DaoTransaction) -> None:
         """
-        Initialize the ModelAllUcImpl with a storage transaction.
+        Initialize the ModelAllUcImpl with a dao transaction.
 
         Parameters
         ----------
         transaction : DaoTransaction
-            The transaction object used to interact with the storage.
+            The transaction object used to interact with the dao.
         """
         self.transaction = transaction
 
     def __call__(self) -> list[ModelMetadataDomain]:
         """
-        Retrieve the metadata of all models from the storage.
+        Retrieve the metadata of all models from the dao.
 
         Returns
         -------

@@ -6,7 +6,7 @@ import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
+from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from tests.unit.fixtures.mock_model import _dummy_model
 
 if TYPE_CHECKING:

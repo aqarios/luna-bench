@@ -24,8 +24,8 @@ if TYPE_CHECKING:
         ModelSetLoadUc,
         ModelSetRemoveUc,
     )
-    from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
-    from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
+    from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
+    from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 

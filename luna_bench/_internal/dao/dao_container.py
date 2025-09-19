@@ -73,11 +73,11 @@ class DaoContainer(containers.DeclarativeContainer):
     transaction: Provider[DaoTransaction] = providers.Singleton(
         PeeweeTransaction,
         database=database,
-        model_storage=model_dao,
-        modelset_storage=modelset_dao,
-        benchmark_storage=benchmark_dao,
-        metric_storage=metric_dao,
-        modelmetric_storage=modelmetric_dao,
-        solvejob_storage=algorithm_dao,
-        plot_storage=plot_dao,
+        model_dao=model_dao,
+        modelset_dao=modelset_dao,
+        benchmark_dao=benchmark_dao,
+        metric_dao=metric_dao,
+        modelmetric_dao=modelmetric_dao,
+        solvejob_dao=algorithm_dao,
+        plot_dao=plot_dao,
     )

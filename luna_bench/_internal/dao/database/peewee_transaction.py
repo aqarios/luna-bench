@@ -22,60 +22,60 @@ if TYPE_CHECKING:
 class PeeweeTransaction(_transaction, DaoTransaction):
     _logger: Logger
 
-    _modelset_storage: ModelSetDao
-    _model_storage: ModelDao
-    _benchmark_storage: BenchmarkDao
-    _metric_storage: MetricDao
-    _modelmetric_storage: ModelmetricDao
-    _solvejob_storage: AlgorithmDao
-    _plot_storage: PlotDao
+    _modelset_dao: ModelSetDao
+    _model_dao: ModelDao
+    _benchmark_dao: BenchmarkDao
+    _metric_dao: MetricDao
+    _modelmetric_dao: ModelmetricDao
+    _solvejob_dao: AlgorithmDao
+    _plot_dao: PlotDao
 
     def __init__(
         self,
         database: Database,
-        modelset_storage: ModelSetDao,
-        model_storage: ModelDao,
-        benchmark_storage: BenchmarkDao,
-        metric_storage: MetricDao,
-        modelmetric_storage: ModelmetricDao,
-        solvejob_storage: AlgorithmDao,
-        plot_storage: PlotDao,
+        modelset_dao: ModelSetDao,
+        model_dao: ModelDao,
+        benchmark_dao: BenchmarkDao,
+        metric_dao: MetricDao,
+        modelmetric_dao: ModelmetricDao,
+        solvejob_dao: AlgorithmDao,
+        plot_dao: PlotDao,
     ) -> None:
         super().__init__(database)
         self._logger = Logging.get_logger(__name__)
 
-        self._modelset_storage = modelset_storage
-        self._model_storage = model_storage
-        self._benchmark_storage = benchmark_storage
-        self._metric_storage = metric_storage
-        self._modelmetric_storage = modelmetric_storage
-        self._solvejob_storage = solvejob_storage
-        self._plot_storage = plot_storage
+        self._modelset_dao = modelset_dao
+        self._model_dao = model_dao
+        self._benchmark_dao = benchmark_dao
+        self._metric_dao = metric_dao
+        self._modelmetric_dao = modelmetric_dao
+        self._solvejob_dao = solvejob_dao
+        self._plot_dao = plot_dao
 
     @property
     def modelset(self) -> ModelSetDao:
-        return self._modelset_storage
+        return self._modelset_dao
 
     @property
     def model(self) -> ModelDao:
-        return self._model_storage
+        return self._model_dao
 
     @property
     def benchmark(self) -> BenchmarkDao:
-        return self._benchmark_storage
+        return self._benchmark_dao
 
     @property
     def metric(self) -> MetricDao:
-        return self._metric_storage
+        return self._metric_dao
 
     @property
     def model_metric(self) -> ModelmetricDao:
-        return self._modelmetric_storage
+        return self._modelmetric_dao
 
     @property
     def algorithm(self) -> AlgorithmDao:
-        return self._solvejob_storage
+        return self._solvejob_dao
 
     @property
     def plot(self) -> PlotDao:
-        return self._plot_storage
+        return self._plot_dao

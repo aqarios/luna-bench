@@ -4,7 +4,7 @@ from luna_quantum import Model
 from returns.result import Result
 
 from luna_bench._internal.domain_models import ModelMetadataDomain
-from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
+from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
@@ -13,7 +13,7 @@ class ModelAllUc(Protocol):
 
     def __call__(self) -> list[ModelMetadataDomain]:
         """
-        Retrieve all models from storage.
+        Retrieve all models from dao.
 
         Returns
         -------

@@ -4,8 +4,8 @@ from typing import Any
 
 from peewee import Database, IntegrityError, Model, SqliteDatabase, sqlite3
 
-from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
-from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
+from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 _database: Database = SqliteDatabase(None)

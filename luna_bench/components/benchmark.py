@@ -9,7 +9,6 @@ from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Result
 
-from luna_bench import UsecaseContainer
 from luna_bench._internal.domain_models import (
     AlgorithmConfigDomain,
     MetricConfigDomain,
@@ -29,13 +28,14 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     BenchmarkRemoveModelMetricUc,
     BenchmarkRemovePlotUc,
 )
+from luna_bench._internal.usecases.usecase_container import UsecaseContainer
 from luna_bench.components.algorithm import Algorithm
 from luna_bench.components.metric import Metric
 from luna_bench.components.model_metric import ModelMetric
 from luna_bench.components.model_set import ModelSet
 from luna_bench.components.plot import Plot
-from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
-from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
+from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 

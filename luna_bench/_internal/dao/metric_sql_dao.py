@@ -8,10 +8,10 @@ from returns.result import Failure, Success
 
 from luna_bench._internal.domain_models import BenchmarkStatus, MetricConfigDomain, MetricResultDomain
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
+from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
+from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
-from ...errors.storage.data_not_unique_error import DataNotUniqueError
 from .protocols import MetricDao
 from .tables import (
     BenchmarkTable,

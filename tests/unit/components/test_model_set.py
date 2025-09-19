@@ -12,8 +12,8 @@ from luna_bench._internal.usecases import ModelAllUc, ModelSetAddUc, ModelSetCre
 from luna_bench._internal.usecases.modelset.protocols import ModelSetDeleteUc, ModelSetLoadAllUc, ModelSetRemoveUc
 from luna_bench.components import ModelSet
 from luna_bench.components.model_set import ModelData
-from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
-from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
+from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from tests.unit.fixtures.mock_usecase import _dummy_model
 

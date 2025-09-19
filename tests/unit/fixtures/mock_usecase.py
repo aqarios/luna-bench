@@ -26,8 +26,8 @@ def usecase() -> Generator[UsecaseContainer]:
     uc.wire()
 
     # Get the transaction from the container
-    transaction: DaoTransaction = uc.storage_container.transaction()
-    db = uc.storage_container.database()
+    transaction: DaoTransaction = uc.dao_container.transaction()
+    db = uc.dao_container.database()
     # Create tables
 
     with transaction as t:

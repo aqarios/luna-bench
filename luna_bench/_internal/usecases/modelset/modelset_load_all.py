@@ -12,12 +12,12 @@ class ModelSetLoadAllUcImpl:
 
     def __init__(self, transaction: DaoTransaction) -> None:
         """
-        Initialize the ModelSetLoadAllUcImpl with a storage transaction.
+        Initialize the ModelSetLoadAllUcImpl with a dao transaction.
 
         Parameters
         ----------
         transaction : DaoTransaction
-            The transaction object used to interact with the storage.
+            The transaction object used to interact with the dao.
         """
         self._transaction = transaction
 

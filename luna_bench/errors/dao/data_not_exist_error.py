@@ -1,4 +1,4 @@
-from luna_bench.errors.storage.dao_error import DaoError
+from luna_bench.errors.dao.dao_error import DaoError
 
 
 class DataNotExistError(DaoError):
