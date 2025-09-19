@@ -31,11 +31,10 @@ class TestBenchmarkDAO:
                 "non-existing",
                 Success(
                     BenchmarkDomain(
-                        id=2,
                         name="non-existing",
                         status=BenchmarkStatus.CREATED,
                         modelset=None,
-                        modelmetrics=[],
+                        features=[],
                         algorithms=[],
                         metrics=[],
                         plots=[],
@@ -47,7 +46,9 @@ class TestBenchmarkDAO:
         ],
     )
     @staticmethod
-    def test_create(setup_transaction: DaoTransaction, name: str, exp: Result) -> None:
+    def test_create(
+        setup_transaction: DaoTransaction, name: str, exp: Result[BenchmarkDomain, DataNotUniqueError]
+    ) -> None:
         result: Result[BenchmarkDomain, DataNotUniqueError | UnknownLunaBenchError] = (
             setup_transaction.benchmark.create(name)
         )
@@ -66,11 +67,10 @@ class TestBenchmarkDAO:
                 "existing",
                 Success(
                     BenchmarkDomain(
-                        id=1,
                         name="existing",
                         status=BenchmarkStatus.CREATED,
                         modelset=None,
-                        modelmetrics=[],
+                        features=[],
                         algorithms=[],
                         metrics=[],
                         plots=[],
@@ -81,12 +81,14 @@ class TestBenchmarkDAO:
         ],
     )
     @staticmethod
-    def test_load(setup_transaction: DaoTransaction, name: str, exp: Result) -> None:
+    def test_load(
+        setup_transaction: DaoTransaction, name: str, exp: Result[BenchmarkDomain, DataNotUniqueError]
+    ) -> None:
         result: Result[BenchmarkDomain, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.load(
             name
         )
 
-        assert type(result) is type(exp)
+        assert is_successful(result) == is_successful(exp)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
@@ -104,10 +106,12 @@ class TestBenchmarkDAO:
         ],
     )
     @staticmethod
-    def test_delete(setup_transaction: DaoTransaction, name: str, exp: Result) -> None:
+    def test_delete(
+        setup_transaction: DaoTransaction, name: str, exp: Result[BenchmarkDomain, DataNotUniqueError]
+    ) -> None:
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.delete(name)
 
-        assert type(result) is type(exp)
+        assert is_successful(result) == is_successful(exp)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
@@ -141,12 +145,17 @@ class TestBenchmarkDAO:
         ],
     )
     @staticmethod
-    def test_add_modelset(setup_transaction: DaoTransaction, name: str, modelset_name: str, exp: Result) -> None:
+    def test_add_modelset(
+        setup_transaction: DaoTransaction,
+        name: str,
+        modelset_name: str,
+        exp: Result[BenchmarkDomain, DataNotUniqueError],
+    ) -> None:
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.set_modelset(
             name, modelset_name
         )
 
-        assert type(result) is type(exp)
+        assert is_successful(result) == is_successful(exp)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
@@ -169,7 +178,10 @@ class TestBenchmarkDAO:
     )
     @staticmethod
     def test_remove_modelset(
-        setup_transaction: DaoTransaction, benchmark_add_name: str, benchmark_remove_name: str, exp: Result
+        setup_transaction: DaoTransaction,
+        benchmark_add_name: str,
+        benchmark_remove_name: str,
+        exp: Result[None, DataNotExistError],
     ) -> None:
         setup_transaction.benchmark.set_modelset(benchmark_add_name, "existing")
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = setup_transaction.benchmark.remove_modelset(

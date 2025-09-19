@@ -7,8 +7,7 @@ from luna_bench.configs.config import Config
 
 
 @pytest.fixture()
-def empty_transaction() -> Generator[DaoTransaction]:
-    """Provide a transaction fixture for testing DAOs."""
+def configured_dao() -> DaoTransaction:
     sc = DaoContainer()
 
     cnf = Config()
@@ -17,10 +16,13 @@ def empty_transaction() -> Generator[DaoTransaction]:
     sc.config.from_pydantic(cnf)
     sc.reset_singletons()
     sc.wire()
+    return sc.transaction()
 
-    transaction: DaoTransaction = sc.transaction()
 
-    with transaction as t:
+@pytest.fixture()
+def empty_transaction(configured_dao: DaoTransaction) -> Generator[DaoTransaction]:
+    """Provide a transaction fixture for testing DAOs."""
+    with configured_dao as t:
         try:
             yield t
         finally:

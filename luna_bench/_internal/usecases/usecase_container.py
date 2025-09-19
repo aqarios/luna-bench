@@ -2,49 +2,59 @@ from dependency_injector import containers, providers
 from dependency_injector.providers import Configuration, Provider
 
 from luna_bench._internal.dao import DaoContainer
+from luna_bench._internal.usecases.benchmark.algorithm.algorithm_add import AlgorithmAddUcImpl
+from luna_bench._internal.usecases.benchmark.algorithm.algorithm_remove import AlgorithmRemoveUcImpl
+from luna_bench._internal.usecases.benchmark.feature.feature_remove import FeatureRemoveUcImpl
+from luna_bench._internal.usecases.benchmark.plot.plot_add import PlotAddUcImpl
+from luna_bench._internal.usecases.benchmark.plot.plot_remove import PlotRemoveUcImpl
 
-from .benchmark.benchmark_add_algorithm import BenchmarkAddAlgorithmUcImpl
-from .benchmark.benchmark_add_metric import BenchmarkAddMetricUcImpl
-from .benchmark.benchmark_add_modelmetric import BenchmarkAddModelMetricUcImpl
-from .benchmark.benchmark_add_plot import BenchmarkAddPlotUcImpl
+from .benchmark import (
+    BenchmarkRemoveModelsetUcImpl,
+    BenchmarkSetModelsetUcImpl,
+    FeatureAddUcImpl,
+    MetricAddUcImpl,
+    MetricRemoveUcImpl,
+)
 from .benchmark.benchmark_create import BenchmarkCreateUcImpl
 from .benchmark.benchmark_delete import BenchmarkDeleteUcImpl
 from .benchmark.benchmark_load import BenchmarkLoadUcImpl
 from .benchmark.benchmark_load_all import BenchmarkLoadAllUcImpl
-from .benchmark.benchmark_remove_algorithm import BenchmarkRemoveAlgorithmUcImpl
-from .benchmark.benchmark_remove_metric import BenchmarkRemoveMetricUcImpl
-from .benchmark.benchmark_remove_modelmetric import BenchmarkRemoveModelMetricUcImpl
-from .benchmark.benchmark_remove_plot import BenchmarkRemovePlotUcImpl
 from .benchmark.protocols import (
-    BenchmarkAddAlgorithmUc,
-    BenchmarkAddMetricUc,
-    BenchmarkAddModelMetricUc,
-    BenchmarkAddPlotUc,
+    AlgorithmAddUc,
+    AlgorithmRemoveUc,
     BenchmarkCreateUc,
     BenchmarkDeleteUc,
     BenchmarkLoadAllUc,
     BenchmarkLoadUc,
-    BenchmarkRemoveAlgorithmUc,
-    BenchmarkRemoveMetricUc,
-    BenchmarkRemoveModelMetricUc,
-    BenchmarkRemovePlotUc,
+    BenchmarkRemoveModelsetUc,
+    BenchmarkSetModelsetUc,
+    FeatureAddUc,
+    FeatureRemoveUc,
+    MetricAddUc,
+    MetricRemoveUc,
+    PlotAddUc,
+    PlotRemoveUc,
 )
-from .models import ModelAllUc, ModelAllUcImpl
-from .models.model_fetch import ModelFetchUcImpl
-from .models.protocols import ModelFetchUc
 from .modelset import (
-    ModelSetAddUc,
-    ModelSetAddUcImpl,
-    ModelSetCreateUc,
+    ModelAddUcImpl,
+    ModelFetchUcImpl,
+    ModelLoadAllUcImpl,
+    ModelRemoveUcImpl,
     ModelSetCreateUcImpl,
-    ModelSetDeleteUc,
     ModelSetDeleteUcImpl,
-    ModelSetRemoveUc,
-    ModelSetRemoveUcImpl,
 )
 from .modelset.modelset_load import ModelSetLoadUcImpl
 from .modelset.modelset_load_all import ModelSetLoadAllUcImpl
-from .modelset.protocols import ModelSetLoadAllUc, ModelSetLoadUc
+from .modelset.protocols import (
+    ModelAddUc,
+    ModelFetchUc,
+    ModelLoadAllUc,
+    ModelRemoveUc,
+    ModelSetCreateUc,
+    ModelSetDeleteUc,
+    ModelSetLoadAllUc,
+    ModelSetLoadUc,
+)
 
 
 class UsecaseContainer(containers.DeclarativeContainer):
@@ -62,19 +72,17 @@ class UsecaseContainer(containers.DeclarativeContainer):
     modelset_load_all_uc: Provider[ModelSetLoadAllUc] = providers.Singleton(
         ModelSetLoadAllUcImpl, transaction=dao_container.transaction
     )
-
-    modelset_add_uc: Provider[ModelSetAddUc] = providers.Singleton(
-        ModelSetAddUcImpl, transaction=dao_container.transaction
-    )
-    modelset_remove_uc: Provider[ModelSetRemoveUc] = providers.Singleton(
-        ModelSetRemoveUcImpl, transaction=dao_container.transaction
-    )
     modelset_delete_uc: Provider[ModelSetDeleteUc] = providers.Singleton(
         ModelSetDeleteUcImpl, transaction=dao_container.transaction
     )
 
-    # Model usecases
-    model_all_uc: Provider[ModelAllUc] = providers.Singleton(ModelAllUcImpl, transaction=dao_container.transaction)
+    model_add_uc: Provider[ModelAddUc] = providers.Singleton(ModelAddUcImpl, transaction=dao_container.transaction)
+    model_remove_uc: Provider[ModelRemoveUc] = providers.Singleton(
+        ModelRemoveUcImpl, transaction=dao_container.transaction
+    )
+    model_load_all_uc: Provider[ModelLoadAllUc] = providers.Singleton(
+        ModelLoadAllUcImpl, transaction=dao_container.transaction
+    )
 
     model_fetch_uc: Provider[ModelFetchUc] = providers.Singleton(
         ModelFetchUcImpl, transaction=dao_container.transaction
@@ -93,28 +101,36 @@ class UsecaseContainer(containers.DeclarativeContainer):
     benchmark_load_all_uc: Provider[BenchmarkLoadAllUc] = providers.Singleton(
         BenchmarkLoadAllUcImpl, transaction=dao_container.transaction
     )
-    benchmark_add_metric_uc: Provider[BenchmarkAddMetricUc] = providers.Singleton(
-        BenchmarkAddMetricUcImpl, transaction=dao_container.transaction
+    benchmark_add_metric_uc: Provider[MetricAddUc] = providers.Singleton(
+        MetricAddUcImpl, transaction=dao_container.transaction
     )
-    benchmark_add_modelmetric_uc: Provider[BenchmarkAddModelMetricUc] = providers.Singleton(
-        BenchmarkAddModelMetricUcImpl, transaction=dao_container.transaction
+    benchmark_add_feature_uc: Provider[FeatureAddUc] = providers.Singleton(
+        FeatureAddUcImpl, transaction=dao_container.transaction
     )
-    benchmark_add_plot_uc: Provider[BenchmarkAddPlotUc] = providers.Singleton(
-        BenchmarkAddPlotUcImpl, transaction=dao_container.transaction
+    benchmark_add_plot_uc: Provider[PlotAddUc] = providers.Singleton(
+        PlotAddUcImpl, transaction=dao_container.transaction
     )
-    benchmark_add_algorithm_uc: Provider[BenchmarkAddAlgorithmUc] = providers.Singleton(
-        BenchmarkAddAlgorithmUcImpl, transaction=dao_container.transaction
+    benchmark_add_algorithm_uc: Provider[AlgorithmAddUc] = providers.Singleton(
+        AlgorithmAddUcImpl, transaction=dao_container.transaction
     )
 
-    benchmark_remove_modelmetric_uc: Provider[BenchmarkRemoveModelMetricUc] = providers.Singleton(
-        BenchmarkRemoveModelMetricUcImpl, transaction=dao_container.transaction
+    benchmark_remove_feature_uc: Provider[FeatureRemoveUc] = providers.Singleton(
+        FeatureRemoveUcImpl, transaction=dao_container.transaction
     )
-    benchmark_remove_metric_uc: Provider[BenchmarkRemoveMetricUc] = providers.Singleton(
-        BenchmarkRemoveMetricUcImpl, transaction=dao_container.transaction
+    benchmark_remove_metric_uc: Provider[MetricRemoveUc] = providers.Singleton(
+        MetricRemoveUcImpl, transaction=dao_container.transaction
     )
-    benchmark_remove_plot_uc: Provider[BenchmarkRemovePlotUc] = providers.Singleton(
-        BenchmarkRemovePlotUcImpl, transaction=dao_container.transaction
+    benchmark_remove_plot_uc: Provider[PlotRemoveUc] = providers.Singleton(
+        PlotRemoveUcImpl, transaction=dao_container.transaction
     )
-    benchmark_remove_algorithm_uc: Provider[BenchmarkRemoveAlgorithmUc] = providers.Singleton(
-        BenchmarkRemoveAlgorithmUcImpl, transaction=dao_container.transaction
+    benchmark_remove_algorithm_uc: Provider[AlgorithmRemoveUc] = providers.Singleton(
+        AlgorithmRemoveUcImpl, transaction=dao_container.transaction
+    )
+
+    benchmark_set_modelset_uc: Provider[BenchmarkSetModelsetUc] = providers.Singleton(
+        BenchmarkSetModelsetUcImpl, transaction=dao_container.transaction
+    )
+
+    benchmark_remove_modelset_uc: Provider[BenchmarkRemoveModelsetUc] = providers.Singleton(
+        BenchmarkRemoveModelsetUcImpl, transaction=dao_container.transaction
     )

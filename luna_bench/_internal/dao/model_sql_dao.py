@@ -46,7 +46,7 @@ class ModelSqlDao(ModelDao):
             On failure: Contains a DataNotExistError.
         """
         try:
-            model = ModelMetadataTable.get(ModelMetadataTable.hash == model_hash)
+            model = ModelMetadataTable.get(ModelMetadataTable.hash == model_hash)  # type: ignore[no-untyped-call]
             return Success(ModelSqlDao.model_to_domain(model))
         except DoesNotExist:
             return Failure(DataNotExistError())
@@ -62,7 +62,7 @@ class ModelSqlDao(ModelDao):
         list[ModelMetadataDomain]
             A metadata list of all model objects in the database.
         """
-        data = ModelMetadataTable.select()
+        data = ModelMetadataTable.select()  # type: ignore[no-untyped-call]
         return [ModelSqlDao.model_to_domain(d) for d in data]
 
     @staticmethod
@@ -90,11 +90,11 @@ class ModelSqlDao(ModelDao):
             On failure: Contains an exception.
         """
         try:
-            metadata, created = ModelMetadataTable.get_or_create(hash=model_hash, defaults={"name": model_name})
+            metadata, created = ModelMetadataTable.get_or_create(hash=model_hash, defaults={"name": model_name})  # type: ignore[no-untyped-call]
 
             if created:
                 # The Metadata was newly created therefore, we also save the model.
-                ModelTable.create(model_id=metadata, encoded_model=binary)
+                ModelTable.create(model_id=metadata, encoded_model=binary)  # type: ignore[no-untyped-call]
 
             return Success(ModelSqlDao.model_to_domain(metadata))
         except Exception as e:  # pragma: no cover
@@ -120,7 +120,7 @@ class ModelSqlDao(ModelDao):
             On failure: Contains an exception.
         """
         try:
-            data = ModelTable.get(ModelTable.model_id == model_id)
+            data = ModelTable.get(ModelTable.model_id == model_id)  # type: ignore[no-untyped-call]
 
             return Success(data.encoded_model)
         except DoesNotExist:

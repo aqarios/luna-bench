@@ -1,25 +1,25 @@
-from .algorithm_config_table import AlgorithmConfigTable
 from .algorithm_result_table import AlgorithmResultTable
+from .algorithm_table import AlgorithmTable
 from .benchmark_table import BenchmarkTable
-from .metric_config_table import MetricConfigTable
+from .feature_result_table import FeatureResultTable
+from .feature_table import FeatureTable
 from .metric_result_table import MetricResultTable
+from .metric_table import MetricTable
 from .model_metadata_table import ModelMetadataTable
 from .model_table import ModelTable
-from .modelmetric_config_table import ModelmetricConfigTable
-from .modelmetric_result_table import ModelmetricResultTable
 from .modelset_table import ModelSetTable
 from .plot_config_table import PlotConfigTable
 
 __all__ = [
-    "AlgorithmConfigTable",
     "AlgorithmResultTable",
+    "AlgorithmTable",
     "BenchmarkTable",
-    "MetricConfigTable",
+    "FeatureResultTable",
+    "FeatureTable",
     "MetricResultTable",
+    "MetricTable",
     "ModelMetadataTable",
     "ModelSetTable",
     "ModelTable",
-    "ModelmetricConfigTable",
-    "ModelmetricResultTable",
     "PlotConfigTable",
 ]

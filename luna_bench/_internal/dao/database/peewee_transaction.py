@@ -8,8 +8,8 @@ from peewee import Database, _transaction
 from luna_bench._internal.dao.protocols import (
     AlgorithmDao,
     DaoTransaction,
+    FeatureDao,
     MetricDao,
-    ModelmetricDao,
     PlotDao,
 )
 
@@ -26,18 +26,18 @@ class PeeweeTransaction(_transaction, DaoTransaction):
     _model_dao: ModelDao
     _benchmark_dao: BenchmarkDao
     _metric_dao: MetricDao
-    _modelmetric_dao: ModelmetricDao
+    _feature_dao: FeatureDao
     _solvejob_dao: AlgorithmDao
     _plot_dao: PlotDao
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 # Excluded because we need to add all dao's in this init function
         self,
         database: Database,
         modelset_dao: ModelSetDao,
         model_dao: ModelDao,
         benchmark_dao: BenchmarkDao,
         metric_dao: MetricDao,
-        modelmetric_dao: ModelmetricDao,
+        feature_dao: FeatureDao,
         solvejob_dao: AlgorithmDao,
         plot_dao: PlotDao,
     ) -> None:
@@ -48,7 +48,7 @@ class PeeweeTransaction(_transaction, DaoTransaction):
         self._model_dao = model_dao
         self._benchmark_dao = benchmark_dao
         self._metric_dao = metric_dao
-        self._modelmetric_dao = modelmetric_dao
+        self._feature_dao = feature_dao
         self._solvejob_dao = solvejob_dao
         self._plot_dao = plot_dao
 
@@ -69,8 +69,8 @@ class PeeweeTransaction(_transaction, DaoTransaction):
         return self._metric_dao
 
     @property
-    def model_metric(self) -> ModelmetricDao:
-        return self._modelmetric_dao
+    def feature(self) -> FeatureDao:
+        return self._feature_dao
 
     @property
     def algorithm(self) -> AlgorithmDao:

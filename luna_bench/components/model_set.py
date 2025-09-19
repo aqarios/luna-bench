@@ -4,98 +4,29 @@ from typing import TYPE_CHECKING, ClassVar
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging, Model
-from pydantic import BaseModel
 from returns.pipeline import is_successful
 
-from luna_bench._internal import UsecaseContainer
+from luna_bench._internal.usecases import ModelAddUc, ModelLoadAllUc, ModelSetCreateUc
+from luna_bench._internal.usecases.modelset.protocols import (
+    ModelRemoveUc,
+    ModelSetDeleteUc,
+    ModelSetLoadAllUc,
+    ModelSetLoadUc,
+)
+from luna_bench._internal.usecases.usecase_container import UsecaseContainer
+from luna_bench._internal.user_models import ModelSetUserModel
+from luna_bench.components.model_metadata import ModelMetadata
+from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
+from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
     from logging import Logger
 
     from returns.result import Result
 
-    from luna_bench._internal.entities.model_set.domain_models import ModelMetadataDomain, ModelSetDomain
-    from luna_bench._internal.usecases import ModelAllUc
-    from luna_bench._internal.usecases.models.protocols import ModelFetchUc
-    from luna_bench._internal.usecases.modelset import ModelSetAddUc, ModelSetCreateUc
-    from luna_bench._internal.usecases.modelset.protocols import (
-        ModelSetDeleteUc,
-        ModelSetLoadAllUc,
-        ModelSetLoadUc,
-        ModelSetRemoveUc,
-    )
-    from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
-    from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
-    from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
-
-class ModelData(BaseModel):
-    """
-    Metadata for a model.
-
-    A class that stores essential metadata about a model, including its ID,
-    name, and hash value. Provides also access to the actual model.
-
-    Attributes
-    ----------
-    id : int
-        The unique identifier for the model.
-    model_name : str
-        The name of the model.
-    model_hash : int
-        The hash value of the model, used for identification and verification.
-    """
-
-    id: int
-    model_name: str
-    model_hash: int
-
-    @inject
-    def _fetch_model(self, model_fetch: ModelFetchUc = Provide[UsecaseContainer.model_fetch_uc]) -> Model:
-        """
-        Fetch the model from the database.
-
-        Retrieves the model from the database using the model ID, decodes it, and returns a Model object.
-
-        Returns
-        -------
-        Model
-            The decoded model object.
-
-        Raises
-        ------
-        RuntimeError
-            If the model cannot be fetched from the database.
-        """
-        result: Result[Model, DataNotExistError | UnknownLunaBenchError] = model_fetch(model_id=self.id)
-
-        if not is_successful(result):
-            error = result.failure()
-            raise RuntimeError(error)
-
-        return result.unwrap()
-
-    @property
-    def model(self) -> Model:
-        """
-        Fetch the model from the database.
-
-        Retrieves the model from the database using the model ID, decodes it, and returns a Model object.
-
-        Returns
-        -------
-        Model
-            The decoded model object.
-
-        Raises
-        ------
-        RuntimeError
-            If the model cannot be fetched from the database.
-        """
-        return self._fetch_model()
-
-
-class ModelSet(BaseModel):
+class ModelSet(ModelSetUserModel):
     """
     Set of models.
 
@@ -108,15 +39,11 @@ class ModelSet(BaseModel):
         The unique identifier for the model set.
     name : str
         The name of the model set.
-    models : list[ModelData]
+    models : list[ModelMetadata]
         A list of ModelData objects representing the models in this set.
     """
 
     _logger: ClassVar[Logger] = Logging.get_logger(__name__)
-
-    id: int
-    name: str
-    models: list[ModelData]
 
     @staticmethod
     @inject
@@ -141,15 +68,16 @@ class ModelSet(BaseModel):
         ModelSet
             An instance of ModelSet representing the successfully created model set.
         """
-        result: Result[ModelSetDomain, DataNotUniqueError | Exception] = modelset_create(modelset_name=modelset_name)
+        result: Result[ModelSetUserModel, DataNotUniqueError | UnknownLunaBenchError] = modelset_create(
+            modelset_name=modelset_name
+        )
 
         if not is_successful(result):
             error = result.failure()
             ModelSet._logger.info(f"Error: {error}")
             raise RuntimeError(error)
 
-        success: ModelSetDomain = result.unwrap()
-        return ModelSet._to_data_set(success)
+        return ModelSet.model_validate(result.unwrap(), from_attributes=True)
 
     @staticmethod
     @inject
@@ -171,15 +99,14 @@ class ModelSet(BaseModel):
         ModelSet
             The loaded model set.
         """
-        result: Result[ModelSetDomain, Exception] = modelset_load(modelset_name=name)
+        result: Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError] = modelset_load(modelset_name=name)
 
         if not is_successful(result):
             error = result.failure()
             ModelSet._logger.info(f"Error: {error}")
             raise RuntimeError(error)
 
-        success: ModelSetDomain = result.unwrap()
-        return ModelSet._to_data_set(success)
+        return ModelSet.model_validate(result.unwrap(), from_attributes=True)
 
     @staticmethod
     @inject
@@ -196,18 +123,19 @@ class ModelSet(BaseModel):
         list[ModelSet]
             A list of all model sets.
         """
-        result: Result[list[ModelSetDomain], Exception] = modelset_load_all()
+        result: Result[list[ModelSetUserModel], UnknownLunaBenchError] = modelset_load_all()
 
         if not is_successful(result):
             error = result.failure()
             raise RuntimeError(error)
-        return [ModelSet._to_data_set(m) for m in result.unwrap()]
+        # TODO(Llewellyn): i think model validate for metadata is here missing # noqa: FIX002
+        return [ModelSet.model_validate(m, from_attributes=True) for m in result.unwrap()]
 
     @staticmethod
     @inject
     def load_all_models(
-        model_all: ModelAllUc = Provide[UsecaseContainer.model_all_uc],
-    ) -> list[ModelData]:
+        model_all: ModelLoadAllUc = Provide[UsecaseContainer.model_load_all_uc],
+    ) -> list[ModelMetadata]:
         """
         Load all models from the database.
 
@@ -220,13 +148,13 @@ class ModelSet(BaseModel):
 
         Returns
         -------
-        list[ModelData]
+        list[ModelMetadata]
             A list of ModelData objects representing all models in the database.
         """
-        return [ModelSet._to_model_data(m) for m in model_all()]
+        return [ModelMetadata.model_validate(m, from_attributes=True) for m in model_all()]
 
     @inject
-    def add(self, model: Model, modelset_add: ModelSetAddUc = Provide[UsecaseContainer.modelset_add_uc]) -> None:
+    def add(self, model: Model, modelset_add: ModelAddUc = Provide[UsecaseContainer.model_add_uc]) -> None:
         """
         Add a model to this model set.
 
@@ -239,7 +167,9 @@ class ModelSet(BaseModel):
         modelset_add : ModelSetAddUc, injected
             The use case for adding models to a model set, by default provided by dependency injection.
         """
-        result: Result[ModelSetDomain, Exception] = modelset_add(modelset_name=self.name, model=model)
+        result: Result[ModelSetUserModel, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError] = (
+            modelset_add(modelset_name=self.name, model=model)
+        )
 
         if not is_successful(result):
             error = result.failure()
@@ -249,7 +179,7 @@ class ModelSet(BaseModel):
 
     @inject
     def remove_model(
-        self, model: Model, modelset_remove: ModelSetRemoveUc = Provide[UsecaseContainer.modelset_remove_uc]
+        self, model: Model, modelset_remove: ModelRemoveUc = Provide[UsecaseContainer.model_remove_uc]
     ) -> None:
         """
         Remove a model from this model set.
@@ -263,7 +193,9 @@ class ModelSet(BaseModel):
         modelset_remove : ModelSetRemoveUc, injected
             The use case for removing models from a model set, by default provided by dependency injection.
         """
-        result: Result[ModelSetDomain, Exception] = modelset_remove(modelset_name=self.name, model=model)
+        result: Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError] = modelset_remove(
+            modelset_name=self.name, model=model
+        )
 
         if not is_successful(result):
             error = result.failure()
@@ -283,14 +215,14 @@ class ModelSet(BaseModel):
         modelset_delete_uc : ModelSetDeleteUc, injected
             The use case for deleting model sets, by default provided by dependency injection.
         """
-        result: Result[None, Exception] = modelset_delete_uc(modelset_name=self.name)
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = modelset_delete_uc(modelset_name=self.name)
 
         if not is_successful(result):
             error = result.failure()
             ModelSet._logger.info(f"Error: {error}")
             raise RuntimeError(error)
 
-    def _update(self, modelset: ModelSetDomain) -> None:
+    def _update(self, modelset: ModelSetUserModel) -> None:
         """
         Update this model set with data from a domain model.
 
@@ -303,42 +235,4 @@ class ModelSet(BaseModel):
         """
         self.id = modelset.id
         self.name = modelset.name
-        self.models = [ModelSet._to_model_data(model=m) for m in modelset.models]
-
-    @staticmethod
-    def _to_model_data(model: ModelMetadataDomain) -> ModelData:
-        """
-        Convert a model metadata domain object to a ModelData object.
-
-        Parameters
-        ----------
-        model : ModelMetadataDomain
-            The model metadata domain object to convert.
-
-        Returns
-        -------
-        ModelData
-            The converted ModelData object.
-        """
-        return ModelData(id=model.id, model_name=model.name, model_hash=model.hash)
-
-    @staticmethod
-    def _to_data_set(dataset: ModelSetDomain) -> ModelSet:
-        """
-        Convert a model set domain object to a ModelSet object.
-
-        Parameters
-        ----------
-        dataset : ModelSetDomain
-            The model set domain object to convert.
-
-        Returns
-        -------
-        ModelSet
-            The converted ModelSet object.
-        """
-        return ModelSet(
-            id=dataset.id,
-            name=dataset.name,
-            models=[ModelSet._to_model_data(m) for m in dataset.models],
-        )
+        self.models = [ModelMetadata.model_validate(m, from_attributes=True) for m in modelset.models]

@@ -2,4 +2,4 @@ from luna_bench.errors.base_error import BaseError
 
 
 class DaoError(BaseError):
-    pass
+    """Base class for errors related to the DAO."""

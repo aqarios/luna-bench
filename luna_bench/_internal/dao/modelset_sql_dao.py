@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from luna_quantum import Logging
-from peewee import DoesNotExist, IntegrityError
+from peewee import DoesNotExist, ForeignKeyField, IntegrityError
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models import ModelMetadataDomain, ModelSetDomain
@@ -37,7 +37,7 @@ class ModelSetSqlDao(ModelSetDao):
     @staticmethod
     def load(modelset_name: str) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = (ModelSetTable.select(ModelSetTable).where(ModelSetTable.name == modelset_name)).get()
+            modelset = (ModelSetTable.select(ModelSetTable).where(ModelSetTable.name == modelset_name)).get()  # type: ignore[no-untyped-call]
 
             return Success(ModelSetSqlDao.modelset_to_domain(modelset))
         except DoesNotExist:
@@ -49,7 +49,7 @@ class ModelSetSqlDao(ModelSetDao):
     @staticmethod
     def delete(modelset_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
+            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)  # type: ignore[no-untyped-call]
 
             models_to_check = list(modelset.models)
 
@@ -72,8 +72,8 @@ class ModelSetSqlDao(ModelSetDao):
         modelset_name: str, model_id: int
     ) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
-            model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)
+            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)  # type: ignore[no-untyped-call]
+            model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)  # type: ignore[no-untyped-call]
 
             if model_metadata not in modelset.models:
                 modelset.models.add(model_metadata)
@@ -91,12 +91,12 @@ class ModelSetSqlDao(ModelSetDao):
         modelset_name: str, model_id: int
     ) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
-            model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)
+            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)  # type: ignore[no-untyped-call]
+            model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)  # type: ignore[no-untyped-call]
             modelset.models.remove(model_metadata)
             modelset.save()
             to_return = ModelSetSqlDao.modelset_to_domain(modelset)
-            through_model = ModelSetTable.models.get_through_model()
+            through_model = ModelSetTable.models.get_through_model()  # type: ignore[no-untyped-call]
             remaining_count = through_model.select().where(through_model.modelmetadatatable == through_model.id).count()
 
             if remaining_count == 0:
@@ -112,7 +112,7 @@ class ModelSetSqlDao(ModelSetDao):
     @staticmethod
     def load_all() -> Result[list[ModelSetDomain], UnknownLunaBenchError]:
         try:
-            modelsets = ModelSetTable.select()
+            modelsets = ModelSetTable.select()  # type: ignore[no-untyped-call]
             return Success([ModelSetSqlDao.modelset_to_domain(m) for m in modelsets])
         except Exception as e:  # pragma: no cover
             ModelSetSqlDao._logger.debug(e)
@@ -123,7 +123,7 @@ class ModelSetSqlDao(ModelSetDao):
         modelset_name: str,
     ) -> Result[list[ModelMetadataDomain], DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
+            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)  # type: ignore[no-untyped-call]
 
             return Success([ModelSqlDao.model_to_domain(m) for m in modelset.models])
         except DoesNotExist:
@@ -133,7 +133,7 @@ class ModelSetSqlDao(ModelSetDao):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def modelset_to_domain(modelset: ModelSetTable) -> ModelSetDomain:
+    def modelset_to_domain(modelset: ModelSetTable | ForeignKeyField) -> ModelSetDomain:
         return ModelSetDomain(
             id=cast("int", modelset.id),
             name=cast("str", modelset.name),

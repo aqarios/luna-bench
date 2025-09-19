@@ -4,7 +4,6 @@ from .base_domain import BaseDomain
 from .model_metadata_domain import ModelMetadataDomain
 
 
-# ruff: noqa: TC001 Disable typing block rule since it will break pydantic.
 class ModelSetDomain(BaseDomain):
     """
     Domain model representing a set of models.

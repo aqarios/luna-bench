@@ -7,20 +7,20 @@ from dependency_injector import containers, providers
 from .algorithm_sql_dao import AlgorithmSqlDao
 from .benchmark_sql_dao import BenchmarkSqlDao
 from .database.peewee_transaction import PeeweeTransaction
+from .feature_sql_dao import FeatureSqlDao
 from .metric_sql_dao import MetricSqlDao
 from .model_sql_dao import ModelSqlDao
-from .modelmetric_sql_dao import ModelmetricSqlDao
 from .modelset_sql_dao import ModelSetSqlDao
 from .plot_sql_dao import PlotSqlDao
 from .tables import (
-    AlgorithmConfigTable,
     AlgorithmResultTable,
+    AlgorithmTable,
     BenchmarkTable,
-    MetricConfigTable,
+    FeatureResultTable,
+    FeatureTable,
     MetricResultTable,
+    MetricTable,
     ModelMetadataTable,
-    ModelmetricConfigTable,
-    ModelmetricResultTable,
     ModelSetTable,
     ModelTable,
     PlotConfigTable,
@@ -34,9 +34,9 @@ if TYPE_CHECKING:
         AlgorithmDao,
         BenchmarkDao,
         DaoTransaction,
+        FeatureDao,
         MetricDao,
         ModelDao,
-        ModelmetricDao,
         ModelSetDao,
         PlotDao,
     )
@@ -48,24 +48,24 @@ class DaoContainer(containers.DeclarativeContainer):
     model_dao: Provider[ModelDao] = providers.Singleton(ModelSqlDao)
     modelset_dao: Provider[ModelSetDao] = providers.Singleton(ModelSetSqlDao)
     benchmark_dao: Provider[BenchmarkDao] = providers.Singleton(BenchmarkSqlDao)
-    modelmetric_dao: Provider[ModelmetricDao] = providers.Singleton(ModelmetricSqlDao)
+    feature_dao: Provider[FeatureDao] = providers.Singleton(FeatureSqlDao)
     metric_dao: Provider[MetricDao] = providers.Singleton(MetricSqlDao)
     algorithm_dao: Provider[AlgorithmDao] = providers.Singleton(AlgorithmSqlDao)
     plot_dao: Provider[PlotDao] = providers.Singleton(PlotSqlDao)
 
     tables = providers.List(
         BenchmarkTable,
-        MetricConfigTable,
+        MetricTable,
         MetricResultTable,
         ModelMetadataTable,
         ModelSetTable,
         ModelTable,
-        ModelmetricConfigTable,
-        ModelmetricResultTable,
+        FeatureTable,
+        FeatureResultTable,
         PlotConfigTable,
-        AlgorithmConfigTable,
+        AlgorithmTable,
         AlgorithmResultTable,
-        ModelSetTable.models.get_through_model(),
+        ModelSetTable.models.get_through_model(),  # type: ignore[no-untyped-call]
     )
 
     database = providers.Callable(setup_db_proxy, connection_string=config.DB_CONNECTION_STRING, tables=tables)
@@ -77,7 +77,7 @@ class DaoContainer(containers.DeclarativeContainer):
         modelset_dao=modelset_dao,
         benchmark_dao=benchmark_dao,
         metric_dao=metric_dao,
-        modelmetric_dao=modelmetric_dao,
+        feature_dao=feature_dao,
         solvejob_dao=algorithm_dao,
         plot_dao=plot_dao,
     )
