@@ -27,7 +27,7 @@ class ModelmetricSqlDao(ModelmetricDao):
         benchmark_name: str, modelmetric_name: str, modelmetric_config: ModelmetricConfigDomain.ModelmetricConfig
     ) -> Result[ModelmetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             modelmetric = ModelmetricConfigTable(
                 name=modelmetric_name,
                 status=BenchmarkStatus.CREATED,
@@ -37,17 +37,15 @@ class ModelmetricSqlDao(ModelmetricDao):
             modelmetric.status = BenchmarkStatus.CREATED
             modelmetric.save()
             return Success(ModelmetricSqlDao.modelmetric_to_domain(modelmetric))
-        except IntegrityError:
-            return Failure(DataNotUniqueError())
-        except DoesNotExist:
-            return Failure(DataNotExistError())
+        except IntegrityError as e:
+            return Failure(ModelmetricConfigTable.map_integrity_error(e))
         except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
     def remove(benchmark_name: str, modelmetric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             modelmetric = ModelmetricConfigTable.get(
                 ModelmetricConfigTable.name == modelmetric_name, ModelmetricConfigTable.benchmark == benchmark
             )
@@ -63,7 +61,7 @@ class ModelmetricSqlDao(ModelmetricDao):
         benchmark_name: str, modelmetric_name: str, modelmetric_config: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             modelmetric = ModelmetricConfigTable.get(
                 ModelmetricConfigTable.name == modelmetric_name, ModelmetricConfigTable.benchmark == benchmark
             )
@@ -81,7 +79,7 @@ class ModelmetricSqlDao(ModelmetricDao):
         benchmark_name: str, modelmetric_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             modelmetric = ModelmetricConfigTable.get(
                 ModelmetricConfigTable.name == modelmetric_name, ModelmetricConfigTable.benchmark == benchmark
             )
@@ -98,7 +96,7 @@ class ModelmetricSqlDao(ModelmetricDao):
         benchmark_name: str, modelmetric_name: str, result: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = ModelmetricConfigTable.get(
                 ModelmetricConfigTable.name == modelmetric_name, ModelmetricConfigTable.benchmark == benchmark
             )
@@ -121,7 +119,7 @@ class ModelmetricSqlDao(ModelmetricDao):
         benchmark_name: str, modelmetric_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = ModelmetricConfigTable.get(
                 ModelmetricConfigTable.name == modelmetric_name, ModelmetricConfigTable.benchmark == benchmark
             )
@@ -140,7 +138,7 @@ class ModelmetricSqlDao(ModelmetricDao):
         benchmark_name: str, metric_name: str
     ) -> Result[ModelmetricConfigDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = ModelmetricConfigTable.get(
                 ModelmetricConfigTable.name == metric_name, ModelmetricConfigTable.benchmark == benchmark
             )

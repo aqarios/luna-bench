@@ -31,7 +31,7 @@ class PlotSqlDao(PlotDao):
         benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
     ) -> Result[PlotConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             plot = PlotConfigTable(
                 name=plot_name,
                 status=BenchmarkStatus.CREATED,
@@ -40,17 +40,15 @@ class PlotSqlDao(PlotDao):
             )
             plot.save()
             return Success(PlotSqlDao.plot_to_domain(plot))
-        except IntegrityError:
-            return Failure(DataNotUniqueError())
-        except DoesNotExist:
-            return Failure(DataNotExistError())
+        except IntegrityError as e:
+            return Failure(PlotConfigTable.map_integrity_error(e))
         except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
     def remove(benchmark_name: str, plot_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)
             plot.delete_instance(recursive=True)
             return Success(None)
@@ -64,7 +62,7 @@ class PlotSqlDao(PlotDao):
         benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)
             plot.status = BenchmarkStatus.CREATED
             plot.config_data = plot_config
@@ -80,7 +78,7 @@ class PlotSqlDao(PlotDao):
         benchmark_name: str, plot_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)
             plot.status = status
             plot.save()
@@ -95,7 +93,7 @@ class PlotSqlDao(PlotDao):
         benchmark_name: str, plot_name: str
     ) -> Result[PlotConfigDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)
             return Success(PlotSqlDao.plot_to_domain(plot))
         except DoesNotExist:

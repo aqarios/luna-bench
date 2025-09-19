@@ -1,7 +1,7 @@
-from luna_bench.errors.base_error import BaseError
+from luna_bench.errors.storage.dao_error import DaoError
 
 
-class DataNotExistError(BaseError):
+class DataNotExistError(DaoError):
     """Raised when the requested data does not exist."""
 
     def __init__(self) -> None:

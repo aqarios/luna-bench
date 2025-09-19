@@ -1,7 +1,7 @@
-from luna_bench.errors.base_error import BaseError
+from luna_bench.errors.storage.dao_error import DaoError
 
 
-class DataNotUniqueError(BaseError):
+class DataNotUniqueError(DaoError):
     """Raised when the inserted/create data is not unique."""
 
     def __init__(self) -> None:

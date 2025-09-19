@@ -34,7 +34,7 @@ class MetricSqlDao(MetricDao):
         benchmark_name: str, metric_name: str, metric_config: MetricConfigDomain.MetricConfig
     ) -> Result[MetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricConfigTable(
                 name=metric_name,
                 status=BenchmarkStatus.CREATED,
@@ -44,17 +44,15 @@ class MetricSqlDao(MetricDao):
             metric.status = BenchmarkStatus.CREATED
             metric.save()
             return Success(MetricSqlDao.metric_to_domain(metric))
-        except IntegrityError:
-            return Failure(DataNotUniqueError())
-        except DoesNotExist:
-            return Failure(DataNotExistError())
+        except IntegrityError as e:
+            return Failure(MetricConfigTable.map_integrity_error(e))
         except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
     def remove(benchmark_name: str, metric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricConfigTable.get(
                 MetricConfigTable.name == metric_name, MetricConfigTable.benchmark == benchmark
             )
@@ -70,7 +68,7 @@ class MetricSqlDao(MetricDao):
         benchmark_name: str, metric_name: str, metric_config: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricConfigTable.get(
                 MetricConfigTable.name == metric_name, MetricConfigTable.benchmark == benchmark
             )
@@ -88,7 +86,7 @@ class MetricSqlDao(MetricDao):
         benchmark_name: str, metric_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricConfigTable.get(
                 MetricConfigTable.name == metric_name, MetricConfigTable.benchmark == benchmark
             )
@@ -105,7 +103,7 @@ class MetricSqlDao(MetricDao):
         benchmark_name: str, metric_name: str, result: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricConfigTable.get(
                 MetricConfigTable.name == metric_name, MetricConfigTable.benchmark == benchmark
             )
@@ -125,7 +123,7 @@ class MetricSqlDao(MetricDao):
     @staticmethod
     def remove_result(benchmark_name: str, metric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricConfigTable.get(
                 MetricConfigTable.name == metric_name, MetricConfigTable.benchmark == benchmark
             )
@@ -144,7 +142,7 @@ class MetricSqlDao(MetricDao):
         benchmark_name: str, metric_name: str
     ) -> Result[MetricConfigDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricConfigTable.get(
                 MetricConfigTable.name == metric_name, MetricConfigTable.benchmark == benchmark
             )

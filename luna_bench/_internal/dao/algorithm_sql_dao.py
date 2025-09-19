@@ -37,27 +37,26 @@ class AlgorithmSqlDao(AlgorithmDao):
         backend: AlgorithmConfigDomain.Backend | None = None,
     ) -> Result[AlgorithmConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
-            solve_job = AlgorithmConfigTable(
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
+            algorithm = AlgorithmConfigTable(
                 name=solve_job_name,
                 status=BenchmarkStatus.CREATED,
                 benchmark=benchmark,
                 algorithm=algorithm,
                 backend=backend,
             )
-            solve_job.save()
-            return Success(AlgorithmSqlDao.solvejob_to_domain(solve_job))
-        except IntegrityError:
-            return Failure(DataNotUniqueError())
-        except DoesNotExist:
-            return Failure(DataNotExistError())
+            algorithm.save()
+            return Success(AlgorithmSqlDao.solvejob_to_domain(algorithm))
+        except IntegrityError as e:
+            return Failure(AlgorithmConfigTable.map_integrity_error(e))
         except Exception as e:  # pragma: no cover
+            print(e)
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
     def remove(benchmark_name: str, solve_job_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             solve_job = AlgorithmConfigTable.get(
                 AlgorithmConfigTable.name == solve_job_name, AlgorithmConfigTable.benchmark == benchmark
             )
@@ -77,7 +76,7 @@ class AlgorithmSqlDao(AlgorithmDao):
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         # TODO: delete results
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             solve_job = AlgorithmConfigTable.get(
                 AlgorithmConfigTable.name == solve_job_name, AlgorithmConfigTable.benchmark == benchmark
             )
@@ -96,7 +95,7 @@ class AlgorithmSqlDao(AlgorithmDao):
         benchmark_name: str, solve_job_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             solve_job = AlgorithmConfigTable.get(
                 AlgorithmConfigTable.name == solve_job_name, AlgorithmConfigTable.benchmark == benchmark
             )
@@ -113,7 +112,7 @@ class AlgorithmSqlDao(AlgorithmDao):
         benchmark_name: str, solvejob_name: str
     ) -> Result[AlgorithmConfigDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             solve_job = AlgorithmConfigTable.get(
                 AlgorithmConfigTable.name == solvejob_name, AlgorithmConfigTable.benchmark == benchmark
             )
@@ -130,7 +129,7 @@ class AlgorithmSqlDao(AlgorithmDao):
         benchmark_name: str, solve_job_name: str, result_domain: AlgorithmResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             solve_job = AlgorithmConfigTable.get(
                 AlgorithmConfigTable.name == solve_job_name, AlgorithmConfigTable.benchmark == benchmark
             )
@@ -153,7 +152,7 @@ class AlgorithmSqlDao(AlgorithmDao):
         benchmark_name: str, solvejob_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             solve_job = AlgorithmConfigTable.get(
                 AlgorithmConfigTable.name == solvejob_name, AlgorithmConfigTable.benchmark == benchmark
             )

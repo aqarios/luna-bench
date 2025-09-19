@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from peewee import Database, Model, SqliteDatabase
+from peewee import Database, IntegrityError, Model, SqliteDatabase, sqlite3
+
+from luna_bench.errors.storage.data_not_exist_error import DataNotExistError
+from luna_bench.errors.storage.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 _database: Database = SqliteDatabase(None)
 
@@ -24,3 +28,17 @@ def setup_db_proxy(connection_string: str, tables: list[Any]) -> Database:
 class BaseTable(Model):
     class Meta:
         database = _database
+
+    @staticmethod
+    def map_integrity_error(error: IntegrityError) -> DataNotUniqueError | DataNotExistError | UnknownLunaBenchError:
+        if isinstance(_database, SqliteDatabase):
+            match error.orig.sqlite_errorcode:
+                case sqlite3.SQLITE_CONSTRAINT_UNIQUE:
+                    return DataNotUniqueError()
+                case sqlite3.SQLITE_CONSTRAINT_NOTNULL:
+                    return DataNotExistError()
+                case _:
+                    return UnknownLunaBenchError(e)
+
+        else:
+            raise NotImplementedError("Currently only SQLite for error handling is supported.")
