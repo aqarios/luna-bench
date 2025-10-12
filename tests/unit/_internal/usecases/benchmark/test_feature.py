@@ -27,6 +27,7 @@ def _empty_feature(name: str, feature: IFeature) -> FeatureUserModel:
         name=name,
         status=JobStatus.CREATED,
         feature=feature,
+        results={},
     )
 
 

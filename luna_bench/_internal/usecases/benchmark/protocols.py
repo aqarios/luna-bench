@@ -67,6 +67,12 @@ class FeatureAddUc(Protocol):
     ]: ...
 
 
+class FeatureRunUc(Protocol):
+    def __call__(
+        self, benchmark: BenchmarkUserModel, feature: FeatureUserModel | None = None
+    ) -> Result[None, None]: ...
+
+
 class PlotAddUc(Protocol):
     def __call__(
         self, benchmark_name: str, name: str, plot: IPlot

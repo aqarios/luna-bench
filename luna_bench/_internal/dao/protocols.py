@@ -13,6 +13,7 @@ if TYPE_CHECKING:
         AlgorithmResultDomain,
         BenchmarkDomain,
         BenchmarkStatus,
+        FeatureResultDomain,
         ModelMetadataDomain,
         ModelSetDomain,
         PlotDomain,
@@ -121,7 +122,7 @@ class FeatureDao(Protocol):
 
     @staticmethod
     def set_result(
-        benchmark_name: str, feature_name: str, result: ArbitraryDataDomain
+        benchmark_name: str, feature_name: str, result: FeatureResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
@@ -131,7 +132,7 @@ class FeatureDao(Protocol):
 
     @staticmethod
     def load(
-        benchmark_name: str, metric_name: str
+        benchmark_name: str, feature_name: str
     ) -> Result[FeatureDomain, DataNotExistError | UnknownLunaBenchError]: ...
 
 

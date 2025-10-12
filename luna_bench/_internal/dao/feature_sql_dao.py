@@ -6,6 +6,7 @@ from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError
 from returns.result import Failure, Result, Success
 
+from luna_bench._internal.dao.tables.model_metadata_table import ModelMetadataTable
 from luna_bench._internal.domain_models import (
     BenchmarkStatus,
     FeatureDomain,
@@ -98,18 +99,25 @@ class FeatureSqlDao(FeatureDao):
 
     @staticmethod
     def set_result(
-        benchmark_name: str, feature_name: str, result: ArbitraryDataDomain
+        benchmark_name: str, feature_name: str, result: FeatureResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            model_metadata = ModelMetadataTable.select(ModelMetadataTable.id).where(  # type: ignore[no-untyped-call]
+                ModelMetadataTable.name == result.model_name
+            )
             feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
 
             feature_result = FeatureResultTable(
                 feature=feature,
-                result_data=result.model_dump_json(),
+                model_metadata=model_metadata,
+                processing_time_ms=result.processing_time_ms,
+                result_data=result.result,
+                status=result.status.value,
+                error=result.error,
             )
             feature_result.save()
-            feature.status = BenchmarkStatus.DONE
+
             feature.save()
             return Success(None)
         except DoesNotExist:
@@ -135,12 +143,14 @@ class FeatureSqlDao(FeatureDao):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def load(benchmark_name: str, metric_name: str) -> Result[FeatureDomain, DataNotExistError | UnknownLunaBenchError]:
+    def load(
+        benchmark_name: str, feature_name: str
+    ) -> Result[FeatureDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
-            metric = FeatureTable.get(FeatureTable.name == metric_name, FeatureTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
 
-            return Success(FeatureSqlDao.feature_to_domain(metric))
+            return Success(FeatureSqlDao.feature_to_domain(feature))
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
@@ -148,16 +158,21 @@ class FeatureSqlDao(FeatureDao):
 
     @staticmethod
     def feature_to_domain(feature: FeatureTable) -> FeatureDomain:
-        result_data: FeatureResultDomain | None = (
-            FeatureResultDomain.model_validate_json(feature.result.first().result_data)
-            if feature.result.first()
-            else None
-        )
+        result_data: dict[str, FeatureResultDomain] = {
+            f.model_metadata.name: FeatureResultDomain.model_construct(
+                processing_time_ms=f.processing_time_ms,
+                model_name=f.model_metadata.name,
+                result=f.result_data,
+                status=JobStatus(f.status),
+                error=f.error,
+            )
+            for f in list(feature.results)
+        }
 
         return FeatureDomain(
             name=cast("str", feature.name),
             status=JobStatus(feature.status),
-            result=result_data,
+            results=result_data,
             config_data=RegisteredDataDomain(
                 registered_id=cast("str", feature.registered_id),
                 data=ArbitraryDataDomain.model_validate(feature.config_data, from_attributes=True),

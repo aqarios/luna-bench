@@ -1,5 +1,5 @@
 from luna_bench._internal.usecases.benchmark.algorithm import AlgorithmAddUcImpl, AlgorithmRemoveUcImpl
-from luna_bench._internal.usecases.benchmark.feature import FeatureAddUcImpl, FeatureRemoveUcImpl
+from luna_bench._internal.usecases.benchmark.feature import FeatureAddUcImpl, FeatureRemoveUcImpl, FeatureRunUcImpl
 from luna_bench._internal.usecases.benchmark.metric import MetricAddUcImpl, MetricRemoveUcImpl
 from luna_bench._internal.usecases.benchmark.plot import PlotAddUcImpl, PlotRemoveUcImpl
 
@@ -21,6 +21,7 @@ __all__ = [
     "BenchmarkSetModelsetUcImpl",
     "FeatureAddUcImpl",
     "FeatureRemoveUcImpl",
+    "FeatureRunUcImpl",
     "MetricAddUcImpl",
     "MetricRemoveUcImpl",
     "PlotAddUcImpl",

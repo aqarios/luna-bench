@@ -1,0 +1,2 @@
+class PlotMapper:
+    pass

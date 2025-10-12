@@ -29,7 +29,7 @@ class FeatureTable(BaseTable):
     )
 
     if TYPE_CHECKING:
-        result: ModelSelect
+        results: ModelSelect
 
     class Meta:
         # Ensures uniqueness of name within each benchmark

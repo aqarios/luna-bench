@@ -8,6 +8,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models import BenchmarkDomain, RegisteredDataDomain
 from luna_bench._internal.interfaces import IFeature, IMetric, IPlot
+from luna_bench._internal.mappers import BenchmarkMapper
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.user_models import (
@@ -17,7 +18,6 @@ from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 from .protocols import BenchmarkLoadAllUc
-from .utils import convert_to_user_model
 
 
 class BenchmarkLoadAllUcImpl(BenchmarkLoadAllUc):
@@ -67,7 +67,7 @@ class BenchmarkLoadAllUcImpl(BenchmarkLoadAllUc):
             benchmark_domains: list[BenchmarkDomain] = result_dao.unwrap()
 
             for benchmark_domain in benchmark_domains:
-                user_model = convert_to_user_model(
+                user_model = BenchmarkMapper.to_user_model(
                     benchmark_domain,
                     self._metric_registry,
                     self._feature_registry,

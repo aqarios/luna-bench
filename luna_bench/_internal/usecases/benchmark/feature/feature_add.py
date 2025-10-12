@@ -71,9 +71,5 @@ class FeatureAddUcImpl(FeatureAddUc):
                 return Failure(config.failure())
 
             return Success(
-                FeatureUserModel(
-                    name=name,
-                    status=result.unwrap().status,
-                    feature=config.unwrap(),
-                )
+                FeatureUserModel(name=name, status=result.unwrap().status, feature=config.unwrap(), results={})
             )

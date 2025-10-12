@@ -17,6 +17,7 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     BenchmarkSetModelsetUc,
     FeatureAddUc,
     FeatureRemoveUc,
+    FeatureRunUc,
     MetricAddUc,
     MetricRemoveUc,
     PlotAddUc,
@@ -545,8 +546,17 @@ class Benchmark(BenchmarkUserModel):
 
         self._remove_name_from_list(self.plots, plot_name)
 
-    def run_model_metrics(self) -> None:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+    def run_features(
+        self, benchmark_run_features: FeatureRunUc = Provide[UsecaseContainer.benchmark_run_feature_uc]
+    ) -> None:
+        """
+        Calculate all configured features for all models of this benchmark.
+
+        Parameters
+        ----------
+        benchmark_run_features: FeatureRunUc, inject
+        """
+        benchmark_run_features(self)
 
     def run_metrics(self) -> None:  # noqa: D102 # Not yet implemented
         raise NotImplementedError
