@@ -38,14 +38,14 @@ class AlgorithmSqlDao(AlgorithmDao):
     @staticmethod
     def add(
         benchmark_name: str,
-        solve_job_name: str,
+        algorithm_name: str,
         registered_id: str,
         algorithm: ArbitraryDataDomain,
     ) -> Result[AlgorithmDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
             algorithm_db = AlgorithmTable(
-                name=solve_job_name,
+                name=algorithm_name,
                 status=BenchmarkStatus.CREATED,
                 benchmark=benchmark,
                 config_data=algorithm,

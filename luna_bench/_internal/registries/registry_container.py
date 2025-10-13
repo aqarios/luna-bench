@@ -11,19 +11,19 @@ from .protocols import PydanticRegistry
 
 
 class RegistryContainer(containers.DeclarativeContainer):
-    feature_registry: Provider[PydanticRegistry[IFeature, RegisteredDataDomain]] = providers.Singleton(
+    feature_registry: Provider[PydanticRegistry[IFeature, RegisteredDataDomain]] = providers.ThreadSafeSingleton(
         ArbitraryDataRegistry[IFeature], kind="feature"
     )
 
-    algorithm_registry: Provider[PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain]] = providers.Singleton(
-        ArbitraryDataRegistry[IAlgorithm[IBackend]], kind="algorithm"
+    algorithm_registry: Provider[PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain]] = (
+        providers.ThreadSafeSingleton(ArbitraryDataRegistry[IAlgorithm[IBackend]], kind="algorithm")
     )
 
-    metric_registry: Provider[PydanticRegistry[IMetric, RegisteredDataDomain]] = providers.Singleton(
+    metric_registry: Provider[PydanticRegistry[IMetric, RegisteredDataDomain]] = providers.ThreadSafeSingleton(
         ArbitraryDataRegistry[IMetric], kind="metric"
     )
 
-    plot_registry: Provider[PydanticRegistry[IPlot, RegisteredDataDomain]] = providers.Singleton(
+    plot_registry: Provider[PydanticRegistry[IPlot, RegisteredDataDomain]] = providers.ThreadSafeSingleton(
         ArbitraryDataRegistry[IPlot], kind="plot"
     )
 
