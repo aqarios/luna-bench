@@ -14,8 +14,14 @@ from luna_bench.helpers.decorators import algorithm, feature, metric, plot
 
 @feature
 class MockFeature(IFeature):
-    def run(self, model: Model) -> ArbitraryDataDomain:
-        raise NotImplementedError
+    def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
+        return ArbitraryDataDomain.model_construct(solution="xD")  # type: ignore[call-arg] # Fake data
+
+
+@feature
+class MockFeatureFailing(IFeature):
+    def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
+        raise ValueError("Model failed.")  # noqa: TRY003 # Just simulating a random error
 
 
 class UnregisteredFeature(IFeature):

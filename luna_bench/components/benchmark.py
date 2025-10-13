@@ -63,6 +63,13 @@ class Benchmark(BenchmarkUserModel):
 
     @staticmethod
     @inject
+    def __run_feature_uc(
+        benchmark_run_features: FeatureRunUc = Provide[UsecaseContainer.benchmark_run_feature_uc],
+    ) -> FeatureRunUc:
+        return benchmark_run_features
+
+    @staticmethod
+    @inject
     def create(
         name: str,
         benchmark_create: BenchmarkCreateUc = Provide[UsecaseContainer.benchmark_create_uc],  # Will be injected
@@ -546,9 +553,7 @@ class Benchmark(BenchmarkUserModel):
 
         self._remove_name_from_list(self.plots, plot_name)
 
-    def run_features(
-        self, benchmark_run_features: FeatureRunUc = Provide[UsecaseContainer.benchmark_run_feature_uc]
-    ) -> None:
+    def run_features(self) -> None:
         """
         Calculate all configured features for all models of this benchmark.
 
@@ -556,6 +561,7 @@ class Benchmark(BenchmarkUserModel):
         ----------
         benchmark_run_features: FeatureRunUc, inject
         """
+        benchmark_run_features = self.__run_feature_uc()
         benchmark_run_features(self)
 
     def run_metrics(self) -> None:  # noqa: D102 # Not yet implemented

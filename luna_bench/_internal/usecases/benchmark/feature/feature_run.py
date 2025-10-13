@@ -19,6 +19,8 @@ from luna_bench._internal.user_models import BenchmarkUserModel
 from luna_bench._internal.user_models.feature_result_usermodel import FeatureResultUserModel
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
+from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
+from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
@@ -95,11 +97,20 @@ class FeatureRunUcImpl(FeatureRunUc):
         feature.results[model_metadata.name] = result
         return Success(result)
 
-    def __call__(self, benchmark: BenchmarkUserModel, feature: FeatureUserModel | None = None) -> Result[None, None]:
-        features: list[FeatureUserModel] = benchmark.features if feature is None else [feature]
+    def __call__(
+        self, benchmark: BenchmarkUserModel, feature: FeatureUserModel | None = None
+    ) -> Result[None, RunFeatureMissingError | RunModelsetMissingError]:
+        features: list[FeatureUserModel]
+        if feature is not None:
+            # Check if the feature is part of the benchmark
+            if feature not in benchmark.features:
+                return Failure(RunFeatureMissingError(feature.name, benchmark.name))
+            features = [feature]
+        else:
+            features = benchmark.features
 
         if benchmark.modelset is None:
-            return Failure(None)
+            return Failure(RunModelsetMissingError(benchmark.name))
 
         for model in benchmark.modelset.models:
             with self._transaction as t:

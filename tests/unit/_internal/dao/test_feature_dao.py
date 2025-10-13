@@ -207,7 +207,8 @@ class TestFeatureDAO:
                     model_name="existing",
                     status=JobStatus.CREATED,
                     error=None,
-                    result=ArbitraryDataDomain()),
+                    result=ArbitraryDataDomain(),
+                ),
                 Success(None),
             ),
             (
@@ -218,7 +219,8 @@ class TestFeatureDAO:
                     model_name="existing",
                     status=JobStatus.CREATED,
                     error=None,
-                    result=MockConfig(something="xD")),
+                    result=MockConfig(something="xD"),
+                ),
                 Failure(DataNotExistError()),
             ),
             (
@@ -229,7 +231,8 @@ class TestFeatureDAO:
                     model_name="existing",
                     status=JobStatus.CREATED,
                     error=None,
-                    result=MockConfig(something="xD")),
+                    result=MockConfig(something="xD"),
+                ),
                 Failure(DataNotExistError()),
             ),
         ],
@@ -242,21 +245,21 @@ class TestFeatureDAO:
         result: FeatureResultDomain,
         exp: Result[FeatureResultDomain, DataNotExistError | DataNotUniqueError],
     ) -> None:
-        set_result = setup_transaction.feature.set_result(
-            benchmark_name, feature_name, result
-        )
+        set_result = setup_transaction.feature.set_result(benchmark_name, feature_name, result)
         assert is_successful(set_result) == is_successful(exp)
 
         if is_successful(exp):
-            assert {result.model_name:result} == setup_transaction.feature.load(benchmark_name, feature_name).unwrap().results
+            assert {result.model_name: result} == setup_transaction.feature.load(
+                benchmark_name, feature_name
+            ).unwrap().results
         else:
             assert isinstance(set_result.failure(), type(exp.failure()))
 
         remove = setup_transaction.feature.remove_result(benchmark_name, feature_name)
 
-        assert is_successful(remove) == is_successful(exp)
+        assert is_successful(remove) is is_successful(exp)
 
         if is_successful(exp):
-            assert setup_transaction.feature.load(benchmark_name, feature_name).unwrap().results is {}
+            assert setup_transaction.feature.load(benchmark_name, feature_name).unwrap().results == {}
         else:
             assert isinstance(remove.failure(), type(exp.failure()))
