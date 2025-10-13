@@ -6,9 +6,11 @@ from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging, Model
 from returns.pipeline import is_successful
 
-from luna_bench._internal.usecases import ModelAddUc, ModelLoadAllUc, ModelSetCreateUc
+from luna_bench._internal.usecases import ModelLoadAllUc
 from luna_bench._internal.usecases.modelset.protocols import (
+    ModelAddUc,
     ModelRemoveUc,
+    ModelSetCreateUc,
     ModelSetDeleteUc,
     ModelSetLoadAllUc,
     ModelSetLoadUc,
@@ -47,8 +49,56 @@ class ModelSet(ModelSetUserModel):
 
     @staticmethod
     @inject
+    def __create_uc(
+        modelset_create: ModelSetCreateUc = Provide[UsecaseContainer.modelset_create_uc],
+    ) -> ModelSetCreateUc:
+        return modelset_create
+
+    @staticmethod
+    @inject
+    def __load_uc(
+        modelset_load: ModelSetLoadUc = Provide[UsecaseContainer.modelset_load_uc],
+    ) -> ModelSetLoadUc:
+        return modelset_load
+
+    @staticmethod
+    @inject
+    def __load_all_uc(
+        modelset_load_all: ModelSetLoadAllUc = Provide[UsecaseContainer.modelset_load_all_uc],
+    ) -> ModelSetLoadAllUc:
+        return modelset_load_all
+
+    @staticmethod
+    @inject
+    def __model_all_uc(
+        model_all: ModelLoadAllUc = Provide[UsecaseContainer.model_load_all_uc],
+    ) -> ModelLoadAllUc:
+        return model_all
+
+    @staticmethod
+    @inject
+    def __model_add_uc(
+        modelset_add: ModelAddUc = Provide[UsecaseContainer.model_add_uc],
+    ) -> ModelAddUc:
+        return modelset_add
+
+    @staticmethod
+    @inject
+    def __model_remove_uc(
+        modelset_remove: ModelRemoveUc = Provide[UsecaseContainer.model_remove_uc],
+    ) -> ModelRemoveUc:
+        return modelset_remove
+
+    @staticmethod
+    @inject
+    def __delete_uc(
+        modelset_delete_uc: ModelSetDeleteUc = Provide[UsecaseContainer.modelset_delete_uc],
+    ) -> ModelSetDeleteUc:
+        return modelset_delete_uc
+
+    @staticmethod
     def create(
-        modelset_name: str, modelset_create: ModelSetCreateUc = Provide[UsecaseContainer.modelset_create_uc]
+        modelset_name: str,
     ) -> ModelSet:
         """
         Create a new model set with the given dataset name.
@@ -68,6 +118,8 @@ class ModelSet(ModelSetUserModel):
         ModelSet
             An instance of ModelSet representing the successfully created model set.
         """
+        modelset_create = ModelSet.__create_uc()
+
         result: Result[ModelSetUserModel, DataNotUniqueError | UnknownLunaBenchError] = modelset_create(
             modelset_name=modelset_name
         )
@@ -80,8 +132,7 @@ class ModelSet(ModelSetUserModel):
         return ModelSet.model_validate(result.unwrap(), from_attributes=True)
 
     @staticmethod
-    @inject
-    def load(name: str, modelset_load: ModelSetLoadUc = Provide[UsecaseContainer.modelset_load_uc]) -> ModelSet:
+    def load(name: str) -> ModelSet:
         """
         Load a model set by its ID.
 
@@ -99,6 +150,8 @@ class ModelSet(ModelSetUserModel):
         ModelSet
             The loaded model set.
         """
+        modelset_load = ModelSet.__load_uc()
+
         result: Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError] = modelset_load(modelset_name=name)
 
         if not is_successful(result):
@@ -109,10 +162,7 @@ class ModelSet(ModelSetUserModel):
         return ModelSet.model_validate(result.unwrap(), from_attributes=True)
 
     @staticmethod
-    @inject
-    def load_all(
-        modelset_load_all: ModelSetLoadAllUc = Provide[UsecaseContainer.modelset_load_all_uc],
-    ) -> list[ModelSet]:
+    def load_all() -> list[ModelSet]:
         """
         Load all model sets from the database.
 
@@ -123,6 +173,8 @@ class ModelSet(ModelSetUserModel):
         list[ModelSet]
             A list of all model sets.
         """
+        modelset_load_all = ModelSet.__load_all_uc()
+
         result: Result[list[ModelSetUserModel], UnknownLunaBenchError] = modelset_load_all()
 
         if not is_successful(result):
@@ -132,10 +184,7 @@ class ModelSet(ModelSetUserModel):
         return [ModelSet.model_validate(m, from_attributes=True) for m in result.unwrap()]
 
     @staticmethod
-    @inject
-    def load_all_models(
-        model_all: ModelLoadAllUc = Provide[UsecaseContainer.model_load_all_uc],
-    ) -> list[ModelMetadata]:
+    def load_all_models() -> list[ModelMetadata]:
         """
         Load all models from the database.
 
@@ -151,10 +200,13 @@ class ModelSet(ModelSetUserModel):
         list[ModelMetadata]
             A list of ModelData objects representing all models in the database.
         """
+        model_all = ModelSet.__model_all_uc()
         return [ModelMetadata.model_validate(m, from_attributes=True) for m in model_all()]
 
-    @inject
-    def add(self, model: Model, modelset_add: ModelAddUc = Provide[UsecaseContainer.model_add_uc]) -> None:
+    def add(
+        self,
+        model: Model,
+    ) -> None:
         """
         Add a model to this model set.
 
@@ -167,6 +219,8 @@ class ModelSet(ModelSetUserModel):
         modelset_add : ModelSetAddUc, injected
             The use case for adding models to a model set, by default provided by dependency injection.
         """
+        modelset_add = self.__model_add_uc()
+
         result: Result[ModelSetUserModel, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError] = (
             modelset_add(modelset_name=self.name, model=model)
         )
@@ -177,9 +231,9 @@ class ModelSet(ModelSetUserModel):
             raise RuntimeError(error)
         self._update(result.unwrap())
 
-    @inject
     def remove_model(
-        self, model: Model, modelset_remove: ModelRemoveUc = Provide[UsecaseContainer.model_remove_uc]
+        self,
+        model: Model,
     ) -> None:
         """
         Remove a model from this model set.
@@ -193,6 +247,8 @@ class ModelSet(ModelSetUserModel):
         modelset_remove : ModelSetRemoveUc, injected
             The use case for removing models from a model set, by default provided by dependency injection.
         """
+        modelset_remove = self.__model_remove_uc()
+
         result: Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError] = modelset_remove(
             modelset_name=self.name, model=model
         )
@@ -203,8 +259,7 @@ class ModelSet(ModelSetUserModel):
             raise RuntimeError(error)
         self._update(result.unwrap())
 
-    @inject
-    def delete(self, modelset_delete_uc: ModelSetDeleteUc = Provide[UsecaseContainer.modelset_delete_uc]) -> None:
+    def delete(self) -> None:
         """
         Delete this model set from the database.
 
@@ -215,6 +270,8 @@ class ModelSet(ModelSetUserModel):
         modelset_delete_uc : ModelSetDeleteUc, injected
             The use case for deleting model sets, by default provided by dependency injection.
         """
+        modelset_delete_uc = self.__delete_uc()
+
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = modelset_delete_uc(modelset_name=self.name)
 
         if not is_successful(result):
