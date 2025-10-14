@@ -1,0 +1,48 @@
+name: 🛠️ Task - Internal Use Only
+description: Create a task for work that needs to be done
+title: "[Task]: "
+labels: ["task"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to create a task for work that needs to be completed.
+  
+  - type: textarea
+    id: description
+    attributes:
+      label: Task Description
+      description: Describe what needs to be done
+      placeholder: What is the task?
+    validations:
+      required: true
+  
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What are the conditions that must be met for this task to be considered complete?
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Criterion 3
+    validations:
+      required: false
+  
+  - type: textarea
+    id: technical-details
+    attributes:
+      label: Technical Details
+      description: Any technical specifications or implementation details
+      placeholder: Include any relevant technical information
+    validations:
+      required: false
+  
+  - type: textarea
+    id: related-issues
+    attributes:
+      label: Related Issues. Please link parent & sub issues in the right column. And others here.
+      description: Link any related issues or pull requests
+      placeholder: "#123, #456"
+    validations:
+      required: false
