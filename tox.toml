@@ -1,9 +1,9 @@
-requires = ["tox>=4"]
-env_list = ["3.13"]
+requires = ["tox>=4", "tox-uv"]
+env_list = ["3.13", "3.14"]
 
 [env_run_base]
-allowlist_externals = ["uv"]
-commands_pre = [["uv", "sync", "--all-groups", "--all-extras", "--active"]]
+allowlist_externals = ["uv", "pytest"]
+runner = "uv-venv-runner"
 description = "run unit tests"
 deps = []
 commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]

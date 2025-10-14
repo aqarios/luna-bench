@@ -195,4 +195,4 @@ cython_debug/
 
 # helpers config
 .idea
-local
+.local
