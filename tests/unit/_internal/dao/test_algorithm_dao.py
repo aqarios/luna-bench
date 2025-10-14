@@ -33,7 +33,7 @@ class TestAlgorithmDAO:
         empty_transaction.benchmark.create(benchmark_name="existing")
         TestAlgorithmDAO._saved_algorithm_domain = empty_transaction.algorithm.add(
             benchmark_name="existing",
-            solve_job_name="existing",
+            algorithm_name="existing",
             registered_id="existing",
             algorithm=ArbitraryDataDomain(),
         ).unwrap()

@@ -175,7 +175,7 @@ class AlgorithmDao(Protocol):
     @staticmethod
     def add(
         benchmark_name: str,
-        solve_job_name: str,
+        algorithm_name: str,
         registered_id: str,
         algorithm: ArbitraryDataDomain,
     ) -> Result[AlgorithmDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
