@@ -4,13 +4,13 @@ erDiagram
     Model }|..|{ ModelSet: "belongs to"
     ModelMetadata }|..|{ ModelSet: "related to"
     Benchmark o|..o{ ModelSet: "has one or none"
-    Benchmark }o--|| ModelmetricConfig: "0 or n metrics"
-    Benchmark }o--|| AlgorithmConfig: "0 or n algorithms"
-    Benchmark }o--|| MetricConfig: "0 or n metrics"
-    Benchmark }o--|| PlotConfig: "0 or n plots"
-    ModelmetricConfig |o--|| ModelmetricResult: "if calculated"
-    AlgorithmConfig }o--|| AlgorithmResult: "if calculated"
-    MetricConfig }o--|| MetricResult: "if calculated"
+    Benchmark }o--|| Feature: "0 or n metrics"
+    Benchmark }o--|| Algorithm: "0 or n algorithms"
+    Benchmark }o--|| Metric: "0 or n metrics"
+    Benchmark }o--|| Plot: "0 or n plots"
+    Feature |o--|| FeatureResult: "if calculated"
+    Algorithm }o--|| AlgorithmResult: "if calculated"
+    Metric }o--|| MetricResult: "if calculated"
 
     Model {
         int id PK
@@ -34,19 +34,19 @@ erDiagram
         string status
     }
 
-    ModelmetricConfig {
+    Feature {
         int id PK
         string name UK "UK (benchmark, name), max 45chars"
         string status
         JSONField config_data
     }
 
-    ModelmetricResult {
+    FeatureResult {
         int id PK
         JSONField result_data
     }
 
-    MetricConfig {
+    Metric {
         int id PK
         string name UK "UK (benchmark, name), max 45chars"
         string status
@@ -58,13 +58,11 @@ erDiagram
         JSONField result_data
     }
 
-    AlgorithmConfig {
+    Algorithm {
         int id PK
         string name UK "UK (benchmark, name), max 45chars"
         string status
-        
-        JSONField backend "Can be null"
-        JSONField algorithm
+        JSONField config_data
     }
 
     AlgorithmResult {
@@ -73,7 +71,7 @@ erDiagram
         bytes encoded_solution
     }
 
-    PlotConfig {
+    Plot {
         int id PK
         string name UK "UK (benchmark, name), max 45chars"
         string status

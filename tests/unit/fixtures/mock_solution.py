@@ -32,7 +32,7 @@ def solution() -> Solution:
         0,
     ]
 
-    return Solution._build(  # type: ignore[attr-defined]
+    return Solution._build(  # type: ignore[attr-defined,no-any-return]
         component_types=[Vtype.Binary] * len(row),
         binary_cols=[[element] for element in row],
         spin_cols=None,

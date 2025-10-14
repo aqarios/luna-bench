@@ -8,14 +8,19 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models import ModelMetadataDomain, ModelSetDomain
-from luna_bench._internal.usecases import ModelAllUc, ModelSetAddUc, ModelSetCreateUc
-from luna_bench._internal.usecases.modelset.protocols import ModelSetDeleteUc, ModelSetLoadAllUc, ModelSetRemoveUc
-from luna_bench.components import ModelSet
-from luna_bench.components.model_set import ModelData
+from luna_bench._internal.usecases.modelset.protocols import (
+    ModelAddUc,
+    ModelLoadAllUc,
+    ModelRemoveUc,
+    ModelSetCreateUc,
+    ModelSetDeleteUc,
+    ModelSetLoadAllUc,
+)
+from luna_bench.components import ModelMetadata, ModelSet
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
-from tests.unit.fixtures.mock_usecase import _dummy_model
+from tests.unit.fixtures.mock_model import _dummy_model
 
 
 class TestModelData:
@@ -46,12 +51,12 @@ class TestModelData:
     @pytest.mark.parametrize(
         ("return_value", "exp"),
         [
-            ([ModelMetadataDomain(id=1, name="A", hash=1)], [ModelData(id=1, model_name="A", model_hash=1)]),
+            ([ModelMetadataDomain(id=1, name="A", hash=1)], [ModelMetadata(id=1, name="A", hash=1)]),
             ([], []),
         ],
     )
-    def test_load_all_models(self, return_value: list[ModelMetadataDomain], exp: list[ModelData]) -> None:
-        mock: Mock = Mock(spec=ModelAllUc)
+    def test_load_all_models(self, return_value: list[ModelMetadataDomain], exp: list[ModelMetadata]) -> None:
+        mock: Mock = Mock(spec=ModelLoadAllUc)
         mock.return_value = return_value
 
         r = ModelSet.load_all_models(model_all=mock)
@@ -64,7 +69,7 @@ class TestModelData:
         [
             (
                 Success(ModelSetDomain(id=1, name="B", models=[ModelMetadataDomain(id=1, name="A", hash=1)])),
-                nullcontext(ModelSet(id=1, name="B", models=[ModelData(id=1, model_name="A", model_hash=1)])),
+                nullcontext(ModelSet(id=1, name="B", models=[ModelMetadata(id=1, name="A", hash=1)])),
             ),
             (Failure(DataNotExistError()), pytest.raises(RuntimeError)),
         ],
@@ -72,7 +77,7 @@ class TestModelData:
     def test_add_model(
         self, return_value: Result[ModelSetDomain, Exception], exp: AbstractContextManager[ModelSet | RuntimeError]
     ) -> None:
-        mock: Mock = Mock(spec=ModelSetAddUc)
+        mock: Mock = Mock(spec=ModelAddUc)
         mock.return_value = return_value
         modelset = ModelSet(id=1, name="B", models=[])
 
@@ -134,11 +139,11 @@ class TestModelData:
         return_value: Result[ModelSetDomain, UnknownLunaBenchError],
         exp: AbstractContextManager[ModelSet | RuntimeError],
     ) -> None:
-        mock: Mock = Mock(spec=ModelSetRemoveUc)
+        mock: Mock = Mock(spec=ModelRemoveUc)
         mock.return_value = return_value
 
         ms_name = "b"
-        ms = ModelSet(id=1, name=ms_name, models=[ModelData(id=1, model_name="A", model_hash=1)])
+        ms = ModelSet(id=1, name=ms_name, models=[ModelMetadata(id=1, name="A", hash=1)])
         with exp as e:
             model = _dummy_model("A")
             ms.remove_model(model=model, modelset_remove=mock)
@@ -159,7 +164,7 @@ class TestModelData:
         mock: Mock = Mock(spec=ModelSetDeleteUc)
         mock.return_value = return_value
 
-        ms = ModelSet(id=1, name="b", models=[ModelData(id=1, model_name="A", model_hash=1)])
+        ms = ModelSet(id=1, name="b", models=[ModelMetadata(id=1, name="A", hash=1)])
         with exp:
             ms.delete(modelset_delete_uc=mock)
 

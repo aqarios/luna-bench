@@ -7,8 +7,8 @@ import pytest
 from luna_quantum import Model
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.usecases.models.protocols import ModelFetchUc
-from luna_bench.components.model_set import ModelData
+from luna_bench._internal.usecases.modelset.protocols import ModelFetchUc
+from luna_bench.components import ModelMetadata
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from tests.unit.fixtures.mock_model import _dummy_model
 
@@ -29,7 +29,7 @@ class TestModelData:
     ) -> None:
         mock: Mock = Mock(spec=ModelFetchUc)
         mock.return_value = return_value
-        modeldata = ModelData(id=1, model_name="A", model_hash=0)
+        modeldata = ModelMetadata(id=1, name="A", hash=0)
 
         with exp as e:
             fetched_model = modeldata._fetch_model(model_fetch=mock)
@@ -41,7 +41,7 @@ class TestModelData:
         mock: Mock = Mock()
         mock.return_value = "this is a test"
 
-        modeldata = ModelData(id=1, model_name="A", model_hash=0)
+        modeldata = ModelMetadata(id=1, name="A", hash=0)
         with patch.object(modeldata, "_fetch_model", mock):
             assert modeldata.model == "this is a test"
             mock.assert_called_with()

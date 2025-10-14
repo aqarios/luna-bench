@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self
 
-from luna_bench._internal.domain_models.metric_config_domain import MetricConfigDomain
-from luna_bench._internal.domain_models.modelmetric_config_domain import ModelmetricConfigDomain
-
 if TYPE_CHECKING:
     from types import TracebackType
 
@@ -12,14 +9,17 @@ if TYPE_CHECKING:
     from returns.result import Result
 
     from luna_bench._internal.domain_models import (
-        AlgorithmConfigDomain,
+        AlgorithmDomain,
         AlgorithmResultDomain,
         BenchmarkDomain,
         BenchmarkStatus,
         ModelMetadataDomain,
         ModelSetDomain,
-        PlotConfigDomain,
+        PlotDomain,
     )
+    from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
+    from luna_bench._internal.domain_models.feature_domain import FeatureDomain
+    from luna_bench._internal.domain_models.metric_domain import MetricDomain
     from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
     from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -46,7 +46,7 @@ class DaoTransaction(Protocol):
     def benchmark(self) -> BenchmarkDao: ...
 
     @property
-    def model_metric(self) -> ModelmetricDao: ...
+    def feature(self) -> FeatureDao: ...
 
     @property
     def metric(self) -> MetricDao: ...
@@ -77,15 +77,15 @@ class ModelDao(Protocol):
 class PlotDao(Protocol):
     @staticmethod
     def add(
-        benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
-    ) -> Result[PlotConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
+        benchmark_name: str, plot_name: str, registered_id: str, plot_config: ArbitraryDataDomain
+    ) -> Result[PlotDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def remove(benchmark_name: str, plot_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def update(
-        benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
+        benchmark_name: str, plot_name: str, registered_id: str, plot_config: ArbitraryDataDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
@@ -94,60 +94,59 @@ class PlotDao(Protocol):
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def load(
-        benchmark_name: str, plot_name: str
-    ) -> Result[PlotConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
+    def load(benchmark_name: str, plot_name: str) -> Result[PlotDomain, DataNotExistError | UnknownLunaBenchError]: ...
 
 
-class ModelmetricDao(Protocol):
+class FeatureDao(Protocol):
     @staticmethod
     def add(
-        benchmark_name: str, modelmetric_name: str, modelmetric_config: ModelmetricConfigDomain.ModelmetricConfig
-    ) -> Result[ModelmetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
+        benchmark_name: str,
+        feature_name: str,
+        registered_id: str,
+        feature_config: ArbitraryDataDomain,
+    ) -> Result[FeatureDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def remove(
-        benchmark_name: str, modelmetric_name: str
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
+    def remove(benchmark_name: str, feature_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def update(
-        benchmark_name: str, modelmetric_name: str, modelmetric_config: BaseModel
+        benchmark_name: str, feature_name: str, registered_id: str, feature_config: ArbitraryDataDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def update_status(
-        benchmark_name: str, modelmetric_name: str, status: BenchmarkStatus
+        benchmark_name: str, feature_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def set_result(
-        benchmark_name: str, modelmetric_name: str, result: BaseModel
+        benchmark_name: str, feature_name: str, result: ArbitraryDataDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def remove_result(
-        benchmark_name: str, modelmetric_name: str
+        benchmark_name: str, feature_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def load(
         benchmark_name: str, metric_name: str
-    ) -> Result[ModelmetricConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
+    ) -> Result[FeatureDomain, DataNotExistError | UnknownLunaBenchError]: ...
 
 
 class MetricDao(Protocol):
     @staticmethod
     def add(
-        benchmark_name: str, metric_name: str, metric_config: MetricConfigDomain.MetricConfig
-    ) -> Result[MetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
+        benchmark_name: str, metric_name: str, registered_id: str, metric_config: ArbitraryDataDomain
+    ) -> Result[MetricDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def remove(benchmark_name: str, metric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def update(
-        benchmark_name: str, metric_name: str, metric_config: BaseModel
+        benchmark_name: str, metric_name: str, registered_id: str, metric_config: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
@@ -168,17 +167,17 @@ class MetricDao(Protocol):
     @staticmethod
     def load(
         benchmark_name: str, metric_name: str
-    ) -> Result[MetricConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
+    ) -> Result[MetricDomain, DataNotExistError | UnknownLunaBenchError]: ...
 
 
 class AlgorithmDao(Protocol):
     @staticmethod
     def add(
         benchmark_name: str,
-        solvejob_name: str,
-        algorithm: AlgorithmConfigDomain.Algorithm,
-        backend: AlgorithmConfigDomain.Backend | None = None,
-    ) -> Result[AlgorithmConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
+        algorithm_name: str,
+        registered_id: str,
+        algorithm: ArbitraryDataDomain,
+    ) -> Result[AlgorithmDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def remove(benchmark_name: str, solvejob_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
@@ -186,29 +185,29 @@ class AlgorithmDao(Protocol):
     @staticmethod
     def update(
         benchmark_name: str,
-        solvejob_name: str,
-        algorithm: AlgorithmConfigDomain.Algorithm,
-        backend: AlgorithmConfigDomain.Backend | None = None,
+        solve_job_name: str,
+        registered_id: str,
+        algorithm: ArbitraryDataDomain,
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def update_status(
-        benchmark_name: str, solvejob_name: str, status: BenchmarkStatus
+        benchmark_name: str, solve_job_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def load(
         benchmark_name: str, solvejob_name: str
-    ) -> Result[AlgorithmConfigDomain, DataNotExistError | UnknownLunaBenchError]: ...
+    ) -> Result[AlgorithmDomain, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def set_result(
-        benchmark_name: str, solvejob_name: str, result: AlgorithmResultDomain
+        benchmark_name: str, solve_job_name: str, result: AlgorithmResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def remove_result(
-        benchmark_name: str, solvejob_name: str
+        benchmark_name: str, solve_job_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
 

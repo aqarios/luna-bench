@@ -1,16 +1,20 @@
+from dependency_injector.wiring import Provide, inject
 from returns.result import Result
 
-from luna_bench._internal.dao import DaoTransaction
+from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
+from .protocols import ModelSetDeleteUc
 
-class ModelSetDeleteUcImpl:
+
+class ModelSetDeleteUcImpl(ModelSetDeleteUc):
     """Implementation of the use case for deleting a model set."""
 
     _transaction: DaoTransaction
 
-    def __init__(self, transaction: DaoTransaction) -> None:
+    @inject
+    def __init__(self, transaction: DaoTransaction = Provide[DaoContainer.transaction]) -> None:
         """
         Initialize the ModelSetDeleteUcImpl with a dao transaction.
 

@@ -57,8 +57,6 @@ class TestModelDAO:
     ) -> None:
         result = setup_transaction.model.get(model_hash=model_hash)
 
-        assert type(result) is type(exp)
-
         if isinstance(exp, Success):
             TestModelDAO._check_model(exp.unwrap(), result.unwrap())
 

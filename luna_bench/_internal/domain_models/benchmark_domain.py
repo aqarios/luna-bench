@@ -1,24 +1,23 @@
-from .algorithm_config_domain import AlgorithmConfigDomain
+from .algorithm_domain import AlgorithmDomain
 from .base_domain import BaseDomain
 from .benchmark_status_enum import BenchmarkStatus
-from .metric_config_domain import MetricConfigDomain
-from .modelmetric_config_domain import ModelmetricConfigDomain
+from .feature_domain import FeatureDomain
+from .metric_domain import MetricDomain
 from .modelset_domain import ModelSetDomain
-from .plot_config_domain import PlotConfigDomain
+from .plot_config_domain import PlotDomain
 
 
 class BenchmarkDomain(BaseDomain):
-    id: int
     name: str
 
     status: BenchmarkStatus
 
     modelset: ModelSetDomain | None
 
-    modelmetrics: list[ModelmetricConfigDomain]
+    features: list[FeatureDomain]
 
-    algorithms: list[AlgorithmConfigDomain]
+    algorithms: list[AlgorithmDomain]
 
-    metrics: list[MetricConfigDomain]
+    metrics: list[MetricDomain]
 
-    plots: list[PlotConfigDomain]
+    plots: list[PlotDomain]

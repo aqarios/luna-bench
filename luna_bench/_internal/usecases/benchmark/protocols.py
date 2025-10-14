@@ -1,23 +1,26 @@
 from typing import Protocol
 
-from luna_quantum.solve.domain.abstract import LunaAlgorithm
-from luna_quantum.solve.interfaces.algorithm_i import BACKEND_TYPE
+from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
+from luna_quantum.solve.interfaces.backend_i import IBackend
+from pydantic import ValidationError
 from returns.result import Result
 
-from luna_bench._internal.domain_models import (
-    AlgorithmConfigDomain,
-    MetricConfigDomain,
-    ModelmetricConfigDomain,
-    PlotConfigDomain,
-)
-from luna_bench._internal.domain_models.benchmark_domain import BenchmarkDomain
+from luna_bench._internal.interfaces.feature_i import IFeature
+from luna_bench._internal.interfaces.metric_i import IMetric
+from luna_bench._internal.interfaces.plot_i import IPlot
+from luna_bench._internal.user_models import AlgorithmUserModel, BenchmarkUserModel, MetricUserModel, PlotUserModel
+from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
+from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
 class BenchmarkCreateUc(Protocol):
-    def __call__(self, benchmark_name: str) -> Result[BenchmarkDomain, DataNotUniqueError | UnknownLunaBenchError]: ...
+    def __call__(
+        self, benchmark_name: str
+    ) -> Result[BenchmarkUserModel, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError]: ...
 
 
 class BenchmarkDeleteUc(Protocol):
@@ -25,50 +28,82 @@ class BenchmarkDeleteUc(Protocol):
 
 
 class BenchmarkLoadUc(Protocol):
-    def __call__(self, benchmark_name: str) -> Result[BenchmarkDomain, DataNotExistError | UnknownLunaBenchError]: ...
+    def __call__(
+        self, benchmark_name: str
+    ) -> Result[BenchmarkUserModel, DataNotExistError | UnknownLunaBenchError | UnknownIdError | ValidationError]: ...
 
 
 class BenchmarkLoadAllUc(Protocol):
-    def __call__(self) -> Result[list[BenchmarkDomain], UnknownLunaBenchError]: ...
-
-
-class BenchmarkAddMetricUc(Protocol):
-    def __call__(
-        self, benchmark_name: str, metric_name: str, metric_config: MetricConfigDomain.MetricConfig
-    ) -> Result[MetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
-
-
-class BenchmarkAddModelMetricUc(Protocol):
-    def __call__(
-        self, benchmark_name: str, modelmetric_name: str, modelmetric_config: ModelmetricConfigDomain.ModelmetricConfig
-    ) -> Result[ModelmetricConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
-
-
-class BenchmarkAddPlotUc(Protocol):
-    def __call__(
-        self, benchmark_name: str, plot_name: str, plot_config: PlotConfigDomain.PlotConfig
-    ) -> Result[PlotConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
-
-
-class BenchmarkAddAlgorithmUc(Protocol):
     def __call__(
         self,
-        benchmark_name: str,
-        solve_job_name: str,
-        algorithm: LunaAlgorithm[BACKEND_TYPE],
-        backend: BACKEND_TYPE | None = None,
-    ) -> Result[AlgorithmConfigDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
+    ) -> Result[list[BenchmarkUserModel], UnknownLunaBenchError | UnknownIdError | ValidationError]: ...
 
 
-class BenchmarkRemoveMetricUc(Protocol):
+class MetricAddUc(Protocol):
+    def __call__(
+        self, benchmark_name: str, name: str, metric: IMetric
+    ) -> Result[
+        MetricUserModel,
+        DataNotUniqueError
+        | DataNotExistError
+        | UnknownLunaBenchError
+        | UnknownComponentError
+        | UnknownIdError
+        | ValidationError,
+    ]: ...
+
+
+class FeatureAddUc(Protocol):
+    def __call__(
+        self, benchmark_name: str, name: str, feature: IFeature
+    ) -> Result[
+        FeatureUserModel,
+        DataNotUniqueError
+        | DataNotExistError
+        | UnknownLunaBenchError
+        | UnknownComponentError
+        | UnknownIdError
+        | ValidationError,
+    ]: ...
+
+
+class PlotAddUc(Protocol):
+    def __call__(
+        self, benchmark_name: str, name: str, plot: IPlot
+    ) -> Result[
+        PlotUserModel,
+        DataNotUniqueError
+        | DataNotExistError
+        | UnknownLunaBenchError
+        | UnknownComponentError
+        | UnknownIdError
+        | ValidationError,
+    ]: ...
+
+
+class AlgorithmAddUc(Protocol):
+    def __call__(
+        self, benchmark_name: str, name: str, algorithm: IAlgorithm[IBackend]
+    ) -> Result[
+        AlgorithmUserModel,
+        DataNotUniqueError
+        | DataNotExistError
+        | UnknownLunaBenchError
+        | UnknownComponentError
+        | UnknownIdError
+        | ValidationError,
+    ]: ...
+
+
+class MetricRemoveUc(Protocol):
     def __call__(
         self, benchmark_name: str, metric_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
 
-class BenchmarkRemoveModelMetricUc(Protocol):
+class FeatureRemoveUc(Protocol):
     def __call__(
-        self, benchmark_name: str, modelmetric_name: str
+        self, benchmark_name: str, feature_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
 
@@ -76,13 +111,13 @@ class BenchmarkRemoveModelsetUc(Protocol):
     def __call__(self, benchmark_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
 
-class BenchmarkRemovePlotUc(Protocol):
+class PlotRemoveUc(Protocol):
     def __call__(
         self, benchmark_name: str, plot_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
 
-class BenchmarkRemoveAlgorithmUc(Protocol):
+class AlgorithmRemoveUc(Protocol):
     def __call__(
         self, benchmark_name: str, solvejob_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
