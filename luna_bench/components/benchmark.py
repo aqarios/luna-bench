@@ -62,9 +62,105 @@ class Benchmark(BenchmarkUserModel):
 
     @staticmethod
     @inject
+    def __create_uc(
+        benchmark_create: BenchmarkCreateUc = Provide[UsecaseContainer.benchmark_create_uc],
+    ) -> BenchmarkCreateUc:
+        return benchmark_create
+
+    @staticmethod
+    @inject
+    def __load_uc(
+        benchmark_load: BenchmarkLoadUc = Provide[UsecaseContainer.benchmark_load_uc],
+    ) -> BenchmarkLoadUc:
+        return benchmark_load
+
+    @staticmethod
+    @inject
+    def __load_all_uc(
+        benchmark_load_all: BenchmarkLoadAllUc = Provide[UsecaseContainer.benchmark_load_all_uc],
+    ) -> BenchmarkLoadAllUc:
+        return benchmark_load_all
+
+    @staticmethod
+    @inject
+    def __benchmark_set_modelset_uc(
+        benchmark_set_modelset: BenchmarkSetModelsetUc = Provide[UsecaseContainer.benchmark_set_modelset_uc],
+    ) -> BenchmarkSetModelsetUc:
+        return benchmark_set_modelset
+
+    @staticmethod
+    @inject
+    def __modelset_load_uc(
+        modelset_load: ModelSetLoadUc = Provide[UsecaseContainer.modelset_load_uc],
+    ) -> ModelSetLoadUc:
+        return modelset_load
+
+    @staticmethod
+    @inject
+    def __remove_modelset_uc(
+        benchmark_remove_modelset: BenchmarkRemoveModelsetUc = Provide[UsecaseContainer.benchmark_remove_modelset_uc],
+    ) -> BenchmarkRemoveModelsetUc:
+        return benchmark_remove_modelset
+
+    @staticmethod
+    @inject
+    def __remove_feature_uc(
+        benchmark_remove_feature: FeatureRemoveUc = Provide[UsecaseContainer.benchmark_remove_feature_uc],
+    ) -> FeatureRemoveUc:
+        return benchmark_remove_feature
+
+    @staticmethod
+    @inject
+    def __add_metric_uc(
+        benchmark_add_metric_uc: MetricAddUc = Provide[UsecaseContainer.benchmark_add_metric_uc],
+    ) -> MetricAddUc:
+        return benchmark_add_metric_uc
+
+    @staticmethod
+    @inject
+    def __add_feature_uc(
+        benchmark_add_feature: FeatureAddUc = Provide[UsecaseContainer.benchmark_add_feature_uc],
+    ) -> FeatureAddUc:
+        return benchmark_add_feature
+
+    @staticmethod
+    @inject
+    def __remove_metric_uc(
+        benchmark_remove_metric: MetricRemoveUc = Provide[UsecaseContainer.benchmark_remove_metric_uc],
+    ) -> MetricRemoveUc:
+        return benchmark_remove_metric
+
+    @staticmethod
+    @inject
+    def __add_algorithm_uc(
+        benchmark_add_algorithm: AlgorithmAddUc = Provide[UsecaseContainer.benchmark_add_algorithm_uc],
+    ) -> AlgorithmAddUc:
+        return benchmark_add_algorithm
+
+    @staticmethod
+    @inject
+    def __remove_algorithm_uc(
+        benchmark_remove_algorithm: MetricRemoveUc = Provide[UsecaseContainer.benchmark_remove_algorithm_uc],
+    ) -> MetricRemoveUc:
+        return benchmark_remove_algorithm
+
+    @staticmethod
+    @inject
+    def __add_plot_uc(
+        benchmark_add_plot: PlotAddUc = Provide[UsecaseContainer.benchmark_add_plot_uc],
+    ) -> PlotAddUc:
+        return benchmark_add_plot
+
+    @staticmethod
+    @inject
+    def __remove_plot_uc(
+        benchmark_remove_plot: PlotRemoveUc = Provide[UsecaseContainer.benchmark_remove_plot_uc],
+    ) -> PlotRemoveUc:
+        return benchmark_remove_plot
+
+    @staticmethod
     def create(
         name: str,
-        benchmark_create: BenchmarkCreateUc = Provide[UsecaseContainer.benchmark_create_uc],  # Will be injected
     ) -> Benchmark:
         """
         Create a new benchmark with the given name.
@@ -83,6 +179,7 @@ class Benchmark(BenchmarkUserModel):
             The newly created Benchmark object.
 
         """
+        benchmark_create = Benchmark.__create_uc()
         result: Result[
             BenchmarkUserModel, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError
         ] = benchmark_create(name)
@@ -103,8 +200,7 @@ class Benchmark(BenchmarkUserModel):
     def delete(self) -> None: ...  # noqa: D102 # Not yet implemented
 
     @staticmethod
-    @inject
-    def load(name: str, benchmark_load: BenchmarkLoadUc = Provide[UsecaseContainer.benchmark_load_uc]) -> Benchmark:
+    def load(name: str) -> Benchmark:
         """
         Load a benchmark from the database by its name.
 
@@ -119,6 +215,7 @@ class Benchmark(BenchmarkUserModel):
             The loaded Benchmark object.
 
         """
+        benchmark_load = Benchmark.__load_uc()
         result: Result[
             BenchmarkUserModel, DataNotExistError | UnknownLunaBenchError | UnknownIdError | ValidationError
         ] = benchmark_load(name)
@@ -133,10 +230,7 @@ class Benchmark(BenchmarkUserModel):
         return Benchmark.model_validate(result.unwrap(), from_attributes=True)
 
     @staticmethod
-    @inject
-    def load_all(
-        benchmark_load_all: BenchmarkLoadAllUc = Provide[UsecaseContainer.benchmark_load_all_uc],
-    ) -> list[Benchmark]:
+    def load_all() -> list[Benchmark]:
         """
         Load all benchmarks from the database.
 
@@ -149,6 +243,7 @@ class Benchmark(BenchmarkUserModel):
             an empty list is returned.
 
         """
+        benchmark_load_all = Benchmark.__load_all_uc()
         result: Result[list[BenchmarkUserModel], UnknownLunaBenchError | UnknownIdError | ValidationError] = (
             benchmark_load_all()
         )
@@ -168,12 +263,9 @@ class Benchmark(BenchmarkUserModel):
 
     def export_to_file(self, file_path: str) -> None: ...  # noqa: D102 # Not yet implemented
 
-    @inject
     def set_modelset(
         self,
         modelset: str | ModelSet,
-        benchmark_set_modelset: BenchmarkSetModelsetUc = Provide[UsecaseContainer.benchmark_set_modelset_uc],
-        modelset_load: ModelSetLoadUc = Provide[UsecaseContainer.modelset_load_uc],
     ) -> None:
         """
         Set the modelset for the benchmark.
@@ -189,6 +281,9 @@ class Benchmark(BenchmarkUserModel):
             itself.
 
         """
+        benchmark_set_modelset = self.__benchmark_set_modelset_uc()
+        modelset_load = self.__modelset_load_uc()
+
         modelset_name: str = modelset.name if isinstance(modelset, ModelSet) else modelset
 
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_set_modelset(
@@ -211,10 +306,8 @@ class Benchmark(BenchmarkUserModel):
             raise error
         self.modelset = result_modelset.unwrap()
 
-    @inject
     def remove_modelset(
         self,
-        benchmark_remove_modelset: BenchmarkRemoveModelsetUc = Provide[UsecaseContainer.benchmark_remove_modelset_uc],
     ) -> None:
         """
         Remove the modelset from the benchmark.
@@ -226,6 +319,8 @@ class Benchmark(BenchmarkUserModel):
         if not self.modelset:
             return
 
+        benchmark_remove_modelset = self.__remove_modelset_uc()
+
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_remove_modelset(self.name)
 
         if not is_successful(result):
@@ -236,12 +331,10 @@ class Benchmark(BenchmarkUserModel):
             raise error
         self.modelset = None
 
-    @inject
     def add_feature(
         self,
         name: str,
         feature: IFeature,
-        benchmark_add_feature: FeatureAddUc = Provide[UsecaseContainer.benchmark_add_feature_uc],
     ) -> Feature:
         """
         Add a feature to the benchmark with a given name.
@@ -264,6 +357,8 @@ class Benchmark(BenchmarkUserModel):
         Feature
             The added feature.
         """
+        benchmark_add_feature = self.__add_feature_uc()
+
         result: Result[
             FeatureUserModel,
             DataNotUniqueError
@@ -282,11 +377,9 @@ class Benchmark(BenchmarkUserModel):
         self.features.append(result.unwrap())
         return Feature.model_validate(result.unwrap(), from_attributes=True)
 
-    @inject
     def remove_feature(
         self,
         feature: str | Feature,
-        benchmark_remove_feature: FeatureRemoveUc = Provide[UsecaseContainer.benchmark_remove_feature_uc],
     ) -> None:
         """
         Remove a feature from the benchmark.
@@ -299,6 +392,7 @@ class Benchmark(BenchmarkUserModel):
             feature.
 
         """
+        benchmark_remove_feature = self.__remove_feature_uc()
         feature_name = feature.name if isinstance(feature, Feature) else feature
 
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_remove_feature(
@@ -314,12 +408,10 @@ class Benchmark(BenchmarkUserModel):
 
         self._remove_name_from_list(self.features, feature_name)
 
-    @inject
     def add_metric(
         self,
         name: str,
         metric: IMetric,
-        benchmark_add_metric_uc: MetricAddUc = Provide[UsecaseContainer.benchmark_add_metric_uc],
     ) -> Metric:
         """
         Add a metric to the benchmark with a given name.
@@ -342,6 +434,7 @@ class Benchmark(BenchmarkUserModel):
         Metric
             The added metric.
         """
+        benchmark_add_metric_uc = self.__add_metric_uc()
         result: Result[
             MetricUserModel,
             DataNotUniqueError
@@ -360,11 +453,9 @@ class Benchmark(BenchmarkUserModel):
         self.metrics.append(result.unwrap())
         return Metric.model_validate(result.unwrap(), from_attributes=True)
 
-    @inject
     def remove_metric(
         self,
         metric: str | Metric,
-        benchmark_remove_metric: MetricRemoveUc = Provide[UsecaseContainer.benchmark_remove_metric_uc],
     ) -> None:
         """
         Remove a metric from the benchmark.
@@ -376,6 +467,7 @@ class Benchmark(BenchmarkUserModel):
             not only an ``IMetric`` object. This is important because the metric name is used to identify the
             metric.
         """
+        benchmark_remove_metric = self.__remove_metric_uc()
         metric_name = metric.name if isinstance(metric, Metric) else metric
 
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_remove_metric(
@@ -391,12 +483,10 @@ class Benchmark(BenchmarkUserModel):
 
         self._remove_name_from_list(self.metrics, metric_name)
 
-    @inject
     def add_algorithm(
         self,
         name: str,
         algorithm: IAlgorithm[IBackend],
-        benchmark_add_algorithm: AlgorithmAddUc = Provide[UsecaseContainer.benchmark_add_algorithm_uc],
     ) -> Algorithm:
         """
         Add an algorithm to the benchmark with a given name.
@@ -419,6 +509,7 @@ class Benchmark(BenchmarkUserModel):
         Algorithm
             The added algorithm.
         """
+        benchmark_add_algorithm = self.__add_algorithm_uc()
         result: Result[
             AlgorithmUserModel,
             DataNotUniqueError
@@ -446,7 +537,6 @@ class Benchmark(BenchmarkUserModel):
     def remove_algorithm(
         self,
         algorithm: str | Algorithm,
-        benchmark_remove_algorithm: MetricRemoveUc = Provide[UsecaseContainer.benchmark_remove_algorithm_uc],
     ) -> None:
         """
         Remove an algorithm from the benchmark.
@@ -458,6 +548,7 @@ class Benchmark(BenchmarkUserModel):
             object and not only an ``IAlgorithm`` object. This is important because the algorithm name is used to
             identify the algorithm.
         """
+        benchmark_remove_algorithm = self.__remove_algorithm_uc()
         algorithm_name = algorithm.name if isinstance(algorithm, Algorithm) else algorithm
 
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_remove_algorithm(
@@ -475,7 +566,6 @@ class Benchmark(BenchmarkUserModel):
         self,
         name: str,
         plot: IPlot,
-        benchmark_add_plot: PlotAddUc = Provide[UsecaseContainer.benchmark_add_plot_uc],
     ) -> Plot:
         """
         Add a plot to the benchmark with a given name.
@@ -499,6 +589,7 @@ class Benchmark(BenchmarkUserModel):
             The added plot.
 
         """
+        benchmark_add_plot = self.__add_plot_uc()
         result: Result[
             PlotUserModel,
             DataNotUniqueError
@@ -522,7 +613,6 @@ class Benchmark(BenchmarkUserModel):
     def remove_plot(
         self,
         plot: str | Plot,
-        benchmark_remove_plot: PlotRemoveUc = Provide[UsecaseContainer.benchmark_remove_plot_uc],
     ) -> None:
         """
         Remove a plot from the benchmark.
@@ -534,6 +624,7 @@ class Benchmark(BenchmarkUserModel):
             object and not only an ``IPlot`` object. This is important because the plot name is used to identify the
             plot.
         """
+        benchmark_remove_plot = self.__remove_plot_uc()
         plot_name = plot.name if isinstance(plot, Plot) else plot
 
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_remove_plot(self.name, plot_name)
