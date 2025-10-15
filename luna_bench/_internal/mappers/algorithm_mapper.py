@@ -13,8 +13,7 @@ from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 class AlgorithmMapper:
     @staticmethod
     def to_user_model(
-        algorithm_domain: AlgorithmDomain,
-        algorithm_registry: PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain],
+        algorithm_domain: AlgorithmDomain, algorithm_registry: PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain]
     ) -> Result[AlgorithmUserModel, UnknownIdError | ValidationError]:
         """
         Convert the algorithm domain to the user model.
@@ -32,8 +31,9 @@ class AlgorithmMapper:
             Successful conversion: The user model. Otherwise, an exception.
 
         """
-        user_config: Result[IAlgorithm[IBackend], UnknownIdError | ValidationError] = (
-            algorithm_registry.from_domain_to_user_model(algorithm_domain.config_data)
+
+        user_config: Result[IAlgorithm[IBackend], UnknownIdError | ValidationError] = algorithm_registry.from_domain_to_user_model(
+            algorithm_domain.config_data
         )
         if not is_successful(user_config):  # pragma: no cover
             return Failure(user_config.failure())
