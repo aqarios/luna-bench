@@ -9,6 +9,7 @@ from luna_bench._internal.domain_models import BenchmarkDomain, RegisteredDataDo
 from luna_bench._internal.interfaces.feature_i import IFeature
 from luna_bench._internal.interfaces.metric_i import IMetric
 from luna_bench._internal.interfaces.plot_i import IPlot
+from luna_bench._internal.mappers.benchmark_mapper import BenchmarkMapper
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
@@ -17,7 +18,6 @@ from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 from .protocols import BenchmarkCreateUc
-from .utils import convert_return_to_user_model
 
 
 class BenchmarkCreateUcImpl(BenchmarkCreateUc):
@@ -63,7 +63,7 @@ class BenchmarkCreateUcImpl(BenchmarkCreateUc):
             result_dao: Result[BenchmarkDomain, DataNotUniqueError | UnknownLunaBenchError] = t.benchmark.create(
                 benchmark_name
             )
-            return convert_return_to_user_model(
+            return BenchmarkMapper.return_to_user_model(
                 result_dao,
                 self._metric_registry,
                 self._feature_registry,

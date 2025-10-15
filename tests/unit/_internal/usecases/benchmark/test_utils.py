@@ -15,8 +15,8 @@ from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.domain_models.metric_domain import MetricDomain
 from luna_bench._internal.domain_models.registered_data_domain import RegisteredDataDomain
 from luna_bench._internal.interfaces import IFeature, IMetric, IPlot
+from luna_bench._internal.mappers.benchmark_mapper import BenchmarkMapper
 from luna_bench._internal.registries.arbitrary_data_registry import ArbitraryDataRegistry
-from luna_bench._internal.usecases.benchmark.utils import convert_to_user_model
 from luna_bench._internal.user_models import AlgorithmUserModel, BenchmarkUserModel, MetricUserModel, PlotUserModel
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockFeature, MockMetric, MockPlot
@@ -45,7 +45,7 @@ def _full_benchmark_usermodel(name: str) -> BenchmarkUserModel:
     return BenchmarkUserModel(
         name=name,
         modelset=None,
-        features=[FeatureUserModel(name="feature", status=JobStatus.CREATED, feature=MockFeature())],
+        features=[FeatureUserModel(name="feature", status=JobStatus.CREATED, feature=MockFeature(), results={})],
         algorithms=[AlgorithmUserModel(name="algorithm", status=JobStatus.CREATED, algorithm=MockAlgorithm())],
         metrics=[MetricUserModel(name="metric", status=JobStatus.CREATED, metric=MockMetric())],
         plots=[PlotUserModel(name="plot", status=JobStatus.CREATED, plot=MockPlot())],
@@ -74,7 +74,7 @@ def _full_domainmodel(name: str) -> BenchmarkDomain:
             FeatureDomain(
                 name="feature",
                 status=JobStatus.CREATED,
-                result=None,
+                results={},
                 config_data=RegisteredDataDomain(registered_id="feature", data=ArbitraryDataDomain()),
             )
         ],
@@ -145,6 +145,6 @@ class TestUtils:
         benchmark_domain: BenchmarkDomain,
         exp: Result[BenchmarkUserModel, UnknownIdError | ValidationError],
     ) -> None:
-        r = convert_to_user_model(benchmark_domain, registries[0], registries[1], registries[2], registries[3])
+        r = BenchmarkMapper.to_user_model(benchmark_domain, registries[0], registries[1], registries[2], registries[3])
         assert type(r) is type(exp)
         assert r.unwrap() == exp.unwrap()

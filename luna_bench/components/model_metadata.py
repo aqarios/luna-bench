@@ -7,7 +7,7 @@ from returns.pipeline import is_successful
 
 from luna_bench._internal.usecases.modelset.protocols import ModelFetchUc
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
-from luna_bench._internal.user_models import ModelMetadataUserModel
+from luna_bench._internal.user_models.model_metadata_usermodel import ModelMetadataUserModel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 

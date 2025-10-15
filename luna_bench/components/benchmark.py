@@ -17,6 +17,7 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     BenchmarkSetModelsetUc,
     FeatureAddUc,
     FeatureRemoveUc,
+    FeatureRunUc,
     MetricAddUc,
     MetricRemoveUc,
     PlotAddUc,
@@ -40,6 +41,8 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
+from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
+from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
@@ -59,6 +62,13 @@ class Benchmark(BenchmarkUserModel):
     """
 
     _logger: ClassVar[Logger] = Logging.get_logger(__name__)
+
+    @staticmethod
+    @inject
+    def __run_feature_uc(
+        benchmark_run_features: FeatureRunUc = Provide[UsecaseContainer.benchmark_run_feature_uc],
+    ) -> FeatureRunUc:
+        return benchmark_run_features
 
     @staticmethod
     @inject
@@ -636,8 +646,21 @@ class Benchmark(BenchmarkUserModel):
 
         self._remove_name_from_list(self.plots, plot_name)
 
-    def run_model_metrics(self) -> None:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+    def run_features(self) -> None:
+        """
+        Calculate all configured features for all models of this benchmark.
+
+        Parameters
+        ----------
+        benchmark_run_features: FeatureRunUc, inject
+        """
+        benchmark_run_features = self.__run_feature_uc()
+        result: Result[None, RunFeatureMissingError | RunModelsetMissingError] = benchmark_run_features(self)
+
+        if not is_successful(result):
+            error = result.failure()
+            Benchmark._logger.error(f"Failed to run features for the benchmark: {error}")
+            raise RuntimeError(error)
 
     def run_metrics(self) -> None:  # noqa: D102 # Not yet implemented
         raise NotImplementedError

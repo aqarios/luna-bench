@@ -23,14 +23,16 @@ if TYPE_CHECKING:
 
 
 class TestFeatureDAO:
-    _saved_modelmetric_domain: FeatureDomain
+    _saved_feature_domain: FeatureDomain
 
     @pytest.fixture()
     @staticmethod
     def setup_transaction(empty_transaction: DaoTransaction) -> DaoTransaction:
         """Provide a transaction fixture with a default model for testing the ModelDAOs."""
+        empty_transaction.modelset.create(modelset_name="existing")
+        empty_transaction.model.get_or_create(model_name="existing", model_hash=1, binary=b"")
         empty_transaction.benchmark.create(benchmark_name="existing")
-        TestFeatureDAO._saved_modelmetric_domain = empty_transaction.feature.add(
+        TestFeatureDAO._saved_feature_domain = empty_transaction.feature.add(
             benchmark_name="existing",
             feature_name="existing",
             registered_id="existing",
@@ -51,7 +53,7 @@ class TestFeatureDAO:
                     FeatureDomain(
                         name="non-existing",
                         status=JobStatus.CREATED,
-                        result=None,
+                        results={},
                         config_data=RegisteredDataDomain(
                             registered_id="existing",
                             data=ArbitraryDataDomain.model_validate(
@@ -66,7 +68,7 @@ class TestFeatureDAO:
         ],
     )
     @staticmethod
-    def test_add_modelmetric(
+    def test_add_feature(
         setup_transaction: DaoTransaction,
         benchmark_name: str,
         metric_name: str,
@@ -99,14 +101,14 @@ class TestFeatureDAO:
         ],
     )
     @staticmethod
-    def test_load_modelmetric(
+    def test_load_feature(
         setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result[None, DataNotUniqueError]
     ) -> None:
         result = setup_transaction.feature.load(benchmark_name, metric_name)
         assert is_successful(result) == is_successful(exp)
 
         if is_successful(exp):
-            assert result.unwrap() == TestFeatureDAO._saved_modelmetric_domain
+            assert result.unwrap() == TestFeatureDAO._saved_feature_domain
         else:
             assert isinstance(result.failure(), type(exp.failure()))
 
@@ -123,7 +125,7 @@ class TestFeatureDAO:
         ],
     )
     @staticmethod
-    def test_remove_modelmetric(
+    def test_remove_feature(
         setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result[None, DataNotUniqueError]
     ) -> None:
         result = setup_transaction.feature.remove(benchmark_name, metric_name)
@@ -147,7 +149,7 @@ class TestFeatureDAO:
         ],
     )
     @staticmethod
-    def test_update_modelmetric(
+    def test_update_feature(
         setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result[None, DataNotUniqueError]
     ) -> None:
         result = setup_transaction.feature.update(
@@ -181,7 +183,7 @@ class TestFeatureDAO:
         ],
     )
     @staticmethod
-    def test_update_modelmetric_status(
+    def test_update_feature_status(
         setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result[None, DataNotUniqueError]
     ) -> None:
         result = setup_transaction.feature.update_status(benchmark_name, metric_name, BenchmarkStatus.DONE)
@@ -195,24 +197,42 @@ class TestFeatureDAO:
             assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
-        ("benchmark_name", "metric_name", "result", "exp"),
+        ("benchmark_name", "feature_name", "result", "exp"),
         [
             (
                 "existing",
                 "existing",
-                FeatureResultDomain.model_validate(MockConfig(something="xD").model_dump(), from_attributes=True),
+                FeatureResultDomain.model_construct(
+                    processing_time_ms=0,
+                    model_name="existing",
+                    status=JobStatus.CREATED,
+                    error=None,
+                    result=ArbitraryDataDomain(),
+                ),
                 Success(None),
             ),
             (
                 "non-existing",
                 "existing",
-                FeatureResultDomain.model_validate(MockConfig(something="xD").model_dump(), from_attributes=True),
+                FeatureResultDomain.model_construct(
+                    processing_time_ms=0,
+                    model_name="existing",
+                    status=JobStatus.CREATED,
+                    error=None,
+                    result=MockConfig(something="xD"),
+                ),
                 Failure(DataNotExistError()),
             ),
             (
                 "existing",
                 "non-existing",
-                FeatureResultDomain.model_validate(MockConfig(something="xD").model_dump(), from_attributes=True),
+                FeatureResultDomain.model_construct(
+                    processing_time_ms=0,
+                    model_name="existing",
+                    status=JobStatus.CREATED,
+                    error=None,
+                    result=MockConfig(something="xD"),
+                ),
                 Failure(DataNotExistError()),
             ),
         ],
@@ -221,25 +241,25 @@ class TestFeatureDAO:
         self,
         setup_transaction: DaoTransaction,
         benchmark_name: str,
-        metric_name: str,
+        feature_name: str,
         result: FeatureResultDomain,
         exp: Result[FeatureResultDomain, DataNotExistError | DataNotUniqueError],
     ) -> None:
-        set_result = setup_transaction.feature.set_result(
-            benchmark_name, metric_name, ArbitraryDataDomain.model_validate(result.model_dump(), from_attributes=True)
-        )
+        set_result = setup_transaction.feature.set_result(benchmark_name, feature_name, result)
         assert is_successful(set_result) == is_successful(exp)
 
         if is_successful(exp):
-            assert setup_transaction.feature.load(benchmark_name, metric_name).unwrap().result == result
+            assert {result.model_name: result} == setup_transaction.feature.load(
+                benchmark_name, feature_name
+            ).unwrap().results
         else:
             assert isinstance(set_result.failure(), type(exp.failure()))
 
-        remove = setup_transaction.feature.remove_result(benchmark_name, metric_name)
+        remove = setup_transaction.feature.remove_result(benchmark_name, feature_name)
 
-        assert is_successful(remove) == is_successful(exp)
+        assert is_successful(remove) is is_successful(exp)
 
         if is_successful(exp):
-            assert setup_transaction.feature.load(benchmark_name, metric_name).unwrap().result is None
+            assert setup_transaction.feature.load(benchmark_name, feature_name).unwrap().results == {}
         else:
             assert isinstance(remove.failure(), type(exp.failure()))

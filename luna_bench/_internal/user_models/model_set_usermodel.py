@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from .model_data_usermodel import ModelMetadataUserModel
+from .model_metadata_usermodel import ModelMetadataUserModel
 
 
 class ModelSetUserModel(BaseModel):

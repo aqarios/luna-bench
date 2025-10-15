@@ -4,22 +4,20 @@ from dependency_injector.providers import Configuration, Provider
 from luna_bench._internal.dao import DaoContainer
 from luna_bench._internal.usecases.benchmark.algorithm.algorithm_add import AlgorithmAddUcImpl
 from luna_bench._internal.usecases.benchmark.algorithm.algorithm_remove import AlgorithmRemoveUcImpl
+from luna_bench._internal.usecases.benchmark.benchmark_create import BenchmarkCreateUcImpl
+from luna_bench._internal.usecases.benchmark.benchmark_delete import BenchmarkDeleteUcImpl
+from luna_bench._internal.usecases.benchmark.benchmark_load import BenchmarkLoadUcImpl
+from luna_bench._internal.usecases.benchmark.benchmark_load_all import BenchmarkLoadAllUcImpl
+from luna_bench._internal.usecases.benchmark.benchmark_remove_modelset import BenchmarkRemoveModelsetUcImpl
+from luna_bench._internal.usecases.benchmark.benchmark_set_modelset import BenchmarkSetModelsetUcImpl
+from luna_bench._internal.usecases.benchmark.feature.feature_add import FeatureAddUcImpl
 from luna_bench._internal.usecases.benchmark.feature.feature_remove import FeatureRemoveUcImpl
+from luna_bench._internal.usecases.benchmark.feature.feature_run import FeatureRunUcImpl
+from luna_bench._internal.usecases.benchmark.metric.metric_add import MetricAddUcImpl
+from luna_bench._internal.usecases.benchmark.metric.metric_remove import MetricRemoveUcImpl
 from luna_bench._internal.usecases.benchmark.plot.plot_add import PlotAddUcImpl
 from luna_bench._internal.usecases.benchmark.plot.plot_remove import PlotRemoveUcImpl
-
-from .benchmark import (
-    BenchmarkRemoveModelsetUcImpl,
-    BenchmarkSetModelsetUcImpl,
-    FeatureAddUcImpl,
-    MetricAddUcImpl,
-    MetricRemoveUcImpl,
-)
-from .benchmark.benchmark_create import BenchmarkCreateUcImpl
-from .benchmark.benchmark_delete import BenchmarkDeleteUcImpl
-from .benchmark.benchmark_load import BenchmarkLoadUcImpl
-from .benchmark.benchmark_load_all import BenchmarkLoadAllUcImpl
-from .benchmark.protocols import (
+from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmAddUc,
     AlgorithmRemoveUc,
     BenchmarkCreateUc,
@@ -30,12 +28,13 @@ from .benchmark.protocols import (
     BenchmarkSetModelsetUc,
     FeatureAddUc,
     FeatureRemoveUc,
+    FeatureRunUc,
     MetricAddUc,
     MetricRemoveUc,
     PlotAddUc,
     PlotRemoveUc,
 )
-from .modelset import (
+from luna_bench._internal.usecases.modelset import (
     ModelAddUcImpl,
     ModelFetchUcImpl,
     ModelLoadAllUcImpl,
@@ -43,9 +42,9 @@ from .modelset import (
     ModelSetCreateUcImpl,
     ModelSetDeleteUcImpl,
 )
-from .modelset.modelset_load import ModelSetLoadUcImpl
-from .modelset.modelset_load_all import ModelSetLoadAllUcImpl
-from .modelset.protocols import (
+from luna_bench._internal.usecases.modelset.modelset_load import ModelSetLoadUcImpl
+from luna_bench._internal.usecases.modelset.modelset_load_all import ModelSetLoadAllUcImpl
+from luna_bench._internal.usecases.modelset.protocols import (
     ModelAddUc,
     ModelFetchUc,
     ModelLoadAllUc,
@@ -133,4 +132,8 @@ class UsecaseContainer(containers.DeclarativeContainer):
 
     benchmark_remove_modelset_uc: Provider[BenchmarkRemoveModelsetUc] = providers.Singleton(
         BenchmarkRemoveModelsetUcImpl, transaction=dao_container.transaction
+    )
+
+    benchmark_run_feature_uc: Provider[FeatureRunUc] = providers.Singleton(
+        FeatureRunUcImpl, transaction=dao_container.transaction
     )

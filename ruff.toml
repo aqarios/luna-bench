@@ -1,5 +1,6 @@
 exclude = [
     ".venv",
+    ".local"
 ]
 
 target-version = "py313"

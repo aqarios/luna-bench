@@ -8,7 +8,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.usecases.modelset.protocols import ModelAddUc
 from luna_bench._internal.user_models import ModelSetUserModel
-from luna_bench._internal.user_models.model_data_usermodel import ModelMetadataUserModel
+from luna_bench._internal.user_models.model_metadata_usermodel import ModelMetadataUserModel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 

@@ -14,6 +14,8 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
+from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
+from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
@@ -65,6 +67,12 @@ class FeatureAddUc(Protocol):
         | UnknownIdError
         | ValidationError,
     ]: ...
+
+
+class FeatureRunUc(Protocol):
+    def __call__(
+        self, benchmark: BenchmarkUserModel, feature: FeatureUserModel | None = None
+    ) -> Result[None, RunFeatureMissingError | RunModelsetMissingError]: ...
 
 
 class PlotAddUc(Protocol):

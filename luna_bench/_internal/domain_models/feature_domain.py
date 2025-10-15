@@ -8,6 +8,6 @@ class FeatureDomain(BaseDomain):
     name: str
 
     status: JobStatus
-    result: FeatureResultDomain | None
+    results: dict[str, FeatureResultDomain]  # key is the model name
 
     config_data: RegisteredDataDomain
