@@ -36,12 +36,11 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-  # custom local hook for pytest
   - repo: local
     hooks:
       - id: pytest-with-coverage
-        name: "Pytest with Coverage Check"
-        entry: bash -c 'pytest --cov=luna_bench --cov-report=term --cov-fail-under=100'
+        name: "Unit tests with Coverage Check"
+        entry: bash -c 'pytest --cov=luna_bench --cov-report=term --cov-fail-under=100 tests/unit'
         language: system
         pass_filenames: false
         always_run: true

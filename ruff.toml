@@ -81,6 +81,9 @@ allow-star-arg-any = true # At some point we should remove all args and kwargs
     "SLF",
     "PL"
 ]
+"luna_bench/_internal/user_models/**/*.py" = ["TC001", "TC002"] # Disable Type checking block checks for pydantic objs
+"luna_bench/_internal/domain_models/**/*.py" = ["TC001"] # Disable Type checking block checks for pydantic objs
+"luna_bench/components/*.py" = ["TC001"] # Disable Type checking block checks for pydantic objs
 
 [lint.pydocstyle]
 convention = "numpy"
@@ -90,8 +93,9 @@ convention = "numpy"
 # reStructuredText code/literal blocks and doctests are all supported.
 docstring-code-format = true
 
-line-ending = "lf" # unix file endings > windows stuff
+line-ending = "lf" # unix file endings
 
+quote-style = "double"
 # Set the line length limit used when formatting code snippets in
 # docstrings.
 #

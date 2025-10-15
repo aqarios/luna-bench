@@ -193,5 +193,6 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
-# custom config
+# helpers config
 .idea
+.local

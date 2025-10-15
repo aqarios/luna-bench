@@ -4,7 +4,6 @@ on:
     branches:
       - main
 
-
 jobs:
   lint-test:
     name: "Lint & Test"
@@ -14,13 +13,17 @@ jobs:
       - name: "Checkout code"
         uses: actions/checkout@v4
 
+      - name: "Install Python 3.13"
+        uses: actions/setup-python@v6
+        with:
+          python-version: |
+            3.13
+            3.14
+
       - name: "Install uv"
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
-
-      - name: "Set up Python"
-        run: uv python install
 
       - name: "Install the project"
         run: uv sync --locked --all-extras --dev
@@ -34,9 +37,12 @@ jobs:
       - name: "Mypy (Type checking)"
         run: uv run mypy --config-file .mypy.ini ./
 
+      - name: "Run tox"
+        run: uv run tox run-parallel
+
       - name: Run Pytest
         run: |
-          uv run pytest --junitxml=pytest.xml --cov-config=pyproject.toml --cov=luna_bench --cov-report=term-missing:skip-covered | tee pytest-coverage.txt
+          uv run pytest --junitxml=pytest.xml --cov-config=.coveragerc --cov=luna_bench --cov-report=term-missing:skip-covered tests/unit | tee pytest-coverage.txt
       - name: Pytest coverage comment
         if: always()
         id: coverageComment
