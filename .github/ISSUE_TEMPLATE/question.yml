@@ -1,0 +1,64 @@
+name: ❓ Question
+description: Ask a question about the project
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for asking a question! Please provide as much detail as possible to help us understand and answer your question.
+  
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: Ask your question here
+    validations:
+      required: true
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      description: What area does your question relate to?
+      options:
+        - General
+        - Installation
+        - Configuration
+        - Usage
+        - Troubleshooting
+        - Best Practices
+        - Other
+    validations:
+      required: true
+  
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide any relevant background or context for your question
+      placeholder: What are you trying to accomplish? What have you already looked at?
+    validations:
+      required: false
+  
+  - type: textarea
+    id: attempted-solutions
+    attributes:
+      label: What Have You Tried?
+      description: Have you tried any solutions or workarounds?
+      placeholder: |
+        1. I tried...
+        2. I looked at...
+        3. I searched for...
+    validations:
+      required: false
+  
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information
+      description: Any other information that might be helpful in answering your question
+      placeholder: Include code snippets, screenshots, or links if relevant
+    validations:
+      required: false
