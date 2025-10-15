@@ -8,6 +8,9 @@ from luna_bench._internal.domain_models import BenchmarkDomain, RegisteredDataDo
 from luna_bench._internal.interfaces.feature_i import IFeature
 from luna_bench._internal.interfaces.metric_i import IMetric
 from luna_bench._internal.interfaces.plot_i import IPlot
+from luna_bench._internal.mappers.algorithm_mapper import AlgorithmMapper
+from luna_bench._internal.mappers.metric_mapper import MetricMapper
+from luna_bench._internal.mappers.plot_mapper import PlotMapper
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.user_models import (
     AlgorithmUserModel,
@@ -21,6 +24,7 @@ from luna_bench._internal.user_models import (
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
 from .feature_mapper import FeatureMapper
+from .utils import MapperUtils
 
 
 class BenchmarkMapper:
@@ -32,55 +36,33 @@ class BenchmarkMapper:
         algorithm_registry: PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain],
         plot_registry: PydanticRegistry[IPlot, RegisteredDataDomain],
     ) -> Result[BenchmarkUserModel, UnknownIdError | ValidationError]:
-        features: list[FeatureUserModel] = []
-        metrics: list[MetricUserModel] = []
-        algorithms: list[AlgorithmUserModel] = []
-        plots: list[PlotUserModel] = []
+        features: Result[list[FeatureUserModel], UnknownIdError | ValidationError] = MapperUtils.to_user_model_list(
+            benchmark_domain.features, feature_registry, FeatureMapper.to_user_model
+        )
 
-        for feature in benchmark_domain.features:
-            result_feature: Result[IFeature, UnknownIdError | ValidationError] = (
-                feature_registry.from_domain_to_user_model(feature.config_data)
-            )
-            if not is_successful(result_feature):  # pragma: no cover
-                return Failure(result_feature.failure())
-            features.append(
-                FeatureUserModel.model_construct(
-                    name=feature.name,
-                    status=feature.status,
-                    feature=result_feature.unwrap(),
-                    results=FeatureMapper.result_to_user_model_dict(feature.results),
-                )
-            )
+        if not is_successful(features):
+            return Failure(features.failure())
 
-        for metric in benchmark_domain.metrics:
-            result_metric: Result[IMetric, UnknownIdError | ValidationError] = (
-                metric_registry.from_domain_to_user_model(metric.config_data)
-            )
-            if not is_successful(result_metric):  # pragma: no cover
-                return Failure(result_metric.failure())
-            metrics.append(
-                MetricUserModel.model_construct(name=metric.name, status=metric.status, metric=result_metric.unwrap())
-            )
+        metrics: Result[list[MetricUserModel], UnknownIdError | ValidationError] = MapperUtils.to_user_model_list(
+            benchmark_domain.metrics, metric_registry, MetricMapper.to_user_model
+        )
 
-        for algorithm in benchmark_domain.algorithms:
-            result_algorithm: Result[IAlgorithm[IBackend], UnknownIdError | ValidationError] = (
-                algorithm_registry.from_domain_to_user_model(algorithm.config_data)
-            )
-            if not is_successful(result_algorithm):  # pragma: no cover
-                return Failure(result_algorithm.failure())
-            algorithms.append(
-                AlgorithmUserModel.model_construct(
-                    name=algorithm.name, status=algorithm.status, algorithm=result_algorithm.unwrap()
-                )
-            )
+        if not is_successful(metrics):
+            return Failure(metrics.failure())
 
-        for plot in benchmark_domain.plots:
-            result_plot: Result[IPlot, UnknownIdError | ValidationError] = plot_registry.from_domain_to_user_model(
-                plot.config_data
-            )
-            if not is_successful(result_plot):  # pragma: no cover
-                return Failure(result_plot.failure())
-            plots.append(PlotUserModel.model_construct(name=plot.name, status=plot.status, plot=result_plot.unwrap()))
+        algorithms: Result[list[AlgorithmUserModel], UnknownIdError | ValidationError] = MapperUtils.to_user_model_list(
+            benchmark_domain.algorithms, algorithm_registry, AlgorithmMapper.to_user_model
+        )
+
+        if not is_successful(algorithms):
+            return Failure(algorithms.failure())
+
+        plots: Result[list[PlotUserModel], UnknownIdError | ValidationError] = MapperUtils.to_user_model_list(
+            benchmark_domain.plots, plot_registry, PlotMapper.to_user_model
+        )
+
+        if not is_successful(plots):
+            return Failure(plots.failure())
 
         return Success(
             BenchmarkUserModel.model_construct(
@@ -95,10 +77,10 @@ class BenchmarkMapper:
                 )
                 if benchmark_domain.modelset
                 else None,
-                features=features,
-                metrics=metrics,
-                algorithms=algorithms,
-                plots=plots,
+                features=features.unwrap(),
+                metrics=metrics.unwrap(),
+                algorithms=algorithms.unwrap(),
+                plots=plots.unwrap(),
             )
         )
 
