@@ -1,19 +1,11 @@
-from typing import TYPE_CHECKING
-
 from dependency_injector.wiring import Provide, inject
-from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
-from luna_quantum.solve.interfaces.backend_i import IBackend
 from pydantic import ValidationError
 from returns.result import Result
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
-from luna_bench._internal.domain_models import RegisteredDataDomain
-from luna_bench._internal.interfaces.feature_i import IFeature
-from luna_bench._internal.interfaces.metric_i import IMetric
-from luna_bench._internal.interfaces.plot_i import IPlot
-from luna_bench._internal.mappers.benchmark_mapper import BenchmarkMapper
-from luna_bench._internal.registries import PydanticRegistry
-from luna_bench._internal.registries.registry_container import RegistryContainer
+from luna_bench._internal.domain_models.benchmark_domain import BenchmarkDomain
+from luna_bench._internal.mappers.container import MapperContainer
+from luna_bench._internal.mappers.types import Mapper
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
@@ -21,30 +13,17 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 from .protocols import BenchmarkLoadUc
 
-if TYPE_CHECKING:
-    from luna_bench._internal.domain_models.benchmark_domain import BenchmarkDomain
-
 
 class BenchmarkLoadUcImpl(BenchmarkLoadUc):
     _transaction: DaoTransaction
 
-    _metric_registry: PydanticRegistry[IMetric, RegisteredDataDomain]
-    _feature_registry: PydanticRegistry[IFeature, RegisteredDataDomain]
-    _algorithm_registry: PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain]
-    _plot_registry: PydanticRegistry[IPlot, RegisteredDataDomain]
+    _benchmark_mapper: Mapper[BenchmarkDomain, BenchmarkUserModel]
 
     @inject
     def __init__(
         self,
         transaction: DaoTransaction = Provide[DaoContainer.transaction],
-        metric_registry: PydanticRegistry[IMetric, RegisteredDataDomain] = Provide[RegistryContainer.metric_registry],
-        feature_registry: PydanticRegistry[IFeature, RegisteredDataDomain] = Provide[
-            RegistryContainer.feature_registry
-        ],
-        algorithm_registry: PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain] = Provide[
-            RegistryContainer.algorithm_registry
-        ],
-        plot_registry: PydanticRegistry[IPlot, RegisteredDataDomain] = Provide[RegistryContainer.plot_registry],
+        benchmark_mapper: Mapper[BenchmarkDomain, BenchmarkUserModel] = Provide[MapperContainer.benchmark_mapper],
     ) -> None:
         """
         Initialize the BenchmarkLoadUc with a dao transaction.
@@ -53,13 +32,11 @@ class BenchmarkLoadUcImpl(BenchmarkLoadUc):
         ----------
         transaction : DaoTransaction
             The transaction object used to interact with the dao.
+        benchmark_mapper: Mapper[BenchmarkDomain, BenchmarkUserModel]
+            Benchmark mapper.
         """
         self._transaction = transaction
-
-        self._metric_registry = metric_registry
-        self._feature_registry = feature_registry
-        self._algorithm_registry = algorithm_registry
-        self._plot_registry = plot_registry
+        self._benchmark_mapper = benchmark_mapper
 
     def __call__(
         self, benchmark_name: str
@@ -69,10 +46,6 @@ class BenchmarkLoadUcImpl(BenchmarkLoadUc):
                 benchmark_name
             )
 
-            return BenchmarkMapper.return_to_user_model(
+            return self._benchmark_mapper.return_to_user_model(
                 result_dao,
-                self._metric_registry,
-                self._feature_registry,
-                self._algorithm_registry,
-                self._plot_registry,
             )

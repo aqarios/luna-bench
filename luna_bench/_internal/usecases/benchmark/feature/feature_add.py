@@ -55,14 +55,12 @@ class FeatureAddUcImpl(FeatureAddUc):
         if not is_successful(dm_result):
             return Failure(dm_result.failure())
         dm: RegisteredDataDomain = dm_result.unwrap()
-
         with self._transaction as t:
             result: Result[FeatureDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError] = (
                 t.feature.add(benchmark_name, name, dm.registered_id, dm.data)
             )
             if not is_successful(result):
                 return Failure(result.failure())
-
             config: Result[IFeature, UnknownIdError | ValidationError] = self._registry.from_domain_to_user_model(
                 result.unwrap().config_data
             )
