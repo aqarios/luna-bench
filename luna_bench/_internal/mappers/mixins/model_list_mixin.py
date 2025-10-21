@@ -2,7 +2,7 @@ from pydantic import ValidationError
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.mappers.types import DomainModel_contra, ListMapper, UserModel_co
+from luna_bench._internal.mappers.base_mapper import DomainModel_contra, ListMapper, UserModel_co
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
 

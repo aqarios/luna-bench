@@ -20,7 +20,7 @@ from luna_bench._internal.user_models import (
 )
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
-from .types import ListMapper, Mapper
+from .base_mapper import ListMapper, Mapper
 
 
 class BenchmarkMapper(Mapper[BenchmarkDomain, BenchmarkUserModel]):

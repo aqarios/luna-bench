@@ -5,8 +5,8 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models import BenchmarkDomain
+from luna_bench._internal.mappers.base_mapper import Mapper
 from luna_bench._internal.mappers.container import MapperContainer
-from luna_bench._internal.mappers.types import Mapper
 from luna_bench._internal.user_models import (
     BenchmarkUserModel,
 )

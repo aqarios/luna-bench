@@ -1,5 +1,5 @@
-from abc import abstractmethod
-from typing import Protocol, TypeVar
+from abc import ABC, abstractmethod
+from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
 from returns.pipeline import is_successful
@@ -12,7 +12,7 @@ DomainModel_contra = TypeVar("DomainModel_contra", bound=BaseDomain, contravaria
 UserModel_co = TypeVar("UserModel_co", bound=BaseModel, covariant=True)
 
 
-class Mapper(Protocol[DomainModel_contra, UserModel_co]):
+class Mapper[DomainModel_contra, UserModel_co](ABC):
     @abstractmethod
     def to_user_model(self, domain: DomainModel_contra) -> Result[UserModel_co, UnknownIdError | ValidationError]: ...
 

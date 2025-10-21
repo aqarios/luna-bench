@@ -4,8 +4,8 @@ from returns.result import Result
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models import BenchmarkDomain
+from luna_bench._internal.mappers.base_mapper import Mapper
 from luna_bench._internal.mappers.container import MapperContainer
-from luna_bench._internal.mappers.types import Mapper
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
