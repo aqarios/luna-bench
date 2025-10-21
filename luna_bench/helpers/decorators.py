@@ -137,12 +137,14 @@ def metric[T: IMetric](
 
 
 @inject
-def plot[T: IPlot](
-    _cls: type[T] | None = None,
+def plot(
+    _cls: type[IPlot] | None = None,
     *,
+    metrics: tuple[str] | None = None,
+    features: tuple[str] | None = None,
     plot_id: str | None = None,
     plot_registry: Registry[IPlot] = Provide[RegistryContainer.plot_registry],
-) -> Callable[[type[T]], type[T]] | type[T]:
+) -> Callable[[type[IPlot]], type[IPlot]] | type[IPlot]:
     """
     Register a class as a plot.
 
@@ -161,9 +163,13 @@ def plot[T: IPlot](
     Callable[[type[T]], type[T]] | type[T]
     """
 
-    def _do_register(cls: type[T]) -> type[T]:
+    def _do_register(cls: type[IPlot]) -> type[IPlot]:
         pid = plot_id or f"{cls.__module__}.{cls.__qualname__}"
         _register_class(cls, base=IPlot, registered_class_id=pid, registry=plot_registry)
+        if metrics is not None:
+            cls.metrics = metrics  # type: ignore[attr-defined]
+        if features is not None:
+            cls.features = features  # type: ignore[attr-defined]
         return cls
 
     if _cls is not None:

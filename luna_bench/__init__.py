@@ -18,6 +18,7 @@ _usecase_container.config.from_pydantic(config)
 _usecase_container.wire(
     modules=[
         "luna_bench.components",
+        "luna_bench.components.plots",
     ]
 )
 _registry_container.wire(

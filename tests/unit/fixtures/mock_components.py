@@ -4,11 +4,15 @@ from luna_quantum import Model
 from luna_quantum.solve import SolveJob
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from luna_quantum.solve.interfaces.backend_i import IBackend
+from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces.feature_i import IFeature
 from luna_bench._internal.interfaces.metric_i import IMetric
 from luna_bench._internal.interfaces.plot_i import IPlot
+from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
+from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
+from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.helpers.decorators import algorithm, feature, metric, plot
 
 
@@ -56,13 +60,28 @@ class UnregisteredAlgorithm(IAlgorithm[IBackend]):
 
 @plot
 class MockPlot(IPlot):
-    def run(self) -> None:
+    def run(self, *args: Any, **kwargs: Any) -> None:
         raise NotImplementedError
+
+    def validate_plot(self, benchmark: BenchmarkUserModel) -> Result[None, PlotRunError | UnknownLunaBenchError]:  # noqa: ARG002
+        return Success(None)
 
 
 class UnregisteredPlot(IPlot):
-    def run(self) -> None:
+    def run(self, *args: Any, **kwargs: Any) -> None:
         raise NotImplementedError
+
+    def validate_plot(self, benchmark: BenchmarkUserModel) -> Result[None, PlotRunError | UnknownLunaBenchError]:
+        raise NotImplementedError
+
+
+@plot
+class MockPlotWithValidationError(IPlot):
+    def run(self, *args: Any, **kwargs: Any) -> None:
+        raise NotImplementedError
+
+    def validate_plot(self, benchmark: BenchmarkUserModel) -> Result[None, PlotRunError | UnknownLunaBenchError]:  # noqa: ARG002
+        return Failure(PlotRunError())
 
 
 @metric
