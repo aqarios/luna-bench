@@ -1,17 +1,14 @@
-from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
-from luna_quantum.solve.interfaces.backend_i import IBackend
 from pydantic import ValidationError
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.domain_models import BenchmarkDomain, RegisteredDataDomain
-from luna_bench._internal.interfaces.feature_i import IFeature
-from luna_bench._internal.interfaces.metric_i import IMetric
-from luna_bench._internal.interfaces.plot_i import IPlot
-from luna_bench._internal.mappers.algorithm_mapper import AlgorithmMapper
-from luna_bench._internal.mappers.metric_mapper import MetricMapper
-from luna_bench._internal.mappers.plot_mapper import PlotMapper
-from luna_bench._internal.registries import PydanticRegistry
+from luna_bench._internal.domain_models import (
+    AlgorithmDomain,
+    BenchmarkDomain,
+    FeatureDomain,
+    MetricDomain,
+    PlotDomain,
+)
 from luna_bench._internal.user_models import (
     AlgorithmUserModel,
     BenchmarkUserModel,
@@ -23,42 +20,55 @@ from luna_bench._internal.user_models import (
 )
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
-from .feature_mapper import FeatureMapper
-from .utils import MapperUtils
+from .base_mapper import ListMapper, Mapper
 
 
-class BenchmarkMapper:
-    @staticmethod
+class BenchmarkMapper(Mapper[BenchmarkDomain, BenchmarkUserModel]):
+    def __init__(
+        self,
+        feature_mapper: ListMapper[FeatureDomain, FeatureUserModel],
+        metric_mapper: ListMapper[MetricDomain, MetricUserModel],
+        algorithm_mapper: ListMapper[AlgorithmDomain, AlgorithmUserModel],
+        plot_mapper: ListMapper[PlotDomain, PlotUserModel],
+    ) -> None:
+        self._feature_mapper = feature_mapper
+        self._metric_mapper = metric_mapper
+        self._algorithm_mapper = algorithm_mapper
+        self._plot_mapper = plot_mapper
+
     def to_user_model(
-        benchmark_domain: BenchmarkDomain,
-        metric_registry: PydanticRegistry[IMetric, RegisteredDataDomain],
-        feature_registry: PydanticRegistry[IFeature, RegisteredDataDomain],
-        algorithm_registry: PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain],
-        plot_registry: PydanticRegistry[IPlot, RegisteredDataDomain],
+        self,
+        domain: BenchmarkDomain,
     ) -> Result[BenchmarkUserModel, UnknownIdError | ValidationError]:
-        features: Result[list[FeatureUserModel], UnknownIdError | ValidationError] = MapperUtils.to_user_model_list(
-            benchmark_domain.features, feature_registry, FeatureMapper.to_user_model
+        features: Result[list[FeatureUserModel], UnknownIdError | ValidationError] = (
+            self._feature_mapper.to_user_model_list(
+                domain.features,
+            )
         )
 
         if not is_successful(features):
             return Failure(features.failure())
 
-        metrics: Result[list[MetricUserModel], UnknownIdError | ValidationError] = MapperUtils.to_user_model_list(
-            benchmark_domain.metrics, metric_registry, MetricMapper.to_user_model
+        metrics: Result[list[MetricUserModel], UnknownIdError | ValidationError] = (
+            self._metric_mapper.to_user_model_list(
+                domain.metrics,
+            )
         )
 
         if not is_successful(metrics):
             return Failure(metrics.failure())
 
-        algorithms: Result[list[AlgorithmUserModel], UnknownIdError | ValidationError] = MapperUtils.to_user_model_list(
-            benchmark_domain.algorithms, algorithm_registry, AlgorithmMapper.to_user_model
+        algorithms: Result[list[AlgorithmUserModel], UnknownIdError | ValidationError] = (
+            self._algorithm_mapper.to_user_model_list(
+                domain.algorithms,
+            )
         )
 
         if not is_successful(algorithms):
             return Failure(algorithms.failure())
 
-        plots: Result[list[PlotUserModel], UnknownIdError | ValidationError] = MapperUtils.to_user_model_list(
-            benchmark_domain.plots, plot_registry, PlotMapper.to_user_model
+        plots: Result[list[PlotUserModel], UnknownIdError | ValidationError] = self._plot_mapper.to_user_model_list(
+            domain.plots,
         )
 
         if not is_successful(plots):
@@ -66,35 +76,20 @@ class BenchmarkMapper:
 
         return Success(
             BenchmarkUserModel.model_construct(
-                name=benchmark_domain.name,
+                name=domain.name,
                 modelset=ModelSetUserModel(
-                    id=benchmark_domain.modelset.id,
-                    name=benchmark_domain.modelset.name,
+                    id=domain.modelset.id,
+                    name=domain.modelset.name,
                     models=[
                         ModelMetadataUserModel.model_validate_json(m.model_dump_json(exclude={"model"}))
-                        for m in benchmark_domain.modelset.models
+                        for m in domain.modelset.models
                     ],
                 )
-                if benchmark_domain.modelset
+                if domain.modelset
                 else None,
                 features=features.unwrap(),
                 metrics=metrics.unwrap(),
                 algorithms=algorithms.unwrap(),
                 plots=plots.unwrap(),
             )
-        )
-
-    @staticmethod
-    def return_to_user_model[E](
-        result: Result[BenchmarkDomain, E],
-        metric_registry: PydanticRegistry[IMetric, RegisteredDataDomain],
-        feature_registry: PydanticRegistry[IFeature, RegisteredDataDomain],
-        algorithm_registry: PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain],
-        plot_registry: PydanticRegistry[IPlot, RegisteredDataDomain],
-    ) -> Result[BenchmarkUserModel, E | UnknownIdError | ValidationError]:
-        if not is_successful(result):
-            return Failure(result.failure())
-        benchmark_domain: BenchmarkDomain = result.unwrap()
-        return BenchmarkMapper.to_user_model(
-            benchmark_domain, metric_registry, feature_registry, algorithm_registry, plot_registry
         )

@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from luna_bench._internal.mappers.container import mapper_container
+from luna_bench._internal.registries.registry_container import registry_container
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
 from luna_bench.configs.config import Config
 
@@ -23,6 +25,10 @@ def usecase() -> Generator[UsecaseContainer]:
     uc.config.from_pydantic(cnf)
 
     uc.reset_singletons()
+
+    uc.mapper_container.override(mapper_container)
+    uc.mapper_container.registry_container.override(registry_container)
+
     uc.wire()
 
     # Get the transaction from the container

@@ -15,7 +15,11 @@ from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.domain_models.metric_domain import MetricDomain
 from luna_bench._internal.domain_models.registered_data_domain import RegisteredDataDomain
 from luna_bench._internal.interfaces import IFeature, IMetric, IPlot
+from luna_bench._internal.mappers.algorithm_mapper import AlgorithmMapper
 from luna_bench._internal.mappers.benchmark_mapper import BenchmarkMapper
+from luna_bench._internal.mappers.feature_mapper import FeatureMapper
+from luna_bench._internal.mappers.metric_mapper import MetricMapper
+from luna_bench._internal.mappers.plot_mapper import PlotMapper
 from luna_bench._internal.registries.arbitrary_data_registry import ArbitraryDataRegistry
 from luna_bench._internal.user_models import AlgorithmUserModel, BenchmarkUserModel, MetricUserModel, PlotUserModel
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
@@ -24,7 +28,6 @@ from tests.unit.fixtures.mock_components import MockAlgorithm, MockFeature, Mock
 if TYPE_CHECKING:
     from pydantic import ValidationError
 
-    from luna_bench._internal.registries import PydanticRegistry
     from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
 
@@ -107,13 +110,13 @@ def _full_domainmodel(name: str) -> BenchmarkDomain:
 
 class TestUtils:
     @pytest.fixture()
-    def registries(
+    def mappers(
         self,
     ) -> tuple[
-        PydanticRegistry[IMetric, RegisteredDataDomain],
-        PydanticRegistry[IFeature, RegisteredDataDomain],
-        PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain],
-        PydanticRegistry[IPlot, RegisteredDataDomain],
+        FeatureMapper,
+        MetricMapper,
+        AlgorithmMapper,
+        PlotMapper,
     ]:
         metric_registry = ArbitraryDataRegistry[IMetric]("metric")
         feature_registry = ArbitraryDataRegistry[IFeature]("feature")
@@ -125,7 +128,12 @@ class TestUtils:
         algorithm_registry.register("algorithm", MockAlgorithm)
         plot_registry.register("plot", MockPlot)
 
-        return metric_registry, feature_registry, algorithm_registry, plot_registry
+        feature_mapper = FeatureMapper(feature_registry)
+        metric_mapper = MetricMapper(metric_registry)
+        algorithm_mapper = AlgorithmMapper(algorithm_registry)
+        plot_mapper = PlotMapper(plot_registry)
+
+        return feature_mapper, metric_mapper, algorithm_mapper, plot_mapper
 
     @pytest.mark.parametrize(
         ("benchmark_domain", "exp"),
@@ -136,15 +144,20 @@ class TestUtils:
     )
     def test_convert_to_user_model(
         self,
-        registries: tuple[
-            PydanticRegistry[IMetric, RegisteredDataDomain],
-            PydanticRegistry[IFeature, RegisteredDataDomain],
-            PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain],
-            PydanticRegistry[IPlot, RegisteredDataDomain],
+        mappers: tuple[
+            FeatureMapper,
+            MetricMapper,
+            AlgorithmMapper,
+            PlotMapper,
         ],
         benchmark_domain: BenchmarkDomain,
         exp: Result[BenchmarkUserModel, UnknownIdError | ValidationError],
     ) -> None:
-        r = BenchmarkMapper.to_user_model(benchmark_domain, registries[0], registries[1], registries[2], registries[3])
+        r = BenchmarkMapper(
+            mappers[0],
+            mappers[1],
+            mappers[2],
+            mappers[3],
+        ).to_user_model(benchmark_domain)
         assert type(r) is type(exp)
         assert r.unwrap() == exp.unwrap()

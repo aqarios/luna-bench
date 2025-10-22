@@ -4,15 +4,22 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models import MetricDomain, RegisteredDataDomain
 from luna_bench._internal.interfaces import IMetric
+from luna_bench._internal.mappers.mixins.model_list_mixin import ModelListMixin
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.user_models import MetricUserModel
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
 
-class MetricMapper:
-    @staticmethod
+class MetricMapper(ModelListMixin[MetricDomain, MetricUserModel]):
+    def __init__(
+        self,
+        metric_registry: PydanticRegistry[IMetric, RegisteredDataDomain],
+    ) -> None:
+        self._metric_registry = metric_registry
+
     def to_user_model(
-        metric_domain: MetricDomain, metric_registry: PydanticRegistry[IMetric, RegisteredDataDomain]
+        self,
+        domain: MetricDomain,
     ) -> Result[MetricUserModel, UnknownIdError | ValidationError]:
         """
         Convert the algorithm domain to the user model.
@@ -21,8 +28,6 @@ class MetricMapper:
         ----------
         metric_domain: MetricDomain
             The model to convert.
-        metric_registry: PydanticRegistry[IMetric, RegisteredDataDomain]
-            The registry to use for the conversion.
 
         Returns
         -------
@@ -30,14 +35,16 @@ class MetricMapper:
             Successful conversion: The user model. Otherwise, an exception.
 
         """
-        user_config: Result[IMetric, UnknownIdError | ValidationError] = metric_registry.from_domain_to_user_model(
-            metric_domain.config_data
+        user_config: Result[IMetric, UnknownIdError | ValidationError] = (
+            self._metric_registry.from_domain_to_user_model(domain.config_data)
         )
         if not is_successful(user_config):  # pragma: no cover
             return Failure(user_config.failure())
 
         return Success(
             MetricUserModel.model_construct(
-                name=metric_domain.name, status=metric_domain.status, metric=user_config.unwrap()
+                name=domain.name,
+                status=domain.status,
+                metric=user_config.unwrap(),
             )
         )

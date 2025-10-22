@@ -2,6 +2,7 @@ from dependency_injector import containers, providers
 from dependency_injector.providers import Configuration, Provider
 
 from luna_bench._internal.dao import DaoContainer
+from luna_bench._internal.mappers.container import MapperContainer
 from luna_bench._internal.usecases.benchmark.algorithm.algorithm_add import AlgorithmAddUcImpl
 from luna_bench._internal.usecases.benchmark.algorithm.algorithm_remove import AlgorithmRemoveUcImpl
 from luna_bench._internal.usecases.benchmark.benchmark_create import BenchmarkCreateUcImpl
@@ -60,6 +61,7 @@ class UsecaseContainer(containers.DeclarativeContainer):
     config: Configuration = providers.Configuration()
 
     dao_container = providers.Container(DaoContainer, config=config)
+    mapper_container = providers.Container(MapperContainer)
 
     # ModelSet usecases
     modelset_create_uc: Provider[ModelSetCreateUc] = providers.Singleton(
@@ -89,16 +91,22 @@ class UsecaseContainer(containers.DeclarativeContainer):
 
     # Benchmark usecases
     benchmark_create_uc: Provider[BenchmarkCreateUc] = providers.Singleton(
-        BenchmarkCreateUcImpl, transaction=dao_container.transaction
+        BenchmarkCreateUcImpl,
+        transaction=dao_container.transaction,
+        benchmark_mapper=mapper_container.benchmark_mapper,
     )
     benchmark_delete_uc: Provider[BenchmarkDeleteUc] = providers.Singleton(
         BenchmarkDeleteUcImpl, transaction=dao_container.transaction
     )
     benchmark_load_uc: Provider[BenchmarkLoadUc] = providers.Singleton(
-        BenchmarkLoadUcImpl, transaction=dao_container.transaction
+        BenchmarkLoadUcImpl,
+        transaction=dao_container.transaction,
+        benchmark_mapper=mapper_container.benchmark_mapper,
     )
     benchmark_load_all_uc: Provider[BenchmarkLoadAllUc] = providers.Singleton(
-        BenchmarkLoadAllUcImpl, transaction=dao_container.transaction
+        BenchmarkLoadAllUcImpl,
+        transaction=dao_container.transaction,
+        benchmark_mapper=mapper_container.benchmark_mapper,
     )
     benchmark_add_metric_uc: Provider[MetricAddUc] = providers.Singleton(
         MetricAddUcImpl, transaction=dao_container.transaction
