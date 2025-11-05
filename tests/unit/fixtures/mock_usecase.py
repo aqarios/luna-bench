@@ -3,8 +3,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from luna_bench._internal.mappers.container import mapper_container
-from luna_bench._internal.registries.registry_container import registry_container
+from luna_bench import _usecase_container
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
 from luna_bench.configs.config import Config
 
@@ -17,19 +16,10 @@ if TYPE_CHECKING:
 @pytest.fixture()
 def usecase() -> Generator[UsecaseContainer]:
     """Provide a usecase fixture for testing usecases."""
-    uc = UsecaseContainer()
+    uc = _usecase_container
 
     cnf = Config()
     cnf.DB_CONNECTION_STRING = ":memory:"
-
-    uc.config.from_pydantic(cnf)
-
-    uc.reset_singletons()
-
-    uc.mapper_container.override(mapper_container)
-    uc.mapper_container.registry_container.override(registry_container)
-
-    uc.wire()
 
     # Get the transaction from the container
     transaction: DaoTransaction = uc.dao_container.transaction()
