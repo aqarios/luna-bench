@@ -4,17 +4,16 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from luna_quantum import Vtype
-from numpy.typing import NDarray
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
 from luna_bench.helpers import feature
 
-from .utils import constraint_matrix, mean, vc
+from luna_bench.components.features.utils import constraint_matrix, mean, vc
 
 if TYPE_CHECKING:
     from luna_quantum import Model
-    from numpy.typing import NDarray
+    from numpy.typing import NDArray
 
 
 class LinearConstraintMatrixFeaturesResult(ArbitraryDataDomain):
@@ -214,7 +213,7 @@ class LinearConstraintMatrixFeatures(IFeature):
             vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row=vc(av_vcs),
         )
 
-    def _normalized_constraint_matrix_entries(self, a: NDarray, b: NDarray) -> NDarray:
+    def _normalized_constraint_matrix_entries(self, a: NDArray, b: NDArray) -> NDArray:
         """
         Normalize constraint matrix entries by dividing by RHS values.
 
@@ -222,14 +221,14 @@ class LinearConstraintMatrixFeatures(IFeature):
 
         Parameters
         ----------
-        a : NDarray
+        a : NDArray
             Constraint matrix.
-        b : NDarray
+        b : NDArray
             Right-hand side vector.
 
         Returns
         -------
-        NDarray
+        NDArray
             Flattened array of normalized entries.
         """
         b_mask = b != 0
@@ -237,7 +236,7 @@ class LinearConstraintMatrixFeatures(IFeature):
         b_nz = b[b_mask]
         return (a_nz / b_nz[:, None]).flatten()
 
-    def _vc_absolute_normalized_constraint_matrix_entries(self, a: NDarray) -> NDarray:
+    def _vc_absolute_normalized_constraint_matrix_entries(self, a: NDArray) -> NDArray:
         """
         Calculate variation coefficient of row-normalized absolute entries.
 
@@ -245,12 +244,12 @@ class LinearConstraintMatrixFeatures(IFeature):
 
         Parameters
         ----------
-        a : NDarray
+        a : NDArray
             Constraint matrix.
 
         Returns
         -------
-        NDarray
+        NDArray
             array of variation coefficients per row.
         """
         vcs = []

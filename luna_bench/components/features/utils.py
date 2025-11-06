@@ -1,43 +1,43 @@
 import numpy as np
 from luna_quantum import Constraints, Model, Variable, Vtype
-from numpy.typing import NDarray
+from numpy.typing import NDArray
 
 LINEAR_DEGREE = 1
 QUADRATIC_DEGREE = 2
 
 
-def mean(data: np.ndarray) -> float:
+def mean(data: NDArray) -> float:
     """Calculate the mean of the array, returning 0 if empty."""
     return data.mean() if len(data) != 0 else 0
 
 
-def std(data: np.ndarray) -> float:
+def std(data: NDArray) -> float:
     """Calculate the standard deviation of the array, returning 0 if empty."""
     return data.std() if len(data) != 0 else 0
 
 
-def var(data: np.ndarray) -> float:
+def var(data: NDArray) -> float:
     """Calculate the variance of the array, returning 0 if empty."""
     return data.var() if len(data) != 0 else 0
 
 
-def normalized(data: np.ndarray) -> np.ndarray:
+def normalized(data: NDArray) -> NDArray:
     """Normalize the array by dividing by its sum."""
     return data / np.sum(data) if np.sum(data) != 0 else data
 
 
-def sqrt_normalized(data: np.ndarray) -> np.ndarray:
+def sqrt_normalized(data: NDArray) -> NDArray:
     """Normalize the array and then apply square root."""
     data = data / np.sum(data) if np.sum(data) != 0 else data
     return np.sqrt(data)
 
 
-def median(data: np.ndarray) -> float:
+def median(data: NDArray) -> float:
     """Calculate the median of the array, returning 0 if empty."""
     return np.median(data).item() if len(data) != 0 else 0
 
 
-def vc(data: np.ndarray) -> float:
+def vc(data: NDArray) -> float:
     """Calculate the coefficient of variation (std/mean), returning 0 if empty or mean is 0."""
     if len(data) == 0:
         return 0
@@ -51,14 +51,14 @@ def vc(data: np.ndarray) -> float:
     return std / mean
 
 
-def q10(data: np.ndarray) -> float:
+def q10(data: NDArray) -> float:
     """Calculate the 10th percentile, returning 0 if empty."""
     if len(data) == 0:
         return 0
     return np.percentile(data, 10).item()
 
 
-def q90(data: np.ndarray) -> float:
+def q90(data: NDArray) -> float:
     """Calculate the 90th percentile, returning 0 if empty."""
     if len(data) == 0:
         return 0
@@ -67,7 +67,7 @@ def q90(data: np.ndarray) -> float:
 
 def _extract_linear_degree(
     constraints: Constraints, variables: list[Variable], variable_order: dict[Variable, int]
-) -> tuple[NDarray, NDarray]:
+) -> tuple[NDArray, NDArray]:
     # Standard linear constraint matrix
     a = np.zeros((len(constraints), len(variables)))
     b = np.zeros(len(constraints))
@@ -83,7 +83,7 @@ def _extract_linear_degree(
 
 def _extract_quad_degree(
     constraints: Constraints, variables: list[Variable], variable_order: dict[Variable, int]
-) -> tuple[NDarray, NDarray]:
+) -> tuple[NDArray, NDArray]:
     # For quadratic constraints, we need to handle both linear and quadratic terms
     # Column structure: [linear terms | quadratic terms]
 
@@ -130,7 +130,7 @@ def constraint_matrix(
     vtype: list[Vtype] | Vtype | None,
     *,
     include_b: bool = False,
-) -> NDarray | tuple[NDarray, NDarray]:
+) -> NDArray | tuple[NDArray, NDArray]:
     """
     Extract constraint matrix from a Model, optionally filtering by variable type and constraint degree.
 
@@ -146,7 +146,7 @@ def constraint_matrix(
 
     Returns
     -------
-        NDarray | tuple[NDarray, NDarray]: Constraint matrix a (and optionally RHS vector b)
+        NDArray | tuple[NDArray, NDArray]: Constraint matrix a (and optionally RHS vector b)
     """
     # Filter variables by type
     variables: list[Variable]

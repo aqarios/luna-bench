@@ -9,13 +9,13 @@ from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDa
 from luna_bench._internal.interfaces import IFeature
 from luna_bench.helpers import feature
 
-from .utils import constraint_matrix, mean, std
+from luna_bench.components.features.utils import constraint_matrix, mean, std
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from luna_quantum import Model
-    from numpy.typing import NDarray
+    from numpy.typing import NDArray
 
 
 class ObjectiveFunctionFeatureResult(ArbitraryDataDomain):
@@ -173,11 +173,11 @@ class ObjectiveFunctionFeature(IFeature):
 
     def _normalize(
         self,
-        a: NDarray,
-        coefs: NDarray,
+        a: NDArray,
+        coefs: NDArray,
         var_indices: list[int],
-        f: Callable[[NDarray], NDarray] = lambda x: x,
-    ) -> NDarray:
+        f: Callable[[NDArray], NDArray] = lambda x: x,
+    ) -> NDArray:
         nonzeros = f(np.count_nonzero(a[:, var_indices], axis=0))
 
         if any(nonzeros == 0):
@@ -186,7 +186,7 @@ class ObjectiveFunctionFeature(IFeature):
 
     def _abs_coefficients(
         self, model: Model
-    ) -> tuple[tuple[NDarray, NDarray, NDarray], tuple[list[int], list[int], list[int]]]:
+    ) -> tuple[tuple[NDArray, NDArray, NDArray], tuple[list[int], list[int], list[int]]]:
         d_coefs_c = {}
         d_coefs_nc = {}
         d_coefs_v = {}

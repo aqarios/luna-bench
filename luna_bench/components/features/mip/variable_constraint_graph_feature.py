@@ -9,7 +9,7 @@ from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDa
 from luna_bench._internal.interfaces import IFeature
 from luna_bench.helpers import feature
 
-from .utils import constraint_matrix, mean, median, q10, q90, vc
+from luna_bench.components.features.utils import constraint_matrix, mean, median, q10, q90, vc
 
 if TYPE_CHECKING:
     from luna_quantum import Model
