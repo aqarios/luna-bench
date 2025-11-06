@@ -1,0 +1,203 @@
+from __future__ import annotations
+
+import random
+from typing import TYPE_CHECKING
+
+from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
+from luna_bench._internal.interfaces import IFeature
+from luna_bench.helpers import feature
+from luna_quantum import Model, Vtype
+import numpy as np
+from numpy.typing import NDArray
+from .utils import mean, median, q10, q90, vc, constraint_matrix
+
+if TYPE_CHECKING:
+    from luna_quantum import Model
+
+class ProblemSizeFeaturesResult(ArbitraryDataDomain):
+    """
+    Result container for problem size feature calculations.
+
+    This class stores various metrics related to the size and structure of an
+    optimization problem, including counts of variables and constraints by type,
+    sparsity measures, and support size statistics.
+
+    Attributes
+    ----------
+    num_variables : int
+        Total number of variables in the model.
+    num_constraints : int
+        Total number of constraints in the model.
+    num_non_zero_entries_linear_constraint_matrix : int
+        Number of non-zero entries in the linear constraint matrix.
+    num_quadratic_constraints : int
+        Number of quadratic constraints.
+    num_non_zero_entries_quadratic_constraint_matrix : int
+        Number of non-zero entries in the quadratic constraint matrix.
+    num_boolean_variables : int
+        Number of binary/boolean variables.
+    num_integer_variables : int
+        Number of integer variables.
+    num_continuous_variables : int
+        Number of continuous (real) variables.
+    num_semi_continuous_variables : int
+        Number of semi-continuous variables.
+    num_semi_integer_variables : int
+        Number of semi-integer variables.
+    frac_boolean_variables : float
+        Fraction of boolean variables relative to total variables.
+    frac_integer_variables : float
+        Fraction of integer variables relative to total variables.
+    frac_continuous_variables : float
+        Fraction of continuous variables relative to total variables.
+    frac_semi_continuous_variables : float
+        Fraction of semi-continuous variables relative to total variables.
+    frac_semi_integer_variables : float
+        Fraction of semi-integer variables relative to total variables.
+    num_non_continuous_variables : int
+        Total number of non-continuous variables (binary + integer).
+    frac_non_continuous_variables : float
+        Fraction of non-continuous variables relative to total variables.
+    num_unbounded_non_continuous_variables : int
+        Number of non-continuous variables without bounds.
+    frac_unbounded_non_continuous_variables : float
+        Fraction of unbounded non-continuous variables relative to total variables.
+    mean_support_size : float
+        Mean support size across bounded variables.
+    median_support_size : float
+        Median support size across bounded variables.
+    vc_support_size : float
+        Variation coefficient of support sizes.
+    q90_support_size : float
+        90th percentile of support sizes.
+    q10_support_size : float
+        10th percentile of support sizes.
+    """
+
+    num_variables: int
+    num_constraints: int
+    num_non_zero_entries_linear_constraint_matrix: int
+    num_quadratic_constraints: int
+    num_non_zero_entries_quadratic_constraint_matrix: int
+    num_boolean_variables: int
+    num_integer_variables: int
+    num_continuous_variables: int
+    num_semi_continuous_variables: int
+    num_semi_integer_variables: int
+    frac_boolean_variables: float
+    frac_integer_variables: float
+    frac_continuous_variables: float
+    frac_semi_continuous_variables: float
+    frac_semi_integer_variables: float
+    num_non_continuous_variables: int
+    frac_non_continuous_variables: float
+    num_unbounded_non_continuous_variables: int
+    frac_unbounded_non_continuous_variables: float
+    mean_support_size: float
+    median_support_size: float
+    vc_support_size: float
+    q90_support_size: float
+    q10_support_size: float
+
+
+@feature
+class ProblemSizeFeatures(IFeature):
+    """
+    Feature extractor for problem size-related characteristics.
+
+    Extracts features related to the number and types of variables, constraints,
+    and the sparsity of constraint matrices. Includes both absolute counts and
+    fractional values, as well as statistical metrics related to variable support sizes.
+    """
+
+    def run(self, model: Model) -> ArbitraryDataDomain:
+        """
+        Calculate problem size features for the given optimization model.
+
+        Computes various metrics including variable counts by type, constraint counts,
+        matrix sparsity measures, and support size statistics for bounded variables.
+
+        Parameters
+        ----------
+        model : Model
+            The optimization model for which the features should be calculated.
+
+        Returns
+        -------
+        ProblemSizeFeaturesResult
+            Container with problem size metrics.
+        """
+        num_vars = model.num_variables
+        num_cons = model.num_constraints
+        num_non_zero_linear = np.count_nonzero(constraint_matrix(model, 1, None))
+        num_non_zero_quad = np.count_nonzero(constraint_matrix(model, 2, None))
+        num_quad_constr = sum(c.lhs.degree() == 2 for c in model.constraints)
+
+        variables = list(model.variables())
+        # Todo rather reduce to one loop and use match
+        num_bool = sum(v.vtype == Vtype.Binary for v in variables)
+        num_int = sum(v.vtype == Vtype.Integer for v in variables)
+        num_cont = sum(v.vtype == Vtype.Real for v in variables)
+        # Semi-continuous and semi-integer variables currently not supported, Todo fix by checking upper/lower bounds
+        num_semi_cont = 0
+        num_semi_int = 0
+
+        num_non_cont = num_bool + num_int
+        num_unbound_non_cont = sum(
+            (v.bounds.upper is None) and (v.bounds.lower is None)
+            for v in variables
+            if v.vtype in [Vtype.Binary, Vtype.Integer]
+        )
+
+        support_sizes = self._support_sizes(model)
+
+        return ProblemSizeFeaturesResult(
+            num_variables=num_vars,
+            num_constraints=num_cons,
+            num_non_zero_entries_linear_constraint_matrix=num_non_zero_linear,
+            num_quadratic_constraints=num_quad_constr,
+            num_non_zero_entries_quadratic_constraint_matrix=num_non_zero_quad,
+            num_boolean_variables=num_bool,
+            num_integer_variables=num_int,
+            num_continuous_variables=num_cont,
+            num_semi_continuous_variables=num_semi_cont,
+            num_semi_integer_variables=num_semi_int,
+            frac_boolean_variables=num_bool / num_vars if num_vars > 0 else 0.0,
+            frac_integer_variables=num_int / num_vars if num_vars > 0 else 0.0,
+            frac_continuous_variables=num_cont / num_vars if num_vars > 0 else 0.0,
+            frac_semi_continuous_variables=num_semi_cont / num_vars if num_vars > 0 else 0.0,
+            frac_semi_integer_variables=num_semi_int / num_vars if num_vars > 0 else 0.0,
+            num_non_continuous_variables=num_non_cont,
+            frac_non_continuous_variables=num_non_cont / num_vars if num_vars > 0 else 0.0,
+            num_unbounded_non_continuous_variables=num_unbound_non_cont,
+            frac_unbounded_non_continuous_variables=num_unbound_non_cont / num_vars if num_vars > 0 else 0.0,
+            mean_support_size=mean(support_sizes),
+            median_support_size=median(support_sizes),
+            vc_support_size=vc(support_sizes),
+            q90_support_size=q90(support_sizes),
+            q10_support_size=q10(support_sizes),
+        )
+
+    def _support_sizes(self, model: Model) -> NDArray:
+        """
+        Calculate support sizes for bounded variables.
+
+        Computes domain size for binary/integer variables. For semi-continuous
+        variables this would be 2, and for semi-integer variables this would be
+        1 + domain size (not currently implemented).
+
+        Parameters
+        ----------
+        model : Model
+            The optimization model.
+
+        Returns
+        -------
+        NDArray
+            Array of support sizes for bounded variables.
+        """
+        support_sizes = []
+        for v in model.variables():
+            if (v.bounds.lower is not None) and (v.bounds.upper is not None):
+                support_sizes.append((v.bounds.upper - v.bounds.lower) + 1)
+        return np.array(support_sizes)
