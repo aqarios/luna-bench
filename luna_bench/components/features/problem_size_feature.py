@@ -4,16 +4,15 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from luna_quantum import Model, Vtype
-from numpy.typing import NDArray
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
 from luna_bench.helpers import feature
 
-from .utils import constraint_matrix, mean, median, q10, q90, vc
+from .utils import QUADRATIC_DEGREE, constraint_matrix, mean, median, q10, q90, vc
 
 if TYPE_CHECKING:
-    from luna_quantum import Model
+    from numpy.typing import NDArray
 
 
 class ProblemSizeFeaturesResult(ArbitraryDataDomain):
@@ -133,16 +132,28 @@ class ProblemSizeFeatures(IFeature):
         num_cons = model.num_constraints
         num_non_zero_linear = np.count_nonzero(constraint_matrix(model, 1, None))
         num_non_zero_quad = np.count_nonzero(constraint_matrix(model, 2, None))
-        num_quad_constr = sum(c.lhs.degree() == 2 for c in model.constraints)
+        num_quad_constr = sum(c.lhs.degree() == QUADRATIC_DEGREE for c in model.constraints)
 
         variables = list(model.variables())
-        # TODO rather reduce to one loop and use match
-        num_bool = sum(v.vtype == Vtype.Binary for v in variables)
-        num_int = sum(v.vtype == Vtype.Integer for v in variables)
-        num_cont = sum(v.vtype == Vtype.Real for v in variables)
-        # Semi-continuous and semi-integer variables currently not supported, Todo fix by checking upper/lower bounds
-        num_semi_cont = 0
-        num_semi_int = 0
+
+        num_bool, num_int, num_cont, num_semi_cont, num_semi_int = 0, 0, 0, 0, 0
+        for var in variables:
+            match var.vtype:
+                case Vtype.Binary:
+                    num_bool += 1
+                case Vtype.Integer:
+                    if (var.bounds.lower is None or np.isclose(var.bounds.lower, -np.inf)) and \
+                            (var.bounds.upper is None or np.isclose(var.bounds.upper, np.inf)):
+                        num_int += 1
+                    else:
+                        num_semi_int += 1
+                case Vtype.Real:
+                    if (var.bounds.lower is None or np.isclose(var.bounds.lower, -np.inf)) and \
+                            (var.bounds.upper is None or np.isclose(var.bounds.upper, np.inf)):
+                        num_cont += 1
+                    else:
+                        num_semi_cont += 1
+
 
         num_non_cont = num_bool + num_int
         num_unbound_non_cont = sum(
@@ -198,8 +209,10 @@ class ProblemSizeFeatures(IFeature):
         NDArray
             Array of support sizes for bounded variables.
         """
-        support_sizes = []
-        for v in model.variables():
-            if (v.bounds.lower is not None) and (v.bounds.upper is not None):
-                support_sizes.append((v.bounds.upper - v.bounds.lower) + 1)
+        support_sizes = [
+            (v.bounds.upper - v.bounds.lower) + 1
+            for v in model.variables()
+            if (v.bounds.lower is not None) and (v.bounds.upper is not None)
+        ]
+
         return np.array(support_sizes)

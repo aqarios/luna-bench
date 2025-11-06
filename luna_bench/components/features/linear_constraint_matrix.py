@@ -14,6 +14,7 @@ from .utils import constraint_matrix, mean, vc
 
 if TYPE_CHECKING:
     from luna_quantum import Model
+    from numpy.typing import NDarray
 
 
 class LinearConstraintMatrixFeaturesResult(ArbitraryDataDomain):

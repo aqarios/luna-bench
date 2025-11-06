@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import numpy as np
-from luna_quantum import Model, Vtype
-from numpy.typing import NDarray
+from luna_quantum import Vtype
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
@@ -14,7 +12,10 @@ from luna_bench.helpers import feature
 from .utils import constraint_matrix, mean, std
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from luna_quantum import Model
+    from numpy.typing import NDarray
 
 
 class ObjectiveFunctionFeatureResult(ArbitraryDataDomain):
@@ -58,7 +59,8 @@ class ObjectiveFunctionFeatureResult(ArbitraryDataDomain):
     mean_sqrtnorm_abscoefs_nc : float
         Mean of square-root-normalized absolute objective function coefficients for non-continuous variables.
     std_sqrtnorm_abscoefs_nc : float
-        Standard deviation of square-root-normalized absolute objective function coefficients for non-continuous variables.
+        Standard deviation of square-root-normalized absolute objective function coefficients for
+        non-continuous variables.
     mean_sqrtnorm_abscoefs_v : float
         Mean of square-root-normalized absolute objective function coefficients for all variables.
     std_sqrtnorm_abscoefs_v : float
@@ -177,7 +179,7 @@ class ObjectiveFunctionFeature(IFeature):
         f: Callable[[NDarray], NDarray] = lambda x: x,
     ) -> NDarray:
         nonzeros = f(np.count_nonzero(a[:, var_indices], axis=0))
-        # TODO: make sure is correct.
+
         if any(nonzeros == 0):
             return np.zeros_like(nonzeros)
         return coefs / f(nonzeros)
@@ -197,8 +199,6 @@ class ObjectiveFunctionFeature(IFeature):
                 case Vtype.Real:
                     d_coefs_c[var] = v
                     d_coefs_v[var] = v
-                case _:
-                    raise RuntimeError(f"unknown variable type: '{var.vtype}'")
 
         vars_c = list(d_coefs_c.keys())
         vars_nc = list(d_coefs_nc.keys())
