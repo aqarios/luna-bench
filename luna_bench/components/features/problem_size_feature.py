@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-import random
 from typing import TYPE_CHECKING
+
+import numpy as np
+from luna_quantum import Model, Vtype
+from numpy.typing import NDArray
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
 from luna_bench.helpers import feature
-from luna_quantum import Model, Vtype
-import numpy as np
-from numpy.typing import NDArray
-from .utils import mean, median, q10, q90, vc, constraint_matrix
+
+from .utils import constraint_matrix, mean, median, q10, q90, vc
 
 if TYPE_CHECKING:
     from luna_quantum import Model
+
 
 class ProblemSizeFeaturesResult(ArbitraryDataDomain):
     """
@@ -134,7 +136,7 @@ class ProblemSizeFeatures(IFeature):
         num_quad_constr = sum(c.lhs.degree() == 2 for c in model.constraints)
 
         variables = list(model.variables())
-        # Todo rather reduce to one loop and use match
+        # TODO rather reduce to one loop and use match
         num_bool = sum(v.vtype == Vtype.Binary for v in variables)
         num_int = sum(v.vtype == Vtype.Integer for v in variables)
         num_cont = sum(v.vtype == Vtype.Real for v in variables)

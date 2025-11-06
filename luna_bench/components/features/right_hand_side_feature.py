@@ -3,11 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+from luna_quantum import Comparator
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
 from luna_bench.helpers import feature
-from luna_quantum import Comparator
+
 from .utils import mean, std
 
 if TYPE_CHECKING:
@@ -81,10 +82,12 @@ class RightHandSideFeatures(IFeature):
 
         for c in model.constraints:
             match type(c.comparator):
-                case Comparator.Le: rhs_leq.append(c.rhs)
-                case Comparator.Eq: rhs_eq.append(c.rhs)
-                case Comparator.Ge: rhs_geq.append(c.rhs)
-
+                case Comparator.Le:
+                    rhs_leq.append(c.rhs)
+                case Comparator.Eq:
+                    rhs_eq.append(c.rhs)
+                case Comparator.Ge:
+                    rhs_geq.append(c.rhs)
 
         rhs_leq = np.array(rhs_leq)
         rhs_eq = np.array(rhs_eq)

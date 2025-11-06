@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+from luna_quantum import Vtype
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
 from luna_bench.helpers import feature
-from luna_quantum import Vtype
 
-from .utils import constraint_matrix, mean, median, vc, q10, q90
+from .utils import constraint_matrix, mean, median, q10, q90, vc
 
 if TYPE_CHECKING:
     from luna_quantum import Model
@@ -158,58 +158,58 @@ class VariableConstraintGraphFeatures(IFeature):
             Container with graph-based statistical measures.
         """
         # Continuous
-        Ac = constraint_matrix(model, degree=1, vtype=Vtype.Real)
-        Ac_binary = (Ac != 0).astype(int)
-        Ac_vnd = np.sum(Ac_binary, axis=0)  # Variable node degrees
-        Ac_cnd = np.sum(Ac_binary, axis=1)  # Constraint node degrees
+        ac = constraint_matrix(model, degree=1, vtype=Vtype.Real)
+        ac_binary = (ac != 0).astype(int)
+        ac_vnd = np.sum(ac_binary, axis=0)  # Variable node degrees
+        ac_cnd = np.sum(ac_binary, axis=1)  # Constraint node degrees
 
         # Non-continuous
-        Anc = constraint_matrix(model, degree=1, vtype=[Vtype.Integer, Vtype.Binary])
-        Anc_binary = (Anc != 0).astype(int)
-        Anc_vnd = np.sum(Anc_binary, axis=0)
-        Anc_cnd = np.sum(Anc_binary, axis=1)
+        anc = constraint_matrix(model, degree=1, vtype=[Vtype.Integer, Vtype.Binary])
+        anc_binary = (anc != 0).astype(int)
+        anc_vnd = np.sum(anc_binary, axis=0)
+        anc_cnd = np.sum(anc_binary, axis=1)
 
-        # All variables
-        Av = constraint_matrix(model, degree=1, vtype=None)
-        Av_binary = (Av != 0).astype(int)
-        Av_vnd = np.sum(Av_binary, axis=0)
-        Av_cnd = np.sum(Av_binary, axis=1)
+        # all variables
+        av = constraint_matrix(model, degree=1, vtype=None)
+        av_binary = (av != 0).astype(int)
+        av_vnd = np.sum(av_binary, axis=0)
+        av_cnd = np.sum(av_binary, axis=1)
 
         return VariableConstraintGraphFeaturesResult(
             # Variable node degree statistics - continuous
-            mean_variable_node_degree_continuous=mean(Ac_vnd),
-            median_variable_node_degree_continuous=median(Ac_vnd),
-            vc_variable_node_degree_continuous=vc(Ac_vnd),
-            q90_variable_node_degree_continuous=q90(Ac_vnd),
-            q10_variable_node_degree_continuous=q10(Ac_vnd),
+            mean_variable_node_degree_continuous=mean(ac_vnd),
+            median_variable_node_degree_continuous=median(ac_vnd),
+            vc_variable_node_degree_continuous=vc(ac_vnd),
+            q90_variable_node_degree_continuous=q90(ac_vnd),
+            q10_variable_node_degree_continuous=q10(ac_vnd),
             # Variable node degree statistics - non-continuous
-            mean_variable_node_degree_non_continuous=mean(Anc_vnd),
-            median_variable_node_degree_non_continuous=median(Anc_vnd),
-            vc_variable_node_degree_non_continuous=vc(Anc_vnd),
-            q90_variable_node_degree_non_continuous=q90(Anc_vnd),
-            q10_variable_node_degree_non_continuous=q10(Anc_vnd),
+            mean_variable_node_degree_non_continuous=mean(anc_vnd),
+            median_variable_node_degree_non_continuous=median(anc_vnd),
+            vc_variable_node_degree_non_continuous=vc(anc_vnd),
+            q90_variable_node_degree_non_continuous=q90(anc_vnd),
+            q10_variable_node_degree_non_continuous=q10(anc_vnd),
             # Variable node degree statistics - all
-            mean_variable_node_degree_all=mean(Av_vnd),
-            median_variable_node_degree_all=median(Av_vnd),
-            vc_variable_node_degree_all=vc(Av_vnd),
-            q90_variable_node_degree_all=q90(Av_vnd),
-            q10_variable_node_degree_all=q10(Av_vnd),
+            mean_variable_node_degree_all=mean(av_vnd),
+            median_variable_node_degree_all=median(av_vnd),
+            vc_variable_node_degree_all=vc(av_vnd),
+            q90_variable_node_degree_all=q90(av_vnd),
+            q10_variable_node_degree_all=q10(av_vnd),
             # Constraint node degree statistics - all
-            mean_constraint_node_degree=mean(Av_cnd),
-            median_constraint_node_degree=median(Av_cnd),
-            vc_constraint_node_degree=vc(Av_cnd),
-            q90_constraint_node_degree=q90(Av_cnd),
-            q10_constraint_node_degree=q10(Av_cnd),
+            mean_constraint_node_degree=mean(av_cnd),
+            median_constraint_node_degree=median(av_cnd),
+            vc_constraint_node_degree=vc(av_cnd),
+            q90_constraint_node_degree=q90(av_cnd),
+            q10_constraint_node_degree=q10(av_cnd),
             # Constraint node degree statistics - continuous
-            mean_constraint_node_degree_continuous=mean(Ac_cnd),
-            median_constraint_node_degree_continuous=median(Ac_cnd),
-            vc_constraint_node_degree_continuous=vc(Ac_cnd),
-            q90_constraint_node_degree_continuous=q90(Ac_cnd),
-            q10_constraint_node_degree_continuous=q10(Ac_cnd),
+            mean_constraint_node_degree_continuous=mean(ac_cnd),
+            median_constraint_node_degree_continuous=median(ac_cnd),
+            vc_constraint_node_degree_continuous=vc(ac_cnd),
+            q90_constraint_node_degree_continuous=q90(ac_cnd),
+            q10_constraint_node_degree_continuous=q10(ac_cnd),
             # Constraint node degree statistics - non-continuous
-            mean_constraint_node_degree_non_continuous=mean(Anc_cnd),
-            median_constraint_node_degree_non_continuous=median(Anc_cnd),
-            vc_constraint_node_degree_non_continuous=vc(Anc_cnd),
-            q90_constraint_node_degree_non_continuous=q90(Anc_cnd),
-            q10_constraint_node_degree_non_continuous=q10(Anc_cnd),
+            mean_constraint_node_degree_non_continuous=mean(anc_cnd),
+            median_constraint_node_degree_non_continuous=median(anc_cnd),
+            vc_constraint_node_degree_non_continuous=vc(anc_cnd),
+            q90_constraint_node_degree_non_continuous=q90(anc_cnd),
+            q10_constraint_node_degree_non_continuous=q10(anc_cnd),
         )

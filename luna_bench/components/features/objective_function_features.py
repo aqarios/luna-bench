@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from luna_quantum import Model, Vtype
-from numpy.typing import NDArray
+from numpy.typing import NDarray
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
@@ -65,15 +65,15 @@ class ObjectiveFunctionFeatureResult(ArbitraryDataDomain):
         Standard deviation of square-root-normalized absolute objective function coefficients for all variables.
     """
 
-    # Absolute objective function coefficients - continuous
+    # absolute objective function coefficients - continuous
     mean_abscoefs_c: float
     std_abscoefs_c: float
 
-    # Absolute objective function coefficients - non-continuous
+    # absolute objective function coefficients - non-continuous
     mean_abscoefs_nc: float
     std_abscoefs_nc: float
 
-    # Absolute objective function coefficients - all
+    # absolute objective function coefficients - all
     mean_abscoefs_v: float
     std_abscoefs_v: float
 
@@ -111,7 +111,7 @@ class ObjectiveFunctionFeature(IFeature):
         Calculate statistical features of objective function coefficients.
 
         Computes mean and standard deviation of absolute objective function coefficients
-        for continuous, non-continuous, and all variable types. Also calculates these
+        for continuous, non-continuous, and all variable types. also calculates these
         statistics for normalized and square-root-normalized coefficient values.
 
         Parameters
@@ -125,30 +125,28 @@ class ObjectiveFunctionFeature(IFeature):
             Container with 18 statistical measures of objective function coefficients.
 
         """
-        (abscoefs_c, abscoefs_nc, abscoefs_v), (indices_c, indices_nc, indices_v) = (
-            self._abs_coefficients(model)
-        )
+        (abscoefs_c, abscoefs_nc, abscoefs_v), (indices_c, indices_nc, indices_v) = self._abs_coefficients(model)
 
-        Ac = constraint_matrix(model, degree=1, vtype=Vtype.Real)
-        Anc = constraint_matrix(model, degree=1, vtype=[Vtype.Integer, Vtype.Binary])
-        Av = constraint_matrix(model, degree=1, vtype=None)
+        ac = constraint_matrix(model, degree=1, vtype=Vtype.Real)
+        anc = constraint_matrix(model, degree=1, vtype=[Vtype.Integer, Vtype.Binary])
+        av = constraint_matrix(model, degree=1, vtype=None)
 
-        norm_abscoefs_c = self._normalize(Ac, abscoefs_c, indices_c)  # type: ignore[reportArgumentType]
-        norm_abscoefs_nc = self._normalize(Anc, abscoefs_nc, indices_nc)  # type: ignore[reportArgumentType]
-        norm_abscoefs_v = self._normalize(Av, abscoefs_v, indices_v)  # type: ignore[reportArgumentType]
+        norm_abscoefs_c = self._normalize(ac, abscoefs_c, indices_c)  # type: ignore[reportargumentType]
+        norm_abscoefs_nc = self._normalize(anc, abscoefs_nc, indices_nc)  # type: ignore[reportargumentType]
+        norm_abscoefs_v = self._normalize(av, abscoefs_v, indices_v)  # type: ignore[reportargumentType]
 
-        sqrtnorm_abscoefs_c = self._normalize(Ac, abscoefs_c, indices_c, np.sqrt)  # type: ignore[reportArgumentType]
-        sqrtnorm_abscoefs_nc = self._normalize(Anc, abscoefs_nc, indices_nc, np.sqrt)  # type: ignore[reportArgumentType]
-        sqrtnorm_abscoefs_v = self._normalize(Av, abscoefs_v, indices_v, np.sqrt)  # type: ignore[reportArgumentType]
+        sqrtnorm_abscoefs_c = self._normalize(ac, abscoefs_c, indices_c, np.sqrt)  # type: ignore[reportargumentType]
+        sqrtnorm_abscoefs_nc = self._normalize(anc, abscoefs_nc, indices_nc, np.sqrt)  # type: ignore[reportargumentType]
+        sqrtnorm_abscoefs_v = self._normalize(av, abscoefs_v, indices_v, np.sqrt)  # type: ignore[reportargumentType]
 
         return ObjectiveFunctionFeatureResult(
-            # Absolute objective function coefficients - continuous
+            # absolute objective function coefficients - continuous
             mean_abscoefs_c=mean(abscoefs_c),
             std_abscoefs_c=std(abscoefs_c),
-            # Absolute objective function coefficients - non-continuous
+            # absolute objective function coefficients - non-continuous
             mean_abscoefs_nc=mean(abscoefs_nc),
             std_abscoefs_nc=std(abscoefs_nc),
-            # Absolute objective function coefficients - all
+            # absolute objective function coefficients - all
             mean_abscoefs_v=mean(abscoefs_v),
             std_abscoefs_v=std(abscoefs_v),
             # Normalized absolute objective function coefficients - continuous
@@ -171,25 +169,22 @@ class ObjectiveFunctionFeature(IFeature):
             std_sqrtnorm_abscoefs_v=std(sqrtnorm_abscoefs_v),
         )
 
-
     def _normalize(
         self,
-        A: NDArray,
-        coefs: NDArray,
+        a: NDarray,
+        coefs: NDarray,
         var_indices: list[int],
-        f: Callable[[NDArray], NDArray] = lambda x: x,
-    ) -> NDArray:
-        nonzeros = f(np.count_nonzero(A[:, var_indices], axis=0))
+        f: Callable[[NDarray], NDarray] = lambda x: x,
+    ) -> NDarray:
+        nonzeros = f(np.count_nonzero(a[:, var_indices], axis=0))
         # TODO: make sure is correct.
         if any(nonzeros == 0):
             return np.zeros_like(nonzeros)
         return coefs / f(nonzeros)
 
     def _abs_coefficients(
-            self, model: Model
-    ) -> tuple[
-        tuple[NDArray, NDArray, NDArray], tuple[list[int], list[int], list[int]]
-    ]:
+        self, model: Model
+    ) -> tuple[tuple[NDarray, NDarray, NDarray], tuple[list[int], list[int], list[int]]]:
         d_coefs_c = {}
         d_coefs_nc = {}
         d_coefs_v = {}
