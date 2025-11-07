@@ -674,7 +674,10 @@ class Benchmark(BenchmarkUserModel):
     def run_metrics(self) -> None:  # noqa: D102 # Not yet implemented
         raise NotImplementedError
 
-    def run_plots(self, error_handling_mode: UseCaseErrorHandlingMode) -> None:
+    def run_plots(
+        self,
+        error_handling_mode: UseCaseErrorHandlingMode = UseCaseErrorHandlingMode.FAIL_ON_ERROR,
+    ) -> None:
         """
         Execute all plots registered in the benchmark.
 
