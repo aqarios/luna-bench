@@ -142,4 +142,8 @@ class BenchmarkSetModelsetUc(Protocol):
 class PlotsRunUc(Protocol):
     error_handling_mode: UseCaseErrorHandlingMode
 
-    def __call__(self, benchmark: BenchmarkUserModel) -> Result[None, PlotRunError | UnknownLunaBenchError]: ...
+    def __call__(
+        self,
+        benchmark: BenchmarkUserModel,
+        error_handling_mode: UseCaseErrorHandlingMode = UseCaseErrorHandlingMode.FAIL_ON_ERROR,
+    ) -> Result[None, PlotRunError | UnknownLunaBenchError]: ...

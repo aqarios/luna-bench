@@ -151,7 +151,7 @@ class TestPlot:
             plots=[_empty_plot("test", plot)],
         )
 
-        result = default_usecase.benchmark_run_plots_uc(error_handling_mode=error_handling_mode)(benchmark)
+        result = default_usecase.benchmark_run_plots_uc()(benchmark, error_handling_mode)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()

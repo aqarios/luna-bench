@@ -35,6 +35,7 @@ from luna_bench._internal.user_models import (
     PlotUserModel,
 )
 from luna_bench.components.algorithm import Algorithm
+from luna_bench.components.enums import ErrorHandlingMode
 from luna_bench.components.feature import Feature
 from luna_bench.components.metric import Metric
 from luna_bench.components.model_set import ModelSet
@@ -676,7 +677,7 @@ class Benchmark(BenchmarkUserModel):
 
     def run_plots(
         self,
-        error_handling_mode: UseCaseErrorHandlingMode = UseCaseErrorHandlingMode.FAIL_ON_ERROR,
+        error_handling_mode: ErrorHandlingMode = ErrorHandlingMode.FAIL_ON_ERROR,
     ) -> None:
         """
         Execute all plots registered in the benchmark.
@@ -689,7 +690,7 @@ class Benchmark(BenchmarkUserModel):
 
         Parameters
         ----------
-        error_handling_mode : UseCaseErrorHandlingMode
+        error_handling_mode : ErrorHandlingMode
             Determines behavior when plot validation or execution fails.
             - FAIL_ON_ERROR: Stop at the first error and raise RuntimeError
             - CONTINUE_ON_ERROR: Log warnings and continue with remaining plots
@@ -710,8 +711,7 @@ class Benchmark(BenchmarkUserModel):
         execution continues with remaining plots.
         """
         benchmark_run_plots = self.__run_plots_uc()
-        benchmark_run_plots.error_handling_mode = error_handling_mode
-        result = benchmark_run_plots(self)
+        result = benchmark_run_plots(self, UseCaseErrorHandlingMode(error_handling_mode))
         if not is_successful(result):
             error = result.failure()
             Benchmark._logger.error(f"Failed to run plots for the benchmark {self.name} with error: {error}")

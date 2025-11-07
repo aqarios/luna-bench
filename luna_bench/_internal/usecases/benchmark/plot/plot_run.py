@@ -37,23 +37,13 @@ class PlotsRunUcImpl(PlotsRunUc):
 
     def __init__(
         self,
-        error_handling_mode: UseCaseErrorHandlingMode = UseCaseErrorHandlingMode.FAIL_ON_ERROR,
     ) -> None:
-        """
-        Initialize the plots run use case.
-
-        Parameters
-        ----------
-        error_handling_mode : UseCaseErrorHandlingMode, optional
-            Error handling strategy for plot validation and execution failures.
-            Default is FAIL_ON_ERROR.
-        """
         self._logger = Logging.get_logger(__name__)
-        self.error_handling_mode = error_handling_mode
 
     def __call__(
         self,
         benchmark: BenchmarkUserModel,
+        error_handling_mode: UseCaseErrorHandlingMode = UseCaseErrorHandlingMode.FAIL_ON_ERROR,
     ) -> Result[None, PlotRunError | UnknownLunaBenchError]:
         """
         Execute all plots defined in the benchmark.
@@ -68,6 +58,9 @@ class PlotsRunUcImpl(PlotsRunUc):
         benchmark : BenchmarkUserModel
             The benchmark containing plots to execute and the data (metrics,
             features, algorithms, models) required for plot generation.
+        error_handling_mode : UseCaseErrorHandlingMode, optional
+            Error handling strategy for plot validation and execution failures.
+            Default is FAIL_ON_ERROR.
 
         Returns
         -------
@@ -87,7 +80,7 @@ class PlotsRunUcImpl(PlotsRunUc):
         for plot in benchmark.plots:
             validation_result = plot.plot.validate_plot(benchmark)
             if not is_successful(validation_result):
-                if self.error_handling_mode == UseCaseErrorHandlingMode.FAIL_ON_ERROR:
+                if error_handling_mode == UseCaseErrorHandlingMode.FAIL_ON_ERROR:
                     return Failure(validation_result.failure())
                 self._logger.warning(f"Plot {plot.name} validation failed with error: {validation_result.failure()}")
                 continue
@@ -96,7 +89,7 @@ class PlotsRunUcImpl(PlotsRunUc):
                 plot.plot.run(**validation_result.unwrap())
             except Exception as e:
                 self._logger.warning(f"Plot {plot.name} execution failed with error: {e}")
-                if self.error_handling_mode == UseCaseErrorHandlingMode.FAIL_ON_ERROR:
+                if error_handling_mode == UseCaseErrorHandlingMode.FAIL_ON_ERROR:
                     return Failure(UnknownLunaBenchError(e))
 
         return Success(None)
