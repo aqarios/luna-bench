@@ -19,13 +19,12 @@ if TYPE_CHECKING:
     from luna_bench._internal.domain_models.feature_domain import FeatureDomain
     from luna_bench._internal.domain_models.metric_domain import MetricDomain
     from luna_bench._internal.domain_models.plot_config_domain import PlotDomain
+    from luna_bench._internal.mappers.base_mapper import Mapper
     from luna_bench._internal.user_models.algorithm_usermodel import AlgorithmUserModel
     from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
     from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
     from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
     from luna_bench._internal.user_models.plot_usermodel import PlotUserModel
-
-    from .types import Mapper
 
 
 class MapperContainer(containers.DeclarativeContainer):
@@ -58,11 +57,3 @@ class MapperContainer(containers.DeclarativeContainer):
         algorithm_mapper=algorithm_mapper,
         plot_mapper=plot_mapper,
     )
-
-
-mapper_container = MapperContainer()
-
-# Import and override the registry_container to use the global singleton
-from luna_bench._internal.registries.registry_container import registry_container  # noqa: E402
-
-mapper_container.registry_container.override(registry_container)
