@@ -1,4 +1,4 @@
-from typing import ClassVar
+from abc import abstractmethod
 
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
@@ -6,12 +6,12 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.interfaces.plot_i import IPlot
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
-from luna_bench.errors.run_errors.plots_errors.features_missing_error import FeaturesMissingError
+from luna_bench.components.plots.generics.mixins.features_plot_mixin import FeaturesPlotMixin
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-class GenericFeaturesPlot(IPlot):
+class GenericFeaturesPlot(IPlot, FeaturesPlotMixin):
     """
     Base class for plots that only require features.
 
@@ -28,13 +28,30 @@ class GenericFeaturesPlot(IPlot):
 
     """
 
-    features_names: ClassVar[set[str]] = set()
-    features: dict[str, FeatureUserModel] | None = None
+    @abstractmethod
+    def run(self, features: dict[str, FeatureUserModel]) -> None:
+        """
+        Generate the plot using the provided features.
+
+        This method must be implemented by subclasses to define the specific
+        plotting logic for feature-based visualizations.
+
+        Parameters
+        ----------
+        features : dict[str, FeatureUserModel]
+            Dictionary mapping feature names to feature instances. Contains only
+            the features specified in the class's features_names attribute.
+
+        Returns
+        -------
+        None
+            The method should generate and save/display the plot as a side effect.
+        """
 
     def validate_plot(
         self,
         benchmark: BenchmarkUserModel,
-    ) -> Result[None, PlotRunError | UnknownLunaBenchError]:
+    ) -> Result[dict[str, dict[str, FeatureUserModel]], PlotRunError | UnknownLunaBenchError]:
         """
         Validate that required features are present in the benchmark.
 
@@ -54,64 +71,4 @@ class GenericFeaturesPlot(IPlot):
         if not is_successful(features):
             return Failure(features.failure())
 
-        self.features = features.unwrap()
-
-        return Success(None)
-
-    def _prepare_features(
-        self,
-        features: list[FeatureUserModel],
-    ) -> Result[dict[str, FeatureUserModel], FeaturesMissingError | UnknownLunaBenchError]:
-        """
-        Parse features from benchmark and compare with config.
-
-        Parameters
-        ----------
-        features : list[FeatureUserModel]
-            List of benchmark's features.
-
-        Returns
-        -------
-        Result[dict[str, IFeature], FeaturesMissingError | UnknownLunaBenchError]
-            Success with dictionary mapping feature names to feature instances,
-            or Failure with FeaturesMissingError if required features are missing.
-        """
-        result: dict[str, FeatureUserModel] = {}
-
-        for feature in features:
-            if feature.name in self.features_names:
-                result[feature.name] = feature
-
-        featires_diff = self.features_names - result.keys()
-
-        if len(featires_diff) > 0:
-            return Failure(FeaturesMissingError(list(featires_diff)))
-
-        return Success(result)
-
-    def has_feature(self, feature_name: str) -> bool:
-        """
-        Check if a feature is required by this plot.
-
-        Parameters
-        ----------
-        feature_name : str
-            Name of the feature to check.
-
-        Returns
-        -------
-        bool
-            True if the feature is in the required features set, False otherwise.
-        """
-        return feature_name in self.features_names
-
-    def add_feature(self, feature_name: str) -> None:
-        """
-        Add feature manually to a plot configuration.
-
-        Parameters
-        ----------
-        feature_name : str
-            Name of the feature to add.
-        """
-        self.features_names.add(feature_name)
+        return Success({"features": features.unwrap()})

@@ -20,7 +20,7 @@ class _FakePlot(GenericFeaturesPlot):
     metrics_names: ClassVar[set[str]] = {"existing"}
     features_names: ClassVar[set[str]] = {"existing"}
 
-    def run(self) -> None:
+    def run(self, features: dict[str, FeatureUserModel]) -> None:
         pass
 
 
@@ -176,4 +176,4 @@ class TestGenericFeaturesPlot:
         ]
         result = fake_plot.validate_plot(benchmark)
 
-        assert result.unwrap() is None
+        assert result.unwrap() == {"features": {"existing": benchmark.features[0]}}

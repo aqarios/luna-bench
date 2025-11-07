@@ -10,8 +10,7 @@ from tests.unit.fixtures.mock_components import MockFeature, MockMetric
 
 
 class _FakePlot(GenericFeaturesMetricsPlot):
-    def run(self) -> None:
-        pass
+    def run(self, metrics: dict[str, MetricUserModel], features: dict[str, FeatureUserModel]) -> None: ...
 
 
 class TestGenericFeaturesMetricsPlot:
@@ -63,4 +62,7 @@ class TestGenericFeaturesMetricsPlot:
         ]
         result = fake_plot.validate_plot(benchmark)
 
-        assert result.unwrap() is None
+        assert result.unwrap() == {
+            "features": {"existing": benchmark.features[0]},
+            "metrics": {"existing": benchmark.metrics[0]},
+        }

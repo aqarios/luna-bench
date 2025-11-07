@@ -1,16 +1,22 @@
+from abc import abstractmethod
+
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
+from luna_bench._internal.interfaces.plot_i import IPlot
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
-from luna_bench.components.plots.generics.features_plot import GenericFeaturesPlot
-from luna_bench.components.plots.generics.metrics_plot import GenericMetricsPlot
+from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
+from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
+from luna_bench.components.plots.generics.mixins.features_plot_mixin import FeaturesPlotMixin
+from luna_bench.components.plots.generics.mixins.metrics_plot_mixin import MetricsPlotMixin
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
 class GenericFeaturesMetricsPlot(
-    GenericMetricsPlot,
-    GenericFeaturesPlot,
+    FeaturesPlotMixin,
+    MetricsPlotMixin,
+    IPlot,
 ):
     """
     Base class for plots that require both metrics and features.
@@ -32,10 +38,36 @@ class GenericFeaturesMetricsPlot(
         At the moment when run method will be called it should contain needed featres.
     """
 
+    @abstractmethod
+    def run(self, metrics: dict[str, MetricUserModel], features: dict[str, FeatureUserModel]) -> None:
+        """
+        Generate the plot using the provided metrics and features.
+
+        This method must be implemented by subclasses to define the specific
+        plotting logic for visualizations that combine both metrics and features.
+
+        Parameters
+        ----------
+        metrics : dict[str, MetricUserModel]
+            Dictionary mapping metric names to metric instances. Contains only
+            the metrics specified in the class's metrics_names attribute.
+        features : dict[str, FeatureUserModel]
+            Dictionary mapping feature names to feature instances. Contains only
+            the features specified in the class's features_names attribute.
+
+        Returns
+        -------
+        None
+            The method should generate and save/display the plot as a side effect.
+
+        """
+
     def validate_plot(
         self,
         benchmark: BenchmarkUserModel,
-    ) -> Result[None, PlotRunError | UnknownLunaBenchError]:
+    ) -> Result[
+        dict[str, dict[str, FeatureUserModel] | dict[str, MetricUserModel]], PlotRunError | UnknownLunaBenchError
+    ]:
         """
         Validate that required metrics and features are present in the benchmark.
 
@@ -57,4 +89,9 @@ class GenericFeaturesMetricsPlot(
         if not is_successful(features_result):
             return Failure(features_result.failure())
 
-        return Success(None)
+        return Success(
+            {
+                "metrics": metrics_result.unwrap(),
+                "features": features_result.unwrap(),
+            }
+        )

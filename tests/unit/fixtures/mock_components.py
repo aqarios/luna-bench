@@ -63,15 +63,21 @@ class MockPlot(IPlot):
     def run(self, *args: Any, **kwargs: Any) -> None:
         raise NotImplementedError
 
-    def validate_plot(self, benchmark: BenchmarkUserModel) -> Result[None, PlotRunError | UnknownLunaBenchError]:  # noqa: ARG002
-        return Success(None)
+    def validate_plot(
+        self,
+        benchmark: BenchmarkUserModel,  # noqa: ARG002
+    ) -> Result[dict[str, dict[str, Any]], PlotRunError | UnknownLunaBenchError]:
+        return Success({"test": {"test": "test"}})
 
 
 class UnregisteredPlot(IPlot):
     def run(self, *args: Any, **kwargs: Any) -> None:
         raise NotImplementedError
 
-    def validate_plot(self, benchmark: BenchmarkUserModel) -> Result[None, PlotRunError | UnknownLunaBenchError]:
+    def validate_plot(
+        self,
+        benchmark: BenchmarkUserModel,
+    ) -> Result[dict[str, dict[str, Any]], PlotRunError | UnknownLunaBenchError]:
         raise NotImplementedError
 
 
@@ -80,7 +86,10 @@ class MockPlotWithValidationError(IPlot):
     def run(self, *args: Any, **kwargs: Any) -> None:
         raise NotImplementedError
 
-    def validate_plot(self, benchmark: BenchmarkUserModel) -> Result[None, PlotRunError | UnknownLunaBenchError]:  # noqa: ARG002
+    def validate_plot(
+        self,
+        benchmark: BenchmarkUserModel,  # noqa: ARG002
+    ) -> Result[dict[str, dict[str, Any]], PlotRunError | UnknownLunaBenchError]:
         return Failure(PlotRunError())
 
 

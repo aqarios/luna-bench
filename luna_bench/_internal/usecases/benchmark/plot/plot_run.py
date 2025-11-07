@@ -93,7 +93,7 @@ class PlotsRunUcImpl(PlotsRunUc):
                 continue
 
             try:
-                plot.plot.run()
+                plot.plot.run(**validation_result.unwrap())
             except Exception as e:
                 self._logger.warning(f"Plot {plot.name} execution failed with error: {e}")
                 if self.error_handling_mode == UseCaseErrorHandlingMode.FAIL_ON_ERROR:

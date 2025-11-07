@@ -1,3 +1,5 @@
+from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
+from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
 from luna_bench.components.plots.generics.features_metrics_plot import GenericFeaturesMetricsPlot
 from luna_bench.helpers.decorators import plot
 
@@ -11,5 +13,5 @@ class FakePlot(GenericFeaturesMetricsPlot):  # type: ignore[call-arg]
     Used primarily for testing the plot infrastructure.
     """
 
-    def run(self) -> None:
+    def run(self, metrics: dict[str, MetricUserModel], features: dict[str, FeatureUserModel]) -> None:
         """Execute the fake plot generation."""

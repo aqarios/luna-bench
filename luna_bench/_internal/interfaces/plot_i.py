@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ParamSpec
+from typing import TYPE_CHECKING, Any, ParamSpec
 
 from pydantic import BaseModel
 from returns.result import Result
@@ -22,7 +22,7 @@ class IPlot(BaseModel, ABC):
     """
 
     @abstractmethod
-    def run(self) -> None:
+    def run(self, *args: Any, **kwargs: Any) -> None:
         """
         Execute the plot generation logic.
 
@@ -34,7 +34,7 @@ class IPlot(BaseModel, ABC):
     def validate_plot(
         self,
         benchmark: "BenchmarkUserModel",
-    ) -> Result[None, PlotRunError | UnknownLunaBenchError]:
+    ) -> Result[dict[str, dict[str, Any]], PlotRunError | UnknownLunaBenchError]:
         """
         Validate the plot from benchmark data.
 
