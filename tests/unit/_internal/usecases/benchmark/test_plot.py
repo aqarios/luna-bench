@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from returns.pipeline import is_successful
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
 
-def _empty_plot(name: str, plot: IPlot) -> PlotUserModel:
+def _empty_plot(name: str, plot: IPlot[Any]) -> PlotUserModel:
     return PlotUserModel(
         name=name,
         status=JobStatus.CREATED,
@@ -61,7 +61,7 @@ class TestPlot:
         default_usecase: UsecaseContainer,
         benchmark_name: str,
         plot_name: str,
-        plot: IPlot,
+        plot: IPlot[Any],
         exp: Result[
             PlotUserModel,
             DataNotUniqueError
@@ -131,7 +131,7 @@ class TestPlot:
         self,
         default_usecase: UsecaseContainer,
         error_handling_mode: UseCaseErrorHandlingMode,
-        plot: IPlot,
+        plot: IPlot[Any],
         exp: Result[
             PlotUserModel,
             DataNotUniqueError

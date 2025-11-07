@@ -1,5 +1,6 @@
 from abc import abstractmethod
 
+from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -11,7 +12,21 @@ from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunErro
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-class GenericMetricsPlot(IPlot, MetricsPlotMixin):
+class MetricsValidationResult(BaseModel):
+    """
+    Container for validated metrics data passed to plot run methods.
+
+    Attributes
+    ----------
+    metrics : dict[str, MetricUserModel]
+        Dictionary mapping metric names to metric instances. Contains only
+        the metrics required by the plot.
+    """
+
+    metrics: dict[str, MetricUserModel]
+
+
+class GenericMetricsPlot(IPlot[MetricsValidationResult], MetricsPlotMixin):
     """
     Base class for plots that only require metrics.
 
@@ -25,7 +40,7 @@ class GenericMetricsPlot(IPlot, MetricsPlotMixin):
     """
 
     @abstractmethod
-    def run(self, metrics: dict[str, MetricUserModel]) -> None:
+    def run(self, data: MetricsValidationResult) -> None:
         """
         Generate the plot using the provided metrics.
 
@@ -34,9 +49,10 @@ class GenericMetricsPlot(IPlot, MetricsPlotMixin):
 
         Parameters
         ----------
-        metrics : dict[str, MetricUserModel]
-            Dictionary mapping metric names to metric instances. Contains only
-            the metrics specified in the class's metrics_names attribute.
+        data : MetricsValidationResult
+            Validated metrics container. Access metrics via data.metrics,
+            which contains only the metrics specified in the class's
+            metrics_names attribute.
 
         Returns
         -------
@@ -47,7 +63,7 @@ class GenericMetricsPlot(IPlot, MetricsPlotMixin):
     def validate_plot(
         self,
         benchmark: BenchmarkUserModel,
-    ) -> Result[dict[str, dict[str, MetricUserModel]], PlotRunError | UnknownLunaBenchError]:
+    ) -> Result[MetricsValidationResult, PlotRunError | UnknownLunaBenchError]:
         """
         Validate that required metrics are present in the benchmark.
 
@@ -65,4 +81,4 @@ class GenericMetricsPlot(IPlot, MetricsPlotMixin):
         if not is_successful(metrics_result):
             return Failure(metrics_result.failure())
 
-        return Success({"metrics": metrics_result.unwrap()})
+        return Success(MetricsValidationResult(metrics=metrics_result.unwrap()))

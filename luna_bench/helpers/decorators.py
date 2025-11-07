@@ -138,13 +138,13 @@ def metric[T: IMetric](
 
 @inject
 def plot(
-    _cls: type[IPlot] | None = None,
+    _cls: type[IPlot[Any]] | None = None,
     *,
     metrics: tuple[str] | None = None,
     features: tuple[str] | None = None,
     plot_id: str | None = None,
-    plot_registry: Registry[IPlot] = Provide[RegistryContainer.plot_registry],
-) -> Callable[[type[IPlot]], type[IPlot]] | type[IPlot]:
+    plot_registry: Registry[IPlot[Any]] = Provide[RegistryContainer.plot_registry],
+) -> Callable[[type[IPlot[Any]]], type[IPlot[Any]]] | type[IPlot[Any]]:
     """
     Register a class as a plot.
 
@@ -163,7 +163,7 @@ def plot(
     Callable[[type[T]], type[T]] | type[T]
     """
 
-    def _do_register(cls: type[IPlot]) -> type[IPlot]:
+    def _do_register(cls: type[IPlot[Any]]) -> type[IPlot[Any]]:
         pid = plot_id or f"{cls.__module__}.{cls.__qualname__}"
         _register_class(cls, base=IPlot, registered_class_id=pid, registry=plot_registry)
         if metrics is not None:
@@ -240,8 +240,8 @@ def metrics(
 
 @inject
 def plots(
-    plot_registry: Registry[IPlot] = Provide[RegistryContainer.plot_registry],
-) -> Registry[IPlot]:
+    plot_registry: Registry[IPlot[Any]] = Provide[RegistryContainer.plot_registry],
+) -> Registry[IPlot[Any]]:
     """
     Retrieve the plot registry.
 
@@ -263,7 +263,7 @@ def registry_info(
     feature_registry: Registry[IFeature] = Provide[RegistryContainer.feature_registry],
     algorithm_registry: Registry[IAlgorithm[IBackend]] = Provide[RegistryContainer.algorithm_registry],
     metric_registry: Registry[IMetric] = Provide[RegistryContainer.metric_registry],
-    plot_registry: Registry[IPlot] = Provide[RegistryContainer.plot_registry],
+    plot_registry: Registry[IPlot[Any]] = Provide[RegistryContainer.plot_registry],
 ) -> None:
     """
     Print information about the registered features, algorithms, metrics, and plots.
@@ -273,7 +273,7 @@ def registry_info(
     feature_registry: Registry[IFeature], injected
     algorithm_registry: Registry[IAlgorithm[IBackend]], injected
     metric_registry: Registry[IMetric], injected
-    plot_registry: Registry[IPlot], injected
+    plot_registry: Registry[IPlot[Any]], injected
 
 
     """

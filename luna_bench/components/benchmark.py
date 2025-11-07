@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
@@ -585,7 +585,7 @@ class Benchmark(BenchmarkUserModel):
     def add_plot(
         self,
         name: str,
-        plot: IPlot,
+        plot: IPlot[Any],
     ) -> Plot:
         """
         Add a plot to the benchmark with a given name.
@@ -600,7 +600,7 @@ class Benchmark(BenchmarkUserModel):
         ----------
         name: str
             The name of the plot to add.
-        plot: IPlot
+        plot: IPlot[Any]
             The plot to add.
 
         Returns
@@ -711,7 +711,7 @@ class Benchmark(BenchmarkUserModel):
         execution continues with remaining plots.
         """
         benchmark_run_plots = self.__run_plots_uc()
-        result = benchmark_run_plots(self, UseCaseErrorHandlingMode(error_handling_mode))
+        result = benchmark_run_plots(self, UseCaseErrorHandlingMode(error_handling_mode.value))
         if not is_successful(result):
             error = result.failure()
             Benchmark._logger.error(f"Failed to run plots for the benchmark {self.name} with error: {error}")

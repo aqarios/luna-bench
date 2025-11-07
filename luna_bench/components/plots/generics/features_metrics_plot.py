@@ -1,5 +1,6 @@
 from abc import abstractmethod
 
+from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -13,10 +14,28 @@ from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunErro
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
+class FeaturesAndMetricsValidationResult(BaseModel):
+    """
+    Container for validated metrics and features data passed to plot run methods.
+
+    Attributes
+    ----------
+    metrics : dict[str, MetricUserModel]
+        Dictionary mapping metric names to metric instances. Contains only
+        the metrics required by the plot.
+    features : dict[str, FeatureUserModel]
+        Dictionary mapping feature names to feature instances. Contains only
+        the features required by the plot.
+    """
+
+    metrics: dict[str, MetricUserModel]
+    features: dict[str, FeatureUserModel]
+
+
 class GenericFeaturesMetricsPlot(
     FeaturesPlotMixin,
     MetricsPlotMixin,
-    IPlot,
+    IPlot[FeaturesAndMetricsValidationResult],
 ):
     """
     Base class for plots that require both metrics and features.
@@ -39,7 +58,7 @@ class GenericFeaturesMetricsPlot(
     """
 
     @abstractmethod
-    def run(self, metrics: dict[str, MetricUserModel], features: dict[str, FeatureUserModel]) -> None:
+    def run(self, data: FeaturesAndMetricsValidationResult) -> None:
         """
         Generate the plot using the provided metrics and features.
 
@@ -48,26 +67,21 @@ class GenericFeaturesMetricsPlot(
 
         Parameters
         ----------
-        metrics : dict[str, MetricUserModel]
-            Dictionary mapping metric names to metric instances. Contains only
-            the metrics specified in the class's metrics_names attribute.
-        features : dict[str, FeatureUserModel]
-            Dictionary mapping feature names to feature instances. Contains only
-            the features specified in the class's features_names attribute.
+        data : FeaturesAndMetricsValidationResult
+            Validated metrics and features container. Access metrics via data.metrics
+            (contains only metrics specified in metrics_names) and features via
+            data.features (contains only features specified in features_names).
 
         Returns
         -------
         None
             The method should generate and save/display the plot as a side effect.
-
         """
 
     def validate_plot(
         self,
         benchmark: BenchmarkUserModel,
-    ) -> Result[
-        dict[str, dict[str, FeatureUserModel] | dict[str, MetricUserModel]], PlotRunError | UnknownLunaBenchError
-    ]:
+    ) -> Result[FeaturesAndMetricsValidationResult, PlotRunError | UnknownLunaBenchError]:
         """
         Validate that required metrics and features are present in the benchmark.
 
@@ -90,8 +104,8 @@ class GenericFeaturesMetricsPlot(
             return Failure(features_result.failure())
 
         return Success(
-            {
-                "metrics": metrics_result.unwrap(),
-                "features": features_result.unwrap(),
-            }
+            FeaturesAndMetricsValidationResult(
+                features=features_result.unwrap(),
+                metrics=metrics_result.unwrap(),
+            )
         )

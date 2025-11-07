@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Any, Protocol
 
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from luna_quantum.solve.interfaces.backend_i import IBackend
@@ -79,7 +79,7 @@ class FeatureRunUc(Protocol):
 
 class PlotAddUc(Protocol):
     def __call__(
-        self, benchmark_name: str, name: str, plot: IPlot
+        self, benchmark_name: str, name: str, plot: IPlot[Any]
     ) -> Result[
         PlotUserModel,
         DataNotUniqueError

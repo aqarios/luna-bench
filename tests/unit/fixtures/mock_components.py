@@ -59,37 +59,37 @@ class UnregisteredAlgorithm(IAlgorithm[IBackend]):
 
 
 @plot
-class MockPlot(IPlot):
-    def run(self, *args: Any, **kwargs: Any) -> None:
+class MockPlot(IPlot[str]):
+    def run(self, data: str) -> None:
         raise NotImplementedError
 
     def validate_plot(
         self,
         benchmark: BenchmarkUserModel,  # noqa: ARG002
-    ) -> Result[dict[str, dict[str, Any]], PlotRunError | UnknownLunaBenchError]:
-        return Success({"test": {"test": "test"}})
+    ) -> Result[str, PlotRunError | UnknownLunaBenchError]:
+        return Success("test")
 
 
-class UnregisteredPlot(IPlot):
-    def run(self, *args: Any, **kwargs: Any) -> None:
+class UnregisteredPlot(IPlot[str]):
+    def run(self, data: str) -> None:
         raise NotImplementedError
 
     def validate_plot(
         self,
         benchmark: BenchmarkUserModel,
-    ) -> Result[dict[str, dict[str, Any]], PlotRunError | UnknownLunaBenchError]:
+    ) -> Result[str, PlotRunError | UnknownLunaBenchError]:
         raise NotImplementedError
 
 
 @plot
-class MockPlotWithValidationError(IPlot):
-    def run(self, *args: Any, **kwargs: Any) -> None:
+class MockPlotWithValidationError(IPlot[str]):
+    def run(self, data: str) -> None:
         raise NotImplementedError
 
     def validate_plot(
         self,
         benchmark: BenchmarkUserModel,  # noqa: ARG002
-    ) -> Result[dict[str, dict[str, Any]], PlotRunError | UnknownLunaBenchError]:
+    ) -> Result[str, PlotRunError | UnknownLunaBenchError]:
         return Failure(PlotRunError())
 
 

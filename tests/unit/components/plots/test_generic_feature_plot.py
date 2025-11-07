@@ -9,7 +9,7 @@ from luna_bench._internal.interfaces.feature_i import IFeature
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench._internal.user_models.feature_result_usermodel import FeatureResultUserModel
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
-from luna_bench.components.plots.generics.features_plot import GenericFeaturesPlot
+from luna_bench.components.plots.generics.features_plot import FeaturesValidationResult, GenericFeaturesPlot
 from luna_bench.errors.run_errors.plots_errors.features_missing_error import FeaturesMissingError
 from luna_bench.errors.run_errors.plots_errors.metrics_missing_error import MetricsMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -17,10 +17,9 @@ from tests.unit.fixtures.mock_components import MockFeature
 
 
 class _FakePlot(GenericFeaturesPlot):
-    metrics_names: ClassVar[set[str]] = {"existing"}
     features_names: ClassVar[set[str]] = {"existing"}
 
-    def run(self, features: dict[str, FeatureUserModel]) -> None:
+    def run(self, data: FeaturesValidationResult) -> None:
         pass
 
 
@@ -176,4 +175,4 @@ class TestGenericFeaturesPlot:
         ]
         result = fake_plot.validate_plot(benchmark)
 
-        assert result.unwrap() == {"features": {"existing": benchmark.features[0]}}
+        assert result.unwrap() == FeaturesValidationResult(features={"existing": benchmark.features[0]})

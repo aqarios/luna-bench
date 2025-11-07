@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ParamSpec
+from typing import TYPE_CHECKING, TypeVar
 
 from pydantic import BaseModel
 from returns.result import Result
@@ -10,10 +10,10 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 if TYPE_CHECKING:
     from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 
-P = ParamSpec("P")
+TValidationResult = TypeVar("TValidationResult")
 
 
-class IPlot(BaseModel, ABC):
+class IPlot[TValidationResult](BaseModel, ABC):
     """
     Base interface for all plot components.
 
@@ -22,7 +22,7 @@ class IPlot(BaseModel, ABC):
     """
 
     @abstractmethod
-    def run(self, *args: Any, **kwargs: Any) -> None:
+    def run(self, data: TValidationResult) -> None:
         """
         Execute the plot generation logic.
 
@@ -34,7 +34,7 @@ class IPlot(BaseModel, ABC):
     def validate_plot(
         self,
         benchmark: "BenchmarkUserModel",
-    ) -> Result[dict[str, dict[str, Any]], PlotRunError | UnknownLunaBenchError]:
+    ) -> Result[TValidationResult, PlotRunError | UnknownLunaBenchError]:
         """
         Validate the plot from benchmark data.
 

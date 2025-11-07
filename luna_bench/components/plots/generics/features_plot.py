@@ -1,5 +1,6 @@
 from abc import abstractmethod
 
+from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -11,7 +12,21 @@ from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunErro
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-class GenericFeaturesPlot(IPlot, FeaturesPlotMixin):
+class FeaturesValidationResult(BaseModel):
+    """
+    Container for validated features data passed to plot run methods.
+
+    Attributes
+    ----------
+    features : dict[str, FeatureUserModel]
+        Dictionary mapping feature names to feature instances. Contains only
+        the features required by the plot.
+    """
+
+    features: dict[str, FeatureUserModel]
+
+
+class GenericFeaturesPlot(IPlot[FeaturesValidationResult], FeaturesPlotMixin):
     """
     Base class for plots that only require features.
 
@@ -29,7 +44,7 @@ class GenericFeaturesPlot(IPlot, FeaturesPlotMixin):
     """
 
     @abstractmethod
-    def run(self, features: dict[str, FeatureUserModel]) -> None:
+    def run(self, data: FeaturesValidationResult) -> None:
         """
         Generate the plot using the provided features.
 
@@ -38,20 +53,22 @@ class GenericFeaturesPlot(IPlot, FeaturesPlotMixin):
 
         Parameters
         ----------
-        features : dict[str, FeatureUserModel]
-            Dictionary mapping feature names to feature instances. Contains only
-            the features specified in the class's features_names attribute.
+        data : FeaturesValidationResult
+            Validated features container. Access features via data.features,
+            which contains only the features specified in the class's
+            features_names attribute.
 
         Returns
         -------
         None
             The method should generate and save/display the plot as a side effect.
+
         """
 
     def validate_plot(
         self,
         benchmark: BenchmarkUserModel,
-    ) -> Result[dict[str, dict[str, FeatureUserModel]], PlotRunError | UnknownLunaBenchError]:
+    ) -> Result[FeaturesValidationResult, PlotRunError | UnknownLunaBenchError]:
         """
         Validate that required features are present in the benchmark.
 
@@ -71,4 +88,4 @@ class GenericFeaturesPlot(IPlot, FeaturesPlotMixin):
         if not is_successful(features):
             return Failure(features.failure())
 
-        return Success({"features": features.unwrap()})
+        return Success(FeaturesValidationResult(features=features.unwrap()))

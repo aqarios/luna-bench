@@ -8,7 +8,7 @@ from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.interfaces.metric_i import IMetric
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
-from luna_bench.components.plots.generics.metrics_plot import GenericMetricsPlot
+from luna_bench.components.plots.generics.metrics_plot import GenericMetricsPlot, MetricsValidationResult
 from luna_bench.errors.run_errors.plots_errors.metrics_missing_error import MetricsMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from tests.unit.fixtures.mock_components import MockMetric
@@ -17,7 +17,7 @@ from tests.unit.fixtures.mock_components import MockMetric
 class _FakePlot(GenericMetricsPlot):
     metrics_names: typing.ClassVar[set[str]] = {"existing"}
 
-    def run(self, metrics: dict[str, MetricUserModel]) -> None:
+    def run(self, data: MetricsValidationResult) -> None:
         pass
 
 
@@ -138,4 +138,4 @@ class TestGenericMetricsPlot:
 
         result = fake_plot.validate_plot(benchmark)
 
-        assert result.unwrap() == {"metrics": {"existing": benchmark.metrics[0]}}
+        assert result.unwrap() == MetricsValidationResult(metrics={"existing": benchmark.metrics[0]})

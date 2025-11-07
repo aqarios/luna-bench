@@ -3,14 +3,17 @@ from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserMo
 from luna_bench._internal.user_models.feature_result_usermodel import FeatureResultUserModel
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
 from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
-from luna_bench.components.plots.generics.features_metrics_plot import GenericFeaturesMetricsPlot
+from luna_bench.components.plots.generics.features_metrics_plot import (
+    FeaturesAndMetricsValidationResult,
+    GenericFeaturesMetricsPlot,
+)
 from luna_bench.errors.run_errors.plots_errors.features_missing_error import FeaturesMissingError
 from luna_bench.errors.run_errors.plots_errors.metrics_missing_error import MetricsMissingError
 from tests.unit.fixtures.mock_components import MockFeature, MockMetric
 
 
 class _FakePlot(GenericFeaturesMetricsPlot):
-    def run(self, metrics: dict[str, MetricUserModel], features: dict[str, FeatureUserModel]) -> None: ...
+    def run(self, data: FeaturesAndMetricsValidationResult) -> None: ...
 
 
 class TestGenericFeaturesMetricsPlot:
@@ -62,7 +65,7 @@ class TestGenericFeaturesMetricsPlot:
         ]
         result = fake_plot.validate_plot(benchmark)
 
-        assert result.unwrap() == {
-            "features": {"existing": benchmark.features[0]},
-            "metrics": {"existing": benchmark.metrics[0]},
-        }
+        assert result.unwrap() == FeaturesAndMetricsValidationResult(
+            features={"existing": benchmark.features[0]},
+            metrics={"existing": benchmark.metrics[0]},
+        )
