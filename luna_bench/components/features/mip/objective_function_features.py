@@ -7,9 +7,8 @@ from luna_quantum import Vtype
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.helpers import feature
-
 from luna_bench.components.features.utils import constraint_matrix, mean, std
+from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -129,17 +128,17 @@ class ObjectiveFunctionFeature(IFeature):
         """
         (abscoefs_c, abscoefs_nc, abscoefs_v), (indices_c, indices_nc, indices_v) = self._abs_coefficients(model)
 
-        ac = constraint_matrix(model, degree=1, vtype=Vtype.Real)
-        anc = constraint_matrix(model, degree=1, vtype=[Vtype.Integer, Vtype.Binary])
-        av = constraint_matrix(model, degree=1, vtype=None)
+        ac, _ = constraint_matrix(model, degree=1, vtype=Vtype.Real)
+        anc, _ = constraint_matrix(model, degree=1, vtype=[Vtype.Integer, Vtype.Binary])
+        av, _ = constraint_matrix(model, degree=1, vtype=None)
 
-        norm_abscoefs_c = self._normalize(ac, abscoefs_c, indices_c)  # type: ignore[reportargumentType]
-        norm_abscoefs_nc = self._normalize(anc, abscoefs_nc, indices_nc)  # type: ignore[reportargumentType]
-        norm_abscoefs_v = self._normalize(av, abscoefs_v, indices_v)  # type: ignore[reportargumentType]
+        norm_abscoefs_c = self._normalize(ac, abscoefs_c, indices_c)
+        norm_abscoefs_nc = self._normalize(anc, abscoefs_nc, indices_nc)
+        norm_abscoefs_v = self._normalize(av, abscoefs_v, indices_v)
 
-        sqrtnorm_abscoefs_c = self._normalize(ac, abscoefs_c, indices_c, np.sqrt)  # type: ignore[reportargumentType]
-        sqrtnorm_abscoefs_nc = self._normalize(anc, abscoefs_nc, indices_nc, np.sqrt)  # type: ignore[reportargumentType]
-        sqrtnorm_abscoefs_v = self._normalize(av, abscoefs_v, indices_v, np.sqrt)  # type: ignore[reportargumentType]
+        sqrtnorm_abscoefs_c = self._normalize(ac, abscoefs_c, indices_c, np.sqrt)
+        sqrtnorm_abscoefs_nc = self._normalize(anc, abscoefs_nc, indices_nc, np.sqrt)
+        sqrtnorm_abscoefs_v = self._normalize(av, abscoefs_v, indices_v, np.sqrt)
 
         return ObjectiveFunctionFeatureResult(
             # absolute objective function coefficients - continuous
@@ -173,20 +172,22 @@ class ObjectiveFunctionFeature(IFeature):
 
     def _normalize(
         self,
-        a: NDArray,
-        coefs: NDArray,
+        a: NDArray[np.float64],
+        coefs: NDArray[np.float64],
         var_indices: list[int],
-        f: Callable[[NDArray], NDArray] = lambda x: x,
-    ) -> NDArray:
+        f: Callable[[NDArray[np.float64]], NDArray[np.float64]] = lambda x: x,
+    ) -> NDArray[np.float64]:
         nonzeros = f(np.count_nonzero(a[:, var_indices], axis=0))
 
         if any(nonzeros == 0):
-            return np.zeros_like(nonzeros)
+            return np.zeros_like(nonzeros, dtype=np.float64)
         return coefs / f(nonzeros)
 
     def _abs_coefficients(
         self, model: Model
-    ) -> tuple[tuple[NDArray, NDArray, NDArray], tuple[list[int], list[int], list[int]]]:
+    ) -> tuple[
+        tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]], tuple[list[int], list[int], list[int]]
+    ]:
         d_coefs_c = {}
         d_coefs_nc = {}
         d_coefs_v = {}

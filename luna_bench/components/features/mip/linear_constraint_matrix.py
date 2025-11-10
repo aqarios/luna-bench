@@ -4,12 +4,12 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from luna_quantum import Vtype
+from numpy.typing import NDArray
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.helpers import feature
-
 from luna_bench.components.features.utils import constraint_matrix, mean, vc
+from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
     from luna_quantum import Model
@@ -213,7 +213,9 @@ class LinearConstraintMatrixFeatures(IFeature):
             vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row=vc(av_vcs),
         )
 
-    def _normalized_constraint_matrix_entries(self, a: NDArray, b: NDArray) -> NDArray:
+    def _normalized_constraint_matrix_entries(
+        self, a: NDArray[np.float64], b: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
         """
         Normalize constraint matrix entries by dividing by RHS values.
 
@@ -234,9 +236,10 @@ class LinearConstraintMatrixFeatures(IFeature):
         b_mask = b != 0
         a_nz = a[b_mask, :]
         b_nz = b[b_mask]
-        return (a_nz / b_nz[:, None]).flatten()
+        normalized: NDArray[np.float64] = (a_nz / b_nz[:, None]).flatten()
+        return normalized
 
-    def _vc_absolute_normalized_constraint_matrix_entries(self, a: NDArray) -> NDArray:
+    def _vc_absolute_normalized_constraint_matrix_entries(self, a: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Calculate variation coefficient of row-normalized absolute entries.
 

@@ -3,16 +3,34 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
-from luna_quantum import Model, Vtype, Unbounded
+from luna_quantum import Model, Unbounded, Vtype
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.helpers import feature
-
 from luna_bench.components.features.utils import QUADRATIC_DEGREE, constraint_matrix, mean, median, q10, q90, vc
+from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
+
+
+class ModelBoundsError(Exception):
+    """Raised when model bounds are None or invalid."""
+
+    def __init__(self, model_name: str | None = None, expected_bounds: str | None = None) -> None:
+        """Initialize ModdelBoundError."""
+        self.model_name = model_name
+        self.expected_bounds = expected_bounds
+        super().__init__()
+
+    def __str__(self) -> str:
+        """Return string representation of ModelBoundError."""
+        base_msg = super().__str__()
+        if self.model_name:
+            base_msg += f" (model: {self.model_name})"
+        if self.expected_bounds:
+            base_msg += f" (expected: {self.expected_bounds})"
+        return base_msg
 
 
 class ProblemSizeFeaturesResult(ArbitraryDataDomain):
@@ -130,8 +148,8 @@ class ProblemSizeFeatures(IFeature):
         """
         num_vars = model.num_variables
         num_cons = model.num_constraints
-        num_non_zero_linear = np.count_nonzero(constraint_matrix(model, 1, None))
-        num_non_zero_quad = np.count_nonzero(constraint_matrix(model, 2, None))
+        num_non_zero_linear = np.count_nonzero(constraint_matrix(model, 1, None)[0])
+        num_non_zero_quad = np.count_nonzero(constraint_matrix(model, 2, None)[0])
         num_quad_constr = sum(c.lhs.degree() == QUADRATIC_DEGREE for c in model.constraints)
 
         variables = list(model.variables())
@@ -142,19 +160,19 @@ class ProblemSizeFeatures(IFeature):
                 case Vtype.Binary:
                     num_bool += 1
                 case Vtype.Integer:
-                    if (var.bounds.lower is Unbounded or var.bounds.upper is Unbounded):
+                    if var.bounds.lower is Unbounded or var.bounds.upper is Unbounded:
                         num_int += 1
                     elif var.bounds.lower is Unbounded and var.bounds.upper is Unbounded:
                         num_unbound_non_cont += 1
                     elif var.bounds.lower is None and var.bounds.upper is None:
-                        raise ValueError('Model has bounds value of None')
+                        raise ModelBoundsError(model_name=model.name, expected_bounds="[-inf, inf]")
                     else:
                         num_semi_int += 1
                 case Vtype.Real:
                     if var.bounds.lower is Unbounded or var.bounds.upper is Unbounded:
                         num_cont += 1
                     elif var.bounds.lower is None and var.bounds.upper is None:
-                        raise ValueError('Model has bounds value of None')
+                        raise ModelBoundsError(model_name=model.name, expected_bounds="[-inf, inf]")
                     else:
                         num_semi_cont += 1
 
@@ -165,9 +183,9 @@ class ProblemSizeFeatures(IFeature):
         return ProblemSizeFeaturesResult(
             num_variables=num_vars,
             num_constraints=num_cons,
-            num_non_zero_entries_linear_constraint_matrix=num_non_zero_linear,
+            num_non_zero_entries_linear_constraint_matrix=num_non_zero_linear.astype(int),
             num_quadratic_constraints=num_quad_constr,
-            num_non_zero_entries_quadratic_constraint_matrix=num_non_zero_quad,
+            num_non_zero_entries_quadratic_constraint_matrix=num_non_zero_quad.astype(int),
             num_boolean_variables=num_bool,
             num_integer_variables=num_int,
             num_continuous_variables=num_cont,
@@ -189,7 +207,7 @@ class ProblemSizeFeatures(IFeature):
             q10_support_size=q10(support_sizes),
         )
 
-    def _support_sizes(self, model: Model) -> NDArray:
+    def _support_sizes(self, model: Model) -> NDArray[np.float64]:
         """
         Calculate support sizes for bounded variables.
 
@@ -207,10 +225,12 @@ class ProblemSizeFeatures(IFeature):
         NDArray
             Array of support sizes for bounded variables.
         """
+        # Because luna model defines upper / lowerbound as unbounded and none, typing gives an irrelevant
+        # errror.
         support_sizes = [
-            (v.bounds.upper - v.bounds.lower) + 1
+            v.bounds.upper - v.bounds.lower + 1  # type: ignore[operator]
             for v in model.variables()
-            if (v.bounds.lower is not None) and (v.bounds.upper is not None)
+            if v.bounds.lower is not Unbounded and v.bounds.upper is not Unbounded
         ]
 
         return np.array(support_sizes)

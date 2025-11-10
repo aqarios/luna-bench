@@ -7,9 +7,8 @@ from luna_quantum import Vtype
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.helpers import feature
-
 from luna_bench.components.features.utils import constraint_matrix, mean, median, q10, q90, vc
+from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
     from luna_quantum import Model
@@ -158,19 +157,19 @@ class VariableConstraintGraphFeatures(IFeature):
             Container with graph-based statistical measures.
         """
         # Continuous
-        ac = constraint_matrix(model, degree=1, vtype=Vtype.Real)
+        ac, _ = constraint_matrix(model, degree=1, vtype=Vtype.Real)
         ac_binary = (ac != 0).astype(int)
         ac_vnd = np.sum(ac_binary, axis=0)  # Variable node degrees
         ac_cnd = np.sum(ac_binary, axis=1)  # Constraint node degrees
 
         # Non-continuous
-        anc = constraint_matrix(model, degree=1, vtype=[Vtype.Integer, Vtype.Binary])
+        anc, _ = constraint_matrix(model, degree=1, vtype=[Vtype.Integer, Vtype.Binary])
         anc_binary = (anc != 0).astype(int)
         anc_vnd = np.sum(anc_binary, axis=0)
         anc_cnd = np.sum(anc_binary, axis=1)
 
         # all variables
-        av = constraint_matrix(model, degree=1, vtype=None)
+        av, _ = constraint_matrix(model, degree=1, vtype=None)
         av_binary = (av != 0).astype(int)
         av_vnd = np.sum(av_binary, axis=0)
         av_cnd = np.sum(av_binary, axis=1)

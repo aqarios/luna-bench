@@ -1,13 +1,10 @@
 """
-MIP Features
-============
+MIP Feature: module provides feature extractors for analyzing Mixed-Integer Programming (MIP) problems.
 
-This module provides feature extractors for analyzing Mixed-Integer Programming (MIP) problems. These extractors
-compute structural and statistical properties of MIP models that can later be used for algorithm selection, performance
-prediction, and problem characterization.
-
-The features capture various aspects of MIP problem structure including constraint matrix properties, objective
-function characteristics, problem dimensions, right-hand side distributions, and variable-constraint graph topology.
+These extractors compute structural and statistical properties of MIP models that can later be used for algorithm
+selection, performance prediction, and problem characterization. The features capture various aspects of MIP problem
+structure including constraint matrix properties, objective function characteristics, problem dimensions, right-hand
+side distributions, and variable-constraint graph topology.
 
 Usage in Luna Bench
 -------------------
@@ -22,8 +19,8 @@ To use these feature extractors in your benchmark:
     b = Benchmark()
 
     # Add feature extractors
-    b.add_feature('problem_size', ProblemSizeFeatures())
-    b.add_feature('constraint_matrix', LinearConstraintMatrixFeatures())
+    b.add_feature("problem_size", ProblemSizeFeatures())
+    b.add_feature("constraint_matrix", LinearConstraintMatrixFeatures())
 
     # Features will be automatically extracted when running the benchmark
 

@@ -7,9 +7,8 @@ from luna_quantum import Comparator
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.helpers import feature
-
 from luna_bench.components.features.utils import mean, std
+from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
     from luna_quantum import Model
@@ -78,20 +77,18 @@ class RightHandSideFeatures(IFeature):
         RightHandSideFeaturesResult
             Container with RHS statistical measures for each constraint type.
         """
-        rhs_leq, rhs_eq, rhs_geq = [], [], []
+        rhs_leq: np.typing.NDArray[np.float64] = np.array([])
+        rhs_eq: np.typing.NDArray[np.float64] = np.array([])
+        rhs_geq: np.typing.NDArray[np.float64] = np.array([])
 
         for c in model.constraints:
             match type(c.comparator):
                 case Comparator.Le:
-                    rhs_leq.append(c.rhs)
+                    rhs_leq = np.append(rhs_leq, c.rhs)
                 case Comparator.Eq:
-                    rhs_eq.append(c.rhs)
+                    rhs_eq = np.append(rhs_eq, c.rhs)
                 case Comparator.Ge:
-                    rhs_geq.append(c.rhs)
-
-        rhs_leq = np.array(rhs_leq)
-        rhs_eq = np.array(rhs_eq)
-        rhs_geq = np.array(rhs_geq)
+                    rhs_geq = np.append(rhs_geq, c.rhs)
 
         return RightHandSideFeaturesResult(
             mean_right_hand_side_leq_constraints=mean(rhs_leq),

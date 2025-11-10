@@ -1,64 +1,66 @@
+from typing import Literal, overload
+
 import numpy as np
-from luna_quantum import Constraints, Model, Variable, Vtype
+from luna_quantum import Constraint, Model, Variable, Vtype
 from numpy.typing import NDArray
 
 LINEAR_DEGREE = 1
 QUADRATIC_DEGREE = 2
 
 
-def mean(data: NDArray) -> float:
+def mean(data: NDArray[np.float64]) -> np.float64:
     """Calculate the mean of the array, returning 0 if empty."""
-    return data.mean() if len(data) != 0 else 0
+    return data.mean() if len(data) != 0 else np.float64(0)
 
 
-def std(data: NDArray) -> float:
+def std(data: NDArray[np.float64]) -> np.float64:
     """Calculate the standard deviation of the array, returning 0 if empty."""
-    return data.std() if len(data) != 0 else 0
+    return data.std() if len(data) != 0 else np.float64(0)
 
 
-def var(data: NDArray) -> float:
+def var(data: NDArray[np.float64]) -> np.float64:
     """Calculate the variance of the array, returning 0 if empty."""
-    return data.var() if len(data) != 0 else 0
+    return data.var() if len(data) != 0 else np.float64(0)
 
 
-def normalized(data: NDArray) -> NDArray:
+def normalized(data: NDArray[np.float64]) -> NDArray[np.float64]:
     """Normalize the array by dividing by its sum."""
     return data / np.sum(data) if np.sum(data) != 0 else data
 
 
-def sqrt_normalized(data: NDArray) -> NDArray:
+def sqrt_normalized(data: NDArray[np.float64]) -> NDArray[np.float64]:
     """Normalize the array and then apply square root."""
     data = data / np.sum(data) if np.sum(data) != 0 else data
     return np.sqrt(data)
 
 
-def median(data: NDArray) -> float:
+def median(data: NDArray[np.float64]) -> float:
     """Calculate the median of the array, returning 0 if empty."""
-    return np.median(data).item() if len(data) != 0 else 0
+    return np.median(data).item() if len(data) != 0 else np.float64(0)
 
 
-def vc(data: NDArray) -> float:
+def vc(data: NDArray[np.float64]) -> np.float64:
     """Calculate the coefficient of variation (std/mean), returning 0 if empty or mean is 0."""
     if len(data) == 0:
-        return 0
+        return np.float64(0)
 
     std = data.std()
     mean = data.mean()
 
     if mean == 0:
-        return 0
+        return np.float64(0)
 
-    return std / mean
+    return np.float64(std / mean)
 
 
-def q10(data: NDArray) -> float:
+def q10(data: NDArray[np.float64]) -> float:
     """Calculate the 10th percentile, returning 0 if empty."""
     if len(data) == 0:
         return 0
     return np.percentile(data, 10).item()
 
 
-def q90(data: NDArray) -> float:
+def q90(data: NDArray[np.float64]) -> float:
     """Calculate the 90th percentile, returning 0 if empty."""
     if len(data) == 0:
         return 0
@@ -66,8 +68,8 @@ def q90(data: NDArray) -> float:
 
 
 def _extract_linear_degree(
-    constraints: Constraints, variables: list[Variable], variable_order: dict[Variable, int]
-) -> tuple[NDArray, NDArray]:
+    constraints: list[Constraint], variables: list[Variable], variable_order: dict[Variable, int]
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     # Standard linear constraint matrix
     a = np.zeros((len(constraints), len(variables)))
     b = np.zeros(len(constraints))
@@ -82,8 +84,8 @@ def _extract_linear_degree(
 
 
 def _extract_quad_degree(
-    constraints: Constraints, variables: list[Variable], variable_order: dict[Variable, int]
-) -> tuple[NDArray, NDArray]:
+    constraints: list[Constraint], variables: list[Variable], variable_order: dict[Variable, int]
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     # For quadratic constraints, we need to handle both linear and quadratic terms
     # Column structure: [linear terms | quadratic terms]
 
@@ -94,7 +96,8 @@ def _extract_quad_degree(
             if var1 in variable_order and var2 in variable_order:
                 # Ensure consistent ordering (i <= j)
                 i, j = sorted([variable_order[var1], variable_order[var2]])
-                quad_pairs.add((i, j))
+                pair = (min(i, j), max(i, j))
+                quad_pairs.add(pair)
 
     # Create ordered list of quadratic pairs
     quad_pairs_list = sorted(quad_pairs)
@@ -115,7 +118,7 @@ def _extract_quad_degree(
         for var1, var2, coef in c.lhs.quadratic_items():
             if var1 in variable_order and var2 in variable_order:
                 idx1, idx2 = variable_order[var1], variable_order[var2]
-                pair = tuple(sorted([idx1, idx2]))
+                pair = (min(idx1, idx2), max(idx1, idx2))
                 col = quad_pair_to_col[pair]
                 a[i, col] = coef
 
@@ -124,13 +127,25 @@ def _extract_quad_degree(
     return a, b
 
 
+@overload
+def constraint_matrix(
+    model: Model, degree: int, vtype: Vtype | list[Vtype] | None, *, include_b: Literal[True]
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]: ...
+
+
+@overload
+def constraint_matrix(
+    model: Model, degree: int, vtype: Vtype | list[Vtype] | None, *, include_b: Literal[False] = False
+) -> tuple[NDArray[np.float64], None]: ...
+
+
 def constraint_matrix(
     model: Model,
     degree: int,
     vtype: list[Vtype] | Vtype | None,
     *,
     include_b: bool = False,
-) -> NDArray | tuple[NDArray, NDArray]:
+) -> tuple[NDArray[np.float64], NDArray[np.float64]] | tuple[NDArray[np.float64], None]:
     """
     Extract constraint matrix from a Model, optionally filtering by variable type and constraint degree.
 
@@ -146,7 +161,8 @@ def constraint_matrix(
 
     Returns
     -------
-        NDArray | tuple[NDArray, NDArray]: Constraint matrix a (and optionally RHS vector b)
+        NDArray[np.float64] | tuple[NDArray[np.float64], NDArray[np.float64]]: Constraint matrix a
+        (and optionally RHS vector b)
     """
     # Filter variables by type
     variables: list[Variable]
@@ -169,4 +185,6 @@ def constraint_matrix(
     else:
         raise NotImplementedError(f"Degree {degree} constraints are not yet supported")
 
-    return (a, b) if include_b else a
+    if include_b:
+        return (a, b)
+    return (a, None)
