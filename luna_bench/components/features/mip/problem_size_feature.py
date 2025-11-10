@@ -154,28 +154,25 @@ class ProblemSizeFeatures(IFeature):
 
         variables = list(model.variables())
 
+        # luna-model does not explicity supports semi continuous / integer variables
         num_bool, num_int, num_cont, num_semi_cont, num_semi_int, num_unbound_non_cont = 0, 0, 0, 0, 0, 0
         for var in variables:
             match var.vtype:
                 case Vtype.Binary:
                     num_bool += 1
                 case Vtype.Integer:
-                    if var.bounds.lower is Unbounded or var.bounds.upper is Unbounded:
+                    if isinstance(var.bounds.lower, Unbounded) and isinstance(var.bounds.upper, Unbounded):
                         num_int += 1
-                    elif var.bounds.lower is Unbounded and var.bounds.upper is Unbounded:
                         num_unbound_non_cont += 1
-                    elif var.bounds.lower is None and var.bounds.upper is None:
-                        raise ModelBoundsError(model_name=model.name, expected_bounds="[-inf, inf]")
+                    elif (isinstance(var.bounds.lower, Unbounded) or isinstance(var.bounds.upper, Unbounded)) or (isinstance(var.bounds.lower, float) or isinstance(var.bounds.upper, float)) :
+                        num_int += 1
                     else:
-                        num_semi_int += 1
+                        raise ModelBoundsError(model_name=model.name, expected_bounds="[-inf, inf]")
                 case Vtype.Real:
-                    if var.bounds.lower is Unbounded or var.bounds.upper is Unbounded:
-                        num_cont += 1
-                    elif var.bounds.lower is None and var.bounds.upper is None:
+                    if var.bounds.lower is None or var.bounds.upper is None:
                         raise ModelBoundsError(model_name=model.name, expected_bounds="[-inf, inf]")
                     else:
-                        num_semi_cont += 1
-
+                        num_cont += 1
         num_non_cont = num_bool + num_int
 
         support_sizes = self._support_sizes(model)
@@ -230,7 +227,9 @@ class ProblemSizeFeatures(IFeature):
         support_sizes = [
             v.bounds.upper - v.bounds.lower + 1  # type: ignore[operator]
             for v in model.variables()
-            if v.bounds.lower is not Unbounded and v.bounds.upper is not Unbounded
+            if v.vtype in [Vtype.Binary, Vtype.Integer]
+            and not isinstance(v.bounds.lower, Unbounded)
+            and not isinstance(v.bounds.upper, Unbounded)
         ]
 
         return np.array(support_sizes)

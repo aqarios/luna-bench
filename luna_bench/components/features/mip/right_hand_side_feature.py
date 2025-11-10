@@ -82,13 +82,14 @@ class RightHandSideFeatures(IFeature):
         rhs_geq: np.typing.NDArray[np.float64] = np.array([])
 
         for c in model.constraints:
-            match type(c.comparator):
-                case Comparator.Le:
-                    rhs_leq = np.append(rhs_leq, c.rhs)
-                case Comparator.Eq:
-                    rhs_eq = np.append(rhs_eq, c.rhs)
-                case Comparator.Ge:
-                    rhs_geq = np.append(rhs_geq, c.rhs)
+            if c.comparator == Comparator.Le:
+                rhs_leq = np.append(rhs_leq, c.rhs)
+            elif c.comparator == Comparator.Eq:
+                rhs_eq = np.append(rhs_eq, c.rhs)
+            elif c.comparator == Comparator.Ge:
+                rhs_geq = np.append(rhs_geq, c.rhs)
+            else:
+                raise ValueError()
 
         return RightHandSideFeaturesResult(
             mean_right_hand_side_leq_constraints=mean(rhs_leq),
