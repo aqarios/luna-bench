@@ -3,10 +3,9 @@ from typing import Any
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
-from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
-from luna_quantum.solve.interfaces.backend_i import IBackend
+from pydantic import BaseModel
 
-from luna_bench._internal.interfaces import IFeature, IMetric, IPlot
+from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync, IFeature, IMetric, IPlot
 from luna_bench._internal.registries.protocols import Registry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench.errors.incompatible_class_error import IncompatibleClassError
@@ -15,7 +14,7 @@ from luna_bench.errors.incompatible_class_error import IncompatibleClassError
 def _register_class(
     register_class: type[Any],
     *,
-    base: type,
+    base: type | tuple[type, ...],
     registered_class_id: str | None,
     registry: Registry[Any],
 ) -> None:
@@ -23,7 +22,7 @@ def _register_class(
         raise IncompatibleClassError(base)
     pid = registered_class_id or f"{register_class.__module__}.{register_class.__qualname__}"
 
-    register_class._registered_id = pid  # type: ignore[attr-defined] # noqa: SLF001 # We define it here internally.
+    register_class._registered_id = pid  # noqa: SLF001 # We define it here internally.
     registry.register(pid, register_class)
 
 
@@ -63,11 +62,12 @@ def feature[T: IFeature](
 
 
 @inject
-def algorithm[T: IAlgorithm[IBackend]](
+def algorithm[T: AlgorithmAsync[BaseModel] | AlgorithmSync](
     _cls: type[T] | None = None,
     *,
     algorithm_id: str | None = None,
-    algorithm_registry: Registry[IAlgorithm[IBackend]] = Provide[RegistryContainer.algorithm_registry],
+    algorithm_sync_registry: Registry[AlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
+    algorithm_async_registry: Registry[AlgorithmAsync[BaseModel]] = Provide[RegistryContainer.algorithm_async_registry],
 ) -> Callable[[type[T]], type[T]] | type[T]:
     """
     Register a class as an algorithm.
@@ -90,7 +90,12 @@ def algorithm[T: IAlgorithm[IBackend]](
 
     def _do_register(cls: type[T]) -> type[T]:
         pid = algorithm_id or f"{cls.__module__}.{cls.__qualname__}"
-        _register_class(cls, base=IAlgorithm, registered_class_id=pid, registry=algorithm_registry)
+        if issubclass(cls, AlgorithmAsync):
+            _register_class(cls, base=AlgorithmAsync, registered_class_id=pid, registry=algorithm_async_registry)
+        elif issubclass(cls, AlgorithmSync):
+            _register_class(cls, base=AlgorithmSync, registered_class_id=pid, registry=algorithm_sync_registry)
+        else:
+            raise IncompatibleClassError(AlgorithmAsync | AlgorithmSync)
         return cls
 
     if _cls is not None:
@@ -193,9 +198,29 @@ def features(
 
 
 @inject
-def algorithms(
-    algorithm_registry: Registry[IAlgorithm[IBackend]] = Provide[RegistryContainer.algorithm_registry],
-) -> Registry[IAlgorithm[IBackend]]:
+def algorithms_sync(
+    algorithm_registry: Registry[AlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
+) -> Registry[AlgorithmSync]:
+    """
+    Retrieve the algorithm registry.
+
+    Parameters
+    ----------
+    algorithm_registry: Registry[IAlgorithm[IBackend]], injected
+
+    Returns
+    -------
+    Registry[IAlgorithm[IBackend]]
+        Returns the injected algorithm registry.
+
+    """
+    return algorithm_registry
+
+
+@inject
+def algorithms_async(
+    algorithm_registry: Registry[AlgorithmAsync[BaseModel]] = Provide[RegistryContainer.algorithm_async_registry],
+) -> Registry[AlgorithmAsync[BaseModel]]:
     """
     Retrieve the algorithm registry.
 
@@ -255,7 +280,8 @@ def plots(
 @inject
 def registry_info(
     feature_registry: Registry[IFeature] = Provide[RegistryContainer.feature_registry],
-    algorithm_registry: Registry[IAlgorithm[IBackend]] = Provide[RegistryContainer.algorithm_registry],
+    algorithm_sync_registry: Registry[AlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
+    algorithm_async_registry: Registry[AlgorithmAsync[BaseModel]] = Provide[RegistryContainer.algorithm_async_registry],
     metric_registry: Registry[IMetric] = Provide[RegistryContainer.metric_registry],
     plot_registry: Registry[IPlot] = Provide[RegistryContainer.plot_registry],
 ) -> None:
@@ -273,6 +299,7 @@ def registry_info(
     """
     logging = Logging.get_logger(__name__)
     logging.info(f"FeatureRegistry: {feature_registry.ids()}")
-    logging.info(f"AlgorithmRegistry: {algorithm_registry.ids()}")
+    logging.info(f"AlgorithmSyncRegistry: {algorithm_sync_registry.ids()}")
+    logging.info(f"AlgorithmAsyncRegistry: {algorithm_async_registry.ids()}")
     logging.info(f"MetricRegistry: {metric_registry.ids()}")
     logging.info(f"PlotRegistry: {plot_registry.ids()}")

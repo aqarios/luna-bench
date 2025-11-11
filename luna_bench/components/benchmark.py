@@ -1,15 +1,19 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
+from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from returns.pipeline import is_successful
 
 from luna_bench._internal.interfaces import IFeature, IMetric, IPlot
+from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
+from luna_bench._internal.interfaces.algorithm_sync import AlgorithmSync
 from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmAddUc,
+    AlgorithmRunUc,
     BenchmarkCreateUc,
     BenchmarkLoadAllUc,
     BenchmarkLoadUc,
@@ -32,6 +36,7 @@ from luna_bench._internal.user_models import (
     MetricUserModel,
     PlotUserModel,
 )
+from luna_bench._internal.wrappers.luna_quantum.luna_algorithm_wrapper import LunaAlgorithmWrapper
 from luna_bench.components.algorithm import Algorithm
 from luna_bench.components.feature import Feature
 from luna_bench.components.metric import Metric
@@ -41,6 +46,7 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
+from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -48,8 +54,6 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 if TYPE_CHECKING:
     from logging import Logger
 
-    from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
-    from luna_quantum.solve.interfaces.backend_i import IBackend
     from returns.result import Result
 
 
@@ -69,6 +73,13 @@ class Benchmark(BenchmarkUserModel):
         benchmark_run_features: FeatureRunUc = Provide[UsecaseContainer.benchmark_run_feature_uc],
     ) -> FeatureRunUc:
         return benchmark_run_features
+
+    @staticmethod
+    @inject
+    def __run_algorithm_uc(
+        benchmark_run_algorithms: AlgorithmRunUc = Provide[UsecaseContainer.benchmark_run_algorithm_uc],
+    ) -> AlgorithmRunUc:
+        return benchmark_run_algorithms
 
     @staticmethod
     @inject
@@ -496,7 +507,7 @@ class Benchmark(BenchmarkUserModel):
     def add_algorithm(
         self,
         name: str,
-        algorithm: IAlgorithm[IBackend],
+        algorithm: IAlgorithm[Any] | AlgorithmSync | AlgorithmAsync[Any],
     ) -> Algorithm:
         """
         Add an algorithm to the benchmark with a given name.
@@ -519,6 +530,9 @@ class Benchmark(BenchmarkUserModel):
         Algorithm
             The added algorithm.
         """
+        if isinstance(algorithm, IAlgorithm):
+            algorithm = LunaAlgorithmWrapper.wrap(algorithm)
+
         benchmark_add_algorithm = self.__add_algorithm_uc()
         result: Result[
             AlgorithmUserModel,
@@ -542,6 +556,7 @@ class Benchmark(BenchmarkUserModel):
             name=result_algorithm.name,
             status=result_algorithm.status,
             algorithm=result_algorithm.algorithm,
+            results=result_algorithm.results,
         )
 
     def remove_algorithm(
@@ -660,6 +675,16 @@ class Benchmark(BenchmarkUserModel):
         if not is_successful(result):
             error = result.failure()
             Benchmark._logger.error(f"Failed to run features for the benchmark: {error}")
+            raise RuntimeError(error)
+
+    def run_algorithms(self) -> None:
+        """Calculate all configured features for all models of this benchmark."""
+        benchmark_run_algorithms = self.__run_algorithm_uc()
+        result: Result[None, RunAlgorithmMissingError | RunModelsetMissingError] = benchmark_run_algorithms(self)
+
+        if not is_successful(result):
+            error = result.failure()
+            Benchmark._logger.error(f"Failed to run algorithms for the benchmark: {error}")
             raise RuntimeError(error)
 
     def run_metrics(self) -> None:  # noqa: D102 # Not yet implemented

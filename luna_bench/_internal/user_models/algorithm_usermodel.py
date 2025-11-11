@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from luna_quantum.solve.interfaces.algorithm_i import (
-    IAlgorithm,
-)
-from luna_quantum.solve.interfaces.backend_i import IBackend
 from pydantic import BaseModel
 
 from luna_bench._internal.domain_models import JobStatus
+from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
+from luna_bench._internal.interfaces.algorithm_sync import AlgorithmSync
+from luna_bench._internal.user_models.algorithm_result_usermodel import AlgorithmResultUserModel
 
 
 class AlgorithmUserModel(BaseModel):
     name: str
     status: JobStatus
 
-    algorithm: IAlgorithm[IBackend]
+    algorithm: AlgorithmSync | AlgorithmAsync[BaseModel]
+
+    results: dict[str, AlgorithmResultUserModel]  # key is the model name

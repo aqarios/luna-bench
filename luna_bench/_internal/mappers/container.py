@@ -19,13 +19,12 @@ if TYPE_CHECKING:
     from luna_bench._internal.domain_models.feature_domain import FeatureDomain
     from luna_bench._internal.domain_models.metric_domain import MetricDomain
     from luna_bench._internal.domain_models.plot_config_domain import PlotDomain
+    from luna_bench._internal.mappers.base_mapper import Mapper
     from luna_bench._internal.user_models.algorithm_usermodel import AlgorithmUserModel
     from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
     from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
     from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
     from luna_bench._internal.user_models.plot_usermodel import PlotUserModel
-
-    from .types import Mapper
 
 
 class MapperContainer(containers.DeclarativeContainer):
@@ -33,7 +32,12 @@ class MapperContainer(containers.DeclarativeContainer):
 
     algorithm_mapper: Provider[Mapper[AlgorithmDomain, AlgorithmUserModel]] = providers.Factory(
         AlgorithmMapper,
-        algorithm_registry=registry_container.algorithm_registry,
+        algorithm_sync_registry=registry_container.algorithm_sync_registry,
+        algorithm_async_registry=registry_container.algorithm_async_registry,
+    )
+    algorithm_async_mapper: Provider[Mapper[AlgorithmDomain, AlgorithmUserModel]] = providers.Factory(
+        AlgorithmMapper,
+        algorithm_registry=registry_container.algorithm_async_registry,
     )
 
     feature_mapper: Provider[Mapper[FeatureDomain, FeatureUserModel]] = providers.Factory(

@@ -12,6 +12,9 @@ class Config(BaseSettings):
     """
 
     DB_CONNECTION_STRING: str = "luna_bench.db"
+    DB_JOBS_CONNECTION_STRING: str = "luna_bench-jobs.db"
+
+    ALGORITHM_INTERNAL_BACKOFF_TIME: float = 0.001
 
 
 config = Config()

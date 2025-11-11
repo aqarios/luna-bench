@@ -45,13 +45,13 @@ if TYPE_CHECKING:
 class DaoContainer(containers.DeclarativeContainer):
     config = providers.Configuration()
 
-    model_dao: Provider[ModelDao] = providers.Singleton(ModelSqlDao)
-    modelset_dao: Provider[ModelSetDao] = providers.Singleton(ModelSetSqlDao)
-    benchmark_dao: Provider[BenchmarkDao] = providers.Singleton(BenchmarkSqlDao)
-    feature_dao: Provider[FeatureDao] = providers.Singleton(FeatureSqlDao)
-    metric_dao: Provider[MetricDao] = providers.Singleton(MetricSqlDao)
-    algorithm_dao: Provider[AlgorithmDao] = providers.Singleton(AlgorithmSqlDao)
-    plot_dao: Provider[PlotDao] = providers.Singleton(PlotSqlDao)
+    model_dao: Provider[ModelDao] = providers.ThreadSafeSingleton(ModelSqlDao)
+    modelset_dao: Provider[ModelSetDao] = providers.ThreadSafeSingleton(ModelSetSqlDao)
+    benchmark_dao: Provider[BenchmarkDao] = providers.ThreadSafeSingleton(BenchmarkSqlDao)
+    feature_dao: Provider[FeatureDao] = providers.ThreadSafeSingleton(FeatureSqlDao)
+    metric_dao: Provider[MetricDao] = providers.ThreadSafeSingleton(MetricSqlDao)
+    algorithm_dao: Provider[AlgorithmDao] = providers.ThreadSafeSingleton(AlgorithmSqlDao)
+    plot_dao: Provider[PlotDao] = providers.ThreadSafeSingleton(PlotSqlDao)
 
     tables = providers.List(
         BenchmarkTable,
@@ -70,7 +70,7 @@ class DaoContainer(containers.DeclarativeContainer):
 
     database = providers.Callable(setup_db_proxy, connection_string=config.DB_CONNECTION_STRING, tables=tables)
 
-    transaction: Provider[DaoTransaction] = providers.Singleton(
+    transaction: Provider[DaoTransaction] = providers.ThreadSafeSingleton(
         PeeweeTransaction,
         database=database,
         model_dao=model_dao,

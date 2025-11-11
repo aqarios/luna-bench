@@ -1,3 +1,4 @@
+from luna_bench._internal.async_tasks import huey_algorithm_runner
 from luna_bench._internal.dao.dao_container import DaoContainer
 from luna_bench._internal.mappers.container import MapperContainer
 from luna_bench._internal.registries.registry_container import registry_container
@@ -37,8 +38,10 @@ _dao_container.config.from_pydantic(config)
 
 _mapper_container = MapperContainer()
 
-_dao_container.wire(modules=[modelset, benchmark])
-registry_container.wire(modules=[modelset, benchmark])
+_dao_container.wire(modules=[modelset, benchmark, huey_algorithm_runner])
+from luna_bench._internal.wrappers.luna_quantum import luna_algorithm_wrapper
+
+registry_container.wire(modules=[modelset, benchmark, "luna_bench.helpers", luna_algorithm_wrapper])
 _mapper_container.wire(modules=[modelset, benchmark])
 
 

@@ -18,6 +18,7 @@ if TYPE_CHECKING:
         ModelSetDomain,
         PlotDomain,
     )
+    from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
     from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
     from luna_bench._internal.domain_models.feature_domain import FeatureDomain
     from luna_bench._internal.domain_models.metric_domain import MetricDomain
@@ -177,38 +178,39 @@ class AlgorithmDao(Protocol):
         benchmark_name: str,
         algorithm_name: str,
         registered_id: str,
+        algorithm_type: AlgorithmType,
         algorithm: ArbitraryDataDomain,
     ) -> Result[AlgorithmDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
-    def remove(benchmark_name: str, solvejob_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
+    def remove(benchmark_name: str, algorithm_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def update(
         benchmark_name: str,
-        solve_job_name: str,
+        algorithm_name: str,
         registered_id: str,
-        algorithm: ArbitraryDataDomain,
+        algorithm_config: ArbitraryDataDomain,
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def update_status(
-        benchmark_name: str, solve_job_name: str, status: BenchmarkStatus
+        benchmark_name: str, algorithm_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def load(
-        benchmark_name: str, solvejob_name: str
+        benchmark_name: str, algorithm_name: str
     ) -> Result[AlgorithmDomain, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def set_result(
-        benchmark_name: str, solve_job_name: str, result: AlgorithmResultDomain
+        benchmark_name: str, algorithm_name: str, result: AlgorithmResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod
     def remove_result(
-        benchmark_name: str, solve_job_name: str
+        benchmark_name: str, algorithm_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
 

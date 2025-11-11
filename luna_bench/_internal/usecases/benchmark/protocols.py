@@ -1,19 +1,28 @@
-from typing import Protocol
+from typing import Any, Protocol
 
-from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
-from luna_quantum.solve.interfaces.backend_i import IBackend
 from pydantic import ValidationError
 from returns.result import Result
 
+from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
+from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync
 from luna_bench._internal.interfaces.feature_i import IFeature
 from luna_bench._internal.interfaces.metric_i import IMetric
 from luna_bench._internal.interfaces.plot_i import IPlot
-from luna_bench._internal.user_models import AlgorithmUserModel, BenchmarkUserModel, MetricUserModel, PlotUserModel
+from luna_bench._internal.user_models import (
+    AlgorithmUserModel,
+    BenchmarkUserModel,
+    MetricUserModel,
+    ModelMetadataUserModel,
+    PlotUserModel,
+)
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
+from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
+from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -91,7 +100,7 @@ class PlotAddUc(Protocol):
 
 class AlgorithmAddUc(Protocol):
     def __call__(
-        self, benchmark_name: str, name: str, algorithm: IAlgorithm[IBackend]
+        self, benchmark_name: str, name: str, algorithm: AlgorithmSync | AlgorithmAsync[Any]
     ) -> Result[
         AlgorithmUserModel,
         DataNotUniqueError
@@ -101,6 +110,47 @@ class AlgorithmAddUc(Protocol):
         | UnknownIdError
         | ValidationError,
     ]: ...
+
+
+class AlgorithmRunUc(Protocol):
+    def __call__(
+        self, benchmark: BenchmarkUserModel, algorithm: AlgorithmUserModel | None = None
+    ) -> Result[None, RunAlgorithmMissingError | RunModelsetMissingError]: ...
+
+
+class AlgorithmFilterUc(Protocol):
+    def __call__(
+        self, benchmark: BenchmarkUserModel, algorithm_type: AlgorithmType, algorithm: AlgorithmUserModel | None = None
+    ) -> Result[list[AlgorithmUserModel], RunAlgorithmMissingError]: ...
+
+
+class AlgorithmStartTasksUc(Protocol):
+    def __call__(
+        self,
+        benchmark_name: str,
+        models: list[ModelMetadataUserModel],
+        algorithms: list[AlgorithmUserModel],
+    ) -> Result[None, RunAlgorithmMissingError | RunModelsetMissingError]: ...
+
+
+class AlgorithmRetrieveAsyncUc(Protocol):
+    def __call__(
+        self, benchmark: BenchmarkUserModel
+    ) -> Result[None, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]: ...
+
+
+class AlgorithmRetrieveAsyncSolutionUc(Protocol):
+    def __call__(
+        self, benchmark: BenchmarkUserModel
+    ) -> Result[
+        None, RunAlgorithmMissingError | RunModelsetMissingError | DataNotExistError | UnknownLunaBenchError
+    ]: ...
+
+
+class AlgorithmRetrieveSyncUc(Protocol):
+    def __call__(
+        self, benchmark: BenchmarkUserModel
+    ) -> Result[None, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]: ...
 
 
 class MetricRemoveUc(Protocol):

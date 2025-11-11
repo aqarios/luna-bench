@@ -12,6 +12,7 @@ from luna_bench._internal.domain_models import (
     BenchmarkStatus,
     RegisteredDataDomain,
 )
+from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
@@ -22,6 +23,7 @@ from .tables import (
     AlgorithmResultTable,
     AlgorithmTable,
     BenchmarkTable,
+    ModelMetadataTable,
 )
 
 if TYPE_CHECKING:
@@ -40,6 +42,7 @@ class AlgorithmSqlDao(AlgorithmDao):
         benchmark_name: str,
         algorithm_name: str,
         registered_id: str,
+        algorithm_type: AlgorithmType,
         algorithm: ArbitraryDataDomain,
     ) -> Result[AlgorithmDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
@@ -47,23 +50,24 @@ class AlgorithmSqlDao(AlgorithmDao):
             algorithm_db = AlgorithmTable(
                 name=algorithm_name,
                 status=BenchmarkStatus.CREATED,
+                algorithm_type=algorithm_type,
                 benchmark=benchmark,
                 config_data=algorithm,
                 registered_id=registered_id,
             )
             algorithm_db.save()
-            return Success(AlgorithmSqlDao.solvejob_to_domain(algorithm_db))
+            return Success(AlgorithmSqlDao.algorithm_to_domain(algorithm_db))
         except IntegrityError as e:
             return Failure(AlgorithmTable.map_integrity_error(e))
         except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def remove(benchmark_name: str, solve_job_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+    def remove(benchmark_name: str, algorithm_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
-            solve_job = AlgorithmTable.get(AlgorithmTable.name == solve_job_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            solve_job.delete_instance()
+            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            algorithm.delete_instance()
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
@@ -73,18 +77,18 @@ class AlgorithmSqlDao(AlgorithmDao):
     @staticmethod
     def update(
         benchmark_name: str,
-        solve_job_name: str,
+        algorithm_name: str,
         registered_id: str,
-        algorithm: ArbitraryDataDomain,
+        algorithm_config: ArbitraryDataDomain,
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         # TODO(Llewellyn): delete results  # noqa: FIX002
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
-            solve_job = AlgorithmTable.get(AlgorithmTable.name == solve_job_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            solve_job.status = BenchmarkStatus.CREATED
-            solve_job.config_data = algorithm
-            solve_job.registered_id = registered_id
-            solve_job.save()
+            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            algorithm.status = BenchmarkStatus.CREATED
+            algorithm.config_data = algorithm_config
+            algorithm.registered_id = registered_id
+            algorithm.save()
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
@@ -93,13 +97,13 @@ class AlgorithmSqlDao(AlgorithmDao):
 
     @staticmethod
     def update_status(
-        benchmark_name: str, solve_job_name: str, status: BenchmarkStatus
+        benchmark_name: str, algorithm_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
-            solve_job = AlgorithmTable.get(AlgorithmTable.name == solve_job_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            solve_job.status = status
-            solve_job.save()
+            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            algorithm.status = status
+            algorithm.save()
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
@@ -108,13 +112,13 @@ class AlgorithmSqlDao(AlgorithmDao):
 
     @staticmethod
     def load(
-        benchmark_name: str, solvejob_name: str
+        benchmark_name: str, algorithm_name: str
     ) -> Result[AlgorithmDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
-            solve_job = AlgorithmTable.get(AlgorithmTable.name == solvejob_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            AlgorithmSqlDao.solvejob_to_domain(solve_job)
-            return Success(AlgorithmSqlDao.solvejob_to_domain(solve_job))
+            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            AlgorithmSqlDao.algorithm_to_domain(algorithm)
+            return Success(AlgorithmSqlDao.algorithm_to_domain(algorithm))
         except DoesNotExist:
             return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
@@ -122,19 +126,33 @@ class AlgorithmSqlDao(AlgorithmDao):
 
     @staticmethod
     def set_result(
-        benchmark_name: str, solve_job_name: str, result_domain: AlgorithmResultDomain
+        benchmark_name: str, algorithm_name: str, result: AlgorithmResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
-            solve_job = AlgorithmTable.get(AlgorithmTable.name == solve_job_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
 
-            result = AlgorithmResultTable(
-                solve_job=solve_job,
-                meta_data=result_domain.meta_data,
-                encoded_solution=result_domain.solution_bytes,
-                algorithm=solve_job,
+            model_metadata = ModelMetadataTable.select(ModelMetadataTable.id).where(  # type: ignore[no-untyped-call]
+                ModelMetadataTable.id == result.model_id
             )
-            result.save()
+
+            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+
+            existing_id = AlgorithmResultTable.get_or_none(  # type: ignore[no-untyped-call]
+                (AlgorithmResultTable.algorithm == algorithm) & (AlgorithmResultTable.model_metadata == model_metadata)
+            )
+
+            algorithm_result = AlgorithmResultTable(
+                id=existing_id,
+                algorithm=algorithm,
+                model_metadata=model_metadata,
+                status=result.status,
+                error=result.error,
+                encoded_solution=result.solution_bytes,
+                meta_data=result.meta_data,
+                task_id=result.task_id,
+                retrival_data=result.retrival_data,
+            )
+            algorithm_result.save()
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
@@ -143,12 +161,12 @@ class AlgorithmSqlDao(AlgorithmDao):
 
     @staticmethod
     def remove_result(
-        benchmark_name: str, solve_job_name: str
+        benchmark_name: str, algorithm_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
-            solve_job = AlgorithmTable.get(AlgorithmTable.name == solve_job_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            result = AlgorithmResultTable.get(AlgorithmResultTable.algorithm == solve_job)  # type: ignore[no-untyped-call]
+            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            result = AlgorithmResultTable.get(AlgorithmResultTable.algorithm == algorithm)  # type: ignore[no-untyped-call]
             result.delete_instance()
             return Success(None)
         except DoesNotExist:
@@ -157,23 +175,31 @@ class AlgorithmSqlDao(AlgorithmDao):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def solvejob_to_domain(solve_job: AlgorithmTable) -> AlgorithmDomain:
-        result_data: AlgorithmResultDomain | None
+    def algorithm_to_domain(algorithm: AlgorithmTable) -> AlgorithmDomain:
+        def to_domain(result: AlgorithmResultTable) -> AlgorithmResultDomain:
+            to_return = AlgorithmResultDomain.model_construct(
+                meta_data=result.meta_data,
+                model_id=result.model_metadata.id,
+                status=JobStatus(result.status),
+                error=result.error,
+                task_id=result.task_id,
+                retrival_data=result.retrival_data,
+            )
 
-        selected_data = solve_job.result.first()
-        if selected_data:
-            result_data = AlgorithmResultDomain(meta_data=selected_data.meta_data)
+            to_return.solution = result.encoded_solution
+            return to_return
 
-            result_data.solution_bytes = selected_data.encoded_solution
-        else:
-            result_data = None
+        result_data: dict[str, AlgorithmResultDomain] = {
+            r.model_metadata.name: to_domain(r) for r in list(algorithm.results)
+        }
 
         return AlgorithmDomain(
-            name=cast("str", solve_job.name),
-            status=JobStatus(solve_job.status),
-            result=result_data,
+            name=cast("str", algorithm.name),
+            status=algorithm.status,
+            algorithm_type=AlgorithmType(algorithm.algorithm_type),
+            results=result_data,
             config_data=RegisteredDataDomain(
-                registered_id=cast("str", solve_job.registered_id),
-                data=ArbitraryDataDomain.model_validate(solve_job.config_data),
+                registered_id=cast("str", algorithm.registered_id),
+                data=ArbitraryDataDomain.model_validate(algorithm.config_data),
             ),
         )
