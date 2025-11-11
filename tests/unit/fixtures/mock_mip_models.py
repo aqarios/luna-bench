@@ -139,6 +139,7 @@ def dense_model() -> Model:
     model.constraints += x1 + 3 * x2 + x3 + 2 * x4 == 7
     model.constraints += 4 * x1 + x2 + x3 + x4 <= 15
 
+
     return model
 
 

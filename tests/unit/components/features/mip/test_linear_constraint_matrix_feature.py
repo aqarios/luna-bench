@@ -104,7 +104,8 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Only continuous variables
-        assert result.mean_variable_coefficient_continuous > 0
+        var_coef = [3,7]
+        assert result.mean_variable_coefficient_continuous == np.mean(var_coef)
         assert result.mean_variable_coefficient_non_continuous == 0.0
 
         # All variables stats should match continuous
@@ -126,7 +127,8 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Only non-continuous variables
-        assert result.mean_variable_coefficient_non_continuous > 0
+        var_coef = [3,4]
+        assert result.mean_variable_coefficient_non_continuous == np.mean(var_coef)
         assert result.mean_variable_coefficient_continuous == 0.0
 
         # All variables stats should match non-continuous
@@ -138,10 +140,11 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(sparse_model)
 
         # Sparse model should have low coefficient sums
-        assert result.mean_variable_coefficient_all >= 0
+        vars_coef = [1, 1, 0, 0, 0, 1, 1, 1, 0, 1]
+        assert result.mean_variable_coefficient_all == np.mean(vars_coef)
 
         # Variation coefficients may be high due to sparsity
-        assert result.vc_variable_coefficient_all >= 0
+        assert result.vc_variable_coefficient_all == np.std(vars_coef) / np.mean(vars_coef)
 
     def test_dense_model(self, dense_model: Model) -> None:
         """Test feature extraction on a dense model."""
@@ -149,12 +152,16 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(dense_model)
 
         # Dense model should have higher coefficient sums
-        assert result.mean_variable_coefficient_all > 0
-        assert result.mean_constraint_coefficient > 0
+        vars_coef = [10, 4, 5, 5]
+        con_coef = [4, 6, 7, 7]
+        assert result.mean_variable_coefficient_all == np.mean(vars_coef)
+        assert result.mean_constraint_coefficient == np.mean(con_coef)
 
         # Most variables appear in most constraints
-        assert result.mean_variable_coefficient_continuous > 0
-        assert result.mean_variable_coefficient_non_continuous > 0
+        con_vars = [10,4]
+        nc_vars = [5,5]
+        assert result.mean_variable_coefficient_continuous == np.mean(con_vars)
+        assert result.mean_variable_coefficient_non_continuous == np.mean(nc_vars)
 
     def test_variable_coefficient_calculation(self) -> None:
         """Test variable coefficient sum calculation with known values."""
@@ -210,9 +217,9 @@ class TestLinearConstraintMatrixFeatures:
 
         extractor = LinearConstraintMatrixFeatures()
         result = extractor.run(model)
-
+        no_mat = np.array([[2,4], [1,2]]) / np.array([[10],[5]])
         # Normalized entries should be computed by dividing by RHS
-        assert result.mean_distribution_of_normalized_constraint_matrix_entries_continuous > 0
+        assert result.mean_distribution_of_normalized_constraint_matrix_entries_continuous == np.mean(no_mat)
 
     def test_zero_rhs_handling(self) -> None:
         """Test that zero RHS values are handled correctly in normalization."""
