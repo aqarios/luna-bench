@@ -15,12 +15,6 @@ _usecase_container.mapper_container.override(_mapper_container)
 _dao_container.config.from_pydantic(config)
 _usecase_container.config.from_pydantic(config)
 
-_usecase_container.wire(
-    modules=[
-        "luna_bench.components",
-        "luna_bench.components.plots",
-    ]
-)
 _registry_container.wire(
     modules=[
         "luna_bench.helpers.decorators",
@@ -28,6 +22,13 @@ _registry_container.wire(
         "luna_bench._internal.usecases.modelset",
         "luna_bench._internal.usecases.benchmark",
         "luna_bench.components",
+    ]
+)
+
+_usecase_container.wire(
+    modules=[
+        "luna_bench.components",
+        "luna_bench.components.plots",
     ]
 )
 
