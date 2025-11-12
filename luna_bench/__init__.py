@@ -27,6 +27,7 @@ _registry_container.wire(
         "luna_bench._internal.usecases.modelset",
         "luna_bench._internal.usecases.benchmark",
         "luna_bench.components",
+        "luna_bench._internal.wrappers",
     ]
 )
 
@@ -35,6 +36,7 @@ _dao_container.wire(
     modules=[
         "luna_bench._internal.usecases.modelset",
         "luna_bench._internal.usecases.benchmark",
+        "luna_bench._internal.async_tasks.huey_algorithm_runner",
     ]
 )
 _mapper_container.wire(
@@ -56,3 +58,8 @@ __all__ = (
     "FakeMetric",
     "FakePlot",
 )
+
+# Import and wrapping after the wiring is done, to ensure the wrappers and decorators have access to the injected registries
+from luna_bench._internal.wrappers import LunaAlgorithmWrapper  # noqa: E402
+
+LunaAlgorithmWrapper.wrap_algorithms()
