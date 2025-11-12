@@ -24,6 +24,7 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     FeatureRunUc,
     MetricAddUc,
     MetricRemoveUc,
+    MetricRunUc,
     PlotAddUc,
     PlotRemoveUc,
 )
@@ -80,6 +81,13 @@ class Benchmark(BenchmarkUserModel):
         benchmark_run_algorithms: AlgorithmRunUc = Provide[UsecaseContainer.benchmark_run_algorithm_uc],
     ) -> AlgorithmRunUc:
         return benchmark_run_algorithms
+
+    @staticmethod
+    @inject
+    def __run_metric_uc(
+        benchmark_run_metrics: MetricRunUc = Provide[UsecaseContainer.benchmark_run_metric_uc],
+    ) -> MetricRunUc:
+        return benchmark_run_metrics
 
     @staticmethod
     @inject
@@ -688,7 +696,13 @@ class Benchmark(BenchmarkUserModel):
             raise RuntimeError(error)
 
     def run_metrics(self) -> None:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+        benchmark_run_metrics = self.__run_metric_uc()
+        result: Result[None, RunAlgorithmMissingError | RunModelsetMissingError] = benchmark_run_metrics(self)
+
+        if not is_successful(result):
+            error = result.failure()
+            Benchmark._logger.error(f"Failed to run metrics for the benchmark: {error}")
+            raise RuntimeError(error)
 
     def run_plots(self) -> None:  # noqa: D102 # Not yet implemented
         raise NotImplementedError

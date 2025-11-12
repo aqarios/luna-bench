@@ -6,6 +6,7 @@ from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError
 from returns.result import Failure, Success
 
+from luna_bench._internal.dao.tables import AlgorithmTable
 from luna_bench._internal.domain_models import BenchmarkStatus, MetricDomain, MetricResultDomain
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
@@ -18,6 +19,7 @@ from .tables import (
     BenchmarkTable,
     MetricResultTable,
     MetricTable,
+    ModelMetadataTable,
 )
 
 if TYPE_CHECKING:
@@ -98,18 +100,27 @@ class MetricSqlDao(MetricDao):
 
     @staticmethod
     def set_result(
-        benchmark_name: str, metric_name: str, result: BaseModel
+        benchmark_name: str, metric_name: str, result: MetricResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            model_metadata = ModelMetadataTable.select(ModelMetadataTable.id).where(  # type: ignore[no-untyped-call]
+                ModelMetadataTable.name == result.model_name
+            )
             metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+
+            algorithm = AlgorithmTable.get(AlgorithmTable.registered_id == result.algorithm_registered_id)  # type: ignore[no-untyped-call]
             metric_result = MetricResultTable(
                 metric=metric,
-                result_data=result.model_dump_json(),
+                algorithm=algorithm,
+                model_metadata=model_metadata,
+                processing_time_ms=result.processing_time_ms,
+                result_data=result.result,
+                status=result.status.value,
+                error=result.error,
             )
             metric_result.save()
-            metric.status = BenchmarkStatus.DONE
-            metric.save()
+
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
@@ -145,16 +156,24 @@ class MetricSqlDao(MetricDao):
 
     @staticmethod
     def metric_to_domain(metric: MetricTable) -> MetricDomain:
-        result_data: MetricResultDomain | None = (
-            MetricResultDomain.model_validate_json(metric.result.first().result_data) if metric.result.first() else None
-        )
+        result_data: dict[tuple[str, str], MetricResultDomain] = {
+            (m.algorithm.registered_id, m.model_metadata.name): MetricResultDomain.model_construct(
+                processing_time_ms=m.processing_time_ms,
+                model_name=m.model_metadata.name,
+                algorithm_registered_id=m.algorithm_registered_id,
+                result=m.result_data,
+                status=JobStatus(m.status),
+                error=m.error,
+            )
+            for m in list(metric.results)
+        }
 
         return MetricDomain(
             name=cast("str", metric.name),
             status=JobStatus(metric.status),
+            results=result_data,
             config_data=RegisteredDataDomain(
                 registered_id=cast("str", metric.registered_id),
                 data=ArbitraryDataDomain.model_validate(metric.config_data, from_attributes=True),
             ),
-            result=result_data,
         )

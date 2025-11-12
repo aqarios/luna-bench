@@ -14,6 +14,7 @@ if TYPE_CHECKING:
         BenchmarkDomain,
         BenchmarkStatus,
         FeatureResultDomain,
+        MetricResultDomain,
         ModelMetadataDomain,
         ModelSetDomain,
         PlotDomain,
@@ -158,7 +159,7 @@ class MetricDao(Protocol):
 
     @staticmethod
     def set_result(
-        benchmark_name: str, metric_name: str, result: BaseModel
+        benchmark_name: str, metric_name: str, result: MetricResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
 
     @staticmethod

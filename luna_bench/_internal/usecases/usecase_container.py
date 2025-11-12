@@ -17,6 +17,7 @@ from luna_bench._internal.usecases.benchmark.feature.feature_remove import Featu
 from luna_bench._internal.usecases.benchmark.feature.feature_run import FeatureRunUcImpl
 from luna_bench._internal.usecases.benchmark.metric.metric_add import MetricAddUcImpl
 from luna_bench._internal.usecases.benchmark.metric.metric_remove import MetricRemoveUcImpl
+from luna_bench._internal.usecases.benchmark.metric.metric_run import MetricRunUcImpl
 from luna_bench._internal.usecases.benchmark.plot.plot_add import PlotAddUcImpl
 from luna_bench._internal.usecases.benchmark.plot.plot_remove import PlotRemoveUcImpl
 from luna_bench._internal.usecases.benchmark.protocols import (
@@ -34,6 +35,7 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     FeatureRunUc,
     MetricAddUc,
     MetricRemoveUc,
+    MetricRunUc,
     PlotAddUc,
     PlotRemoveUc,
 )
@@ -150,4 +152,8 @@ class UsecaseContainer(containers.DeclarativeContainer):
 
     benchmark_run_algorithm_uc: Provider[AlgorithmRunUc] = providers.Singleton(
         AlgorithmRunUcImpl, transaction=dao_container.transaction
+    )
+
+    benchmark_run_metric_uc: Provider[MetricRunUc] = providers.Singleton(
+        MetricRunUcImpl, transaction=dao_container.transaction
     )

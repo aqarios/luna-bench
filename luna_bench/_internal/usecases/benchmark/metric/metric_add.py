@@ -75,5 +75,6 @@ class MetricAddUcImpl(MetricAddUc):
                     name=name,
                     status=result.unwrap().status,
                     metric=config.unwrap(),
+                    results={},
                 )
             )

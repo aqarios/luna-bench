@@ -8,6 +8,6 @@ class MetricDomain(BaseDomain):
     name: str
 
     status: JobStatus
-    result: MetricResultDomain | None
+    results: dict[tuple[str, str], MetricResultDomain]  # key is the solver registered id and model name
 
     config_data: RegisteredDataDomain

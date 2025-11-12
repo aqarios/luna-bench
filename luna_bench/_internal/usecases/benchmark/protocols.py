@@ -24,6 +24,7 @@ from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
+from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -62,6 +63,12 @@ class MetricAddUc(Protocol):
         | UnknownIdError
         | ValidationError,
     ]: ...
+
+
+class MetricRunUc(Protocol):
+    def __call__(
+        self, benchmark: BenchmarkUserModel, metric: MetricUserModel | None = None
+    ) -> Result[None, RunMetricMissingError | RunModelsetMissingError]: ...
 
 
 class FeatureAddUc(Protocol):
