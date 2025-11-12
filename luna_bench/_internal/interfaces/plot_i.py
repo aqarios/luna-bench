@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 from returns.result import Result
@@ -9,8 +9,6 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
     from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
-
-TValidationResult = TypeVar("TValidationResult")
 
 
 class IPlot[TValidationResult](BaseModel, ABC):

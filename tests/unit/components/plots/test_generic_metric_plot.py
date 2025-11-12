@@ -11,45 +11,52 @@ from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
 from luna_bench.components.plots.generics.metrics_plot import GenericMetricsPlot, MetricsValidationResult
 from luna_bench.errors.run_errors.plots_errors.metrics_missing_error import MetricsMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.helpers.decorators import metric
 from tests.unit.fixtures.mock_components import MockMetric
 
 
 class _FakePlot(GenericMetricsPlot):
-    metrics_names: typing.ClassVar[set[str]] = {"existing"}
+    metrics_ids: typing.ClassVar[set[str]] = {"test_metric"}
 
     def run(self, data: MetricsValidationResult) -> None:
         pass
 
 
+@metric(metric_id="mock_metric_new")  # type: ignore[arg-type]
+class MockMetricNew(IMetric):  # type: ignore[misc]
+    def run(self) -> None:
+        raise NotImplementedError
+
+
 class TestGenericMetricsPlot:
     @pytest.mark.parametrize(
-        ("plot", "metric_name", "exp"),
+        ("plot", "metric_id", "exp"),
         [
-            (_FakePlot(), "existing", True),
+            (_FakePlot(), "test_metric", True),
             (_FakePlot(), "non-existing", False),
         ],
     )
     def test_has_metric(
         self,
         plot: GenericMetricsPlot,
-        metric_name: str,
+        metric_id: str,
         exp: bool,  # noqa: FBT001
     ) -> None:
-        assert plot.has_metric(metric_name) is exp
+        assert plot.has_metric(metric_id) is exp
 
     def test_add_metric(
         self,
     ) -> None:
         fake_plot = _FakePlot()
-        fake_plot.add_metric("existing")
+        fake_plot.add_metric("test_metric")
 
-        assert fake_plot.has_metric("existing")
-        assert len(fake_plot.metrics_names) == 1
+        assert fake_plot.has_metric("test_metric")
+        assert len(fake_plot.metrics_ids) == 1
 
         fake_plot.add_metric("new")
 
         assert fake_plot.has_metric("new")
-        assert len(fake_plot.metrics_names) == 2
+        assert len(fake_plot.metrics_ids) == 2
 
     @pytest.mark.parametrize(
         ("metrics", "plot_metrics", "exp"),
@@ -57,26 +64,26 @@ class TestGenericMetricsPlot:
             (
                 (
                     (
-                        "existing",
+                        "existing_name",
                         MockMetric(),
                     ),
                     (
-                        "existing2",
-                        MockMetric(),
+                        "existing2_name",
+                        MockMetricNew(),
                     ),
                 ),
-                {"existing", "existing2"},
+                {"mock_metric", "mock_metric_new"},
                 Success(
                     {
-                        "existing": MetricUserModel(
-                            name="existing",
+                        "mock_metric": MetricUserModel(
+                            name="existing_name",
                             status=JobStatus.CREATED,
                             metric=MockMetric(),
                         ),
-                        "existing2": MetricUserModel(
-                            name="existing2",
+                        "mock_metric_new": MetricUserModel(
+                            name="existing2_name",
                             status=JobStatus.CREATED,
-                            metric=MockMetric(),
+                            metric=MockMetricNew(),
                         ),
                     }
                 ),
@@ -95,7 +102,7 @@ class TestGenericMetricsPlot:
         exp: Result[dict[str, MetricUserModel], MetricsMissingError | UnknownLunaBenchError],
     ) -> None:
         fake_plot = _FakePlot()
-        _FakePlot.metrics_names = plot_metrics
+        _FakePlot.metrics_ids = plot_metrics
         metrics_to_prepare = [
             MetricUserModel(
                 name=metric[0],
@@ -113,7 +120,7 @@ class TestGenericMetricsPlot:
 
     def test_validate_plot(self) -> None:
         fake_plot = _FakePlot()
-        _FakePlot.metrics_names = {"existing"}
+        _FakePlot.metrics_ids = {"mock_metric"}
 
         benchmark = BenchmarkUserModel(
             name="test",
@@ -130,7 +137,7 @@ class TestGenericMetricsPlot:
 
         benchmark.metrics = [
             MetricUserModel(
-                name="existing",
+                name="existing_name",
                 status=JobStatus.CREATED,
                 metric=MockMetric(),
             )
@@ -138,4 +145,4 @@ class TestGenericMetricsPlot:
 
         result = fake_plot.validate_plot(benchmark)
 
-        assert result.unwrap() == MetricsValidationResult(metrics={"existing": benchmark.metrics[0]})
+        assert result.unwrap() == MetricsValidationResult(metrics={"mock_metric": benchmark.metrics[0]})

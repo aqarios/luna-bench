@@ -5,7 +5,7 @@ from luna_bench.components.plots.generics.features_metrics_plot import (
 from luna_bench.helpers.decorators import plot
 
 
-@plot(metrics=("test",), features=("test",))
+@plot(metrics_ids=("test",), features_ids=("test",))
 class FakePlot(GenericFeaturesMetricsPlot):  # type: ignore[call-arg]
     """
     Fake plot implementation for testing purposes.

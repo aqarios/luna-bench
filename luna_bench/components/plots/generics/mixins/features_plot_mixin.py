@@ -18,20 +18,20 @@ class FeaturesPlotMixin:
 
     Attributes
     ----------
-    features_names : set[str]
-        Class-level set of feature names required by the plot.
+    features_ids : set[str]
+        Class-level set of feature ids required by the plot.
 
     Methods
     -------
     _prepare_features(features)
         Validate and map benchmark features against required features.
-    add_feature(feature_name)
+    add_feature(feature_id)
         Manually add a feature to the required features set.
-    has_feature(feature_name)
+    has_feature(feature_id)
         Check if a feature is in the required features set.
     """
 
-    features_names: ClassVar[set[str]] = set()
+    features_ids: ClassVar[set[str]] = set()
 
     def _prepare_features(
         self,
@@ -48,29 +48,28 @@ class FeaturesPlotMixin:
         Returns
         -------
         Result[dict[str, IFeature], FeaturesMissingError | UnknownLunaBenchError]
-            Success with dictionary mapping feature names to feature instances,
+            Success with dictionary mapping feature ids to feature instances,
             or Failure with FeaturesMissingError if required features are missing.
         """
         result: dict[str, FeatureUserModel] = {}
 
         for feature in features:
-            if feature.name in self.features_names:
-                result[feature.name] = feature
-
-        featires_diff = self.features_names - result.keys()
+            if feature.feature._registered_id in self.features_ids:  # type: ignore[attr-defined] # noqa: SLF001
+                result[feature.feature._registered_id] = feature  # type: ignore[attr-defined] # noqa: SLF001
+        featires_diff = self.features_ids - result.keys()
 
         if len(featires_diff) > 0:
             return Failure(FeaturesMissingError(list(featires_diff)))
 
         return Success(result)
 
-    def has_feature(self, feature_name: str) -> bool:
+    def has_feature(self, feature_id: str) -> bool:
         """
         Check if a feature is required by this plot.
 
         Parameters
         ----------
-        feature_name : str
+        feature_id : str
             Name of the feature to check.
 
         Returns
@@ -78,15 +77,15 @@ class FeaturesPlotMixin:
         bool
             True if the feature is in the required features set, False otherwise.
         """
-        return feature_name in self.features_names
+        return feature_id in self.features_ids
 
-    def add_feature(self, feature_name: str) -> None:
+    def add_feature(self, feature_id: str) -> None:
         """
         Add feature manually to a plot configuration.
 
         Parameters
         ----------
-        feature_name : str
+        feature_id : str
             Name of the feature to add.
         """
-        self.features_names.add(feature_name)
+        self.features_ids.add(feature_id)

@@ -16,8 +16,8 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.helpers.decorators import algorithm, feature, metric, plot
 
 
-@feature
-class MockFeature(IFeature):
+@feature(feature_id="mock_feature")  # type: ignore[arg-type]
+class MockFeature(IFeature):  # type: ignore[misc]
     def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
         return ArbitraryDataDomain.model_construct(solution="xD")  # type: ignore[call-arg] # Fake data
 
@@ -93,8 +93,8 @@ class MockPlotWithValidationError(IPlot[str]):
         return Failure(PlotRunError())
 
 
-@metric
-class MockMetric(IMetric):
+@metric(metric_id="mock_metric")  # type: ignore[arg-type]
+class MockMetric(IMetric):  # type: ignore[misc]
     def run(self) -> None:
         raise NotImplementedError
 

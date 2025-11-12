@@ -19,8 +19,8 @@ class _FakePlot(GenericFeaturesMetricsPlot):
 class TestGenericFeaturesMetricsPlot:
     def test_validate_plot(self) -> None:
         fake_plot = _FakePlot()
-        _FakePlot.features_names = {"existing"}
-        _FakePlot.metrics_names = {"existing"}
+        _FakePlot.features_ids = {"mock_feature"}
+        _FakePlot.metrics_ids = {"mock_metric"}
 
         benchmark = BenchmarkUserModel(
             name="test",
@@ -47,25 +47,27 @@ class TestGenericFeaturesMetricsPlot:
 
         assert isinstance(result.failure(), FeaturesMissingError)
 
-        benchmark.features = [
-            FeatureUserModel(
-                name="existing",
-                status=JobStatus.CREATED,
-                feature=MockFeature(),
-                results={
-                    "": FeatureResultUserModel.model_construct(
-                        processing_time_ms=0,
-                        model_name="test",
-                        status=JobStatus.CREATED,
-                        error=None,
-                        result=None,
-                    )
-                },
-            )
-        ]
+        feature = MockFeature()
+
+        feature_user_model = FeatureUserModel(
+            name="existing",
+            status=JobStatus.CREATED,
+            feature=feature,
+            results={
+                "": FeatureResultUserModel.model_construct(
+                    processing_time_ms=0,
+                    model_name="test",
+                    status=JobStatus.CREATED,
+                    error=None,
+                    result=None,
+                )
+            },
+        )
+
+        benchmark.features = [feature_user_model]
         result = fake_plot.validate_plot(benchmark)
 
         assert result.unwrap() == FeaturesAndMetricsValidationResult(
-            features={"existing": benchmark.features[0]},
-            metrics={"existing": benchmark.metrics[0]},
+            features={"mock_feature": benchmark.features[0]},
+            metrics={"mock_metric": benchmark.metrics[0]},
         )

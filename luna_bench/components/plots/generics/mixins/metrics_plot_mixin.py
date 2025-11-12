@@ -31,7 +31,7 @@ class MetricsPlotMixin:
         Check if a metric is in the required metrics set.
     """
 
-    metrics_names: ClassVar[set[str]] = set()
+    metrics_ids: ClassVar[set[str]] = set()
 
     def _prepare_metrics(
         self,
@@ -48,43 +48,43 @@ class MetricsPlotMixin:
         Returns
         -------
         Result[dict[str, IMetric], MetricsMissingError | UnknownLunaBenchError]
-            Success with dictionary mapping metric names to metric instances,
+            Success with dictionary mapping metric ids to metric instances,
             or Failure with MetricsMissingError if required metrics are missing.
         """
         result: dict[str, MetricUserModel] = {}
         for metric in metrics:
-            if metric.name in self.metrics_names:
-                result[metric.name] = metric
+            if metric.metric._registered_id in self.metrics_ids:  # type: ignore[attr-defined] # noqa: SLF001
+                result[metric.metric._registered_id] = metric  # type: ignore[attr-defined] # noqa: SLF001
 
-        metrics_diff = self.metrics_names - result.keys()
+        metrics_diff = self.metrics_ids - result.keys()
         if len(metrics_diff) > 0:
             return Failure(MetricsMissingError(list(metrics_diff)))
 
         return Success(result)
 
-    def add_metric(self, metric_name: str) -> None:
+    def add_metric(self, metric_id: str) -> None:
         """
         Add metric manually to a plot configuration.
 
         Parameters
         ----------
-        metric_name : str
-            Name of the metric to add.
+        metric_id : str
+            Id of the metric to add.
         """
-        self.metrics_names.add(metric_name)
+        self.metrics_ids.add(metric_id)
 
-    def has_metric(self, metric_name: str) -> bool:
+    def has_metric(self, metric_id: str) -> bool:
         """
         Check if a metric is required by this plot.
 
         Parameters
         ----------
-        metric_name : str
-            Name of the metric to check.
+        metric_id : str
+            Id of the metric to check.
 
         Returns
         -------
         bool
             True if the metric is in the required metrics set, False otherwise.
         """
-        return metric_name in self.metrics_names
+        return metric_id in self.metrics_ids
