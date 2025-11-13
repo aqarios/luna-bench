@@ -14,7 +14,6 @@ R = TypeVar("R")
 class HueyConsumer:
     _process: Process | None = None
     _logger = Logging.get_logger(__name__)
-    _logger.setLevel("DEBUG")
 
     huey: SqliteHuey | MemoryHuey = (
         MemoryHuey()

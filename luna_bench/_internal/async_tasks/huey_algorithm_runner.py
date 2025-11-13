@@ -21,7 +21,6 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 class HueyAlgorithmRunner:
     _logger = Logging.get_logger(__name__)
-    _logger.setLevel("DEBUG")
 
     @staticmethod
     @inject

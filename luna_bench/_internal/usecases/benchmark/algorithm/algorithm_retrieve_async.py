@@ -31,7 +31,6 @@ if TYPE_CHECKING:
 class AlgorithmRetrieveAsyncUcImpl(AlgorithmRetrieveAsyncUc):
     _transaction: DaoTransaction
     _logger = Logging.get_logger(__name__)
-    _logger.setLevel("DEBUG")
 
     @inject
     def __init__(

@@ -11,7 +11,6 @@ from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorith
 
 class AlgorithmFilterUcImpl(AlgorithmFilterUc):
     _logger = Logging.get_logger(__name__)
-    _logger.setLevel("DEBUG")
 
     def __call__(
         self, benchmark: BenchmarkUserModel, algorithm_type: AlgorithmType, algorithm: AlgorithmUserModel | None = None

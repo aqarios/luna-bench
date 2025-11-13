@@ -31,7 +31,6 @@ class AlgorithmStartTasksUcImpl(AlgorithmStartTasksUc):
     _registry_sync: PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain]
     _registry_async: PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain]
     _logger = Logging.get_logger(__name__)
-    _logger.setLevel("DEBUG")
 
     @inject
     def __init__(

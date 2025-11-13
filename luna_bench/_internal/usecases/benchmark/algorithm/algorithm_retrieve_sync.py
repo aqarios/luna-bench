@@ -25,7 +25,6 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 class AlgorithmRetrieveSyncUcImpl(AlgorithmRetrieveSyncUc):
     _transaction: DaoTransaction
     _logger = Logging.get_logger(__name__)
-    _logger.setLevel("DEBUG")
 
     @inject
     def __init__(
