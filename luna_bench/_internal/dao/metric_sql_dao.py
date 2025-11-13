@@ -112,8 +112,7 @@ class MetricSqlDao(MetricDao):
             )
 
             algorithm = AlgorithmTable.select(AlgorithmTable.id).where(  # type: ignore[no-untyped-call]
-                (AlgorithmTable.registered_id == result.algorithm_registered_id)
-                & (AlgorithmTable.benchmark == benchmark)
+                (AlgorithmTable.name == result.algorithm_name) & (AlgorithmTable.benchmark == benchmark)
             )
             metric_result = MetricResultTable(
                 metric=metric,
@@ -165,7 +164,7 @@ class MetricSqlDao(MetricDao):
             (m.algorithm.registered_id, m.model_metadata.name): MetricResultDomain.model_construct(
                 processing_time_ms=m.processing_time_ms,
                 model_name=m.model_metadata.name,
-                algorithm_registered_id=m.algorithm_registered_id,
+                algorithm_name=m.algorithm_name,
                 result=m.result_data,
                 status=JobStatus(m.status),
                 error=m.error,

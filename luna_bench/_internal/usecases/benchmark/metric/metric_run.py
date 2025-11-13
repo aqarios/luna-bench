@@ -51,24 +51,24 @@ class MetricRunUcImpl(MetricRunUc):
     def _run(
         self,
         benchmark_name: str,
-        algorithm_registered_id: str,
+        alogorithm_name: str,
         model_name: str,
         algorithm_result: AlgorithmResultUserModel,
         metric: MetricUserModel,
     ) -> Result[MetricResultUserModel, AlgorithmNotDoneError | DataNotExistError | UnknownLunaBenchError]:
         # CHECK if result for metric and algorithm already exists and if it should be updated/recalulated or not.
 
-        result: MetricResultUserModel | None = metric.results.get((algorithm_registered_id, model_name), None)
+        result: MetricResultUserModel | None = metric.results.get((alogorithm_name, model_name), None)
 
         if result is not None and result.status == JobStatus.DONE:
             self._logger.info(
-                f"Metric {metric.name} for model {model_name} and algorithm {algorithm_registered_id} "
+                f"Metric {metric.name} for model {model_name} and algorithm {alogorithm_name} "
                 f"already exists and is done."
             )
             return Success(result)
 
         if algorithm_result.status != JobStatus.DONE:
-            return Failure(AlgorithmNotDoneError(algorithm_registered_id, algorithm_result.status))
+            return Failure(AlgorithmNotDoneError(alogorithm_name, algorithm_result.status))
 
         if algorithm_result.solution is None:
             return Failure(DataNotExistError())
@@ -94,7 +94,7 @@ class MetricRunUcImpl(MetricRunUc):
         result_domain = MetricResultDomain.model_construct(
             processing_time_ms=delta_time,
             model_name=model_name,
-            algorithm_registered_id=algorithm_registered_id,
+            algorithm_name=alogorithm_name,
             result=user_result,
             status=status,
             error=exception,
@@ -109,7 +109,7 @@ class MetricRunUcImpl(MetricRunUc):
             return Failure(r.failure())
 
         result = MetricMapper.result_to_user_model(result_domain)
-        metric.results[(algorithm_registered_id, model_name)] = result
+        metric.results[(alogorithm_name, model_name)] = result
         return Success(result)
 
     def __call__(
@@ -127,7 +127,7 @@ class MetricRunUcImpl(MetricRunUc):
         for a in benchmark.algorithms:
             for model_name, result in a.results.items():
                 for m in metrics:
-                    metric_result = self._run(benchmark.name, a.algorithm._registered_id, model_name, result, m)
+                    metric_result = self._run(benchmark.name, a.name, model_name, result, m)
 
                     if not is_successful(metric_result):
                         pass  # TODO(Llewellyn): decide what to do with the failed run # noqa: FIX002

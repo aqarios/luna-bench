@@ -23,7 +23,7 @@ class MetricMapper(ModelListMixin[MetricDomain, MetricUserModel]):
         return MetricResultUserModel.model_construct(
             processing_time_ms=result.processing_time_ms,
             model_name=result.model_name,
-            algorithm_registered_id=result.algorithm_registered_id,
+            algorithm_name=result.algorithm_name,
             status=result.status,
             error=result.error,
             result=result.result.model_dump() if result.result else None,

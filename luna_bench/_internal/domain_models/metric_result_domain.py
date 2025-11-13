@@ -6,7 +6,7 @@ from .job_status_enum import JobStatus
 class MetricResultDomain(BaseDomain):
     processing_time_ms: int  # time in ms
     model_name: str
-    algorithm_registered_id: str
+    algorithm_name: str
 
     status: JobStatus
     error: str | None
