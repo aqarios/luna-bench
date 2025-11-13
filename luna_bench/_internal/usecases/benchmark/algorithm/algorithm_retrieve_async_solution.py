@@ -62,7 +62,6 @@ class AlgorithmRetrieveAsyncSolutionUcImpl(AlgorithmRetrieveAsyncSolutionUc):
                         result = "No retrival data provided"
                     else:
                         result = a.algorithm.fetch_result(model, r.retrival_data)
-                        result = "No retrival data provided"
                     if not isinstance(result, Result):
                         result = Failure(result) if isinstance(result, str) else Success(result)
 
