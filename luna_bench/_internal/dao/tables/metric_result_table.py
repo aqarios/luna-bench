@@ -30,7 +30,6 @@ class MetricResultTable(BaseTable):
     metric = ForeignKeyField(
         MetricTable,
         backref="results",
-        unique=True,
         on_delete="CASCADE",
     )
 

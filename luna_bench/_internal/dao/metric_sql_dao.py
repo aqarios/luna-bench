@@ -107,9 +107,14 @@ class MetricSqlDao(MetricDao):
             model_metadata = ModelMetadataTable.select(ModelMetadataTable.id).where(  # type: ignore[no-untyped-call]
                 ModelMetadataTable.name == result.model_name
             )
-            metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            metric = MetricTable.select(MetricTable.id).where(  # type: ignore[no-untyped-call]
+                (MetricTable.name == metric_name) & (MetricTable.benchmark == benchmark)
+            )
 
-            algorithm = AlgorithmTable.get(AlgorithmTable.registered_id == result.algorithm_registered_id)  # type: ignore[no-untyped-call]
+            algorithm = AlgorithmTable.select(AlgorithmTable.id).where(  # type: ignore[no-untyped-call]
+                (AlgorithmTable.registered_id == result.algorithm_registered_id)
+                & (AlgorithmTable.benchmark == benchmark)
+            )
             metric_result = MetricResultTable(
                 metric=metric,
                 algorithm=algorithm,
