@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
@@ -121,7 +121,7 @@ class TestUtils:
         metric_registry = ArbitraryDataRegistry[IMetric]("metric")
         feature_registry = ArbitraryDataRegistry[IFeature]("feature")
         algorithm_registry = ArbitraryDataRegistry[IAlgorithm[IBackend]]("algorithm")
-        plot_registry = ArbitraryDataRegistry[IPlot]("plot")
+        plot_registry = ArbitraryDataRegistry[IPlot[Any]]("plot")
 
         feature_registry.register("feature", MockFeature)
         metric_registry.register("metric", MockMetric)

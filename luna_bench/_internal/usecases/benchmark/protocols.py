@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Any, Protocol
 
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from luna_quantum.solve.interfaces.backend_i import IBackend
@@ -8,12 +8,14 @@ from returns.result import Result
 from luna_bench._internal.interfaces.feature_i import IFeature
 from luna_bench._internal.interfaces.metric_i import IMetric
 from luna_bench._internal.interfaces.plot_i import IPlot
+from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
 from luna_bench._internal.user_models import AlgorithmUserModel, BenchmarkUserModel, MetricUserModel, PlotUserModel
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
+from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -77,7 +79,7 @@ class FeatureRunUc(Protocol):
 
 class PlotAddUc(Protocol):
     def __call__(
-        self, benchmark_name: str, name: str, plot: IPlot
+        self, benchmark_name: str, name: str, plot: IPlot[Any]
     ) -> Result[
         PlotUserModel,
         DataNotUniqueError
@@ -135,3 +137,13 @@ class BenchmarkSetModelsetUc(Protocol):
     def __call__(
         self, benchmark_name: str, modelset_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]: ...
+
+
+class PlotsRunUc(Protocol):
+    error_handling_mode: UseCaseErrorHandlingMode
+
+    def __call__(
+        self,
+        benchmark: BenchmarkUserModel,
+        error_handling_mode: UseCaseErrorHandlingMode = UseCaseErrorHandlingMode.FAIL_ON_ERROR,
+    ) -> Result[None, PlotRunError | UnknownLunaBenchError]: ...

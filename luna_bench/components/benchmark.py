@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
@@ -8,6 +8,7 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 from returns.pipeline import is_successful
 
 from luna_bench._internal.interfaces import IFeature, IMetric, IPlot
+from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
 from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmAddUc,
     BenchmarkCreateUc,
@@ -22,6 +23,7 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     MetricRemoveUc,
     PlotAddUc,
     PlotRemoveUc,
+    PlotsRunUc,
 )
 from luna_bench._internal.usecases.modelset.protocols import ModelSetLoadUc
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
@@ -33,6 +35,7 @@ from luna_bench._internal.user_models import (
     PlotUserModel,
 )
 from luna_bench.components.algorithm import Algorithm
+from luna_bench.components.enums import ErrorHandlingMode
 from luna_bench.components.feature import Feature
 from luna_bench.components.metric import Metric
 from luna_bench.components.model_set import ModelSet
@@ -62,6 +65,13 @@ class Benchmark(BenchmarkUserModel):
     """
 
     _logger: ClassVar[Logger] = Logging.get_logger(__name__)
+
+    @staticmethod
+    @inject
+    def __run_plots_uc(
+        benchmark_run_plots: PlotsRunUc = Provide[UsecaseContainer.benchmark_run_plots_uc],
+    ) -> PlotsRunUc:
+        return benchmark_run_plots
 
     @staticmethod
     @inject
@@ -575,7 +585,7 @@ class Benchmark(BenchmarkUserModel):
     def add_plot(
         self,
         name: str,
-        plot: IPlot,
+        plot: IPlot[Any],
     ) -> Plot:
         """
         Add a plot to the benchmark with a given name.
@@ -590,7 +600,7 @@ class Benchmark(BenchmarkUserModel):
         ----------
         name: str
             The name of the plot to add.
-        plot: IPlot
+        plot: IPlot[Any]
             The plot to add.
 
         Returns
@@ -665,8 +675,47 @@ class Benchmark(BenchmarkUserModel):
     def run_metrics(self) -> None:  # noqa: D102 # Not yet implemented
         raise NotImplementedError
 
-    def run_plots(self) -> None:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+    def run_plots(
+        self,
+        error_handling_mode: ErrorHandlingMode = ErrorHandlingMode.FAIL_ON_ERROR,
+    ) -> None:
+        """
+        Execute all plots registered in the benchmark.
+
+        Iterates through all plots in the benchmark, validates each plot against
+        the benchmark data, and executes the plot generation. Each plot is
+        validated before execution to ensure required data (metrics, features, etc.)
+        is available. Plot execution is sequential and follows the order defined
+        in the benchmark configuration.
+
+        Parameters
+        ----------
+        error_handling_mode : ErrorHandlingMode
+            Determines behavior when plot validation or execution fails.
+            - FAIL_ON_ERROR: Stop at the first error and raise RuntimeError
+            - CONTINUE_ON_ERROR: Log warnings and continue with remaining plots
+
+        Raises
+        ------
+        RuntimeError
+            If plot validation or execution fails. The RuntimeError wraps the
+            underlying error, which may be PlotRunError (for validation failures)
+            or UnknownLunaBenchError (for unexpected execution errors).
+            Only raised in FAIL_ON_ERROR mode; in CONTINUE_ON_ERROR mode,
+            errors are logged as warnings instead.
+
+        Notes
+        -----
+        In FAIL_ON_ERROR mode, the method stops at the first validation or
+        execution error. In CONTINUE_ON_ERROR mode, errors are logged and
+        execution continues with remaining plots.
+        """
+        benchmark_run_plots = self.__run_plots_uc()
+        result = benchmark_run_plots(self, UseCaseErrorHandlingMode(error_handling_mode.value))
+        if not is_successful(result):
+            error = result.failure()
+            Benchmark._logger.error(f"Failed to run plots for the benchmark {self.name} with error: {error}")
+            raise RuntimeError(error)
 
     def run_jobs(self) -> None:  # noqa: D102 # Not yet implemented
         raise NotImplementedError
