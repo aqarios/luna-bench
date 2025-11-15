@@ -10,7 +10,6 @@ from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.interfaces import IPlot
 from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
 from luna_bench._internal.user_models import BenchmarkUserModel, PlotUserModel
-from luna_bench._internal.user_models import PlotUserModel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -116,7 +115,7 @@ class TestPlot:
     )
     def test_run_plots(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         error_handling_mode: UseCaseErrorHandlingMode,
         plot: IPlot[Any],
         exp: Result[
@@ -138,7 +137,7 @@ class TestPlot:
             plots=[_empty_plot("test", plot)],
         )
 
-        result = default_usecase.benchmark_run_plots_uc()(benchmark, error_handling_mode)
+        result = usecase.benchmark_run_plots_uc()(benchmark, error_handling_mode)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()

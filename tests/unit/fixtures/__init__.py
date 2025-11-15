@@ -10,6 +10,7 @@ __all__ = [
     "infeasible_model",
     "model",
     "regular_model",
-    "setup_benchmark", "solution",
+    "setup_benchmark",
+    "solution",
     "usecase",
 ]

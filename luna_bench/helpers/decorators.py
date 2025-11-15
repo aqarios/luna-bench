@@ -66,16 +66,16 @@ def algorithm[T: AlgorithmAsync[BaseModel] | AlgorithmSync](
     _cls: type[T],
     *,
     algorithm_id: str | None = None,
-) -> type[T]:
-    ...
+) -> type[T]: ...
+
 
 @overload
 def algorithm[T: AlgorithmAsync[BaseModel] | AlgorithmSync](
     _cls: None = None,
     *,
     algorithm_id: str | None = None,
-) -> Callable[[type[T]], type[T]]:
-    ...
+) -> Callable[[type[T]], type[T]]: ...
+
 
 @inject
 def algorithm[T: AlgorithmAsync[BaseModel] | AlgorithmSync](

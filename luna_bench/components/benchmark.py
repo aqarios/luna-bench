@@ -8,9 +8,7 @@ from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from returns.pipeline import is_successful
 
-from luna_bench._internal.interfaces import IFeature, IMetric, IPlot
-from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
-from luna_bench._internal.interfaces.algorithm_sync import AlgorithmSync
+from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync, IFeature, IMetric, IPlot
 from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
 from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmAddUc,
@@ -38,7 +36,7 @@ from luna_bench._internal.user_models import (
     MetricUserModel,
     PlotUserModel,
 )
-from luna_bench._internal.wrappers.luna_quantum.luna_algorithm_wrapper import LunaAlgorithmWrapper
+from luna_bench._internal.wrappers import LunaAlgorithmWrapper
 from luna_bench.components.algorithm import Algorithm
 from luna_bench.components.enums import ErrorHandlingMode
 from luna_bench.components.feature import Feature
@@ -517,7 +515,7 @@ class Benchmark(BenchmarkUserModel):
     def add_algorithm(
         self,
         name: str,
-        algorithm: IAlgorithm[IBackend],
+        algorithm: IAlgorithm[Any] | AlgorithmSync | AlgorithmAsync[Any],
     ) -> Algorithm:
         """
         Add an algorithm to the benchmark with a given name.
@@ -532,7 +530,7 @@ class Benchmark(BenchmarkUserModel):
         ----------
         name: str
             The name of the algorithm to add.
-        algorithm: IAlgorithm
+        algorithm: IAlgorithm[Any] | AlgorithmSync | AlgorithmAsync[Any]
             An instance of the algorithm to add.
 
         Returns
@@ -540,6 +538,9 @@ class Benchmark(BenchmarkUserModel):
         Algorithm
             The added algorithm.
         """
+        if isinstance(algorithm, IAlgorithm):
+            algorithm = LunaAlgorithmWrapper.wrap(algorithm)
+
         benchmark_add_algorithm = self.__add_algorithm_uc()
         result: Result[
             AlgorithmUserModel,
@@ -563,6 +564,7 @@ class Benchmark(BenchmarkUserModel):
             name=result_algorithm.name,
             status=result_algorithm.status,
             algorithm=result_algorithm.algorithm,
+            results=result_algorithm.results,
         )
 
     def remove_algorithm(
