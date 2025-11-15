@@ -1,3 +1,5 @@
+from typing import Any
+
 from dependency_injector.wiring import Provide, inject
 from pydantic import ValidationError
 from returns.pipeline import is_successful
@@ -19,13 +21,13 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 class PlotAddUcImpl(PlotAddUc):
     _transaction: DaoTransaction
-    _registry: PydanticRegistry[IPlot, RegisteredDataDomain]
+    _registry: PydanticRegistry[IPlot[Any], RegisteredDataDomain]
 
     @inject
     def __init__(
         self,
         transaction: DaoTransaction = Provide[DaoContainer.transaction],
-        registry: PydanticRegistry[IPlot, RegisteredDataDomain] = Provide[RegistryContainer.plot_registry],
+        registry: PydanticRegistry[IPlot[Any], RegisteredDataDomain] = Provide[RegistryContainer.plot_registry],
     ) -> None:
         """
         Initialize the BenchmarkAddPlotUc with a dao transaction.
@@ -39,7 +41,7 @@ class PlotAddUcImpl(PlotAddUc):
         self._registry = registry
 
     def __call__(
-        self, benchmark_name: str, name: str, plot: IPlot
+        self, benchmark_name: str, name: str, plot: IPlot[Any]
     ) -> Result[
         PlotUserModel,
         DataNotUniqueError
@@ -63,7 +65,7 @@ class PlotAddUcImpl(PlotAddUc):
             if not is_successful(result):
                 return Failure(result.failure())
 
-            config: Result[IPlot, UnknownIdError | ValidationError] = self._registry.from_domain_to_user_model(
+            config: Result[IPlot[Any], UnknownIdError | ValidationError] = self._registry.from_domain_to_user_model(
                 result.unwrap().config_data
             )
 

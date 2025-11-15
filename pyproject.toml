@@ -24,3 +24,6 @@ dev = [
     "tox>=4.30.3",
     "types-peewee>=3.18.2",
 ]
+opt-metrics = [
+    "pyscipopt>=5.6.0",
+]

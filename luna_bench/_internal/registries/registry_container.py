@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from dependency_injector import containers, providers
 from pydantic import BaseModel
@@ -36,6 +36,6 @@ class RegistryContainer(containers.DeclarativeContainer):
         ArbitraryDataRegistry[IMetric], kind="metric"
     )
 
-    plot_registry: Provider[PydanticRegistry[IPlot, RegisteredDataDomain]] = providers.ThreadSafeSingleton(
-        ArbitraryDataRegistry[IPlot], kind="plot"
+    plot_registry: Provider[PydanticRegistry[IPlot[Any], RegisteredDataDomain]] = providers.ThreadSafeSingleton(
+        ArbitraryDataRegistry[IPlot[Any]], kind="plot"
     )

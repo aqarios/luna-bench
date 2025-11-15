@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from pydantic import BaseModel
@@ -151,7 +151,7 @@ class TestUtils:
         feature_registry = ArbitraryDataRegistry[IFeature]("feature")
         algorithm_sync_registry = ArbitraryDataRegistry[AlgorithmSync]("algorithm_sync")
         algorithm_async_registry = ArbitraryDataRegistry[AlgorithmAsync[BaseModel]]("algorithm_async")
-        plot_registry = ArbitraryDataRegistry[IPlot]("plot")
+        plot_registry = ArbitraryDataRegistry[IPlot[Any]]("plot")
 
         feature_registry.register("feature", MockFeature)
         metric_registry.register("metric", MockMetric)
