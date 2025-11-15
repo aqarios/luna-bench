@@ -8,7 +8,7 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.interfaces import IPlot
-from luna_bench._internal.user_models import BenchmarkUserModel, PlotUserModel
+from luna_bench._internal.user_models import PlotUserModel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -31,20 +31,6 @@ def _empty_plot(name: str, plot: IPlot) -> PlotUserModel:
 
 
 class TestPlot:
-    @pytest.fixture()
-    @staticmethod
-    def default_usecase(usecase: UsecaseContainer) -> UsecaseContainer:
-        create_default: Result[
-            BenchmarkUserModel, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError
-        ] = usecase.benchmark_create_uc()(benchmark_name="existing")
-        assert is_successful(create_default)
-        create_default_plot = usecase.benchmark_add_plot_uc()(
-            benchmark_name="existing", name="existing", plot=MockPlot()
-        )
-        assert is_successful(create_default_plot)
-
-        return usecase
-
     @pytest.mark.parametrize(
         ("benchmark_name", "plot_name", "plot", "exp"),
         [
@@ -56,7 +42,7 @@ class TestPlot:
     )
     def test_add(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         benchmark_name: str,
         plot_name: str,
         plot: IPlot,
@@ -78,7 +64,7 @@ class TestPlot:
             | UnknownComponentError
             | UnknownIdError
             | ValidationError,
-        ] = default_usecase.benchmark_add_plot_uc()(benchmark_name, plot_name, plot)
+        ] = usecase.benchmark_add_plot_uc()(benchmark_name, plot_name, plot)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
@@ -95,7 +81,7 @@ class TestPlot:
     )
     def test_remove(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         benchmark_name: str,
         plot_name: str,
         exp: Result[
@@ -108,7 +94,7 @@ class TestPlot:
             | ValidationError,
         ],
     ) -> None:
-        result: Result[None, DataNotExistError | UnknownLunaBenchError] = default_usecase.benchmark_remove_plot_uc()(
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = usecase.benchmark_remove_plot_uc()(
             benchmark_name, plot_name
         )
 

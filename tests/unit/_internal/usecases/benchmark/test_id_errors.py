@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result
 
@@ -18,37 +17,32 @@ if TYPE_CHECKING:
 
 
 class TestIdErrors:
-    @pytest.fixture()
-    @staticmethod
-    def setup_transaction(configured_dao: DaoTransaction) -> DaoTransaction:
-        """Provide a transaction fixture with a default model for testing the ModelDAOs."""
-        configured_dao.benchmark.create(benchmark_name="existing")
-
-        return configured_dao
-
     class DummyRegistry(ArbitraryDataRegistry[Any]):
         def get_by_id(self, registered_id: str) -> Result[type[RegisteredDataDomain], UnknownIdError]:
             return Failure(UnknownIdError("Dummy", registered_id))
 
-    def test_add_id_error(self, setup_transaction: DaoTransaction) -> None:
+    def test_add_id_error(self, empty_transaction: DaoTransaction) -> None:
         registry = TestIdErrors.DummyRegistry("Dummy")
+        benchmark_name = "id_test"
+
+        empty_transaction.benchmark.create(benchmark_name)
 
         registry.register("algorithm", MockAlgorithm)
         registry.register("feature", MockFeature)
         registry.register("metric", MockMetric)
         registry.register("plot", MockPlot)
 
-        result_algorithm = AlgorithmAddUcImpl(transaction=setup_transaction, registry=registry)(
-            "existing", "non-existing", MockAlgorithm()
+        result_algorithm = AlgorithmAddUcImpl(
+            transaction=empty_transaction, registry_sync=registry, registry_async=registry
+        )(benchmark_name, "non-existing", MockAlgorithm())
+        result_feature = FeatureAddUcImpl(transaction=empty_transaction, registry=registry)(
+            benchmark_name, "non-existing", MockFeature()
         )
-        result_feature = FeatureAddUcImpl(transaction=setup_transaction, registry=registry)(
-            "existing", "non-existing", MockFeature()
+        result_metric = MetricAddUcImpl(transaction=empty_transaction, registry=registry)(
+            benchmark_name, "non-existing", MockMetric()
         )
-        result_metric = MetricAddUcImpl(transaction=setup_transaction, registry=registry)(
-            "existing", "non-existing", MockMetric()
-        )
-        result_plot = PlotAddUcImpl(transaction=setup_transaction, registry=registry)(
-            "existing", "non-existing", MockPlot()
+        result_plot = PlotAddUcImpl(transaction=empty_transaction, registry=registry)(
+            benchmark_name, "non-existing", MockPlot()
         )
 
         assert not is_successful(result_algorithm)

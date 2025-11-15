@@ -522,7 +522,7 @@ class Benchmark(BenchmarkUserModel):
         ----------
         name: str
             The name of the algorithm to add.
-        algorithm: IAlgorithm
+        algorithm: IAlgorithm[Any] | AlgorithmSync | AlgorithmAsync[Any]
             An instance of the algorithm to add.
 
         Returns

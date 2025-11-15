@@ -8,7 +8,6 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
-from luna_bench._internal.user_models.model_metadata_usermodel import ModelMetadataUserModel
 from luna_bench._internal.user_models.model_set_usermodel import ModelSetUserModel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
@@ -24,8 +23,8 @@ class TestModelsetUc:
     @pytest.mark.parametrize(
         ("modelset_name", "exp"),
         [
-            ("MS1", Failure(DataNotUniqueError())),
-            ("MS2", Success(ModelSetUserModel(id=2, name="MS2", models=[]))),
+            ("existing", Failure(DataNotUniqueError())),
+            ("non-existing", Success(ModelSetUserModel(id=2, name="non-existing", models=[]))),
         ],
     )
     def test_create(
@@ -48,9 +47,9 @@ class TestModelsetUc:
     @pytest.mark.parametrize(
         ("modelset_name", "model", "models_after_add", "exp"),
         [
-            ("MS1", _dummy_model("M3"), 3, Success(None)),
-            ("MS1", _dummy_model("M1"), 2, Success(None)),
-            ("MS3", _dummy_model("M3"), 2, Failure(DataNotExistError())),
+            ("existing", _dummy_model("non-existing"), 2, Success(None)),
+            ("existing", _dummy_model("existing"), 1, Success(None)),
+            ("non-existing", _dummy_model("non-existing"), 1, Failure(DataNotExistError())),
         ],
     )
     def test_add_model(
@@ -93,8 +92,8 @@ class TestModelsetUc:
     @pytest.mark.parametrize(
         ("modelset_name", "exp"),
         [
-            ("MS1", Failure(DataNotUniqueError())),
-            ("MS2", Success(ModelSetUserModel(id=2, name="MS2", models=[]))),
+            ("existing", Failure(DataNotUniqueError())),
+            ("non-existing", Success(ModelSetUserModel(id=2, name="non-existing", models=[]))),
         ],
     )
     def test_model_create(
@@ -118,18 +117,18 @@ class TestModelsetUc:
         ("modelset_name", "model", "exp"),
         [
             (
-                "MS1",
-                _dummy_model("M2"),
+                "existing",
+                _dummy_model("existing"),
                 Success(
                     ModelSetUserModel(
                         id=1,
-                        name="MS1",
-                        models=[ModelMetadataUserModel(id=1, name="M1", hash=_dummy_model("M1").__hash__())],
+                        name="existing",
+                        models=[],
                     )
                 ),
             ),
-            ("MS1", _dummy_model("M3"), Failure(DataNotExistError())),
-            ("MS3", _dummy_model("M1"), Failure(DataNotExistError())),
+            ("existing", _dummy_model("non-existing"), Failure(DataNotExistError())),
+            ("non-existing", _dummy_model("existing"), Failure(DataNotExistError())),
         ],
     )
     def test_remove_model(
@@ -153,8 +152,8 @@ class TestModelsetUc:
     @pytest.mark.parametrize(
         ("modelset_name", "exp"),
         [
-            ("MS1", Success(None)),
-            ("MS2", Failure(DataNotExistError())),
+            ("existing", Success(None)),
+            ("non-existing", Failure(DataNotExistError())),
         ],
     )
     def test_delete(
@@ -175,8 +174,8 @@ class TestModelsetUc:
     @pytest.mark.parametrize(
         ("modelset_name", "exp"),
         [
-            ("MS1", Success(ModelSetUserModel(id=1, name="MS1", models=[]))),
-            ("MS2", Failure(DataNotExistError())),
+            ("existing", Success(ModelSetUserModel(id=1, name="existing", models=[]))),
+            ("non-existing", Failure(DataNotExistError())),
         ],
     )
     def test_modelset_load(
@@ -194,7 +193,7 @@ class TestModelsetUc:
             ex_modelset = exp.unwrap()
             assert ms1.name == ex_modelset.name
             assert ms1.id == ex_modelset.id
-            assert len(ms1.models) == 2
+            assert len(ms1.models) == 1
 
         else:
             assert isinstance(result.failure(), type(exp.failure()))

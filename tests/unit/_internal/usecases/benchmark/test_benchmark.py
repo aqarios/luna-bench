@@ -9,6 +9,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.user_models import BenchmarkUserModel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
+from tests.unit._internal.usecases.benchmark.test_utils import _full_benchmark_usermodel
 
 if TYPE_CHECKING:
     from pydantic import ValidationError
@@ -30,19 +31,6 @@ def _empty_benchmark(name: str) -> BenchmarkUserModel:
 
 
 class TestBenchmark:
-    @pytest.fixture()
-    @staticmethod
-    def default_usecase(
-        usecase: UsecaseContainer,
-    ) -> UsecaseContainer:
-        uc = usecase.benchmark_create_uc()
-
-        create_default: Result[
-            BenchmarkUserModel, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError
-        ] = uc(benchmark_name="existing")
-        assert is_successful(create_default)
-        return usecase
-
     @pytest.mark.parametrize(
         ("benchmark_name", "exp"),
         [
@@ -52,13 +40,13 @@ class TestBenchmark:
     )
     def test_create(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         benchmark_name: str,
         exp: Result[BenchmarkUserModel, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError],
     ) -> None:
         result: Result[
             BenchmarkUserModel, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError
-        ] = default_usecase.benchmark_create_uc()(benchmark_name)
+        ] = usecase.benchmark_create_uc()(benchmark_name)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
@@ -74,13 +62,11 @@ class TestBenchmark:
     )
     def test_delete(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         benchmark_name: str,
         exp: Result[None, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
-        result: Result[None, DataNotExistError | UnknownLunaBenchError] = default_usecase.benchmark_delete_uc()(
-            benchmark_name
-        )
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = usecase.benchmark_delete_uc()(benchmark_name)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
@@ -90,69 +76,69 @@ class TestBenchmark:
     @pytest.mark.parametrize(
         ("benchmark_name", "exp"),
         [
-            ("existing", Success(_empty_benchmark(name="existing"))),
+            ("existing", Success(_full_benchmark_usermodel("existing"))),
             ("non-existing", Failure(DataNotExistError())),
         ],
     )
     def test_load(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         benchmark_name: str,
-        exp: Result[None, DataNotExistError | UnknownLunaBenchError],
+        exp: Result[BenchmarkUserModel, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         result: Result[
             BenchmarkUserModel, DataNotExistError | UnknownLunaBenchError | UnknownIdError | ValidationError
-        ] = default_usecase.benchmark_load_uc()(benchmark_name)
+        ] = usecase.benchmark_load_uc()(benchmark_name)
 
         if is_successful(exp):
-            assert result.unwrap() == exp.unwrap()
+            assert result.unwrap().model_dump_json() == exp.unwrap().model_dump_json()
         else:
             assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
         ("exp"),
         [
-            (Success([_empty_benchmark(name="existing")])),
+            (Success([_full_benchmark_usermodel("existing")])),
         ],
     )
     def test_load_all(
         self,
-        default_usecase: UsecaseContainer,
-        exp: Result[None, DataNotExistError | UnknownLunaBenchError],
+        usecase: UsecaseContainer,
+        exp: Result[list[BenchmarkUserModel], DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         result: Result[list[BenchmarkUserModel], UnknownLunaBenchError | UnknownIdError | ValidationError] = (
-            default_usecase.benchmark_load_all_uc()()
+            usecase.benchmark_load_all_uc()()
         )
 
         if is_successful(exp):
-            assert result.unwrap() == exp.unwrap()
+            assert [r.model_dump_json() for r in result.unwrap()] == [r.model_dump_json() for r in exp.unwrap()]
         else:
             assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
         ("bench_name", "modelset_name", "exp"),
         [
-            ("existing", "existing", Success(None)),
+            ("existing", "new", Success(None)),
             ("non-existing", "existing", Failure(DataNotExistError())),
             ("existing", "non-existing", Failure(DataNotExistError())),
         ],
     )
     def test_set_modelset(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         bench_name: str,
         modelset_name: str,
         exp: Result[None, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
-        assert is_successful(default_usecase.modelset_create_uc()(modelset_name="existing"))
+        assert is_successful(usecase.modelset_create_uc()(modelset_name="new"))
 
-        result: Result[None, DataNotExistError | UnknownLunaBenchError] = default_usecase.benchmark_set_modelset_uc()(
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = usecase.benchmark_set_modelset_uc()(
             benchmark_name=bench_name, modelset_name=modelset_name
         )
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
-            assert default_usecase.benchmark_load_uc()(benchmark_name="existing").unwrap().modelset is not None
+            assert usecase.benchmark_load_uc()(benchmark_name="existing").unwrap().modelset is not None
         else:
             assert isinstance(result.failure(), type(exp.failure()))
 
@@ -162,21 +148,16 @@ class TestBenchmark:
     )
     def test_remove_modelset(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         bench_name: str,
         exp: Result[None, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
-        assert is_successful(default_usecase.modelset_create_uc()(modelset_name="existing"))
-        assert is_successful(
-            default_usecase.benchmark_set_modelset_uc()(benchmark_name="existing", modelset_name="existing")
-        )
-
-        result: Result[None, DataNotExistError | UnknownLunaBenchError] = (
-            default_usecase.benchmark_remove_modelset_uc()(bench_name)
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = usecase.benchmark_remove_modelset_uc()(
+            bench_name
         )
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
-            assert default_usecase.benchmark_load_uc()(benchmark_name="existing").unwrap().modelset is None
+            assert usecase.benchmark_load_uc()(benchmark_name="existing").unwrap().modelset is None
         else:
             assert isinstance(result.failure(), type(exp.failure()))

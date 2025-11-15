@@ -59,7 +59,8 @@ __all__ = (
     "FakePlot",
 )
 
-# Import and wrapping after the wiring is done, to ensure the wrappers and decorators have access to the injected registries
+# Import and wrapping after the wiring is done,
+# to ensure the wrappers and decorators have access to the injected registries
 from luna_bench._internal.wrappers import LunaAlgorithmWrapper  # noqa: E402
 
 LunaAlgorithmWrapper.wrap_algorithms()

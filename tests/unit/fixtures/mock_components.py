@@ -1,11 +1,7 @@
-from typing import Any
-
-from luna_quantum import Model
-from luna_quantum.solve import SolveJob
-from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
-from luna_quantum.solve.interfaces.backend_i import IBackend
+from luna_quantum import Model, Solution
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
+from luna_bench._internal.interfaces import AlgorithmSync
 from luna_bench._internal.interfaces.feature_i import IFeature
 from luna_bench._internal.interfaces.metric_i import IMetric
 from luna_bench._internal.interfaces.plot_i import IPlot
@@ -30,27 +26,13 @@ class UnregisteredFeature(IFeature):
 
 
 @algorithm
-class MockAlgorithm(IAlgorithm[IBackend]):
-    def run(
-        self,
-        model: Model | str,
-        name: str | None = None,
-        backend: IBackend | None = None,
-        *args: Any | None,
-        **kwargs: Any | None,
-    ) -> SolveJob:
+class MockAlgorithm(AlgorithmSync):
+    def run(self, model: Model) -> Solution:
         raise NotImplementedError
 
 
-class UnregisteredAlgorithm(IAlgorithm[IBackend]):
-    def run(
-        self,
-        model: Model | str,
-        name: str | None = None,
-        backend: IBackend | None = None,
-        *args: Any | None,
-        **kwargs: Any | None,
-    ) -> SolveJob:
+class UnregisteredAlgorithm(AlgorithmSync):
+    def run(self, model: Model) -> Solution:
         raise NotImplementedError
 
 

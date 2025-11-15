@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any
+from typing import Any, overload
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
@@ -60,6 +60,22 @@ def feature[T: IFeature](
 
     return _do_register
 
+
+@overload
+def algorithm[T: AlgorithmAsync[BaseModel] | AlgorithmSync](
+    _cls: type[T],
+    *,
+    algorithm_id: str | None = None,
+) -> type[T]:
+    ...
+
+@overload
+def algorithm[T: AlgorithmAsync[BaseModel] | AlgorithmSync](
+    _cls: None = None,
+    *,
+    algorithm_id: str | None = None,
+) -> Callable[[type[T]], type[T]]:
+    ...
 
 @inject
 def algorithm[T: AlgorithmAsync[BaseModel] | AlgorithmSync](
