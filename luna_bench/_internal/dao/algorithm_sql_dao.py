@@ -158,8 +158,6 @@ class AlgorithmSqlDao(AlgorithmDao):
             )
             algorithm_result.save()
             return Success(None)
-        except DoesNotExist:
-            return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 

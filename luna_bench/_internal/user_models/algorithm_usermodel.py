@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from typing import Any
+
+from pydantic import BaseModel, SkipValidation
 
 from luna_bench._internal.domain_models import JobStatus
 from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
@@ -12,6 +14,6 @@ class AlgorithmUserModel(BaseModel):
     name: str
     status: JobStatus
 
-    algorithm: AlgorithmSync | AlgorithmAsync[BaseModel]
+    algorithm: SkipValidation[AlgorithmSync | AlgorithmAsync[Any]]
 
     results: dict[str, AlgorithmResultUserModel]  # key is the model name

@@ -1,15 +1,20 @@
+from luna_bench._internal.usecases.benchmark.algorithm.algorithm_retrieve_async_retrival_data import (
+    AlgorithmRetrieveAsyncRetrivalDataUcImpl,
+)
+from luna_bench._internal.usecases.benchmark.algorithm.algorithm_retrieve_sync_solutions import (
+    AlgorithmRetrieveSyncSolutionsUcImpl,
+)
+
 from .algorithm_add import AlgorithmAddUcImpl
 from .algorithm_remove import AlgorithmRemoveUcImpl
-from .algorithm_retrieve_async import AlgorithmRetrieveAsyncUcImpl
-from .algorithm_retrieve_async_solution import AlgorithmRetrieveAsyncSolutionUcImpl
-from .algorithm_retrieve_sync import AlgorithmRetrieveSyncUcImpl
-from .algorithm_start_tasks import AlgorithmStartTasksUcImpl
+from .algorithm_retrieve_async_solutions import AlgorithmRetrieveAsyncSolutionsUcImpl
+from .algorithm_run_as_background_tasks import AlgorithmRunAsBackgroundTasksUcImpl
 
 __all__ = [
     "AlgorithmAddUcImpl",
     "AlgorithmRemoveUcImpl",
-    "AlgorithmRetrieveAsyncSolutionUcImpl",
-    "AlgorithmRetrieveAsyncUcImpl",
-    "AlgorithmRetrieveSyncUcImpl",
-    "AlgorithmStartTasksUcImpl",
+    "AlgorithmRetrieveAsyncRetrivalDataUcImpl",
+    "AlgorithmRetrieveAsyncSolutionsUcImpl",
+    "AlgorithmRetrieveSyncSolutionsUcImpl",
+    "AlgorithmRunAsBackgroundTasksUcImpl",
 ]

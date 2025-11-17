@@ -62,7 +62,7 @@ def feature[T: IFeature](
 
 
 @overload
-def algorithm[T: AlgorithmAsync[BaseModel] | AlgorithmSync](
+def algorithm[T: AlgorithmAsync[Any] | AlgorithmSync](
     _cls: type[T],
     *,
     algorithm_id: str | None = None,
@@ -70,7 +70,7 @@ def algorithm[T: AlgorithmAsync[BaseModel] | AlgorithmSync](
 
 
 @overload
-def algorithm[T: AlgorithmAsync[BaseModel] | AlgorithmSync](
+def algorithm[T: AlgorithmAsync[Any] | AlgorithmSync](
     _cls: None = None,
     *,
     algorithm_id: str | None = None,
@@ -78,12 +78,12 @@ def algorithm[T: AlgorithmAsync[BaseModel] | AlgorithmSync](
 
 
 @inject
-def algorithm[T: AlgorithmAsync[BaseModel] | AlgorithmSync](
+def algorithm[T: AlgorithmAsync[Any] | AlgorithmSync](
     _cls: type[T] | None = None,
     *,
     algorithm_id: str | None = None,
     algorithm_sync_registry: Registry[AlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
-    algorithm_async_registry: Registry[AlgorithmAsync[BaseModel]] = Provide[RegistryContainer.algorithm_async_registry],
+    algorithm_async_registry: Registry[AlgorithmAsync[Any]] = Provide[RegistryContainer.algorithm_async_registry],
 ) -> Callable[[type[T]], type[T]] | type[T]:
     """
     Register a class as an algorithm.

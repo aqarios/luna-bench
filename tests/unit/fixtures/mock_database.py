@@ -9,8 +9,9 @@ from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDa
 from luna_bench._internal.domain_models.benchmark_domain import BenchmarkDomain
 from luna_bench._internal.domain_models.model_metadata_domain import ModelMetadataDomain
 from luna_bench._internal.domain_models.modelset_domain import ModelSetDomain
+from luna_bench._internal.user_models import BenchmarkUserModel
 from luna_bench.configs.config import Config
-from tests.unit.fixtures.mock_components import MockAlgorithm, MockFeature, MockMetric, MockPlot
+from tests.unit.fixtures.mock_components import MockAlgorithm, MockAsyncAlgorithm, MockFeature, MockMetric, MockPlot
 from tests.unit.fixtures.mock_model import _dummy_model
 
 
@@ -43,6 +44,7 @@ class SetupBenchmark:
     model_name: str
 
     benchmark: BenchmarkDomain
+    benchmark_usermodel: BenchmarkUserModel
     modelset: ModelSetDomain
     model_metadata: ModelMetadataDomain
     transaction: DaoTransaction
@@ -55,6 +57,7 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
     modelset_name = "existing"
     model_name = "existing"
     algorithm_name = "existing"
+    algorithm_async_name = "existing_async"
     feature_name = "existing"
     metric_name = "existing"
     plot_name = "existing"
@@ -63,7 +66,6 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
 
     benchmark_result = empty_transaction.benchmark.create(benchmark_name=benchmark_name)
     assert is_successful(benchmark_result), "Benchmark creation failed for transaction_existing_benchmark"
-    benchmark = benchmark_result.unwrap()
 
     modelset_result = empty_transaction.modelset.create(modelset_name=modelset_name)
     assert is_successful(modelset_result), "Modelset creation failed for transaction_existing_benchmark"
@@ -84,14 +86,23 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
 
     empty_transaction.benchmark.set_modelset(benchmark_name=benchmark_name, modelset_name=modelset_name)
 
-    algorithm_result = empty_transaction.algorithm.add(
+    algorithm_sync_result = empty_transaction.algorithm.add(
         benchmark_name=benchmark_name,
         algorithm_name=algorithm_name,
         registered_id=MockAlgorithm._registered_id,  # type: ignore[attr-defined] # decorator adds private field
         algorithm_type=AlgorithmType.SYNC,
         algorithm=ArbitraryDataDomain(),
     )
-    assert is_successful(algorithm_result), "Algorithm creation failed for transaction_existing_benchmark"
+    assert is_successful(algorithm_sync_result), "Algorithm creation failed for transaction_existing_benchmark"
+
+    algorithm_async_result = empty_transaction.algorithm.add(
+        benchmark_name=benchmark_name,
+        algorithm_name=algorithm_async_name,
+        registered_id=MockAsyncAlgorithm._registered_id,  # type: ignore[attr-defined] # decorator adds private field
+        algorithm_type=AlgorithmType.ASYNC,
+        algorithm=ArbitraryDataDomain(),
+    )
+    assert is_successful(algorithm_async_result), "Algorithm creation failed for transaction_existing_benchmark"
 
     feature_result = empty_transaction.feature.add(
         benchmark_name=benchmark_name,
@@ -120,12 +131,16 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
 
     assert is_successful(plot_result), "Plot creation failed for transaction_existing_benchmark"
 
+    loaded_benchmark_result = empty_transaction.benchmark.load(benchmark_name)
+    assert is_successful(loaded_benchmark_result), "Benchmark loading failed for transaction_existing_benchmark"
+    loaded_benchmark = loaded_benchmark_result.unwrap()
+
     setup_benchmark = SetupBenchmark()
 
     setup_benchmark.benchmark_name = benchmark_name
     setup_benchmark.modelset_name = modelset_name
     setup_benchmark.model_name = model_name
-    setup_benchmark.benchmark = benchmark
+    setup_benchmark.benchmark = loaded_benchmark
     setup_benchmark.modelset = modelset
     setup_benchmark.model_metadata = model_metadata
     setup_benchmark.transaction = empty_transaction

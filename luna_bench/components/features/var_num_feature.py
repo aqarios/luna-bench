@@ -20,8 +20,6 @@ class VarNumberFeatureResult(ArbitraryDataDomain):
 class VarNumberFeature(IFeature):
     """Fake feature class."""
 
-    exponent: int
-
     def run(self, model: Model) -> VarNumberFeatureResult:
         """
         Fake feature which will return a random number.
@@ -32,4 +30,4 @@ class VarNumberFeature(IFeature):
             The model for which the feature should be calculated
 
         """
-        return VarNumberFeatureResult(var_number=model.num_variables**self.exponent)
+        return VarNumberFeatureResult(var_number=model.num_variables)

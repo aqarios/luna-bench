@@ -1,12 +1,14 @@
 from contextlib import nullcontext
 from typing import TYPE_CHECKING
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 from luna_quantum import Model
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
+from luna_bench._internal.dao import DaoTransaction, ModelSetDao
+from luna_bench._internal.usecases.modelset import ModelSetLoadAllUcImpl
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
 from luna_bench._internal.user_models.model_set_usermodel import ModelSetUserModel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
@@ -208,3 +210,15 @@ class TestModelsetUc:
         assert is_successful(result)
 
         assert len(result.unwrap()) == 1
+
+    def test_modelset_load_all_error(self) -> None:
+        mock_dao = Mock(spec=ModelSetDao)
+        mock_dao.load_all.return_value = Failure(UnknownLunaBenchError(exception=RuntimeError()))
+
+        mock_transaction = MagicMock(spec=DaoTransaction)
+        mock_transaction.__enter__.return_value = mock_transaction
+        mock_transaction.modelset = mock_dao  # Works on Mock objects!
+
+        r = ModelSetLoadAllUcImpl(transaction=mock_transaction)()
+        assert not is_successful(r)
+        assert isinstance(r.failure(), UnknownLunaBenchError)

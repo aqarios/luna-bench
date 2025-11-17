@@ -1,0 +1,2 @@
+class TestAlgorithmAdd:
+    pass

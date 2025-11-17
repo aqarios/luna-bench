@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from pydantic import BaseModel
 from returns.result import Result, Success
 
 from luna_bench._internal.domain_models import BenchmarkDomain, BenchmarkStatus
@@ -28,7 +27,7 @@ from luna_bench._internal.user_models import AlgorithmUserModel, BenchmarkUserMo
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
 from luna_bench._internal.user_models.model_metadata_usermodel import ModelMetadataUserModel
 from luna_bench._internal.user_models.model_set_usermodel import ModelSetUserModel
-from tests.unit.fixtures.mock_components import MockAlgorithm, MockFeature, MockMetric, MockPlot
+from tests.unit.fixtures.mock_components import MockAlgorithm, MockAsyncAlgorithm, MockFeature, MockMetric, MockPlot
 from tests.unit.fixtures.mock_model import _dummy_model
 
 if TYPE_CHECKING:
@@ -66,7 +65,10 @@ def _full_benchmark_usermodel(name: str) -> BenchmarkUserModel:
         ),
         features=[FeatureUserModel(name="existing", status=JobStatus.CREATED, feature=MockFeature(), results={})],
         algorithms=[
-            AlgorithmUserModel(name="existing", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={})
+            AlgorithmUserModel(name="existing", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={}),
+            AlgorithmUserModel(
+                name="existing_async", status=JobStatus.CREATED, algorithm=MockAsyncAlgorithm(), results={}
+            ),
         ],
         metrics=[MetricUserModel(name="existing", status=JobStatus.CREATED, metric=MockMetric())],
         plots=[PlotUserModel(name="existing", status=JobStatus.CREATED, plot=MockPlot())],
@@ -116,7 +118,14 @@ def _full_domainmodel(name: str) -> BenchmarkDomain:
                 algorithm_type=AlgorithmType.SYNC,
                 results={},
                 config_data=RegisteredDataDomain(registered_id="algorithm", data=ArbitraryDataDomain()),
-            )
+            ),
+            AlgorithmDomain(
+                name="existing_async",
+                status=JobStatus.CREATED,
+                algorithm_type=AlgorithmType.ASYNC,
+                results={},
+                config_data=RegisteredDataDomain(registered_id="algorithm_async", data=ArbitraryDataDomain()),
+            ),
         ],
         metrics=[
             MetricDomain(
@@ -150,12 +159,13 @@ class TestUtils:
         metric_registry = ArbitraryDataRegistry[IMetric]("metric")
         feature_registry = ArbitraryDataRegistry[IFeature]("feature")
         algorithm_sync_registry = ArbitraryDataRegistry[AlgorithmSync]("algorithm_sync")
-        algorithm_async_registry = ArbitraryDataRegistry[AlgorithmAsync[BaseModel]]("algorithm_async")
+        algorithm_async_registry = ArbitraryDataRegistry[AlgorithmAsync[Any]]("algorithm_async")
         plot_registry = ArbitraryDataRegistry[IPlot[Any]]("plot")
 
         feature_registry.register("feature", MockFeature)
         metric_registry.register("metric", MockMetric)
         algorithm_sync_registry.register("algorithm", MockAlgorithm)
+        algorithm_async_registry.register("algorithm_async", MockAsyncAlgorithm)
         plot_registry.register("plot", MockPlot)
 
         feature_mapper = FeatureMapper(feature_registry)

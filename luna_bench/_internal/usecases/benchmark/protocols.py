@@ -1,6 +1,8 @@
 from typing import Any, Protocol
 
-from pydantic import ValidationError
+from luna_quantum import Solution
+from pydantic import BaseModel, ValidationError
+from returns.maybe import Maybe
 from returns.result import Result
 
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
@@ -126,22 +128,22 @@ class AlgorithmFilterUc(Protocol):
     ) -> Result[list[AlgorithmUserModel], RunAlgorithmMissingError]: ...
 
 
-class AlgorithmStartTasksUc(Protocol):
+class AlgorithmRunAsBackgroundTasksUc(Protocol):
     def __call__(
         self,
         benchmark_name: str,
         models: list[ModelMetadataUserModel],
         algorithms: list[AlgorithmUserModel],
-    ) -> Result[None, RunAlgorithmMissingError | RunModelsetMissingError]: ...
+    ) -> None: ...
 
 
-class AlgorithmRetrieveAsyncUc(Protocol):
+class AlgorithmRetrieveAsyncRetrivalDataUc(Protocol):
     def __call__(
         self, benchmark: BenchmarkUserModel
     ) -> Result[None, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]: ...
 
 
-class AlgorithmRetrieveAsyncSolutionUc(Protocol):
+class AlgorithmRetrieveAsyncSolutionsUc(Protocol):
     def __call__(
         self, benchmark: BenchmarkUserModel
     ) -> Result[
@@ -149,7 +151,7 @@ class AlgorithmRetrieveAsyncSolutionUc(Protocol):
     ]: ...
 
 
-class AlgorithmRetrieveSyncUc(Protocol):
+class AlgorithmRetrieveSyncSolutionsUc(Protocol):
     def __call__(
         self, benchmark: BenchmarkUserModel
     ) -> Result[None, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]: ...
@@ -197,3 +199,27 @@ class PlotsRunUc(Protocol):
         benchmark: BenchmarkUserModel,
         error_handling_mode: UseCaseErrorHandlingMode = UseCaseErrorHandlingMode.FAIL_ON_ERROR,
     ) -> Result[None, PlotRunError | UnknownLunaBenchError]: ...
+
+
+class BackgroundRunAlgorithmAsyncUc(Protocol):
+    def __call__(self, algorithm: AlgorithmAsync[Any], model_id: int) -> str: ...
+
+
+class BackgroundRunAlgorithmSyncUc(Protocol):
+    def __call__(self, algorithm: AlgorithmSync, model_id: int) -> str: ...
+
+
+class BackgroundRetrieveAlgorithmAsyncUc(Protocol):
+    def __call__(
+        self, task_id: str
+    ) -> Maybe[
+        Result[BaseModel, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]
+    ]: ...
+
+
+class BackgroundRetrieveAlgorithmSyncUc(Protocol):
+    def __call__(
+        self, task_id: str
+    ) -> Maybe[
+        Result[Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]
+    ]: ...
