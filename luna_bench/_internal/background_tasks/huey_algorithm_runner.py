@@ -4,11 +4,10 @@ from dependency_injector.wiring import Provide, inject
 from huey.api import logging
 from luna_quantum import Logging, Model, Solution
 from pydantic import BaseModel
-from returns.maybe import Maybe, Nothing, Some
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.async_tasks.huey_consumer import HueyConsumer
+from luna_bench._internal.background_tasks.huey_consumer import HueyConsumer
 from luna_bench._internal.dao import DaoTransaction
 from luna_bench._internal.dao.dao_container import DaoContainer
 from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
@@ -45,8 +44,7 @@ class HueyAlgorithmRunner:
         return Success(model)
 
     @staticmethod
-    @HueyConsumer.huey.task()  # type: ignore[misc] # Huey doesn't support type hints
-    def run_sync(
+    def _run_sync(
         algorithm: AlgorithmSync,
         model_id: int,
     ) -> Result[Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]:
@@ -63,8 +61,7 @@ class HueyAlgorithmRunner:
             return Failure(RunAlgorithmRuntimeError(e))
 
     @staticmethod
-    @HueyConsumer.huey.task()  # type: ignore[misc] # Huey doesn't support type hints
-    def run_async[T: BaseModel](
+    def _run_async[T: BaseModel](
         algorithm: AlgorithmAsync[T],
         model_id: int,
     ) -> Result[T, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]:
@@ -80,34 +77,29 @@ class HueyAlgorithmRunner:
             return Failure(RunAlgorithmRuntimeError(e))
 
     @staticmethod
-    def retrieve_sync(
-        task_id: str,
-    ) -> Maybe[
-        Result[Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]
-    ]:
-        result: Any | None = HueyConsumer.huey.result(task_id, blocking=False)
-
-        if result is not None:
-            if not isinstance(result, Result):
-                return Some(Failure(UnknownLunaBenchError(ValueError(f"Unexpected result type: {type(result)}"))))
-
-            if not is_successful(result):
-                return Some(Failure(result.failure()))
-            return Some(Success(result.unwrap()))
-        return Nothing
+    @HueyConsumer.huey.task()  # type: ignore[misc] # Huey doesn't support type hints
+    def run_sync(
+        algorithm: AlgorithmSync,
+        model_id: int,
+    ) -> Result[Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]:
+        return HueyAlgorithmRunner._run_sync(
+            algorithm, model_id
+        )  # pragma: no cover # Hard to cover, it's just a wrapper for an api call so we can mock it more easily.
 
     @staticmethod
-    def retrieve_async(
-        task_id: str,
-    ) -> Maybe[
-        Result[BaseModel, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]
-    ]:
-        result: Any | None = HueyConsumer.huey.result(task_id, blocking=False)
-        if result is not None:
-            if not isinstance(result, Result):
-                raise ValueError
+    @HueyConsumer.huey.task()  # type: ignore[misc] # Huey doesn't support type hints
+    def run_async[T: BaseModel](
+        algorithm: AlgorithmAsync[T],
+        model_id: int,
+    ) -> Result[T, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]:
+        return HueyAlgorithmRunner._run_async(
+            algorithm, model_id
+        )  # pragma: no cover # Hard to cover, it's just a wrapper for an api call so we can mock it more easily.
 
-            if not is_successful(result):
-                return Some(Failure(result.failure()))
-            return Some(Success(result.unwrap()))
-        return Nothing
+    @staticmethod
+    def retrieve_task_result(
+        task_id: str,
+    ) -> Any | None:  # noqa: ANN401 # We dont know here what type the result of the task has. We don't know what funktion the task was running on.
+        return HueyConsumer.huey.result(
+            task_id, blocking=False
+        )  # pragma: no cover # Hard to cover, it's just a wrapper for an api call so we can mock it more easily.

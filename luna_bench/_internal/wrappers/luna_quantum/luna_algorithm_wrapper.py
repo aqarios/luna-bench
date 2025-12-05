@@ -1,10 +1,11 @@
 import inspect
 import sys
-import types
 from typing import Any
 
 from dependency_injector.wiring import Provide, inject
+from luna_quantum import Logging
 from luna_quantum import algorithms as algos_module
+from luna_quantum.solve.domain.abstract.luna_algorithm import LunaAlgorithm as LunaQuantumAlgorithm
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from pydantic import BaseModel
 from returns.pipeline import is_successful
@@ -20,6 +21,8 @@ from luna_bench.helpers.decorators import algorithm
 
 
 class LunaAlgorithmWrapper:
+    _logger = Logging.get_logger(__name__)
+
     @staticmethod
     def _get_fake_module_name() -> str:
         return f"{algorithms.__package__}"
@@ -31,8 +34,12 @@ class LunaAlgorithmWrapper:
     @staticmethod
     def _add_luna_quantum_algorithms() -> None:
         exported_names = getattr(algos_module, "__all__", None)
-        if exported_names is None:
-            exported_names = [n for n in dir(algos_module) if not n.startswith("_")]
+
+        if exported_names is None:  # pragma: no cover # We cant really test this since the __all__ attribute is set.
+            LunaAlgorithmWrapper._logger.warning(
+                "No algorithms found in luna-quantum. Therefore no luna-quantum algorithms will be registered."
+            )
+            return
 
         classes: list[type[IAlgorithm[Any]]] = []
         for name in exported_names:
@@ -40,31 +47,31 @@ class LunaAlgorithmWrapper:
             if inspect.isclass(obj):
                 classes.append(obj)
 
-        # Ensure the target module exists and is importable
-        target_module_name = LunaAlgorithmWrapper._get_fake_module_name()
-        mod = sys.modules.get(target_module_name)
-        if mod is None:
-            mod = types.ModuleType(target_module_name)
-            # best-effort metadata
-            mod.__file__ = f"<dynamic:{target_module_name}>"
-            pkg = target_module_name.rpartition(".")[0]
-            mod.__package__ = pkg
-            sys.modules[target_module_name] = mod
-
         for cls in classes:
-            # Create dynamic subclass
-            dyn = type(cls.__name__, (LunaAlgorithm, cls), {})
+            if issubclass(cls, LunaQuantumAlgorithm):
+                LunaAlgorithmWrapper.register_luna_quantum_algorithm(algorithm_cls=cls)
 
-            # Point the class at the target module and bind it by its public name
+    @staticmethod
+    def wrap_all_algorithms() -> None:
+        LunaAlgorithmWrapper._add_luna_quantum_algorithms()
+
+    @staticmethod
+    def register_luna_quantum_algorithm(algorithm_cls: type[LunaQuantumAlgorithm[Any]]) -> None:
+        if issubclass(algorithm_cls, LunaQuantumAlgorithm):
+            target_module_name = LunaAlgorithmWrapper._get_fake_module_name()
+            mod = sys.modules.get(target_module_name)
+
+            dyn = type(algorithm_cls.__name__, (LunaAlgorithm, algorithm_cls), {})
+
             dyn.__module__ = target_module_name
             setattr(mod, dyn.__name__, dyn)
 
-            # Register with your decorator using the same module-qualified id
-            algorithm(_cls=dyn, algorithm_id=LunaAlgorithmWrapper._get_id(cls))
-
-    @staticmethod
-    def wrap_algorithms() -> None:
-        LunaAlgorithmWrapper._add_luna_quantum_algorithms()
+            algorithm(_cls=dyn, algorithm_id=LunaAlgorithmWrapper._get_id(algorithm_cls))
+        else:
+            LunaAlgorithmWrapper._logger.warning(
+                f"Class {algorithm_cls.__name__} is not a subclass of "
+                f"{LunaQuantumAlgorithm.__name__} from luna-quantum."
+            )
 
     @staticmethod
     @inject
@@ -82,4 +89,9 @@ class LunaAlgorithmWrapper:
         if not issubclass(cls, LunaAlgorithm):
             raise AlgorithmSubTypeError("LunaAlgorithm")
 
-        return cls.model_construct(**algorithm.model_dump())
+        x = cls.model_construct(**algorithm.model_dump())
+
+        if isinstance(algorithm, LunaQuantumAlgorithm):
+            x.backend = algorithm.backend
+
+        return x

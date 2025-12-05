@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any
+from typing import Any, overload
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
@@ -61,13 +61,29 @@ def feature[T: IFeature](
     return _do_register
 
 
+@overload
+def algorithm[T: AlgorithmAsync[Any] | AlgorithmSync](
+    _cls: type[T],
+    *,
+    algorithm_id: str | None = None,
+) -> type[T]: ...
+
+
+@overload
+def algorithm[T: AlgorithmAsync[Any] | AlgorithmSync](
+    _cls: None = None,
+    *,
+    algorithm_id: str | None = None,
+) -> Callable[[type[T]], type[T]]: ...
+
+
 @inject
-def algorithm[T: AlgorithmAsync[BaseModel] | AlgorithmSync](
+def algorithm[T: AlgorithmAsync[Any] | AlgorithmSync](
     _cls: type[T] | None = None,
     *,
     algorithm_id: str | None = None,
     algorithm_sync_registry: Registry[AlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
-    algorithm_async_registry: Registry[AlgorithmAsync[BaseModel]] = Provide[RegistryContainer.algorithm_async_registry],
+    algorithm_async_registry: Registry[AlgorithmAsync[Any]] = Provide[RegistryContainer.algorithm_async_registry],
 ) -> Callable[[type[T]], type[T]] | type[T]:
     """
     Register a class as an algorithm.
@@ -142,12 +158,14 @@ def metric[T: IMetric](
 
 
 @inject
-def plot[T: IPlot](
-    _cls: type[T] | None = None,
+def plot(
+    _cls: type[IPlot[Any]] | None = None,
     *,
+    metrics_ids: tuple[str] | None = None,
+    features_ids: tuple[str] | None = None,
     plot_id: str | None = None,
-    plot_registry: Registry[IPlot] = Provide[RegistryContainer.plot_registry],
-) -> Callable[[type[T]], type[T]] | type[T]:
+    plot_registry: Registry[IPlot[Any]] = Provide[RegistryContainer.plot_registry],
+) -> Callable[[type[IPlot[Any]]], type[IPlot[Any]]] | type[IPlot[Any]]:
     """
     Register a class as a plot.
 
@@ -166,9 +184,13 @@ def plot[T: IPlot](
     Callable[[type[T]], type[T]] | type[T]
     """
 
-    def _do_register(cls: type[T]) -> type[T]:
+    def _do_register(cls: type[IPlot[Any]]) -> type[IPlot[Any]]:
         pid = plot_id or f"{cls.__module__}.{cls.__qualname__}"
         _register_class(cls, base=IPlot, registered_class_id=pid, registry=plot_registry)
+        if metrics_ids is not None:
+            cls.metrics_ids = metrics_ids  # type: ignore[attr-defined]
+        if features_ids is not None:
+            cls.features_ids = features_ids  # type: ignore[attr-defined]
         return cls
 
     if _cls is not None:
@@ -259,8 +281,8 @@ def metrics(
 
 @inject
 def plots(
-    plot_registry: Registry[IPlot] = Provide[RegistryContainer.plot_registry],
-) -> Registry[IPlot]:
+    plot_registry: Registry[IPlot[Any]] = Provide[RegistryContainer.plot_registry],
+) -> Registry[IPlot[Any]]:
     """
     Retrieve the plot registry.
 
@@ -283,7 +305,7 @@ def registry_info(
     algorithm_sync_registry: Registry[AlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
     algorithm_async_registry: Registry[AlgorithmAsync[BaseModel]] = Provide[RegistryContainer.algorithm_async_registry],
     metric_registry: Registry[IMetric] = Provide[RegistryContainer.metric_registry],
-    plot_registry: Registry[IPlot] = Provide[RegistryContainer.plot_registry],
+    plot_registry: Registry[IPlot[Any]] = Provide[RegistryContainer.plot_registry],
 ) -> None:
     """
     Print information about the registered features, algorithms, metrics, and plots.
@@ -293,7 +315,7 @@ def registry_info(
     feature_registry: Registry[IFeature], injected
     algorithm_registry: Registry[IAlgorithm[IBackend]], injected
     metric_registry: Registry[IMetric], injected
-    plot_registry: Registry[IPlot], injected
+    plot_registry: Registry[IPlot[Any]], injected
 
 
     """

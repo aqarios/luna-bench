@@ -3,7 +3,26 @@ from dependency_injector.providers import Configuration, Provider
 
 from luna_bench._internal.dao import DaoContainer
 from luna_bench._internal.mappers.container import MapperContainer
+from luna_bench._internal.usecases.background_tasks.background_retrieve_algorithm_async import (
+    BackgroundRetrieveAlgorithmAsyncUcImpl,
+)
+from luna_bench._internal.usecases.background_tasks.background_retrieve_algorithm_sync import (
+    BackgroundRetrieveAlgorithmSyncUcImpl,
+)
+from luna_bench._internal.usecases.background_tasks.background_run_algorithm_async import (
+    BackgroundRunAlgorithmAsyncUcImpl,
+)
+from luna_bench._internal.usecases.background_tasks.background_run_algorithm_sync import (
+    BackgroundRunAlgorithmSyncUcImpl,
+)
+from luna_bench._internal.usecases.benchmark import (
+    AlgorithmRetrieveAsyncRetrivalDataUcImpl,
+    AlgorithmRetrieveAsyncSolutionsUcImpl,
+    AlgorithmRetrieveSyncSolutionsUcImpl,
+    AlgorithmRunAsBackgroundTasksUcImpl,
+)
 from luna_bench._internal.usecases.benchmark.algorithm.algorithm_add import AlgorithmAddUcImpl
+from luna_bench._internal.usecases.benchmark.algorithm.algorithm_filter import AlgorithmFilterUcImpl
 from luna_bench._internal.usecases.benchmark.algorithm.algorithm_remove import AlgorithmRemoveUcImpl
 from luna_bench._internal.usecases.benchmark.algorithm.algorithm_run import AlgorithmRunUcImpl
 from luna_bench._internal.usecases.benchmark.benchmark_create import BenchmarkCreateUcImpl
@@ -20,10 +39,20 @@ from luna_bench._internal.usecases.benchmark.metric.metric_remove import MetricR
 from luna_bench._internal.usecases.benchmark.metric.metric_run import MetricRunUcImpl
 from luna_bench._internal.usecases.benchmark.plot.plot_add import PlotAddUcImpl
 from luna_bench._internal.usecases.benchmark.plot.plot_remove import PlotRemoveUcImpl
+from luna_bench._internal.usecases.benchmark.plot.plot_run import PlotsRunUcImpl
 from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmAddUc,
+    AlgorithmFilterUc,
     AlgorithmRemoveUc,
+    AlgorithmRetrieveAsyncRetrivalDataUc,
+    AlgorithmRetrieveAsyncSolutionsUc,
+    AlgorithmRetrieveSyncSolutionsUc,
+    AlgorithmRunAsBackgroundTasksUc,
     AlgorithmRunUc,
+    BackgroundRetrieveAlgorithmAsyncUc,
+    BackgroundRetrieveAlgorithmSyncUc,
+    BackgroundRunAlgorithmAsyncUc,
+    BackgroundRunAlgorithmSyncUc,
     BenchmarkCreateUc,
     BenchmarkDeleteUc,
     BenchmarkLoadAllUc,
@@ -38,6 +67,7 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     MetricRunUc,
     PlotAddUc,
     PlotRemoveUc,
+    PlotsRunUc,
 )
 from luna_bench._internal.usecases.modelset import (
     ModelAddUcImpl,
@@ -134,6 +164,7 @@ class UsecaseContainer(containers.DeclarativeContainer):
     benchmark_remove_plot_uc: Provider[PlotRemoveUc] = providers.Singleton(
         PlotRemoveUcImpl, transaction=dao_container.transaction
     )
+
     benchmark_remove_algorithm_uc: Provider[AlgorithmRemoveUc] = providers.Singleton(
         AlgorithmRemoveUcImpl, transaction=dao_container.transaction
     )
@@ -150,8 +181,55 @@ class UsecaseContainer(containers.DeclarativeContainer):
         FeatureRunUcImpl, transaction=dao_container.transaction
     )
 
+    benchmark_run_plots_uc: Provider[PlotsRunUc] = providers.Singleton(PlotsRunUcImpl)
+
+    benchmark_algorithm_filter_uc: Provider[AlgorithmFilterUc] = providers.Singleton(AlgorithmFilterUcImpl)
+
+    benchmark_background_run_algorithm_async_uc: Provider[BackgroundRunAlgorithmAsyncUc] = providers.Singleton(
+        BackgroundRunAlgorithmAsyncUcImpl
+    )
+
+    benchmark_background_run_algorithm_sync_uc: Provider[BackgroundRunAlgorithmSyncUc] = providers.Singleton(
+        BackgroundRunAlgorithmSyncUcImpl
+    )
+
+    benchmark_background_retrieve_algorithm_async_uc: Provider[BackgroundRetrieveAlgorithmAsyncUc] = (
+        providers.Singleton(BackgroundRetrieveAlgorithmAsyncUcImpl)
+    )
+
+    benchmark_background_retrieve_algorithm_sync_uc: Provider[BackgroundRetrieveAlgorithmSyncUc] = providers.Singleton(
+        BackgroundRetrieveAlgorithmSyncUcImpl
+    )
+
+    benchmark_algorithm_start_tasks_uc: Provider[AlgorithmRunAsBackgroundTasksUc] = providers.Singleton(
+        AlgorithmRunAsBackgroundTasksUcImpl,
+        transaction=dao_container.transaction,
+        background_start_async=benchmark_background_run_algorithm_async_uc,
+        background_start_sync=benchmark_background_run_algorithm_sync_uc,
+    )
+
+    benchmark_algorithm_retrieve_sync_uc: Provider[AlgorithmRetrieveSyncSolutionsUc] = providers.Singleton(
+        AlgorithmRetrieveSyncSolutionsUcImpl,
+        background_retrieve_sync=benchmark_background_retrieve_algorithm_sync_uc,
+    )
+    benchmark_algorithm_retrieve_async_retrieval_data_uc: Provider[AlgorithmRetrieveAsyncRetrivalDataUc] = (
+        providers.Singleton(
+            AlgorithmRetrieveAsyncRetrivalDataUcImpl,
+            background_retrieve_async=benchmark_background_retrieve_algorithm_async_uc,
+            transaction=dao_container.transaction,
+        )
+    )
+    benchmark_algorithm_retrieve_async_solution_data_uc: Provider[AlgorithmRetrieveAsyncSolutionsUc] = (
+        providers.Singleton(AlgorithmRetrieveAsyncSolutionsUcImpl, transaction=dao_container.transaction)
+    )
+
     benchmark_run_algorithm_uc: Provider[AlgorithmRunUc] = providers.Singleton(
-        AlgorithmRunUcImpl, transaction=dao_container.transaction
+        AlgorithmRunUcImpl,
+        algorithm_filter=benchmark_algorithm_filter_uc,
+        retrieve_sync=benchmark_algorithm_retrieve_sync_uc,
+        retrieve_async_retrieval_data=benchmark_algorithm_retrieve_async_retrieval_data_uc,
+        retrieve_async_solution_data=benchmark_algorithm_retrieve_async_solution_data_uc,
+        start_tasks=benchmark_algorithm_start_tasks_uc,
     )
 
     benchmark_run_metric_uc: Provider[MetricRunUc] = providers.Singleton(

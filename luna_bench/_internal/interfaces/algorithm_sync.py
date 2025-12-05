@@ -6,5 +6,4 @@ from pydantic import BaseModel
 
 class AlgorithmSync(BaseModel, ABC):
     @abstractmethod
-    def run(self, model: Model) -> Solution:
-        pass
+    def run(self, model: Model) -> Solution: ...

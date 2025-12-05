@@ -18,7 +18,7 @@ class AlgorithmFilterUcImpl(AlgorithmFilterUc):
         algorithms: list[AlgorithmUserModel]
 
         if algorithm is not None:
-            if algorithm not in benchmark.algorithms:
+            if not any(a.name == algorithm.name for a in benchmark.algorithms):
                 self._logger.debug(f"Algorithm {algorithm.name} is not part of the benchmark '{benchmark.name}'")
                 return Failure(RunAlgorithmMissingError(algorithm.name, benchmark.name))
             self._logger.debug(f"Running single algorithm {[algorithm.name]} for benchmark '{benchmark.name}'")
@@ -34,7 +34,5 @@ class AlgorithmFilterUcImpl(AlgorithmFilterUc):
                 algorithms = [a for a in algorithms if isinstance(a.algorithm, AlgorithmSync)]
             case AlgorithmType.ASYNC:
                 algorithms = [a for a in algorithms if isinstance(a.algorithm, AlgorithmAsync)]
-            case _:
-                return Failure(ValueError(f"Unknown algorithm type: {algorithm_type}"))
 
         return Success(algorithms)

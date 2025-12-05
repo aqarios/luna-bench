@@ -15,11 +15,6 @@ _usecase_container.mapper_container.override(_mapper_container)
 _dao_container.config.from_pydantic(config)
 _usecase_container.config.from_pydantic(config)
 
-_usecase_container.wire(
-    modules=[
-        "luna_bench.components",
-    ]
-)
 _registry_container.wire(
     modules=[
         "luna_bench.helpers.decorators",
@@ -31,12 +26,19 @@ _registry_container.wire(
     ]
 )
 
+_usecase_container.wire(
+    modules=[
+        "luna_bench.components",
+        "luna_bench.components.plots",
+    ]
+)
+
 
 _dao_container.wire(
     modules=[
         "luna_bench._internal.usecases.modelset",
         "luna_bench._internal.usecases.benchmark",
-        "luna_bench._internal.async_tasks.huey_algorithm_runner",
+        "luna_bench._internal.background_tasks.huey_algorithm_runner",
     ]
 )
 _mapper_container.wire(
@@ -59,7 +61,8 @@ __all__ = (
     "FakePlot",
 )
 
-# Import and wrapping after the wiring is done, to ensure the wrappers and decorators have access to the injected registries
+# Import and wrapping after the wiring is done,
+# to ensure the wrappers and decorators have access to the injected registries
 from luna_bench._internal.wrappers import LunaAlgorithmWrapper  # noqa: E402
 
-LunaAlgorithmWrapper.wrap_algorithms()
+LunaAlgorithmWrapper.wrap_all_algorithms()

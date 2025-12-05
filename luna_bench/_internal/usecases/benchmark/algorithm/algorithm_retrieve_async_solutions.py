@@ -1,17 +1,13 @@
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging, Model, Solution
-from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
-from luna_bench._internal.domain_models import RegisteredDataDomain
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.interfaces import AlgorithmAsync
 from luna_bench._internal.mappers.algorithm_mapper import AlgorithmMapper
-from luna_bench._internal.registries import PydanticRegistry
-from luna_bench._internal.registries.registry_container import RegistryContainer
-from luna_bench._internal.usecases.benchmark.protocols import AlgorithmRetrieveAsyncSolutionUc
+from luna_bench._internal.usecases.benchmark.protocols import AlgorithmRetrieveAsyncSolutionsUc
 from luna_bench._internal.user_models import BenchmarkUserModel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
@@ -19,18 +15,14 @@ from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetM
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-class AlgorithmRetrieveAsyncSolutionUcImpl(AlgorithmRetrieveAsyncSolutionUc):
+class AlgorithmRetrieveAsyncSolutionsUcImpl(AlgorithmRetrieveAsyncSolutionsUc):
     _transaction: DaoTransaction
-    _registry_async: PydanticRegistry[AlgorithmAsync[BaseModel], RegisteredDataDomain]
     _logger = Logging.get_logger(__name__)
 
     @inject
     def __init__(
         self,
         transaction: DaoTransaction = Provide[DaoContainer.transaction],
-        registry_async: PydanticRegistry[AlgorithmAsync[BaseModel], RegisteredDataDomain] = Provide[
-            RegistryContainer.algorithm_async_registry
-        ],
     ) -> None:
         """
         Initialize the AlgorithmRunUc with a dao transaction and a registry.
@@ -43,7 +35,6 @@ class AlgorithmRetrieveAsyncSolutionUcImpl(AlgorithmRetrieveAsyncSolutionUc):
             The registry containing algorithms and their associated data domains.
         """
         self._transaction = transaction
-        self._registry_async = registry_async
 
     def __call__(
         self, benchmark: BenchmarkUserModel
@@ -58,7 +49,7 @@ class AlgorithmRetrieveAsyncSolutionUcImpl(AlgorithmRetrieveAsyncSolutionUc):
 
                     result: Solution | str | Result[Solution, str]
                     if r.retrival_data is None:
-                        result = "No retrival data provided"
+                        result = Failure("No retrival data provided")
                     else:
                         result = a.algorithm.fetch_result(model, r.retrival_data)
                     if not isinstance(result, Result):
@@ -68,8 +59,8 @@ class AlgorithmRetrieveAsyncSolutionUcImpl(AlgorithmRetrieveAsyncSolutionUc):
                         r.solution = result.unwrap()
                         r.status = JobStatus.DONE
                     else:
-                        r.status = JobStatus.FAILED
                         r.error = result.failure()
+                        r.status = JobStatus.FAILED
 
                     domain_model = AlgorithmMapper.result_to_domain_model(r)
 
@@ -79,7 +70,7 @@ class AlgorithmRetrieveAsyncSolutionUcImpl(AlgorithmRetrieveAsyncSolutionUc):
                             algorithm_name=a.name,
                             result=domain_model,
                         )
-                        if not is_successful(storage_result):
+                        if not is_successful(storage_result):  # pragma: no cover
                             return Failure(storage_result.failure())
 
         return Success(None)

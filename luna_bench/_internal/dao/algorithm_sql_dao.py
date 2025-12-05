@@ -129,13 +129,17 @@ class AlgorithmSqlDao(AlgorithmDao):
         benchmark_name: str, algorithm_name: str, result: AlgorithmResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.get_or_none(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
 
             model_metadata = ModelMetadataTable.select(ModelMetadataTable.id).where(  # type: ignore[no-untyped-call]
                 ModelMetadataTable.id == result.model_id
             )
 
-            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            algorithm = AlgorithmTable.get_or_none(  # type: ignore[no-untyped-call]
+                AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark
+            )
+            if algorithm is None:
+                return Failure(DataNotExistError())
 
             existing_id = AlgorithmResultTable.get_or_none(  # type: ignore[no-untyped-call]
                 (AlgorithmResultTable.algorithm == algorithm) & (AlgorithmResultTable.model_metadata == model_metadata)
@@ -154,8 +158,6 @@ class AlgorithmSqlDao(AlgorithmDao):
             )
             algorithm_result.save()
             return Success(None)
-        except DoesNotExist:
-            return Failure(DataNotExistError())
         except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))
 

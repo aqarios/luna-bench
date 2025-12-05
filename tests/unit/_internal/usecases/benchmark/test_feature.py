@@ -35,29 +35,6 @@ def _empty_feature(name: str, feature: IFeature) -> FeatureUserModel:
 
 
 class TestFeature:
-    @pytest.fixture()
-    @staticmethod
-    def default_usecase(usecase: UsecaseContainer) -> UsecaseContainer:
-        create_default: Result[
-            BenchmarkUserModel, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError
-        ] = usecase.benchmark_create_uc()(benchmark_name="existing")
-        assert is_successful(create_default)
-        create_default_feature = usecase.benchmark_add_feature_uc()(
-            benchmark_name="existing", name="existing", feature=MockFeature()
-        )
-        assert is_successful(create_default_feature)
-
-        create_default_feature2 = usecase.benchmark_add_feature_uc()(
-            benchmark_name="existing", name="existing2", feature=MockFeature()
-        )
-        assert is_successful(create_default_feature2)
-
-        create_default_modelset = usecase.modelset_create_uc()("existing")
-
-        assert is_successful(create_default_modelset)
-
-        return usecase
-
     @pytest.mark.parametrize(
         ("benchmark_name", "feature_name", "feature", "exp"),
         [
@@ -69,7 +46,7 @@ class TestFeature:
     )
     def test_add(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         benchmark_name: str,
         feature_name: str,
         feature: IFeature,
@@ -91,7 +68,7 @@ class TestFeature:
             | UnknownComponentError
             | UnknownIdError
             | ValidationError,
-        ] = default_usecase.benchmark_add_feature_uc()(benchmark_name, feature_name, feature)
+        ] = usecase.benchmark_add_feature_uc()(benchmark_name, feature_name, feature)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
@@ -108,7 +85,7 @@ class TestFeature:
     )
     def test_remove(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         benchmark_name: str,
         feature_name: str,
         exp: Result[
@@ -121,7 +98,7 @@ class TestFeature:
             | ValidationError,
         ],
     ) -> None:
-        result: Result[None, DataNotExistError | UnknownLunaBenchError] = default_usecase.benchmark_remove_feature_uc()(
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = usecase.benchmark_remove_feature_uc()(
             benchmark_name, feature_name
         )
 
@@ -131,41 +108,33 @@ class TestFeature:
             assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
-        ("feature", "modelset", "num_models", "exp"),
+        ("benchmark_name", "feature", "num_models", "exp"),
         [
-            (_empty_feature("bla", MockFeature()), None, 1, Failure(RunFeatureMissingError("existing", "bla"))),
-            (None, None, 1, Failure(RunModelsetMissingError("existing"))),
-            (None, "existing", 1, Success(None)),
+            ("existing", _empty_feature("bla", MockFeature()), 1, Failure(RunFeatureMissingError("existing", "bla"))),
+            ("new", None, 1, Failure(RunModelsetMissingError("existing"))),
+            ("existing", None, 1, Success(None)),
             ("existing", "existing", 1, Success(None)),
         ],
     )
     def test_run(
         self,
-        default_usecase: UsecaseContainer,
-        model: Model,
-        modelset: str | None,
+        usecase: UsecaseContainer,
+        benchmark_name: str,
         feature: FeatureUserModel | str | None,
         num_models: int,
         exp: Result[None, RunFeatureMissingError | RunModelsetMissingError],
     ) -> None:
-        if modelset:
-            assert is_successful(
-                default_usecase.benchmark_set_modelset_uc()(benchmark_name="existing", modelset_name=modelset)
-            )
-            for i in range(num_models):
-                model.name = f"model_{i}"
-                assert is_successful(default_usecase.model_add_uc()("existing", model))
-
-        benchmark = default_usecase.benchmark_load_uc()(benchmark_name="existing").unwrap()
+        usecase.benchmark_create_uc()(benchmark_name="new")
+        benchmark = usecase.benchmark_load_uc()(benchmark_name=benchmark_name).unwrap()
 
         if isinstance(feature, str):
             feature = next((f for f in benchmark.features if f.name == feature), None)
 
-        result = default_usecase.benchmark_run_feature_uc()(benchmark=benchmark, feature=feature)
+        result = usecase.benchmark_run_feature_uc()(benchmark=benchmark, feature=feature)
 
         assert type(result) is type(exp)
 
-        benchmark = default_usecase.benchmark_load_uc()(benchmark_name="existing").unwrap()
+        benchmark = usecase.benchmark_load_uc()(benchmark_name="existing").unwrap()
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
 
@@ -180,51 +149,47 @@ class TestFeature:
 
     def test_run_rerun(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         model: Model,
     ) -> None:
         # check if rerun changes the results
 
-        assert is_successful(default_usecase.model_add_uc()("existing", model))
+        assert is_successful(usecase.model_add_uc()("existing", model))
 
-        assert is_successful(
-            default_usecase.benchmark_set_modelset_uc()(benchmark_name="existing", modelset_name="existing")
-        )
+        assert is_successful(usecase.benchmark_set_modelset_uc()(benchmark_name="existing", modelset_name="existing"))
 
-        benchmark: BenchmarkUserModel = default_usecase.benchmark_load_uc()(benchmark_name="existing").unwrap()
+        benchmark: BenchmarkUserModel = usecase.benchmark_load_uc()(benchmark_name="existing").unwrap()
 
         assert benchmark.modelset is not None
         assert len(benchmark.modelset.models) > 0
 
-        default_usecase.benchmark_run_feature_uc()(benchmark=benchmark, feature=None)
+        usecase.benchmark_run_feature_uc()(benchmark=benchmark, feature=None)
 
         for f in benchmark.features:
             for result in f.results.values():
                 assert result.status is JobStatus.DONE
 
-        default_usecase.benchmark_run_feature_uc()(benchmark=benchmark, feature=None)
+        usecase.benchmark_run_feature_uc()(benchmark=benchmark, feature=None)
 
-        benchmark2 = default_usecase.benchmark_load_uc()(benchmark_name="existing").unwrap()
+        benchmark2 = usecase.benchmark_load_uc()(benchmark_name="existing").unwrap()
 
         assert benchmark.features == benchmark2.features
 
     def test_run_failing_feature(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         model: Model,
     ) -> None:
-        assert is_successful(default_usecase.model_add_uc()("existing", model))
+        assert is_successful(usecase.model_add_uc()("existing", model))
 
-        assert is_successful(
-            default_usecase.benchmark_set_modelset_uc()(benchmark_name="existing", modelset_name="existing")
-        )
-        default_usecase.benchmark_add_feature_uc()(
+        assert is_successful(usecase.benchmark_set_modelset_uc()(benchmark_name="existing", modelset_name="existing"))
+        usecase.benchmark_add_feature_uc()(
             benchmark_name="existing", name="failure", feature=MockFeatureFailing()
         ).unwrap()
-        benchmark: BenchmarkUserModel = default_usecase.benchmark_load_uc()(benchmark_name="existing").unwrap()
+        benchmark: BenchmarkUserModel = usecase.benchmark_load_uc()(benchmark_name="existing").unwrap()
 
         feature = next((f for f in benchmark.features if f.name == "failure"), None)
-        default_usecase.benchmark_run_feature_uc()(benchmark=benchmark, feature=feature)
+        usecase.benchmark_run_feature_uc()(benchmark=benchmark, feature=feature)
 
         f = next((f for f in benchmark.features if f.name == "failure"), None)
         assert f is not None

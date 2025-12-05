@@ -16,5 +16,7 @@ class Config(BaseSettings):
 
     ALGORITHM_INTERNAL_BACKOFF_TIME: float = 0.001
 
+    ASYNC_WORKER_COUNT: int = 10
+
 
 config = Config()
