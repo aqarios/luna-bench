@@ -70,7 +70,7 @@ def _full_benchmark_usermodel(name: str) -> BenchmarkUserModel:
                 name="existing_async", status=JobStatus.CREATED, algorithm=MockAsyncAlgorithm(), results={}
             ),
         ],
-        metrics=[MetricUserModel(name="existing", status=JobStatus.CREATED, metric=MockMetric())],
+        metrics=[MetricUserModel(name="existing", status=JobStatus.CREATED, metric=MockMetric(), results={})],
         plots=[PlotUserModel(name="existing", status=JobStatus.CREATED, plot=MockPlot())],
     )
 
@@ -131,7 +131,7 @@ def _full_domainmodel(name: str) -> BenchmarkDomain:
             MetricDomain(
                 name="existing",
                 status=JobStatus.CREATED,
-                result=None,
+                results={},
                 config_data=RegisteredDataDomain(registered_id="metric", data=ArbitraryDataDomain()),
             )
         ],

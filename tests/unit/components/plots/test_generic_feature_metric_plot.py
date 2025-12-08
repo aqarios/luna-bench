@@ -40,6 +40,7 @@ class TestGenericFeaturesMetricsPlot:
                 name="existing",
                 status=JobStatus.CREATED,
                 metric=MockMetric(),
+                results={},
             )
         ]
 

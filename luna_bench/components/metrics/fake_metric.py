@@ -18,8 +18,9 @@ class FakeMetricResult(ArbitraryDataDomain):
 class FakeMetric(IMetric):
     """Fake metric class."""
 
-    def run(self, solution: Solution) -> FakeMetricResult:
+    def run(self, solution: Solution) -> FakeMetricResult:  # noqa: ARG002
+        """Fake metric which will return a random number."""
         sleep(0.1)
         return FakeMetricResult(
-            random_number=random.randint(0, 100),
+            random_number=random.randint(0, 100),  # noqa: S311
         )

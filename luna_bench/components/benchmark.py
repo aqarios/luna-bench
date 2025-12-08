@@ -50,6 +50,7 @@ from luna_bench.errors.registry.unknown_component_error import UnknownComponentE
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
+from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -705,7 +706,7 @@ class Benchmark(BenchmarkUserModel):
 
     def run_metrics(self) -> None:  # noqa: D102 # Not yet implemented
         benchmark_run_metrics = self.__run_metric_uc()
-        result: Result[None, RunAlgorithmMissingError | RunModelsetMissingError] = benchmark_run_metrics(self)
+        result: Result[None, RunMetricMissingError | RunModelsetMissingError] = benchmark_run_metrics(self)
 
         if not is_successful(result):
             error = result.failure()

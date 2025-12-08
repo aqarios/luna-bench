@@ -107,12 +107,13 @@ class MetricSqlDao(MetricDao):
             model_metadata = ModelMetadataTable.select(ModelMetadataTable.id).where(  # type: ignore[no-untyped-call]
                 ModelMetadataTable.name == result.model_name
             )
-            metric = MetricTable.select(MetricTable.id).where(  # type: ignore[no-untyped-call]
-                (MetricTable.name == metric_name) & (MetricTable.benchmark == benchmark)
+
+            metric = MetricTable.get(  # type: ignore[no-untyped-call]
+                MetricTable.name == metric_name, MetricTable.benchmark == benchmark
             )
 
-            algorithm = AlgorithmTable.select(AlgorithmTable.id).where(  # type: ignore[no-untyped-call]
-                (AlgorithmTable.name == result.algorithm_name) & (AlgorithmTable.benchmark == benchmark)
+            algorithm = AlgorithmTable.get(  # type: ignore[no-untyped-call]
+                AlgorithmTable.name == result.algorithm_name, AlgorithmTable.benchmark == benchmark
             )
             metric_result = MetricResultTable(
                 metric=metric,
@@ -161,10 +162,10 @@ class MetricSqlDao(MetricDao):
     @staticmethod
     def metric_to_domain(metric: MetricTable) -> MetricDomain:
         result_data: dict[tuple[str, str], MetricResultDomain] = {
-            (m.algorithm.registered_id, m.model_metadata.name): MetricResultDomain.model_construct(
+            (m.algorithm.name, m.model_metadata.name): MetricResultDomain.model_construct(
                 processing_time_ms=m.processing_time_ms,
                 model_name=m.model_metadata.name,
-                algorithm_name=m.algorithm_name,
+                algorithm_name=m.algorithm.name,
                 result=m.result_data,
                 status=JobStatus(m.status),
                 error=m.error,

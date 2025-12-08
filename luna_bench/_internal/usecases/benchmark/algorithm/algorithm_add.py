@@ -67,7 +67,7 @@ class AlgorithmAddUcImpl(AlgorithmAddUc):
 
         if isinstance(algorithm, AlgorithmAsync):
             dm_result = self._registry_async.from_user_model_to_domain_model(algorithm)
-        elif isinstance(algorithm, AlgorithmSync):
+        else:
             dm_result = self._registry_sync.from_user_model_to_domain_model(algorithm)
 
         if not is_successful(dm_result):

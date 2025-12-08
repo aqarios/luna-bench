@@ -1,6 +1,7 @@
 import typing
 
 import pytest
+from luna_quantum import Solution
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -8,6 +9,7 @@ from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.interfaces.metric_i import IMetric
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
+from luna_bench.components.metrics.fake_metric import FakeMetricResult
 from luna_bench.components.plots.generics.metrics_plot import GenericMetricsPlot, MetricsValidationResult
 from luna_bench.errors.run_errors.plots_errors.metrics_missing_error import MetricsMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -24,7 +26,7 @@ class _FakePlot(GenericMetricsPlot):
 
 @metric(metric_id="mock_metric_new")  # type: ignore[arg-type]
 class MockMetricNew(IMetric):  # type: ignore[misc]
-    def run(self) -> None:
+    def run(self, solution: Solution) -> FakeMetricResult:
         raise NotImplementedError
 
 
@@ -79,11 +81,13 @@ class TestGenericMetricsPlot:
                             name="existing_name",
                             status=JobStatus.CREATED,
                             metric=MockMetric(),
+                            results={},
                         ),
                         "mock_metric_new": MetricUserModel(
                             name="existing2_name",
                             status=JobStatus.CREATED,
                             metric=MockMetricNew(),
+                            results={},
                         ),
                     }
                 ),
@@ -108,6 +112,7 @@ class TestGenericMetricsPlot:
                 name=metric[0],
                 status=JobStatus.CREATED,
                 metric=metric[1],
+                results={},
             )
             for metric in metrics
         ]
@@ -140,6 +145,7 @@ class TestGenericMetricsPlot:
                 name="existing_name",
                 status=JobStatus.CREATED,
                 metric=MockMetric(),
+                results={},
             )
         ]
 

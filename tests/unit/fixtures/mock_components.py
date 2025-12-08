@@ -111,10 +111,16 @@ class MockPlotWithValidationError(IPlot[str]):
 
 @metric(metric_id="mock_metric")  # type: ignore[arg-type]
 class MockMetric(IMetric):  # type: ignore[misc]
-    def run(self) -> None:
+    def run(self, solution: Solution) -> ArbitraryDataDomain:  # noqa: ARG002
+        return ArbitraryDataDomain()
+
+
+@metric
+class MockMetricError(IMetric):
+    def run(self, solution: Solution) -> ArbitraryDataDomain:
         raise NotImplementedError
 
 
 class UnregisteredMetric(IMetric):
-    def run(self) -> None:
-        raise NotImplementedError
+    def run(self, solution: Solution) -> ArbitraryDataDomain:  # noqa: ARG002
+        return ArbitraryDataDomain()
