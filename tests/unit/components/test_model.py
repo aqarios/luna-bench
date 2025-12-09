@@ -10,7 +10,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.usecases.modelset.protocols import ModelFetchUc
 from luna_bench.components import ModelMetadata
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
-from tests.unit.fixtures.mock_model import _dummy_model
+from tests.utils.luna_model import simple_model
 
 
 class TestModelData:
@@ -18,8 +18,8 @@ class TestModelData:
         ("return_value", "exp"),
         [
             (
-                Success(_dummy_model("A")),
-                nullcontext(_dummy_model("A")),
+                Success(simple_model("A")),
+                nullcontext(simple_model("A")),
             ),
             (Failure(DataNotExistError()), pytest.raises(RuntimeError)),
         ],

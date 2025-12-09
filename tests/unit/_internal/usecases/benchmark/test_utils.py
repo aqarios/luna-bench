@@ -28,7 +28,7 @@ from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
 from luna_bench._internal.user_models.model_metadata_usermodel import ModelMetadataUserModel
 from luna_bench._internal.user_models.model_set_usermodel import ModelSetUserModel
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockAsyncAlgorithm, MockFeature, MockMetric, MockPlot
-from tests.unit.fixtures.mock_model import _dummy_model
+from tests.utils.luna_model import simple_model
 
 if TYPE_CHECKING:
     from pydantic import ValidationError
@@ -59,7 +59,7 @@ def _full_benchmark_usermodel(name: str) -> BenchmarkUserModel:
                 ModelMetadataUserModel(
                     id=1,
                     name="existing",
-                    hash=_dummy_model("existing").__hash__(),
+                    hash=simple_model("existing").__hash__(),
                 )
             ],
         ),
@@ -99,7 +99,7 @@ def _full_domainmodel(name: str) -> BenchmarkDomain:
                 ModelMetadataDomain(
                     id=1,
                     name="existing",
-                    hash=_dummy_model("existing").__hash__(),
+                    hash=simple_model("existing").__hash__(),
                 )
             ],
         ),
