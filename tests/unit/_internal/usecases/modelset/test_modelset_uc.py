@@ -63,9 +63,10 @@ class TestModelsetUc:
         exp: Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         uc: ModelAddUc = usecase.model_add_uc()
-        result: Result[ModelSetUserModel, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError] = uc(
-            modelset_name=modelset_name, model=model
-        )
+        result: Result[
+            ModelSetUserModel,
+            DataNotExistError | DataNotUniqueError | UnknownLunaBenchError,
+        ] = uc(modelset_name=modelset_name, model=model)
         assert type(result) is type(exp)
 
         if is_successful(exp):
@@ -86,9 +87,10 @@ class TestModelsetUc:
         )
         uc._transaction = nullcontext(transaction_mock)  # type: ignore[attr-defined] # Overwrite the var so we can return a failure here
 
-        result: Result[ModelSetUserModel, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError] = uc(
-            modelset_name="A", model=simple_model("M3")
-        )
+        result: Result[
+            ModelSetUserModel,
+            DataNotExistError | DataNotUniqueError | UnknownLunaBenchError,
+        ] = uc(modelset_name="A", model=simple_model("M3"))
         assert isinstance(result.failure(), UnknownLunaBenchError)
 
     @pytest.mark.parametrize(

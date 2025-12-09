@@ -1,7 +1,4 @@
-import numpy as np
-import pytest
-from _pytest.fixtures import FixtureRequest
-from luna_quantum import Model, Variable, Vtype, quicksum
+from luna_quantum import Model, Variable
 
 
 def simple_model(name: str) -> Model:
