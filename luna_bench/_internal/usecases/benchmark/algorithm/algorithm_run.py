@@ -1,8 +1,10 @@
+from dependency_injector.wiring import Provide
 from luna_quantum import Logging
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal import HueyConsumer
+from luna_bench._internal.background_tasks import BackgroundTaskContainer
+from luna_bench._internal.background_tasks.protocols import BackgroundTaskClient
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
 from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmFilterUc,
@@ -24,30 +26,40 @@ class AlgorithmRunUcImpl(AlgorithmRunUc):
     _retrieve_async_retrieval_data: AlgorithmRetrieveAsyncRetrivalDataUc
     _retrieve_async_solution_data: AlgorithmRetrieveAsyncSolutionsUc
     _start_tasks: AlgorithmRunAsBackgroundTasksUc
+    _bg_task_client: BackgroundTaskClient
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 # Will need to inject the values differently in the future to reduce the complexity
         self,
         algorithm_filter: AlgorithmFilterUc,
         start_tasks: AlgorithmRunAsBackgroundTasksUc,
         retrieve_sync: AlgorithmRetrieveSyncSolutionsUc,
         retrieve_async_retrieval_data: AlgorithmRetrieveAsyncRetrivalDataUc,
         retrieve_async_solution_data: AlgorithmRetrieveAsyncSolutionsUc,
+        bg_task_client: BackgroundTaskClient = Provide[BackgroundTaskContainer.bg_task_client],
     ) -> None:
         """
         Initialize the AlgorithmRunUc with a dao transaction and a registry.
 
         Parameters
         ----------
-        transaction : DaoTransaction
-            The transaction object used to interact with the dao.
-        registry : PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain]
-            The registry containing algorithms and their associated data domains.
+        algorithm_filter: AlgorithmFilterUc
+            UC to filter algorithms by type.
+        start_tasks: AlgorithmRunAsBackgroundTasksUc
+            UC to start algorithms as background tasks.
+        retrieve_sync: AlgorithmRetrieveSyncSolutionsUc
+            UC to retrieve solutions for sync algorithms.
+        retrieve_async_retrieval_data: AlgorithmRetrieveAsyncRetrivalDataUc
+            UC to retrieve retrieval data for async algorithms.
+        retrieve_async_solution_data: AlgorithmRetrieveAsyncSolutionsUc
+            UC to retrieve solution data for async algorithms.
+
         """
         self._algorithm_filter = algorithm_filter
         self._start_tasks = start_tasks
         self._retrieve_sync = retrieve_sync
         self._retrieve_async_retrieval_data = retrieve_async_retrieval_data
         self._retrieve_async_solution_data = retrieve_async_solution_data
+        self._bg_task_client = bg_task_client
 
     def __call__(
         self, benchmark: BenchmarkUserModel, algorithm: AlgorithmUserModel | None = None
@@ -72,7 +84,7 @@ class AlgorithmRunUcImpl(AlgorithmRunUc):
         self._start_tasks(benchmark.name, benchmark.modelset.models, algorithms_async)
         self._start_tasks(benchmark.name, benchmark.modelset.models, algorithms_sync)
 
-        with HueyConsumer.consumer():
+        with self._bg_task_client.consumer():
             self._retrieve_sync(benchmark=benchmark)
             self._retrieve_async_retrieval_data(benchmark=benchmark)
 

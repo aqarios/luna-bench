@@ -56,16 +56,18 @@ class MockAsyncAlgorithm(AlgorithmAsync[AsyncReturnData]):
     def run_async(self, model: Model) -> AsyncReturnData:
         return AsyncReturnData.model_construct(model_name=model.name)
 
-    def fetch_result(self, model: Model, retrieval_data: AsyncReturnData) -> Solution:  # noqa: ARG002
-        return Solution._build(  # type: ignore[attr-defined,no-any-return]
-            component_types=[],
-            binary_cols=[],
-            spin_cols=None,
-            int_cols=None,
-            real_cols=None,
-            raw_energies=None,
-            timing=None,
-            counts=[],
+    def fetch_result(self, model: Model, retrieval_data: AsyncReturnData) -> Result[Solution, str]:  # noqa: ARG002
+        return Success(
+            Solution._build(  # type: ignore[attr-defined]
+                component_types=[],
+                binary_cols=[],
+                spin_cols=None,
+                int_cols=None,
+                real_cols=None,
+                raw_energies=None,
+                timing=None,
+                counts=[],
+            )
         )
 
 

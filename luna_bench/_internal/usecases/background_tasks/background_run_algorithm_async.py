@@ -1,10 +1,29 @@
 from typing import Any
 
-from luna_bench._internal.background_tasks import HueyAlgorithmRunner
+from dependency_injector.wiring import Provide, inject
+
+from luna_bench._internal.background_tasks import BackgroundAlgorithmRunner, BackgroundTaskContainer
 from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
 from luna_bench._internal.usecases.benchmark.protocols import BackgroundRunAlgorithmAsyncUc
 
 
 class BackgroundRunAlgorithmAsyncUcImpl(BackgroundRunAlgorithmAsyncUc):
+    _bg_algorithm_runner: BackgroundAlgorithmRunner
+
+    @inject
+    def __init__(
+        self,
+        bg_algorithm_runner: BackgroundAlgorithmRunner = Provide[BackgroundTaskContainer.bg_algorithm_runner],
+    ) -> None:
+        """
+        Initialize the BackgroundRunAlgorithmAsyncUc with a background algorithm runner.
+
+        Parameters
+        ----------
+        bg_algorithm_runner : BackgroundAlgorithmRunner
+            The background algorithm runner used to retrieve algorithm results.
+        """
+        self._bg_algorithm_runner = bg_algorithm_runner
+
     def __call__(self, algorithm: AlgorithmAsync[Any], model_id: int) -> str:
-        return str(HueyAlgorithmRunner.run_async(algorithm, model_id).id)  # pragma: no cover
+        return self._bg_algorithm_runner.run_async(algorithm, model_id)  # pragma: no cover

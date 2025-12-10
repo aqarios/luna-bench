@@ -1,6 +1,7 @@
 from dependency_injector import containers, providers
 from dependency_injector.providers import Configuration, Provider
 
+from luna_bench._internal.background_tasks.background_task_container import BackgroundTaskContainer
 from luna_bench._internal.dao import DaoContainer
 from luna_bench._internal.mappers.container import MapperContainer
 from luna_bench._internal.usecases.background_tasks.background_retrieve_algorithm_async import (
@@ -93,6 +94,9 @@ class UsecaseContainer(containers.DeclarativeContainer):
     config: Configuration = providers.Configuration()
 
     dao_container = providers.Container(DaoContainer, config=config)
+    bg_task_container = providers.Container(
+        BackgroundTaskContainer,
+    )
     mapper_container = providers.Container(MapperContainer)
 
     # ModelSet usecases
@@ -184,19 +188,21 @@ class UsecaseContainer(containers.DeclarativeContainer):
     benchmark_algorithm_filter_uc: Provider[AlgorithmFilterUc] = providers.Singleton(AlgorithmFilterUcImpl)
 
     benchmark_background_run_algorithm_async_uc: Provider[BackgroundRunAlgorithmAsyncUc] = providers.Singleton(
-        BackgroundRunAlgorithmAsyncUcImpl
+        BackgroundRunAlgorithmAsyncUcImpl, bg_algorithm_runner=bg_task_container.bg_algorithm_runner
     )
 
     benchmark_background_run_algorithm_sync_uc: Provider[BackgroundRunAlgorithmSyncUc] = providers.Singleton(
-        BackgroundRunAlgorithmSyncUcImpl
+        BackgroundRunAlgorithmSyncUcImpl, bg_algorithm_runner=bg_task_container.bg_algorithm_runner
     )
 
     benchmark_background_retrieve_algorithm_async_uc: Provider[BackgroundRetrieveAlgorithmAsyncUc] = (
-        providers.Singleton(BackgroundRetrieveAlgorithmAsyncUcImpl)
+        providers.Singleton(
+            BackgroundRetrieveAlgorithmAsyncUcImpl, bg_algorithm_runner=bg_task_container.bg_algorithm_runner
+        )
     )
 
     benchmark_background_retrieve_algorithm_sync_uc: Provider[BackgroundRetrieveAlgorithmSyncUc] = providers.Singleton(
-        BackgroundRetrieveAlgorithmSyncUcImpl
+        BackgroundRetrieveAlgorithmSyncUcImpl, bg_algorithm_runner=bg_task_container.bg_algorithm_runner
     )
 
     benchmark_algorithm_start_tasks_uc: Provider[AlgorithmRunAsBackgroundTasksUc] = providers.Singleton(
@@ -228,4 +234,5 @@ class UsecaseContainer(containers.DeclarativeContainer):
         retrieve_async_retrieval_data=benchmark_algorithm_retrieve_async_retrieval_data_uc,
         retrieve_async_solution_data=benchmark_algorithm_retrieve_async_solution_data_uc,
         start_tasks=benchmark_algorithm_start_tasks_uc,
+        bg_task_client=bg_task_container.bg_task_client,
     )

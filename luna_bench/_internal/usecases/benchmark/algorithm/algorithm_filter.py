@@ -19,13 +19,13 @@ class AlgorithmFilterUcImpl(AlgorithmFilterUc):
 
         if algorithm is not None:
             if not any(a.name == algorithm.name for a in benchmark.algorithms):
-                self._logger.debug(f"Algorithm {algorithm.name} is not part of the benchmark '{benchmark.name}'")
+                self._logger.debug(f"Algorithm {algorithm.name} is not part of the benchmark '{benchmark.name}'.")
                 return Failure(RunAlgorithmMissingError(algorithm.name, benchmark.name))
-            self._logger.debug(f"Running single algorithm {[algorithm.name]} for benchmark '{benchmark.name}'")
+            self._logger.debug(f"Selected a single algorithm {[algorithm.name]} for benchmark '{benchmark.name}'.")
             algorithms = [algorithm]
         else:
             self._logger.debug(
-                f"Running all algorithms {[a.name for a in benchmark.algorithms]} for benchmark '{benchmark.name}"
+                f"Selected all algorithms {[a.name for a in benchmark.algorithms]} for benchmark '{benchmark.name}."
             )
             algorithms = benchmark.algorithms
 
