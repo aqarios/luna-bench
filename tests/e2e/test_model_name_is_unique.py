@@ -12,10 +12,10 @@ class TestModelNameNotUnique:
         model_set2 = ModelSet.create("model_set2")
 
         model_set1.add(simple_model("name"))
-        
+
         # Adding the same model multiple times must be possible
-        model_set1.add(simple_model("name")) 
-        
+        model_set1.add(simple_model("name"))
+
         with pytest.raises(RuntimeError):
             model_set1.add(Model("name"))
 

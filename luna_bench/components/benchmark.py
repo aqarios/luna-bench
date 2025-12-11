@@ -295,8 +295,6 @@ class Benchmark(BenchmarkUserModel):
         ta = TypeAdapter(list[Benchmark])
         return ta.validate_python(result.unwrap(), from_attributes=True)
 
-    def run(self) -> None: ...  # noqa: D102 # Not yet implemented
-
     def reset(self) -> None: ...  # noqa: D102 # Not yet implemented
 
     def export_to_file(self, file_path: str) -> None: ...  # noqa: D102 # Not yet implemented
@@ -748,8 +746,12 @@ class Benchmark(BenchmarkUserModel):
             Benchmark._logger.error(f"Failed to run plots for the benchmark {self.name} with error: {error}")
             raise RuntimeError(error)
 
-    def run_jobs(self) -> None:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+    def run(self) -> None:
+        """Execute the benchmark."""
+        self.run_features()
+        self.run_algorithms()
+        self.run_metrics()
+        self.run_plots()
 
     def list_model_metrics_classes(self) -> list[None]:  # noqa: D102 # Not yet implemented
         raise NotImplementedError

@@ -46,10 +46,10 @@ class AlgorithmRetrieveAsyncRetrivalDataUcImpl(AlgorithmRetrieveAsyncRetrivalDat
 
         Parameters
         ----------
+        background_retrieve_async : BackgroundRetrieveAlgorithmAsyncUc
+            The retrieval algorithm for async solutions.
         transaction : DaoTransaction
             The transaction object used to interact with the dao.
-        registry : PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain]
-            The registry containing algorithms and their associated data domains.
         """
         self._transaction = transaction
         self._background_retrieve_async = background_retrieve_async

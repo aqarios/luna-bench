@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.background_tasks import HueyAlgorithmRunner
+from luna_bench._internal.background_tasks.huey.huey_algorithm_runner import HueyAlgorithmRunner
 from luna_bench._internal.dao import DaoTransaction
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync
@@ -42,8 +42,8 @@ class SuccessAlgorithmAsync(AlgorithmAsync[ArbitraryDataDomain]):
     def run_async(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
         return ArbitraryDataDomain()
 
-    def fetch_result(self, model: Model, retrieval_data: ArbitraryDataDomain) -> Solution:  # noqa: ARG002
-        return _solution
+    def fetch_result(self, model: Model, retrieval_data: ArbitraryDataDomain) -> Result[Solution, str]:  # noqa: ARG002
+        return Success(_solution)
 
 
 class FailureAlgorithmSync(AlgorithmSync):
@@ -59,8 +59,8 @@ class FailureAlgorithmAsync(AlgorithmAsync[ArbitraryDataDomain]):
     def run_async(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
         raise RuntimeError
 
-    def fetch_result(self, model: Model, retrieval_data: ArbitraryDataDomain) -> Solution:  # noqa: ARG002
-        raise RuntimeError
+    def fetch_result(self, model: Model, retrieval_data: ArbitraryDataDomain) -> Result[Solution, str]:  # noqa: ARG002
+        raise Failure(RuntimeError)  # type: ignore[misc] # Fine here it's a fake failing algorithm
 
 
 class TestHueyAlgorithmRunner:
