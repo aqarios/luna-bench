@@ -3,10 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from dependency_injector import containers, providers
-from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
-from luna_quantum.solve.interfaces.backend_i import IBackend
 
 from luna_bench._internal.interfaces import IFeature, IMetric, IPlot
+from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
+from luna_bench._internal.interfaces.algorithm_sync import AlgorithmSync
 
 from .arbitrary_data_registry import ArbitraryDataRegistry
 
@@ -23,8 +23,12 @@ class RegistryContainer(containers.DeclarativeContainer):
         ArbitraryDataRegistry[IFeature], kind="feature"
     )
 
-    algorithm_registry: Provider[PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain]] = (
-        providers.ThreadSafeSingleton(ArbitraryDataRegistry[IAlgorithm[IBackend]], kind="algorithm")
+    algorithm_sync_registry: Provider[PydanticRegistry[AlgorithmSync, RegisteredDataDomain]] = (
+        providers.ThreadSafeSingleton(ArbitraryDataRegistry[AlgorithmSync], kind="algorithm_sync")
+    )
+
+    algorithm_async_registry: Provider[PydanticRegistry[AlgorithmAsync[Any], RegisteredDataDomain]] = (
+        providers.ThreadSafeSingleton(ArbitraryDataRegistry[AlgorithmAsync[Any]], kind="algorithm_async")
     )
 
     metric_registry: Provider[PydanticRegistry[IMetric, RegisteredDataDomain]] = providers.ThreadSafeSingleton(

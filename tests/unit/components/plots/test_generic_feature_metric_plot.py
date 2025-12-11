@@ -19,8 +19,8 @@ class _FakePlot(GenericFeaturesMetricsPlot):
 class TestGenericFeaturesMetricsPlot:
     def test_validate_plot(self) -> None:
         fake_plot = _FakePlot()
-        _FakePlot.features_ids = {"mock_feature"}
-        _FakePlot.metrics_ids = {"mock_metric"}
+        _FakePlot.features_ids = {MockFeature._registered_id}  # type: ignore[attr-defined]
+        _FakePlot.metrics_ids = {MockMetric._registered_id}  # type: ignore[attr-defined]
 
         benchmark = BenchmarkUserModel(
             name="test",
@@ -68,6 +68,6 @@ class TestGenericFeaturesMetricsPlot:
         result = fake_plot.validate_plot(benchmark)
 
         assert result.unwrap() == FeaturesAndMetricsValidationResult(
-            features={"mock_feature": benchmark.features[0]},
-            metrics={"mock_metric": benchmark.metrics[0]},
+            features={MockFeature._registered_id: benchmark.features[0]},  # type: ignore[attr-defined]
+            metrics={MockMetric._registered_id: benchmark.metrics[0]},  # type: ignore[attr-defined]
         )

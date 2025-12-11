@@ -33,20 +33,6 @@ def _empty_plot(name: str, plot: IPlot[Any]) -> PlotUserModel:
 
 
 class TestPlot:
-    @pytest.fixture()
-    @staticmethod
-    def default_usecase(usecase: UsecaseContainer) -> UsecaseContainer:
-        create_default: Result[
-            BenchmarkUserModel, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError
-        ] = usecase.benchmark_create_uc()(benchmark_name="existing")
-        assert is_successful(create_default)
-        create_default_plot = usecase.benchmark_add_plot_uc()(
-            benchmark_name="existing", name="existing", plot=MockPlot()
-        )
-        assert is_successful(create_default_plot)
-
-        return usecase
-
     @pytest.mark.parametrize(
         ("benchmark_name", "plot_name", "plot", "exp"),
         [
@@ -58,7 +44,7 @@ class TestPlot:
     )
     def test_add(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         benchmark_name: str,
         plot_name: str,
         plot: IPlot[Any],
@@ -80,7 +66,7 @@ class TestPlot:
             | UnknownComponentError
             | UnknownIdError
             | ValidationError,
-        ] = default_usecase.benchmark_add_plot_uc()(benchmark_name, plot_name, plot)
+        ] = usecase.benchmark_add_plot_uc()(benchmark_name, plot_name, plot)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
@@ -97,7 +83,7 @@ class TestPlot:
     )
     def test_remove(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         benchmark_name: str,
         plot_name: str,
         exp: Result[
@@ -110,7 +96,7 @@ class TestPlot:
             | ValidationError,
         ],
     ) -> None:
-        result: Result[None, DataNotExistError | UnknownLunaBenchError] = default_usecase.benchmark_remove_plot_uc()(
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = usecase.benchmark_remove_plot_uc()(
             benchmark_name, plot_name
         )
 
@@ -129,7 +115,7 @@ class TestPlot:
     )
     def test_run_plots(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         error_handling_mode: UseCaseErrorHandlingMode,
         plot: IPlot[Any],
         exp: Result[
@@ -151,7 +137,7 @@ class TestPlot:
             plots=[_empty_plot("test", plot)],
         )
 
-        result = default_usecase.benchmark_run_plots_uc()(benchmark, error_handling_mode)
+        result = usecase.benchmark_run_plots_uc()(benchmark, error_handling_mode)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()

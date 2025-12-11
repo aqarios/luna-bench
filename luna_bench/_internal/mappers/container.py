@@ -32,7 +32,12 @@ class MapperContainer(containers.DeclarativeContainer):
 
     algorithm_mapper: Provider[Mapper[AlgorithmDomain, AlgorithmUserModel]] = providers.Factory(
         AlgorithmMapper,
-        algorithm_registry=registry_container.algorithm_registry,
+        algorithm_sync_registry=registry_container.algorithm_sync_registry,
+        algorithm_async_registry=registry_container.algorithm_async_registry,
+    )
+    algorithm_async_mapper: Provider[Mapper[AlgorithmDomain, AlgorithmUserModel]] = providers.Factory(
+        AlgorithmMapper,
+        algorithm_registry=registry_container.algorithm_async_registry,
     )
 
     feature_mapper: Provider[Mapper[FeatureDomain, FeatureUserModel]] = providers.Factory(

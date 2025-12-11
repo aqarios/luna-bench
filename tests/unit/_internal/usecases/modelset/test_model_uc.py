@@ -17,12 +17,12 @@ if TYPE_CHECKING:
 class TestModelUc:
     def test_model_all(self, usecase: UsecaseContainer) -> None:
         uc: ModelLoadAllUc = usecase.model_load_all_uc()
-        assert len(uc()) == 2
+        assert len(uc()) == 1
 
     @pytest.mark.parametrize(
         ("model_id", "exp"),
         [
-            (1, Success(_dummy_model("M1"))),
+            (1, Success(_dummy_model("existing"))),
             (3, Failure(DataNotExistError())),
         ],
     )

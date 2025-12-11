@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
@@ -8,44 +8,31 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench._internal.user_models import AlgorithmUserModel, BenchmarkUserModel
+from luna_bench._internal.user_models import AlgorithmUserModel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
 from tests.unit.fixtures.mock_components import MockAlgorithm, UnregisteredAlgorithm
 
 if TYPE_CHECKING:
-    from luna_quantum.solve.interfaces.backend_i import IBackend
     from pydantic import ValidationError
 
+    from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync
     from luna_bench._internal.usecases.usecase_container import UsecaseContainer
     from luna_bench.errors.registry.unknown_id_error import UnknownIdError
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-def _empty_algorithm(name: str, algorithm: IAlgorithm[IBackend]) -> AlgorithmUserModel:
+def _empty_algorithm(name: str, algorithm: AlgorithmSync | AlgorithmAsync[Any]) -> AlgorithmUserModel:
     return AlgorithmUserModel(
         name=name,
         status=JobStatus.CREATED,
         algorithm=algorithm,
+        results={},
     )
 
 
 class TestAlgorithm:
-    @pytest.fixture()
-    @staticmethod
-    def default_usecase(usecase: UsecaseContainer) -> UsecaseContainer:
-        create_default: Result[
-            BenchmarkUserModel, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError
-        ] = usecase.benchmark_create_uc()(benchmark_name="existing")
-        assert is_successful(create_default)
-        create_default_algorithm = usecase.benchmark_add_algorithm_uc()(
-            benchmark_name="existing", name="existing", algorithm=MockAlgorithm()
-        )
-        assert is_successful(create_default_algorithm)
-
-        return usecase
-
     @pytest.mark.parametrize(
         ("benchmark_name", "algorithm_name", "algorithm", "exp"),
         [
@@ -57,10 +44,10 @@ class TestAlgorithm:
     )
     def test_add(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         benchmark_name: str,
         algorithm_name: str,
-        algorithm: IAlgorithm[IBackend],
+        algorithm: AlgorithmSync | AlgorithmAsync[Any],
         exp: Result[
             AlgorithmUserModel,
             DataNotUniqueError
@@ -71,6 +58,7 @@ class TestAlgorithm:
             | ValidationError,
         ],
     ) -> None:
+        uc = usecase.benchmark_add_algorithm_uc()
         result: Result[
             AlgorithmUserModel,
             DataNotUniqueError
@@ -79,7 +67,7 @@ class TestAlgorithm:
             | UnknownComponentError
             | UnknownIdError
             | ValidationError,
-        ] = default_usecase.benchmark_add_algorithm_uc()(benchmark_name, algorithm_name, algorithm)
+        ] = uc(benchmark_name, algorithm_name, algorithm)
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
@@ -96,7 +84,7 @@ class TestAlgorithm:
     )
     def test_remove(
         self,
-        default_usecase: UsecaseContainer,
+        usecase: UsecaseContainer,
         benchmark_name: str,
         algorithm_name: str,
         exp: Result[
@@ -109,8 +97,8 @@ class TestAlgorithm:
             | ValidationError,
         ],
     ) -> None:
-        result: Result[None, DataNotExistError | UnknownLunaBenchError] = (
-            default_usecase.benchmark_remove_algorithm_uc()(benchmark_name, algorithm_name)
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = usecase.benchmark_remove_algorithm_uc()(
+            benchmark_name, algorithm_name
         )
 
         if is_successful(exp):

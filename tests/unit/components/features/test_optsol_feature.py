@@ -16,7 +16,7 @@ class TestOptSolFeature:
     def test_time_limit_reached(self, hard_model: Model) -> None:
         """Test that the feature handles time limit correctly."""
         # Set a short time limit to ensure pre-termination on complex problems
-        feature = OptSolFeature(max_runtime=1)
+        feature = OptSolFeature(max_runtime=0.1)
         result = feature.run(hard_model)
 
         # Should have pre-terminated due to time limit

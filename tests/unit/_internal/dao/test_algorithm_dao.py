@@ -8,6 +8,7 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models import AlgorithmDomain, BenchmarkStatus, JobStatus
 from luna_bench._internal.domain_models.algorithm_result_domain import AlgorithmResultDomain
+from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.registered_data_domain import RegisteredDataDomain
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
@@ -16,9 +17,15 @@ from tests.unit.fixtures.mock_config import MockConfig
 
 if TYPE_CHECKING:
     from luna_bench._internal.dao import DaoTransaction
+    from tests.unit.fixtures.mock_database import SetupBenchmark
 
-_result_obj = AlgorithmResultDomain(
-    meta_data=(ArbitraryDataDomain.model_validate(MockConfig(something="xD").model_dump(), from_attributes=True))
+_result_obj = AlgorithmResultDomain.model_construct(
+    meta_data=ArbitraryDataDomain.model_validate(MockConfig(something="xD").model_dump(), from_attributes=True),
+    model_id=1,
+    status=JobStatus.DONE,
+    error=None,
+    task_id=None,
+    retrival_data=None,
 )
 _result_obj.solution = b"abc"
 
@@ -31,10 +38,16 @@ class TestAlgorithmDAO:
     def setup_transaction(empty_transaction: DaoTransaction) -> DaoTransaction:
         """Provide a transaction fixture with a default model for testing the ModelDAOs."""
         empty_transaction.benchmark.create(benchmark_name="existing")
+        empty_transaction.modelset.create(modelset_name="existing")
+        model = empty_transaction.model.get_or_create(model_name="existing", model_hash=1, binary=b"").unwrap()
+        empty_transaction.modelset.add_model(modelset_name="existing", model_id=model.id)
+        empty_transaction.benchmark.set_modelset(benchmark_name="existing", modelset_name="existing")
+        _result_obj.model_id = model.id
         TestAlgorithmDAO._saved_algorithm_domain = empty_transaction.algorithm.add(
             benchmark_name="existing",
             algorithm_name="existing",
             registered_id="existing",
+            algorithm_type=AlgorithmType.SYNC,
             algorithm=ArbitraryDataDomain(),
         ).unwrap()
 
@@ -50,7 +63,8 @@ class TestAlgorithmDAO:
                     AlgorithmDomain(
                         name="non-existing",
                         status=JobStatus.CREATED,
-                        result=None,
+                        results={},
+                        algorithm_type=AlgorithmType.SYNC,
                         config_data=RegisteredDataDomain(
                             registered_id="existing",
                             data=ArbitraryDataDomain.model_validate(
@@ -75,6 +89,7 @@ class TestAlgorithmDAO:
             benchmark_name,
             metric_name,
             "existing",
+            AlgorithmType.SYNC,
             ArbitraryDataDomain.model_validate(MockConfig(something="xD").model_dump(), from_attributes=True),
         )
         assert type(result) is type(exp)
@@ -192,39 +207,46 @@ class TestAlgorithmDAO:
             assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
-        ("benchmark_name", "metric_name", "result", "exp"),
+        ("benchmark_name", "algorithm_name", "exp"),
         [
             (
                 "existing",
                 "existing",
-                _result_obj,
                 Success(None),
             ),
-            ("non-existing", "existing", _result_obj, Failure(DataNotExistError())),
-            ("existing", "non-existing", _result_obj, Failure(DataNotExistError())),
+            ("non-existing", "existing", Failure(DataNotExistError())),
+            ("existing", "non-existing", Failure(DataNotExistError())),
         ],
     )
     def test_result_storage(
         self,
-        setup_transaction: DaoTransaction,
+        setup_benchmark: SetupBenchmark,
         benchmark_name: str,
-        metric_name: str,
-        result: AlgorithmResultDomain,
+        algorithm_name: str,
         exp: Result[None, DataNotExistError],
     ) -> None:
-        set_result = setup_transaction.algorithm.set_result(benchmark_name, metric_name, result)
+        result_to_store = AlgorithmResultDomain.model_construct(
+            meta_data=ArbitraryDataDomain.model_validate(MockConfig(something="xD").model_dump(), from_attributes=True),
+            model_id=setup_benchmark.model_metadata.id,
+            status=JobStatus.DONE,
+            error=None,
+            task_id=None,
+            retrival_data=None,
+        )
+
+        set_result = setup_benchmark.transaction.algorithm.set_result(benchmark_name, algorithm_name, result_to_store)
         assert type(set_result) is type(exp)
         if is_successful(exp):
-            a = setup_transaction.algorithm.load(benchmark_name, metric_name)
+            a = setup_benchmark.transaction.algorithm.load(benchmark_name, algorithm_name)
 
-            assert a.unwrap().result == result
+            assert a.unwrap().results == {setup_benchmark.model_metadata.name: result_to_store}
 
         else:
             assert isinstance(set_result.failure(), type(exp.failure()))
 
-        remove = setup_transaction.algorithm.remove_result(benchmark_name, metric_name)
+        remove = setup_benchmark.transaction.algorithm.remove_result(benchmark_name, algorithm_name)
         assert type(remove) is type(exp)
         if is_successful(exp):
-            assert setup_transaction.algorithm.load(benchmark_name, metric_name).unwrap().result is None
+            assert setup_benchmark.transaction.algorithm.load(benchmark_name, algorithm_name).unwrap().results == {}
         else:
             assert isinstance(remove.failure(), type(exp.failure()))
