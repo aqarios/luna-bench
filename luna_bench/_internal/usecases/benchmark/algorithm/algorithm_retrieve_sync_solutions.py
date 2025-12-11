@@ -36,14 +36,14 @@ class AlgorithmRetrieveSyncSolutionsUcImpl(AlgorithmRetrieveSyncSolutionsUc):
         transaction: DaoTransaction = Provide[DaoContainer.transaction],
     ) -> None:
         """
-        Initialize the AlgorithmRunUc with a dao transaction and a registry.
+        Initialize the AlgorithmRetrieveSyncSolutionsUc with a dao transaction and a task to retrieve solutions.
 
         Parameters
         ----------
+        background_retrieve_sync : BackgroundRetrieveAlgorithmSyncUc
+            The retrieval algorithm for sync solutions.
         transaction : DaoTransaction
             The transaction object used to interact with the dao.
-        registry : PydanticRegistry[IAlgorithm[IBackend], RegisteredDataDomain]
-            The registry containing algorithms and their associated data domains.
         """
         self._transaction = transaction
         self._background_retrieve_sync = background_retrieve_sync

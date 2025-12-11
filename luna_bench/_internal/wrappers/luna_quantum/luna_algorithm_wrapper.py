@@ -4,9 +4,9 @@ from typing import Any
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
-from luna_quantum import algorithms as algos_module
 from luna_quantum.solve.domain.abstract.luna_algorithm import LunaAlgorithm as LunaQuantumAlgorithm
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
+from luna_quantum.solve.parameters import algorithms as algos_module
 from pydantic import BaseModel
 from returns.pipeline import is_successful
 

@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from luna_quantum import Solution
@@ -13,15 +13,10 @@ from luna_bench._internal.usecases.benchmark.protocols import BackgroundRetrieve
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
-PATCH_TARGET = (
-    "luna_bench._internal.usecases.background_tasks.background_retrieve_algorithm_sync."
-    "HueyAlgorithmRunner.retrieve_task_result"
-)
 solution = MagicMock(spec=Solution)
 
 
 class TestBackgroundRetrieveAlgorithmSync:
-    @patch(PATCH_TARGET)
     @pytest.mark.parametrize(
         ("uc", "mocked_return", "exp"),
         [
@@ -41,16 +36,17 @@ class TestBackgroundRetrieveAlgorithmSync:
     )
     def test_returns_correct_value(
         self,
-        mock_retrieve_task_result: MagicMock,
+        bg_algorithm_runner: MagicMock,
         uc: BackgroundRetrieveAlgorithmSyncUc,
         mocked_return: Result[Solution, Exception],
         exp: Maybe[Result[Solution, Exception]],
     ) -> None:
-        mock_retrieve_task_result.return_value = mocked_return
+        bg_algorithm_runner.retrieve_task_result = MagicMock()
+        bg_algorithm_runner.retrieve_task_result.return_value = mocked_return
 
         result = uc(task_id="some_id")
 
-        mock_retrieve_task_result.assert_called_once_with("some_id")
+        bg_algorithm_runner.retrieve_task_result.assert_called_once_with("some_id")
 
         assert type(result) is type(exp)
         if is_successful(exp):

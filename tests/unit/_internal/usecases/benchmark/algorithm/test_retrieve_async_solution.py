@@ -94,8 +94,10 @@ class TestRetrieveAsyncSolution:
         for a in benchmark.algorithms:
             if isinstance(a.algorithm, AlgorithmAsync):
                 solution = a.results["default_model"].solution
+                fetch_result = MockAsyncAlgorithm().fetch_result(None, None)  # type: ignore[arg-type] # Using none for simplicity. The fake algorithm does nothing with this data anyway.
                 assert solution is not None
-                assert solution == MockAsyncAlgorithm().fetch_result(None, None)  # type: ignore[arg-type] # Using none for simplicity. The fake algorithm does nothing with this data anyway.
+                assert is_successful(fetch_result)
+                assert solution == fetch_result.unwrap()
                 assert a.results["default_model"].status is JobStatus.DONE
             else:
                 assert a.results["default_model"].solution is None
