@@ -85,7 +85,7 @@ class TestLunaAlgorithmWrapper:
         assert hasattr(cls, "run_async")
         assert hasattr(cls, "fetch_result")
 
-        assert cls.model_type.fget(object()) is LunaData
+        assert cls.model_type.fget(None) is LunaData
 
     def test_all_algorithm_added(self) -> None:
         registry = ArbitraryDataRegistry[AlgorithmAsync[Any]](kind="algorithm_async")

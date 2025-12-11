@@ -7,21 +7,24 @@ from pydantic import BaseModel
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.interfaces import AlgorithmSync
-from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
+from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync
 from luna_bench._internal.interfaces.feature_i import IFeature
 from luna_bench._internal.interfaces.metric_i import IMetric
 from luna_bench._internal.interfaces.plot_i import IPlot
+from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
+from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.helpers.decorators import algorithm, feature, metric, plot
 
 if TYPE_CHECKING:
+    from luna_quantum import Model
+
     from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-@feature
-class MockFeature(IFeature):
+@feature(feature_id="mock_feature")  # type: ignore[arg-type]
+class MockFeature(IFeature):  # type: ignore[misc]
     def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
         return ArbitraryDataDomain.model_construct(solution="xD")  # type: ignore[call-arg] # Fake data
 
@@ -56,16 +59,18 @@ class MockAsyncAlgorithm(AlgorithmAsync[AsyncReturnData]):
     def run_async(self, model: Model) -> AsyncReturnData:
         return AsyncReturnData.model_construct(model_name=model.name)
 
-    def fetch_result(self, model: Model, retrieval_data: AsyncReturnData) -> Solution:  # noqa: ARG002
-        return Solution._build(  # type: ignore[attr-defined,no-any-return]
-            component_types=[],
-            binary_cols=[],
-            spin_cols=None,
-            int_cols=None,
-            real_cols=None,
-            raw_energies=None,
-            timing=None,
-            counts=[],
+    def fetch_result(self, model: Model, retrieval_data: AsyncReturnData) -> Result[Solution, str]:  # noqa: ARG002
+        return Success(
+            Solution._build(  # type: ignore[attr-defined]
+                component_types=[],
+                binary_cols=[],
+                spin_cols=None,
+                int_cols=None,
+                real_cols=None,
+                raw_energies=None,
+                timing=None,
+                counts=[],
+            )
         )
 
 

@@ -1,20 +1,20 @@
-from luna_bench._internal.background_tasks.huey_consumer import HueyConsumer
+from luna_bench._internal.background_tasks.huey.huey_background_task_client import HueyBackgroundTaskClient
 
 
 class TestHueyConsumer:
     def test_huey_consumer(self) -> None:
-        assert not HueyConsumer.is_consumer_running()
-        HueyConsumer.start_if_not_running()
-        assert HueyConsumer.is_consumer_running()
-        HueyConsumer._start_consumer()
-        assert HueyConsumer.is_consumer_running()
+        assert not HueyBackgroundTaskClient.is_consumer_running()
+        HueyBackgroundTaskClient._start_consumer()
+        assert HueyBackgroundTaskClient.is_consumer_running()
+        HueyBackgroundTaskClient._start_consumer()
+        assert HueyBackgroundTaskClient.is_consumer_running()
 
-        HueyConsumer._stop_consumer()
-        assert not HueyConsumer.is_consumer_running()
-        HueyConsumer._stop_consumer()
-        assert not HueyConsumer.is_consumer_running()
+        HueyBackgroundTaskClient._stop_consumer()
+        assert not HueyBackgroundTaskClient.is_consumer_running()
+        HueyBackgroundTaskClient._stop_consumer()
+        assert not HueyBackgroundTaskClient.is_consumer_running()
 
-        with HueyConsumer.consumer():
-            assert HueyConsumer.is_consumer_running()
+        with HueyBackgroundTaskClient.consumer():
+            assert HueyBackgroundTaskClient.is_consumer_running()
 
-        assert not HueyConsumer.is_consumer_running()
+        assert not HueyBackgroundTaskClient.is_consumer_running()
