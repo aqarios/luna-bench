@@ -2,11 +2,12 @@ from pydantic import ValidationError
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.domain_models import MetricDomain, RegisteredDataDomain
+from luna_bench._internal.domain_models import MetricDomain, MetricResultDomain, RegisteredDataDomain
 from luna_bench._internal.interfaces import IMetric
 from luna_bench._internal.mappers.mixins.model_list_mixin import ModelListMixin
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.user_models import MetricUserModel
+from luna_bench._internal.user_models.metric_result_usermodel import MetricResultUserModel
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
 
@@ -16,6 +17,23 @@ class MetricMapper(ModelListMixin[MetricDomain, MetricUserModel]):
         metric_registry: PydanticRegistry[IMetric, RegisteredDataDomain],
     ) -> None:
         self._metric_registry = metric_registry
+
+    @staticmethod
+    def result_to_user_model(result: MetricResultDomain) -> MetricResultUserModel:
+        return MetricResultUserModel.model_construct(
+            processing_time_ms=result.processing_time_ms,
+            model_name=result.model_name,
+            algorithm_name=result.algorithm_name,
+            status=result.status,
+            error=result.error,
+            result=result.result if result.result else None,
+        )
+
+    @staticmethod
+    def result_to_user_model_dict(
+        results: dict[tuple[str, str], MetricResultDomain],
+    ) -> dict[tuple[str, str], MetricResultUserModel]:
+        return {(k, m): MetricMapper.result_to_user_model(result) for (k, m), result in results.items()}
 
     def to_user_model(
         self,
@@ -46,5 +64,6 @@ class MetricMapper(ModelListMixin[MetricDomain, MetricUserModel]):
                 name=domain.name,
                 status=domain.status,
                 metric=user_config.unwrap(),
+                results=self.result_to_user_model_dict(domain.results),
             )
         )

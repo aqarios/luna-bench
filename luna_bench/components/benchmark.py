@@ -23,6 +23,7 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     FeatureRunUc,
     MetricAddUc,
     MetricRemoveUc,
+    MetricRunUc,
     PlotAddUc,
     PlotRemoveUc,
     PlotsRunUc,
@@ -49,6 +50,7 @@ from luna_bench.errors.registry.unknown_component_error import UnknownComponentE
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
+from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -88,6 +90,13 @@ class Benchmark(BenchmarkUserModel):
         benchmark_run_algorithms: AlgorithmRunUc = Provide[UsecaseContainer.benchmark_run_algorithm_uc],
     ) -> AlgorithmRunUc:
         return benchmark_run_algorithms
+
+    @staticmethod
+    @inject
+    def __run_metric_uc(
+        benchmark_run_metrics: MetricRunUc = Provide[UsecaseContainer.benchmark_run_metric_uc],
+    ) -> MetricRunUc:
+        return benchmark_run_metrics
 
     @staticmethod
     @inject
@@ -286,8 +295,6 @@ class Benchmark(BenchmarkUserModel):
         ta = TypeAdapter(list[Benchmark])
         return ta.validate_python(result.unwrap(), from_attributes=True)
 
-    def run(self) -> None: ...  # noqa: D102 # Not yet implemented
-
     def reset(self) -> None: ...  # noqa: D102 # Not yet implemented
 
     def export_to_file(self, file_path: str) -> None: ...  # noqa: D102 # Not yet implemented
@@ -311,12 +318,12 @@ class Benchmark(BenchmarkUserModel):
 
         """
         benchmark_set_modelset = self.__benchmark_set_modelset_uc()
-        modelset_load = self.__modelset_load_uc()
 
-        modelset_name: str = modelset.name if isinstance(modelset, ModelSet) else modelset
+        if isinstance(modelset, str):
+            modelset = ModelSet.load(modelset)
 
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_set_modelset(
-            self.name, modelset_name
+            self.name, modelset.name
         )
 
         if not is_successful(result):
@@ -325,15 +332,8 @@ class Benchmark(BenchmarkUserModel):
             if isinstance(error, UnknownLunaBenchError):
                 raise error.error()
             raise error
-        result_modelset = modelset_load(modelset_name)
 
-        if not is_successful(result_modelset):
-            error = result_modelset.failure()
-            Benchmark._logger.error(f"Failed to load modelset for benchmark: {error}")
-            if isinstance(error, UnknownLunaBenchError):
-                raise error.error()
-            raise error
-        self.modelset = result_modelset.unwrap()
+        self.modelset = modelset
 
     def remove_modelset(
         self,
@@ -696,7 +696,13 @@ class Benchmark(BenchmarkUserModel):
             raise RuntimeError(error)
 
     def run_metrics(self) -> None:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+        benchmark_run_metrics = self.__run_metric_uc()
+        result: Result[None, RunMetricMissingError | RunModelsetMissingError] = benchmark_run_metrics(self)
+
+        if not is_successful(result):
+            error = result.failure()
+            Benchmark._logger.error(f"Failed to run metrics for the benchmark: {error}")
+            raise RuntimeError(error)
 
     def run_plots(
         self,
@@ -740,8 +746,12 @@ class Benchmark(BenchmarkUserModel):
             Benchmark._logger.error(f"Failed to run plots for the benchmark {self.name} with error: {error}")
             raise RuntimeError(error)
 
-    def run_jobs(self) -> None:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+    def run(self) -> None:
+        """Execute the benchmark."""
+        self.run_features()
+        self.run_algorithms()
+        self.run_metrics()
+        self.run_plots()
 
     def list_model_metrics_classes(self) -> list[None]:  # noqa: D102 # Not yet implemented
         raise NotImplementedError

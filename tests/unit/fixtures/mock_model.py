@@ -3,24 +3,14 @@ import pytest
 from _pytest.fixtures import FixtureRequest
 from luna_quantum import Model, Variable, Vtype, quicksum
 
-
-def _dummy_model(name: str) -> Model:
-    model = Model(name)
-    with model.environment:
-        x = Variable("x")
-        y = Variable("y")
-    model.objective = x * y + x
-    model.constraints += x >= 0
-    model.constraints += y <= 5
-
-    return model
+from tests.utils.luna_model import simple_model
 
 
 @pytest.fixture()
 def model(request: FixtureRequest) -> Model:
     name: str = getattr(request, "param", "default_model")
 
-    return _dummy_model(name)
+    return simple_model(name)
 
 
 @pytest.fixture()

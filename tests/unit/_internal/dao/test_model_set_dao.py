@@ -8,7 +8,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.domain_models import ModelMetadataDomain, ModelSetDomain
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
-from tests.unit.fixtures.mock_model import _dummy_model
+from tests.utils.luna_model import simple_model
 
 if TYPE_CHECKING:
     from luna_quantum import Model
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 def _stored_dummy_model(transaction: DaoTransaction, modelset_name: str, model_name: str) -> ModelMetadataDomain:
-    model = _dummy_model(model_name)
+    model = simple_model(model_name)
     model_metadata = transaction.model.get_or_create(
         model_name=model.name, model_hash=model.__hash__(), binary=model.encode()
     ).unwrap()
@@ -111,10 +111,10 @@ class TestModelSetDAO:
     @pytest.mark.parametrize(
         ("modelset_name", "models", "exp"),
         [
-            ("Existing", [_dummy_model("Test")], Success(ModelSetDomain(id=1, name="Existing", models=[]))),
+            ("Existing", [simple_model("Test")], Success(ModelSetDomain(id=1, name="Existing", models=[]))),
             (
                 "Existing",
-                [_dummy_model("Test"), _dummy_model("Test2")],
+                [simple_model("Test"), simple_model("Test2")],
                 Success(ModelSetDomain(id=1, name="Existing", models=[])),
             ),
             ("Existing", [], Failure(DataNotExistError())),

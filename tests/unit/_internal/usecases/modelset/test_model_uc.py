@@ -7,7 +7,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
-from tests.unit.fixtures.mock_model import _dummy_model
+from tests.utils.luna_model import simple_model
 
 if TYPE_CHECKING:
     from luna_bench._internal.usecases import ModelLoadAllUc
@@ -22,7 +22,7 @@ class TestModelUc:
     @pytest.mark.parametrize(
         ("model_id", "exp"),
         [
-            (1, Success(_dummy_model("existing"))),
+            (1, Success(simple_model("existing"))),
             (3, Failure(DataNotExistError())),
         ],
     )

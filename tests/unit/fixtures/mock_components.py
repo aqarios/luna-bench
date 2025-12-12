@@ -7,21 +7,24 @@ from pydantic import BaseModel
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.interfaces import AlgorithmSync
-from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
+from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync
 from luna_bench._internal.interfaces.feature_i import IFeature
 from luna_bench._internal.interfaces.metric_i import IMetric
 from luna_bench._internal.interfaces.plot_i import IPlot
+from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
+from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.helpers.decorators import algorithm, feature, metric, plot
 
 if TYPE_CHECKING:
+    from luna_quantum import Model
+
     from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-@feature
-class MockFeature(IFeature):
+@feature(feature_id="mock_feature")  # type: ignore[arg-type]
+class MockFeature(IFeature):  # type: ignore[misc]
     def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
         return ArbitraryDataDomain.model_construct(solution="xD")  # type: ignore[call-arg] # Fake data
 
@@ -113,10 +116,16 @@ class MockPlotWithValidationError(IPlot[str]):
 
 @metric(metric_id="mock_metric")  # type: ignore[arg-type]
 class MockMetric(IMetric):  # type: ignore[misc]
-    def run(self) -> None:
+    def run(self, solution: Solution) -> ArbitraryDataDomain:  # noqa: ARG002
+        return ArbitraryDataDomain()
+
+
+@metric
+class MockMetricError(IMetric):
+    def run(self, solution: Solution) -> ArbitraryDataDomain:
         raise NotImplementedError
 
 
 class UnregisteredMetric(IMetric):
-    def run(self) -> None:
-        raise NotImplementedError
+    def run(self, solution: Solution) -> ArbitraryDataDomain:  # noqa: ARG002
+        return ArbitraryDataDomain()
