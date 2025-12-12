@@ -5,11 +5,11 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models import FeatureDomain, RegisteredDataDomain
-from luna_bench._internal.interfaces.feature_i import IFeature
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.protocols import FeatureAddUc
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
+from luna_bench.base_components import BaseFeature
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -19,13 +19,13 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 class FeatureAddUcImpl(FeatureAddUc):
     _transaction: DaoTransaction
-    _registry: PydanticRegistry[IFeature, RegisteredDataDomain]
+    _registry: PydanticRegistry[BaseFeature, RegisteredDataDomain]
 
     @inject
     def __init__(
         self,
         transaction: DaoTransaction = Provide[DaoContainer.transaction],
-        registry: PydanticRegistry[IFeature, RegisteredDataDomain] = Provide[RegistryContainer.feature_registry],
+        registry: PydanticRegistry[BaseFeature, RegisteredDataDomain] = Provide[RegistryContainer.feature_registry],
     ) -> None:
         """
         Initialize the BenchmarkAddFeatureUc with a dao transaction.
@@ -39,7 +39,7 @@ class FeatureAddUcImpl(FeatureAddUc):
         self._registry = registry
 
     def __call__(
-        self, benchmark_name: str, name: str, feature: IFeature
+        self, benchmark_name: str, name: str, feature: BaseFeature
     ) -> Result[
         FeatureUserModel,
         DataNotUniqueError
@@ -61,7 +61,7 @@ class FeatureAddUcImpl(FeatureAddUc):
             )
             if not is_successful(result):
                 return Failure(result.failure())
-            config: Result[IFeature, UnknownIdError | ValidationError] = self._registry.from_domain_to_user_model(
+            config: Result[BaseFeature, UnknownIdError | ValidationError] = self._registry.from_domain_to_user_model(
                 result.unwrap().config_data
             )
 

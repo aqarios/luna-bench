@@ -2,10 +2,9 @@ from luna_quantum import Logging
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
-from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
-from luna_bench._internal.interfaces.algorithm_sync import AlgorithmSync
 from luna_bench._internal.usecases.benchmark.protocols import AlgorithmFilterUc
 from luna_bench._internal.user_models import AlgorithmUserModel, BenchmarkUserModel
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
 
 
@@ -31,8 +30,8 @@ class AlgorithmFilterUcImpl(AlgorithmFilterUc):
 
         match algorithm_type:
             case AlgorithmType.SYNC:
-                algorithms = [a for a in algorithms if isinstance(a.algorithm, AlgorithmSync)]
+                algorithms = [a for a in algorithms if isinstance(a.algorithm, BaseAlgorithmSync)]
             case AlgorithmType.ASYNC:
-                algorithms = [a for a in algorithms if isinstance(a.algorithm, AlgorithmAsync)]
+                algorithms = [a for a in algorithms if isinstance(a.algorithm, BaseAlgorithmAsync)]
 
         return Success(algorithms)

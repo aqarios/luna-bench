@@ -4,10 +4,10 @@ from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.interfaces.plot_i import IPlot
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
 from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
+from luna_bench.base_components import BasePlot
 from luna_bench.components.plots.generics.mixins.features_plot_mixin import FeaturesPlotMixin
 from luna_bench.components.plots.generics.mixins.metrics_plot_mixin import MetricsPlotMixin
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
@@ -35,7 +35,7 @@ class FeaturesAndMetricsValidationResult(BaseModel):
 class GenericFeaturesMetricsPlot(
     FeaturesPlotMixin,
     MetricsPlotMixin,
-    IPlot[FeaturesAndMetricsValidationResult],
+    BasePlot[FeaturesAndMetricsValidationResult],
 ):
     """
     Base class for plots that require both metrics and features.

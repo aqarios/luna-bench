@@ -4,9 +4,9 @@ from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.interfaces import IPlot
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
+from luna_bench.base_components import BasePlot
 from luna_bench.components.plots.generics.mixins.metrics_plot_mixin import MetricsPlotMixin
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -26,7 +26,7 @@ class MetricsValidationResult(BaseModel):
     metrics: dict[str, MetricUserModel]
 
 
-class GenericMetricsPlot(IPlot[MetricsValidationResult], MetricsPlotMixin):
+class GenericMetricsPlot(BasePlot[MetricsValidationResult], MetricsPlotMixin):
     """
     Base class for plots that only require metrics.
 

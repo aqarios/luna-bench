@@ -9,7 +9,6 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench._internal.interfaces.algorithm_sync import AlgorithmSync
 from luna_bench._internal.mappers.algorithm_mapper import AlgorithmMapper
 from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmRetrieveSyncSolutionsUc,
@@ -17,6 +16,7 @@ from luna_bench._internal.usecases.benchmark.protocols import (
 )
 from luna_bench._internal.user_models import AlgorithmUserModel, BenchmarkUserModel
 from luna_bench._internal.user_models.algorithm_result_usermodel import AlgorithmResultUserModel
+from luna_bench.base_components import BaseAlgorithmSync
 from luna_bench.configs.config import config
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
@@ -98,7 +98,7 @@ class AlgorithmRetrieveSyncSolutionsUcImpl(AlgorithmRetrieveSyncSolutionsUc):
         to_retrieve: deque[tuple[AlgorithmUserModel, AlgorithmResultUserModel]] = deque(
             (a, r)
             for a in benchmark.algorithms
-            if isinstance(a.algorithm, AlgorithmSync)
+            if isinstance(a.algorithm, BaseAlgorithmSync)
             for r in a.results.values()
             if r.status == JobStatus.RUNNING and r.task_id is not None
         )

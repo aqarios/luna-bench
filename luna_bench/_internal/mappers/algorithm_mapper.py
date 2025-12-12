@@ -4,20 +4,19 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models import AlgorithmDomain, AlgorithmResultDomain, RegisteredDataDomain
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
-from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
-from luna_bench._internal.interfaces.algorithm_sync import AlgorithmSync
 from luna_bench._internal.mappers.mixins.model_list_mixin import ModelListMixin
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.user_models import AlgorithmUserModel
 from luna_bench._internal.user_models.algorithm_result_usermodel import AlgorithmResultUserModel
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
 
 class AlgorithmMapper(ModelListMixin[AlgorithmDomain, AlgorithmUserModel]):
     def __init__(
         self,
-        algorithm_sync_registry: PydanticRegistry[AlgorithmSync, RegisteredDataDomain],
-        algorithm_async_registry: PydanticRegistry[AlgorithmAsync[BaseModel], RegisteredDataDomain],
+        algorithm_sync_registry: PydanticRegistry[BaseAlgorithmSync, RegisteredDataDomain],
+        algorithm_async_registry: PydanticRegistry[BaseAlgorithmAsync[BaseModel], RegisteredDataDomain],
     ) -> None:
         self._algorithm_sync_registry = algorithm_sync_registry
         self._algorithm_async_registry = algorithm_async_registry
@@ -70,7 +69,7 @@ class AlgorithmMapper(ModelListMixin[AlgorithmDomain, AlgorithmUserModel]):
             Successful conversion: The user model. Otherwise, an exception.
 
         """
-        user_config: Result[AlgorithmSync | AlgorithmAsync[BaseModel], UnknownIdError | ValidationError]
+        user_config: Result[BaseAlgorithmSync | BaseAlgorithmAsync[BaseModel], UnknownIdError | ValidationError]
         match domain.algorithm_type:
             case AlgorithmType.SYNC:
                 user_config = self._algorithm_sync_registry.from_domain_to_user_model(domain.config_data)

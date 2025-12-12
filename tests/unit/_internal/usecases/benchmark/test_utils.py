@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import pytest
+from luna_bench._internal.interfaces import AlgorithmSync, IFeature, IMetric, Plot
+from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
 from returns.result import Result, Success
 
 from luna_bench._internal.domain_models import BenchmarkDomain, BenchmarkStatus
@@ -15,8 +17,6 @@ from luna_bench._internal.domain_models.metric_domain import MetricDomain
 from luna_bench._internal.domain_models.model_metadata_domain import ModelMetadataDomain
 from luna_bench._internal.domain_models.modelset_domain import ModelSetDomain
 from luna_bench._internal.domain_models.registered_data_domain import RegisteredDataDomain
-from luna_bench._internal.interfaces import AlgorithmSync, IFeature, IMetric, IPlot
-from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
 from luna_bench._internal.mappers.algorithm_mapper import AlgorithmMapper
 from luna_bench._internal.mappers.benchmark_mapper import BenchmarkMapper
 from luna_bench._internal.mappers.feature_mapper import FeatureMapper
@@ -160,7 +160,7 @@ class TestUtils:
         feature_registry = ArbitraryDataRegistry[IFeature]("feature")
         algorithm_sync_registry = ArbitraryDataRegistry[AlgorithmSync]("algorithm_sync")
         algorithm_async_registry = ArbitraryDataRegistry[AlgorithmAsync[Any]]("algorithm_async")
-        plot_registry = ArbitraryDataRegistry[IPlot[Any]]("plot")
+        plot_registry = ArbitraryDataRegistry[Plot[Any]]("plot")
 
         feature_registry.register("feature", MockFeature)
         metric_registry.register("metric", MockMetric)

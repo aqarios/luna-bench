@@ -8,7 +8,6 @@ from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from returns.pipeline import is_successful
 
-from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync, IFeature, IMetric, IPlot
 from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
 from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmAddUc,
@@ -38,6 +37,7 @@ from luna_bench._internal.user_models import (
     PlotUserModel,
 )
 from luna_bench._internal.wrappers import LunaAlgorithmWrapper
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
 from luna_bench.components.algorithm import Algorithm
 from luna_bench.components.enums import ErrorHandlingMode
 from luna_bench.components.feature import Feature
@@ -363,7 +363,7 @@ class Benchmark(BenchmarkUserModel):
     def add_feature(
         self,
         name: str,
-        feature: IFeature,
+        feature: Feature,
     ) -> Feature:
         """
         Add a feature to the benchmark with a given name.
@@ -378,7 +378,7 @@ class Benchmark(BenchmarkUserModel):
         ----------
         name: str
             Name of the feature to add.
-        feature: IFeature
+        feature: Feature
             The feature to add.
 
         Returns
@@ -440,7 +440,7 @@ class Benchmark(BenchmarkUserModel):
     def add_metric(
         self,
         name: str,
-        metric: IMetric,
+        metric: Metric,
     ) -> Metric:
         """
         Add a metric to the benchmark with a given name.
@@ -455,7 +455,7 @@ class Benchmark(BenchmarkUserModel):
         ----------
         name: str
             The name of the metric to add.
-        metric: IMetric
+        metric: Metric
             An instance of the metric to add.
 
         Returns
@@ -515,7 +515,7 @@ class Benchmark(BenchmarkUserModel):
     def add_algorithm(
         self,
         name: str,
-        algorithm: IAlgorithm[Any] | AlgorithmSync | AlgorithmAsync[Any],
+        algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
     ) -> Algorithm:
         """
         Add an algorithm to the benchmark with a given name.
@@ -598,7 +598,7 @@ class Benchmark(BenchmarkUserModel):
     def add_plot(
         self,
         name: str,
-        plot: IPlot[Any],
+        plot: Plot[Any],
     ) -> Plot:
         """
         Add a plot to the benchmark with a given name.
@@ -613,7 +613,7 @@ class Benchmark(BenchmarkUserModel):
         ----------
         name: str
             The name of the plot to add.
-        plot: IPlot[Any]
+        plot: Plot[Any]
             The plot to add.
 
         Returns

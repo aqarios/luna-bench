@@ -3,18 +3,18 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models import FeatureDomain, FeatureResultDomain, RegisteredDataDomain
-from luna_bench._internal.interfaces import IFeature
 from luna_bench._internal.mappers.mixins.model_list_mixin import ModelListMixin
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.user_models.feature_result_usermodel import FeatureResultUserModel
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
+from luna_bench.base_components import BaseFeature
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
 
 class FeatureMapper(ModelListMixin[FeatureDomain, FeatureUserModel]):
     def __init__(
         self,
-        feature_registry: PydanticRegistry[IFeature, RegisteredDataDomain],
+        feature_registry: PydanticRegistry[BaseFeature, RegisteredDataDomain],
     ) -> None:
         self._feature_registry = feature_registry
 
@@ -50,7 +50,7 @@ class FeatureMapper(ModelListMixin[FeatureDomain, FeatureUserModel]):
             Successful conversion: The user model. Otherwise, an exception.
 
         """
-        user_config: Result[IFeature, UnknownIdError | ValidationError] = (
+        user_config: Result[BaseFeature, UnknownIdError | ValidationError] = (
             self._feature_registry.from_domain_to_user_model(domain.config_data)
         )
         if not is_successful(user_config):  # pragma: no cover

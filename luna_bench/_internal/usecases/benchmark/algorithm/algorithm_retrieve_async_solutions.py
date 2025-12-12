@@ -5,10 +5,10 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench._internal.interfaces import AlgorithmAsync
 from luna_bench._internal.mappers.algorithm_mapper import AlgorithmMapper
 from luna_bench._internal.usecases.benchmark.protocols import AlgorithmRetrieveAsyncSolutionsUc
 from luna_bench._internal.user_models import BenchmarkUserModel
+from luna_bench.base_components import BaseAlgorithmAsync
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
@@ -38,7 +38,7 @@ class AlgorithmRetrieveAsyncSolutionsUcImpl(AlgorithmRetrieveAsyncSolutionsUc):
         self, benchmark: BenchmarkUserModel
     ) -> Result[None, RunAlgorithmMissingError | RunModelsetMissingError | DataNotExistError | UnknownLunaBenchError]:
         for a in benchmark.algorithms:
-            if not isinstance(a.algorithm, AlgorithmAsync):
+            if not isinstance(a.algorithm, BaseAlgorithmAsync):
                 continue
             for r in a.results.values():
                 if r.status == JobStatus.RUNNING and r.task_id is not None:

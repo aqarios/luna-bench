@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from pydantic import BaseModel
 from returns.result import Result
 
+from luna_bench.base_components.meta_classes.registered_class_meta import RegisteredClassMeta
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -11,13 +12,15 @@ if TYPE_CHECKING:
     from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 
 
-class IPlot[TValidationResult](BaseModel, ABC):
+class BasePlot[TValidationResult](BaseModel, ABC, metaclass=RegisteredClassMeta):
     """
     Base interface for all plot components.
 
     Subclasses should implement the `run` method.
 
     """
+
+    registered_id: ClassVar[str]
 
     @abstractmethod
     def run(self, data: TValidationResult) -> None:

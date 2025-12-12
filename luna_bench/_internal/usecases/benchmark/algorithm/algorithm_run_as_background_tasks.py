@@ -6,8 +6,6 @@ from luna_quantum import Logging
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models import AlgorithmResultDomain
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
-from luna_bench._internal.interfaces.algorithm_sync import AlgorithmSync
 from luna_bench._internal.mappers.algorithm_mapper import AlgorithmMapper
 from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmRunAsBackgroundTasksUc,
@@ -16,6 +14,7 @@ from luna_bench._internal.usecases.benchmark.protocols import (
 )
 from luna_bench._internal.user_models import AlgorithmUserModel
 from luna_bench._internal.user_models.model_metadata_usermodel import ModelMetadataUserModel
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
 
 
 class AlgorithmRunAsBackgroundTasksUcImpl(AlgorithmRunAsBackgroundTasksUc):
@@ -59,9 +58,9 @@ class AlgorithmRunAsBackgroundTasksUcImpl(AlgorithmRunAsBackgroundTasksUc):
             self._logger.debug(f"Creating job for algorithm {a.name} and model {m.name}")
 
             task_id: str
-            if isinstance(a.algorithm, AlgorithmSync):
+            if isinstance(a.algorithm, BaseAlgorithmSync):
                 task_id = self._background_start_sync(a.algorithm, m.id)
-            elif isinstance(a.algorithm, AlgorithmAsync):
+            elif isinstance(a.algorithm, BaseAlgorithmAsync):
                 task_id = self._background_start_async(a.algorithm, m.id)
             else:  # pragma: no cover This should never happen. There are only two types of algorithms at the moment
                 raise TypeError(type(a))

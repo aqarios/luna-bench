@@ -1,13 +1,13 @@
 from typing import ClassVar
 
 import pytest
+from luna_bench._internal.interfaces.feature import Feature
 from luna_quantum import Model
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench._internal.interfaces.feature_i import IFeature
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench._internal.user_models.feature_result_usermodel import FeatureResultUserModel
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
@@ -27,7 +27,7 @@ class _FakePlot(GenericFeaturesPlot):
 
 
 @feature(feature_id="mock_feature_new")  # type: ignore[arg-type]
-class MockFeatureNew(IFeature):  # type: ignore[misc]
+class MockFeatureNew(Feature):  # type: ignore[misc]
     def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
         return ArbitraryDataDomain.model_construct(solution="xD")  # type: ignore[call-arg] # Fake data
 
@@ -77,12 +77,12 @@ class TestGenericFeaturesPlot:
                     ),
                 ),
                 {
-                    MockFeature._registered_id,  # type: ignore[attr-defined]
+                    MockFeature.registered_id,  # type: ignore[attr-defined]
                     "mock_feature_new",
                 },
                 Success(
                     {
-                        MockFeature._registered_id: FeatureUserModel(  # type: ignore[attr-defined]
+                        MockFeature.registered_id: FeatureUserModel(  # type: ignore[attr-defined]
                             name="existing_name",
                             status=JobStatus.CREATED,
                             feature=MockFeature(),
@@ -122,7 +122,7 @@ class TestGenericFeaturesPlot:
     )
     def test_prepare_features(
         self,
-        features: tuple[tuple[str, IFeature]],
+        features: tuple[tuple[str, Feature]],
         plot_features: set[str],
         exp: Result[dict[str, FeatureUserModel], MetricsMissingError | UnknownLunaBenchError],
     ) -> None:
@@ -154,7 +154,7 @@ class TestGenericFeaturesPlot:
 
     def test_validate_plot(self) -> None:
         fake_plot = _FakePlot()
-        _FakePlot.features_ids = {MockFeature._registered_id}  # type: ignore[attr-defined]
+        _FakePlot.features_ids = {MockFeature.registered_id}  # type: ignore[attr-defined]
 
         benchmark = BenchmarkUserModel(
             name="test",
@@ -187,4 +187,4 @@ class TestGenericFeaturesPlot:
         ]
         result = fake_plot.validate_plot(benchmark)
 
-        assert result.unwrap() == FeaturesValidationResult(features={MockFeature._registered_id: benchmark.features[0]})  # type: ignore[attr-defined]
+        assert result.unwrap() == FeaturesValidationResult(features={MockFeature.registered_id: benchmark.features[0]})  # type: ignore[attr-defined]

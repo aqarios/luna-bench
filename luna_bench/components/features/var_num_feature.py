@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.interfaces import IFeature
+from luna_bench.base_components import BaseFeature
 from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ class VarNumberFeatureResult(ArbitraryDataDomain):
 
 
 @feature
-class VarNumberFeature(IFeature):
+class VarNumberFeature(BaseFeature):
     """Fake feature class."""
 
     def run(self, model: Model) -> VarNumberFeatureResult:

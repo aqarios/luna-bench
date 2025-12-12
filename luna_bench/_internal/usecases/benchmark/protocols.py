@@ -6,10 +6,6 @@ from returns.maybe import Maybe
 from returns.result import Result
 
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
-from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync
-from luna_bench._internal.interfaces.feature_i import IFeature
-from luna_bench._internal.interfaces.metric_i import IMetric
-from luna_bench._internal.interfaces.plot_i import IPlot
 from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
 from luna_bench._internal.user_models import (
     AlgorithmUserModel,
@@ -19,6 +15,7 @@ from luna_bench._internal.user_models import (
     PlotUserModel,
 )
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
@@ -57,7 +54,7 @@ class BenchmarkLoadAllUc(Protocol):
 
 class MetricAddUc(Protocol):
     def __call__(
-        self, benchmark_name: str, name: str, metric: IMetric
+        self, benchmark_name: str, name: str, metric: BaseMetric
     ) -> Result[
         MetricUserModel,
         DataNotUniqueError
@@ -77,7 +74,7 @@ class MetricRunUc(Protocol):
 
 class FeatureAddUc(Protocol):
     def __call__(
-        self, benchmark_name: str, name: str, feature: IFeature
+        self, benchmark_name: str, name: str, feature: BaseFeature
     ) -> Result[
         FeatureUserModel,
         DataNotUniqueError
@@ -97,7 +94,7 @@ class FeatureRunUc(Protocol):
 
 class PlotAddUc(Protocol):
     def __call__(
-        self, benchmark_name: str, name: str, plot: IPlot[Any]
+        self, benchmark_name: str, name: str, plot: BasePlot[Any]
     ) -> Result[
         PlotUserModel,
         DataNotUniqueError
@@ -111,7 +108,7 @@ class PlotAddUc(Protocol):
 
 class AlgorithmAddUc(Protocol):
     def __call__(
-        self, benchmark_name: str, name: str, algorithm: AlgorithmSync | AlgorithmAsync[Any]
+        self, benchmark_name: str, name: str, algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any]
     ) -> Result[
         AlgorithmUserModel,
         DataNotUniqueError
@@ -209,11 +206,11 @@ class PlotsRunUc(Protocol):
 
 
 class BackgroundRunAlgorithmAsyncUc(Protocol):
-    def __call__(self, algorithm: AlgorithmAsync[Any], model_id: int) -> str: ...
+    def __call__(self, algorithm: BaseAlgorithmAsync[Any], model_id: int) -> str: ...
 
 
 class BackgroundRunAlgorithmSyncUc(Protocol):
-    def __call__(self, algorithm: AlgorithmSync, model_id: int) -> str: ...
+    def __call__(self, algorithm: BaseAlgorithmSync, model_id: int) -> str: ...
 
 
 class BackgroundRetrieveAlgorithmAsyncUc(Protocol):

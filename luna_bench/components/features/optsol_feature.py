@@ -42,7 +42,7 @@ class OptSolFeatureResult(ArbitraryDataDomain):
 
 
 @feature
-class OptSolFeature(IFeature):
+class OptSolFeature(IFeature[OptSolFeatureResult]):
     """
     Feature that computes the optimal (or best feasible) solution for optimization models.
 

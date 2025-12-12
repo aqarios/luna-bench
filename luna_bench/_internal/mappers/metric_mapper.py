@@ -3,18 +3,18 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models import MetricDomain, MetricResultDomain, RegisteredDataDomain
-from luna_bench._internal.interfaces import IMetric
 from luna_bench._internal.mappers.mixins.model_list_mixin import ModelListMixin
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.user_models import MetricUserModel
 from luna_bench._internal.user_models.metric_result_usermodel import MetricResultUserModel
+from luna_bench.base_components import BaseMetric
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
 
 class MetricMapper(ModelListMixin[MetricDomain, MetricUserModel]):
     def __init__(
         self,
-        metric_registry: PydanticRegistry[IMetric, RegisteredDataDomain],
+        metric_registry: PydanticRegistry[BaseMetric, RegisteredDataDomain],
     ) -> None:
         self._metric_registry = metric_registry
 
@@ -53,7 +53,7 @@ class MetricMapper(ModelListMixin[MetricDomain, MetricUserModel]):
             Successful conversion: The user model. Otherwise, an exception.
 
         """
-        user_config: Result[IMetric, UnknownIdError | ValidationError] = (
+        user_config: Result[BaseMetric, UnknownIdError | ValidationError] = (
             self._metric_registry.from_domain_to_user_model(domain.config_data)
         )
         if not is_successful(user_config):  # pragma: no cover

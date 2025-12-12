@@ -5,11 +5,11 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models import MetricDomain, RegisteredDataDomain
-from luna_bench._internal.interfaces.metric_i import IMetric
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.protocols import MetricAddUc
 from luna_bench._internal.user_models import MetricUserModel
+from luna_bench.base_components import BaseMetric
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -19,13 +19,13 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 class MetricAddUcImpl(MetricAddUc):
     _transaction: DaoTransaction
-    _registry: PydanticRegistry[IMetric, RegisteredDataDomain]
+    _registry: PydanticRegistry[BaseMetric, RegisteredDataDomain]
 
     @inject
     def __init__(
         self,
         transaction: DaoTransaction = Provide[DaoContainer.transaction],
-        registry: PydanticRegistry[IMetric, RegisteredDataDomain] = Provide[RegistryContainer.metric_registry],
+        registry: PydanticRegistry[BaseMetric, RegisteredDataDomain] = Provide[RegistryContainer.metric_registry],
     ) -> None:
         """
         Initialize the BenchmarkMetricImpl with a dao transaction.
@@ -39,7 +39,7 @@ class MetricAddUcImpl(MetricAddUc):
         self._registry = registry
 
     def __call__(
-        self, benchmark_name: str, name: str, metric: IMetric
+        self, benchmark_name: str, name: str, metric: BaseMetric
     ) -> Result[
         MetricUserModel,
         DataNotUniqueError
@@ -63,7 +63,7 @@ class MetricAddUcImpl(MetricAddUc):
             if not is_successful(result):
                 return Failure(result.failure())
 
-            config: Result[IMetric, UnknownIdError | ValidationError] = self._registry.from_domain_to_user_model(
+            config: Result[BaseMetric, UnknownIdError | ValidationError] = self._registry.from_domain_to_user_model(
                 result.unwrap().config_data
             )
 

@@ -8,12 +8,11 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models import RegisteredDataDomain
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
-from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
-from luna_bench._internal.interfaces.algorithm_sync import AlgorithmSync
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.protocols import AlgorithmAddUc
 from luna_bench._internal.user_models.algorithm_usermodel import AlgorithmUserModel
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -26,17 +25,17 @@ if TYPE_CHECKING:
 
 class AlgorithmAddUcImpl(AlgorithmAddUc):
     _transaction: DaoTransaction
-    _registry_sync: PydanticRegistry[AlgorithmSync, RegisteredDataDomain]
-    _registry_async: PydanticRegistry[AlgorithmAsync[BaseModel], RegisteredDataDomain]
+    _registry_sync: PydanticRegistry[BaseAlgorithmSync, RegisteredDataDomain]
+    _registry_async: PydanticRegistry[BaseAlgorithmAsync[BaseModel], RegisteredDataDomain]
 
     @inject
     def __init__(
         self,
         transaction: DaoTransaction = Provide[DaoContainer.transaction],
-        registry_sync: PydanticRegistry[AlgorithmSync, RegisteredDataDomain] = Provide[
+        registry_sync: PydanticRegistry[BaseAlgorithmSync, RegisteredDataDomain] = Provide[
             RegistryContainer.algorithm_sync_registry
         ],
-        registry_async: PydanticRegistry[AlgorithmAsync[BaseModel], RegisteredDataDomain] = Provide[
+        registry_async: PydanticRegistry[BaseAlgorithmAsync[BaseModel], RegisteredDataDomain] = Provide[
             RegistryContainer.algorithm_async_registry
         ],
     ) -> None:
@@ -53,7 +52,7 @@ class AlgorithmAddUcImpl(AlgorithmAddUc):
         self._registry_async = registry_async
 
     def __call__(
-        self, benchmark_name: str, name: str, algorithm: AlgorithmSync | AlgorithmAsync[Any]
+        self, benchmark_name: str, name: str, algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any]
     ) -> Result[
         AlgorithmUserModel,
         DataNotUniqueError
@@ -65,9 +64,9 @@ class AlgorithmAddUcImpl(AlgorithmAddUc):
     ]:
         dm_result: Result[RegisteredDataDomain, UnknownComponentError]
 
-        if isinstance(algorithm, AlgorithmAsync):
+        if isinstance(algorithm, BaseAlgorithmAsync):
             dm_result = self._registry_async.from_user_model_to_domain_model(algorithm)
-        elif isinstance(algorithm, AlgorithmSync):
+        elif isinstance(algorithm, BaseAlgorithmSync):
             dm_result = self._registry_sync.from_user_model_to_domain_model(algorithm)
 
         if not is_successful(dm_result):
@@ -80,7 +79,7 @@ class AlgorithmAddUcImpl(AlgorithmAddUc):
                     benchmark_name,
                     name,
                     dm.registered_id,
-                    AlgorithmType.SYNC if isinstance(algorithm, AlgorithmSync) else AlgorithmType.ASYNC,
+                    AlgorithmType.SYNC if isinstance(algorithm, BaseAlgorithmSync) else AlgorithmType.ASYNC,
                     dm.data,
                 )
             )
@@ -89,8 +88,8 @@ class AlgorithmAddUcImpl(AlgorithmAddUc):
             domain_model = result.unwrap()
 
             config: (
-                Result[AlgorithmSync | AlgorithmAsync[BaseModel], UnknownIdError | ValidationError]
-                | Result[AlgorithmSync, UnknownIdError | ValidationError]
+                Result[BaseAlgorithmSync | BaseAlgorithmAsync[BaseModel], UnknownIdError | ValidationError]
+                | Result[BaseAlgorithmSync, UnknownIdError | ValidationError]
             )
             match domain_model.algorithm_type:
                 case AlgorithmType.SYNC:

@@ -5,14 +5,14 @@ from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
 from pydantic import BaseModel
 
-from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync, IFeature, IMetric, IPlot
 from luna_bench._internal.registries.protocols import Registry
 from luna_bench._internal.registries.registry_container import RegistryContainer
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
 from luna_bench.errors.incompatible_class_error import IncompatibleClassError
 
 
 def _register_class(
-    register_class: type[Any],
+    register_class: type[BaseMetric | BaseFeature | BaseAlgorithmAsync | BaseAlgorithmSync | BasePlot[Any]],
     *,
     base: type | tuple[type, ...],
     registered_class_id: str | None,
@@ -21,17 +21,18 @@ def _register_class(
     if not isinstance(register_class, type) or not issubclass(register_class, base):
         raise IncompatibleClassError(base)
     pid = registered_class_id or f"{register_class.__module__}.{register_class.__qualname__}"
-
     register_class._registered_id = pid  # noqa: SLF001 # We define it here internally.
+    register_class.registered_id = pid  # We define it here internally.
+
     registry.register(pid, register_class)
 
 
 @inject
-def feature[T: IFeature](
+def feature[T: BaseFeature](
     _cls: type[T] | None = None,
     *,
     feature_id: str | None = None,
-    feature_registry: Registry[IFeature] = Provide[RegistryContainer.feature_registry],
+    feature_registry: Registry[BaseFeature] = Provide[RegistryContainer.feature_registry],
 ) -> Callable[[type[T]], type[T]] | type[T]:
     """
     Register a class as a feature.
@@ -52,7 +53,7 @@ def feature[T: IFeature](
 
     def _do_register(cls: type[T]) -> type[T]:
         pid = feature_id or f"{cls.__module__}.{cls.__qualname__}"
-        _register_class(cls, base=IFeature, registered_class_id=pid, registry=feature_registry)
+        _register_class(cls, base=BaseFeature, registered_class_id=pid, registry=feature_registry)
         return cls
 
     if _cls is not None:
@@ -62,7 +63,7 @@ def feature[T: IFeature](
 
 
 @overload
-def algorithm[T: AlgorithmAsync[Any] | AlgorithmSync](
+def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
     _cls: type[T],
     *,
     algorithm_id: str | None = None,
@@ -70,7 +71,7 @@ def algorithm[T: AlgorithmAsync[Any] | AlgorithmSync](
 
 
 @overload
-def algorithm[T: AlgorithmAsync[Any] | AlgorithmSync](
+def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
     _cls: None = None,
     *,
     algorithm_id: str | None = None,
@@ -78,12 +79,12 @@ def algorithm[T: AlgorithmAsync[Any] | AlgorithmSync](
 
 
 @inject
-def algorithm[T: AlgorithmAsync[Any] | AlgorithmSync](
+def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
     _cls: type[T] | None = None,
     *,
     algorithm_id: str | None = None,
-    algorithm_sync_registry: Registry[AlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
-    algorithm_async_registry: Registry[AlgorithmAsync[Any]] = Provide[RegistryContainer.algorithm_async_registry],
+    algorithm_sync_registry: Registry[BaseAlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
+    algorithm_async_registry: Registry[BaseAlgorithmAsync[Any]] = Provide[RegistryContainer.algorithm_async_registry],
 ) -> Callable[[type[T]], type[T]] | type[T]:
     """
     Register a class as an algorithm.
@@ -106,12 +107,12 @@ def algorithm[T: AlgorithmAsync[Any] | AlgorithmSync](
 
     def _do_register(cls: type[T]) -> type[T]:
         pid = algorithm_id or f"{cls.__module__}.{cls.__qualname__}"
-        if issubclass(cls, AlgorithmAsync):
-            _register_class(cls, base=AlgorithmAsync, registered_class_id=pid, registry=algorithm_async_registry)
-        elif issubclass(cls, AlgorithmSync):
-            _register_class(cls, base=AlgorithmSync, registered_class_id=pid, registry=algorithm_sync_registry)
+        if issubclass(cls, BaseAlgorithmAsync):
+            _register_class(cls, base=BaseAlgorithmAsync, registered_class_id=pid, registry=algorithm_async_registry)
+        elif issubclass(cls, BaseAlgorithmSync):
+            _register_class(cls, base=BaseAlgorithmSync, registered_class_id=pid, registry=algorithm_sync_registry)
         else:
-            raise IncompatibleClassError(AlgorithmAsync | AlgorithmSync)
+            raise IncompatibleClassError(BaseAlgorithmAsync | BaseAlgorithmSync)
         return cls
 
     if _cls is not None:
@@ -121,11 +122,12 @@ def algorithm[T: AlgorithmAsync[Any] | AlgorithmSync](
 
 
 @inject
-def metric[T: IMetric](
+def metric[T: BaseMetric](
     _cls: type[T] | None = None,
     *,
     metric_id: str | None = None,
-    metric_registry: Registry[IMetric] = Provide[RegistryContainer.metric_registry],
+    required_features: tuple[BaseFeature, ...] | None = None,
+    metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
 ) -> Callable[[type[T]], type[T]] | type[T]:
     """
     Register a class as a metric.
@@ -138,6 +140,8 @@ def metric[T: IMetric](
     metric_id: str | None, optional
         Set a custom ID for the metric. If not provided, the ID will be generated automatically.
         It's recommended to not set this parameter.
+    required_features : tuple[IFeature, ...] | None = None
+        A tuple of required features for this metric. If none, no features are required.
     metric_registry: Registry[IMetric], injected
 
     Returns
@@ -148,7 +152,9 @@ def metric[T: IMetric](
 
     def _do_register(cls: type[T]) -> type[T]:
         pid = metric_id or f"{cls.__module__}.{cls.__qualname__}"
-        _register_class(cls, base=IMetric, registered_class_id=pid, registry=metric_registry)
+        cls.required_features = required_features
+        _register_class(cls, base=BaseMetric, registered_class_id=pid, registry=metric_registry)
+
         return cls
 
     if _cls is not None:
@@ -159,13 +165,13 @@ def metric[T: IMetric](
 
 @inject
 def plot(
-    _cls: type[IPlot[Any]] | None = None,
+    _cls: type[BasePlot[Any]] | None = None,
     *,
     metrics_ids: tuple[str] | None = None,
     features_ids: tuple[str] | None = None,
     plot_id: str | None = None,
-    plot_registry: Registry[IPlot[Any]] = Provide[RegistryContainer.plot_registry],
-) -> Callable[[type[IPlot[Any]]], type[IPlot[Any]]] | type[IPlot[Any]]:
+    plot_registry: Registry[BasePlot[Any]] = Provide[RegistryContainer.plot_registry],
+) -> Callable[[type[BasePlot[Any]]], type[BasePlot[Any]]] | type[BasePlot[Any]]:
     """
     Register a class as a plot.
 
@@ -184,9 +190,9 @@ def plot(
     Callable[[type[T]], type[T]] | type[T]
     """
 
-    def _do_register(cls: type[IPlot[Any]]) -> type[IPlot[Any]]:
+    def _do_register(cls: type[BasePlot[Any]]) -> type[BasePlot[Any]]:
         pid = plot_id or f"{cls.__module__}.{cls.__qualname__}"
-        _register_class(cls, base=IPlot, registered_class_id=pid, registry=plot_registry)
+        _register_class(cls, base=BasePlot, registered_class_id=pid, registry=plot_registry)
         if metrics_ids is not None:
             cls.metrics_ids = metrics_ids  # type: ignore[attr-defined]
         if features_ids is not None:
@@ -201,8 +207,8 @@ def plot(
 
 @inject
 def features(
-    feature_registry: Registry[IFeature] = Provide[RegistryContainer.feature_registry],
-) -> Registry[IFeature]:
+    feature_registry: Registry[BaseFeature] = Provide[RegistryContainer.feature_registry],
+) -> Registry[BaseFeature]:
     """
     Retrieve the feature registry.
 
@@ -212,7 +218,7 @@ def features(
 
     Returns
     -------
-    Registry[IFeature]
+    Registry[Feature]
         Returns the injected feature registry.
 
     """
@@ -221,8 +227,8 @@ def features(
 
 @inject
 def algorithms_sync(
-    algorithm_registry: Registry[AlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
-) -> Registry[AlgorithmSync]:
+    algorithm_registry: Registry[BaseAlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
+) -> Registry[BaseAlgorithmSync]:
     """
     Retrieve the algorithm registry.
 
@@ -241,8 +247,8 @@ def algorithms_sync(
 
 @inject
 def algorithms_async(
-    algorithm_registry: Registry[AlgorithmAsync[BaseModel]] = Provide[RegistryContainer.algorithm_async_registry],
-) -> Registry[AlgorithmAsync[BaseModel]]:
+    algorithm_registry: Registry[BaseAlgorithmAsync[BaseModel]] = Provide[RegistryContainer.algorithm_async_registry],
+) -> Registry[BaseAlgorithmAsync[BaseModel]]:
     """
     Retrieve the algorithm registry.
 
@@ -261,8 +267,8 @@ def algorithms_async(
 
 @inject
 def metrics(
-    metric_registry: Registry[IMetric] = Provide[RegistryContainer.metric_registry],
-) -> Registry[IMetric]:
+    metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
+) -> Registry[BaseMetric]:
     """
     Retrieve the metric registry.
 
@@ -272,7 +278,7 @@ def metrics(
 
     Returns
     -------
-    Registry[IMetric]
+    Registry[Metric]
         Returns the injected metric registry.
 
     """
@@ -281,8 +287,8 @@ def metrics(
 
 @inject
 def plots(
-    plot_registry: Registry[IPlot[Any]] = Provide[RegistryContainer.plot_registry],
-) -> Registry[IPlot[Any]]:
+    plot_registry: Registry[BasePlot[Any]] = Provide[RegistryContainer.plot_registry],
+) -> Registry[BasePlot[Any]]:
     """
     Retrieve the plot registry.
 
@@ -292,7 +298,7 @@ def plots(
 
     Returns
     -------
-    Registry[IPlot]
+    Registry[Plot]
         Returns the injected plot registry.
 
     """
@@ -301,11 +307,13 @@ def plots(
 
 @inject
 def registry_info(
-    feature_registry: Registry[IFeature] = Provide[RegistryContainer.feature_registry],
-    algorithm_sync_registry: Registry[AlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
-    algorithm_async_registry: Registry[AlgorithmAsync[BaseModel]] = Provide[RegistryContainer.algorithm_async_registry],
-    metric_registry: Registry[IMetric] = Provide[RegistryContainer.metric_registry],
-    plot_registry: Registry[IPlot[Any]] = Provide[RegistryContainer.plot_registry],
+    feature_registry: Registry[BaseFeature] = Provide[RegistryContainer.feature_registry],
+    algorithm_sync_registry: Registry[BaseAlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
+    algorithm_async_registry: Registry[BaseAlgorithmAsync[BaseModel]] = Provide[
+        RegistryContainer.algorithm_async_registry
+    ],
+    metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
+    plot_registry: Registry[BasePlot[Any]] = Provide[RegistryContainer.plot_registry],
 ) -> None:
     """
     Print information about the registered features, algorithms, metrics, and plots.

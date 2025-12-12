@@ -10,7 +10,6 @@ from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models import JobStatus, RegisteredDataDomain
 from luna_bench._internal.domain_models.feature_result_domain import FeatureResultDomain
 from luna_bench._internal.domain_models.model_metadata_domain import ModelMetadataDomain
-from luna_bench._internal.interfaces.feature_i import IFeature
 from luna_bench._internal.mappers import FeatureMapper
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
@@ -18,6 +17,7 @@ from luna_bench._internal.usecases.benchmark.protocols import FeatureRunUc
 from luna_bench._internal.user_models import BenchmarkUserModel
 from luna_bench._internal.user_models.feature_result_usermodel import FeatureResultUserModel
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
+from luna_bench.base_components import BaseFeature
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
@@ -29,14 +29,14 @@ if TYPE_CHECKING:
 
 class FeatureRunUcImpl(FeatureRunUc):
     _transaction: DaoTransaction
-    _registry: PydanticRegistry[IFeature, RegisteredDataDomain]
+    _registry: PydanticRegistry[BaseFeature, RegisteredDataDomain]
     _logger = Logging.get_logger(__name__)
 
     @inject
     def __init__(
         self,
         transaction: DaoTransaction = Provide[DaoContainer.transaction],
-        registry: PydanticRegistry[IFeature, RegisteredDataDomain] = Provide[RegistryContainer.feature_registry],
+        registry: PydanticRegistry[BaseFeature, RegisteredDataDomain] = Provide[RegistryContainer.feature_registry],
     ) -> None:
         """
         Initialize the BenchmarkAddFeatureUc with a dao transaction.
