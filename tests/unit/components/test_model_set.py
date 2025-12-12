@@ -22,7 +22,7 @@ from luna_bench.components import ModelMetadata, ModelSet
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
-from tests.unit.fixtures.mock_model import _dummy_model
+from tests.utils.luna_model import simple_model
 
 
 class TestModelData:
@@ -83,7 +83,7 @@ class TestModelData:
         modelset = ModelSet(id=1, name="B", models=[])
 
         with exp as e, luna_bench._usecase_container.model_add_uc.override(mock):
-            model = _dummy_model("A")
+            model = simple_model("A")
             modelset.add(model=model)
             mock.assert_called_with(modelset_name=return_value.unwrap().name, model=model)
             assert e == modelset
@@ -146,7 +146,7 @@ class TestModelData:
         ms_name = "b"
         ms = ModelSet(id=1, name=ms_name, models=[ModelMetadata(id=1, name="A", hash=1)])
         with exp as e, luna_bench._usecase_container.model_remove_uc.override(mock):
-            model = _dummy_model("A")
+            model = simple_model("A")
             ms.remove_model(model=model)
 
             assert ms == e

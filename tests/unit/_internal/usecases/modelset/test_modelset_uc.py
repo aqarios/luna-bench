@@ -14,7 +14,7 @@ from luna_bench._internal.user_models.model_set_usermodel import ModelSetUserMod
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
-from tests.unit.fixtures.mock_model import _dummy_model
+from tests.utils.luna_model import simple_model
 
 if TYPE_CHECKING:
     from luna_bench._internal.usecases import ModelAddUc, ModelSetCreateUc, ModelSetDeleteUc
@@ -49,9 +49,9 @@ class TestModelsetUc:
     @pytest.mark.parametrize(
         ("modelset_name", "model", "models_after_add", "exp"),
         [
-            ("existing", _dummy_model("non-existing"), 2, Success(None)),
-            ("existing", _dummy_model("existing"), 1, Success(None)),
-            ("non-existing", _dummy_model("non-existing"), 1, Failure(DataNotExistError())),
+            ("existing", simple_model("non-existing"), 2, Success(None)),
+            ("existing", simple_model("existing"), 1, Success(None)),
+            ("non-existing", simple_model("non-existing"), 1, Failure(DataNotExistError())),
         ],
     )
     def test_add_model(
@@ -63,9 +63,10 @@ class TestModelsetUc:
         exp: Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         uc: ModelAddUc = usecase.model_add_uc()
-        result: Result[ModelSetUserModel, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError] = uc(
-            modelset_name=modelset_name, model=model
-        )
+        result: Result[
+            ModelSetUserModel,
+            DataNotExistError | DataNotUniqueError | UnknownLunaBenchError,
+        ] = uc(modelset_name=modelset_name, model=model)
         assert type(result) is type(exp)
 
         if is_successful(exp):
@@ -86,9 +87,10 @@ class TestModelsetUc:
         )
         uc._transaction = nullcontext(transaction_mock)  # type: ignore[attr-defined] # Overwrite the var so we can return a failure here
 
-        result: Result[ModelSetUserModel, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError] = uc(
-            modelset_name="A", model=_dummy_model("M3")
-        )
+        result: Result[
+            ModelSetUserModel,
+            DataNotExistError | DataNotUniqueError | UnknownLunaBenchError,
+        ] = uc(modelset_name="A", model=simple_model("M3"))
         assert isinstance(result.failure(), UnknownLunaBenchError)
 
     @pytest.mark.parametrize(
@@ -120,7 +122,7 @@ class TestModelsetUc:
         [
             (
                 "existing",
-                _dummy_model("existing"),
+                simple_model("existing"),
                 Success(
                     ModelSetUserModel(
                         id=1,
@@ -129,8 +131,8 @@ class TestModelsetUc:
                     )
                 ),
             ),
-            ("existing", _dummy_model("non-existing"), Failure(DataNotExistError())),
-            ("non-existing", _dummy_model("existing"), Failure(DataNotExistError())),
+            ("existing", simple_model("non-existing"), Failure(DataNotExistError())),
+            ("non-existing", simple_model("existing"), Failure(DataNotExistError())),
         ],
     )
     def test_remove_model(

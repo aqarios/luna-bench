@@ -14,9 +14,9 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
-from tests.unit.fixtures.mock_model import _dummy_model
+from tests.utils.luna_model import simple_model
 
-_model: Model = _dummy_model("a")
+_model: Model = simple_model("a")
 _solution: Solution = Solution._build(  # type: ignore[attr-defined]
     component_types=[],
     binary_cols=[],

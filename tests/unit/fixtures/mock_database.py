@@ -12,7 +12,7 @@ from luna_bench._internal.domain_models.modelset_domain import ModelSetDomain
 from luna_bench._internal.user_models import BenchmarkUserModel
 from luna_bench.configs.config import Config
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockAsyncAlgorithm, MockFeature, MockMetric, MockPlot
-from tests.unit.fixtures.mock_model import _dummy_model
+from tests.utils.luna_model import simple_model
 
 
 @pytest.fixture()
@@ -62,7 +62,7 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
     metric_name = "existing"
     plot_name = "existing"
 
-    model = _dummy_model("existing")
+    model = simple_model("existing")
 
     benchmark_result = empty_transaction.benchmark.create(benchmark_name=benchmark_name)
     assert is_successful(benchmark_result), "Benchmark creation failed for transaction_existing_benchmark"

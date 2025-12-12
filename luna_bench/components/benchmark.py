@@ -318,12 +318,12 @@ class Benchmark(BenchmarkUserModel):
 
         """
         benchmark_set_modelset = self.__benchmark_set_modelset_uc()
-        modelset_load = self.__modelset_load_uc()
 
-        modelset_name: str = modelset.name if isinstance(modelset, ModelSet) else modelset
+        if isinstance(modelset, str):
+            modelset = ModelSet.load(modelset)
 
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_set_modelset(
-            self.name, modelset_name
+            self.name, modelset.name
         )
 
         if not is_successful(result):
@@ -332,15 +332,8 @@ class Benchmark(BenchmarkUserModel):
             if isinstance(error, UnknownLunaBenchError):
                 raise error.error()
             raise error
-        result_modelset = modelset_load(modelset_name)
 
-        if not is_successful(result_modelset):
-            error = result_modelset.failure()
-            Benchmark._logger.error(f"Failed to load modelset for benchmark: {error}")
-            if isinstance(error, UnknownLunaBenchError):
-                raise error.error()
-            raise error
-        self.modelset = result_modelset.unwrap()
+        self.modelset = modelset
 
     def remove_modelset(
         self,
