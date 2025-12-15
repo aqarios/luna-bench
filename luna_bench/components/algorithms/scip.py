@@ -42,6 +42,7 @@ class ScipAlgorithm(AlgorithmSync):
     """
 
     max_runtime: int | None = None
+    quiet_output:bool = True
 
     _logger: ClassVar[Logger] = Logging.get_logger(__name__)
 
@@ -67,7 +68,7 @@ class ScipAlgorithm(AlgorithmSync):
             >>> print(f"Objective: {solution.objective_value}")
         """
         scip_model = PyScipModel()
-        scip_model.hideOutput()
+        scip_model.hideOutput(quit=self.quiet_output)
 
         if self.max_runtime is not None:
             scip_model.setParam("limits/time", self.max_runtime)  # type: ignore[no-untyped-call]
@@ -105,7 +106,6 @@ class ScipAlgorithm(AlgorithmSync):
         for var in scip_model.getVars():  # type: ignore[no-untyped-call]
             solution_dict[var.name] = scip_model.getVal(var)  # type: ignore[no-untyped-call]
 
-        # Get the objective value from SCIP
         objective_value = scip_model.getObjVal()  # type: ignore[no-untyped-call]
 
         return Solution.from_dict(
