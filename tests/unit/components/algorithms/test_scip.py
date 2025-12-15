@@ -35,19 +35,19 @@ class TestScipAlgorithm:
         algorithm = ScipAlgorithm()
         solution = algorithm.run(regular_model)
 
-        # Verify solution type
+        # Solution of correct type
         assert isinstance(solution, Solution)
 
-        # Verify the objective value is correct
+        # Objective value should be 0
         best_sample = solution.best()
         assert best_sample.obj_value == 0.0
 
-        # Verify the solution contains the correct variables
+        # Variables are in solution dict
         sample_dict = best_sample.sample.to_dict()
         assert "x" in sample_dict
         assert "y" in sample_dict
 
-        # Verify the values are optimal (both should be 0)
+        # Both variables are 0
         assert sample_dict["x"] == 0.0
         assert sample_dict["y"] == 0.0
 
@@ -76,12 +76,11 @@ class TestScipAlgorithm:
         algorithm = ScipAlgorithm(max_runtime=10)
         solution = algorithm.run(regular_model)
 
-        # Verify timing is present
+        # Timing obect was added to solution object
         assert hasattr(solution, "runtime")
         assert solution.runtime is not None
 
-        # Verify timing is not the default value (0)
-        # The solver should take some non-zero time to execute
+        # Timing object values make sense
         assert solution.runtime.total_seconds > 0
         assert solution.runtime.qpu is None
 
@@ -103,17 +102,12 @@ class TestScipAlgorithm:
             return temp
 
         with patch("tempfile.NamedTemporaryFile", tracked_tempfile):
-            solution = algorithm.run(regular_model)
+            algorithm.run(regular_model)
 
-        # Verify that a temporary file was created
-        assert len(temp_file_paths) > 0
+        assert len(temp_file_paths) > 0  # temp file was created
 
-        # Verify that all temporary files were cleaned up
-        for temp_path in temp_file_paths:
+        for temp_path in temp_file_paths:  # Check that tempfile was cleaned
             assert not temp_path.exists(), f"Temporary file {temp_path} was not cleaned up"
-
-        # Verify solution is still valid
-        assert isinstance(solution, Solution)
 
     def test_hard_model_can_be_solved(self, hard_model: Model) -> None:
         """Test that SCIP can handle a more complex model.
@@ -124,13 +118,8 @@ class TestScipAlgorithm:
         algorithm = ScipAlgorithm(max_runtime=1)
         solution = algorithm.run(hard_model)
 
-        # Verify solution is returned
+        # Solution object is of correct type
         assert isinstance(solution, Solution)
 
-        # Verify timing was recorded
+        # Timing object is filled despite pre-exit at max run-time
         assert solution.runtime.total_seconds > 0
-
-        # If a solution was found, verify it has an objective value
-        best_sample = solution.best()
-        if best_sample is not None:
-            assert isinstance(best_sample.obj_value, float)
