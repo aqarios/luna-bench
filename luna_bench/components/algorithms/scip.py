@@ -77,7 +77,7 @@ class ScipAlgorithm(AlgorithmSync):
         >>> solution = scip_algo.run(my_model)
         """
         scip_model = PyScipModel()
-        scip_model.hideOutput(quit=self.quiet_output)
+        scip_model.hideOutput(quiet=self.quiet_output)
 
         if self.max_runtime is not None:
             scip_model.setParam("limits/time", self.max_runtime)  # type: ignore[no-untyped-call]
