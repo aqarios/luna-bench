@@ -5,7 +5,7 @@ from multiprocessing import Process
 from typing import TYPE_CHECKING
 
 from huey import MemoryHuey, SqliteHuey
-from huey.consumer import WORKER_PROCESS, WORKER_THREAD, Consumer
+from huey.consumer import WORKER_PROCESS, Consumer
 from luna_quantum import Logging
 
 from luna_bench._internal.background_tasks.protocols import BackgroundTaskClient

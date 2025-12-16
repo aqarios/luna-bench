@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from luna_bench._internal.interfaces.feature import Feature
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.user_models import BenchmarkUserModel, FeatureUserModel
+from luna_bench.base_components import BaseFeature
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-def _empty_feature(name: str, feature: Feature) -> FeatureUserModel:
+def _empty_feature(name: str, feature: BaseFeature) -> FeatureUserModel:
     return FeatureUserModel(
         name=name,
         status=JobStatus.CREATED,
@@ -40,7 +40,7 @@ class TestFeature:
         [
             ("non-existing", "existing", MockFeature(), Failure(DataNotExistError())),
             ("existing", "existing", MockFeature(), Failure(DataNotUniqueError())),
-            ("existing", "non-existing", UnregisteredFeature(), Failure(UnknownComponentError("", Feature))),
+            ("existing", "non-existing", UnregisteredFeature(), Failure(UnknownComponentError("", BaseFeature))),
             ("existing", "non-existing", MockFeature(), Success(_empty_feature("non-existing", MockFeature()))),
         ],
     )
@@ -49,7 +49,7 @@ class TestFeature:
         usecase: UsecaseContainer,
         benchmark_name: str,
         feature_name: str,
-        feature: Feature,
+        feature: BaseFeature,
         exp: Result[
             FeatureUserModel,
             DataNotUniqueError

@@ -16,7 +16,7 @@ class FakeMetricResult(ArbitraryDataDomain):
     random_number: int
 
 
-@metric
+@metric()
 class FakeMetric(BaseMetric):
     """Fake metric class."""
 

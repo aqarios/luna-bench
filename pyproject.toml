@@ -10,7 +10,7 @@ dependencies = [
     "huey>=2.5.3",
     "luna-quantum>=1.1.0",
     "matplotlib>=3.10.8",
-    "peewee>=3.18.2",
+    "peewee>=3.18.3",
     "pydantic-settings>=2.11.0",
     "returns[compatible-mypy]>=0.26.0",
     "rich>=14.1.0",
@@ -23,8 +23,11 @@ dev = [
     "pytest-cov>=7.0.0",
     "ruff>=0.14.1",
     "tox>=4.30.3",
-    "types-peewee>=3.18.2",
+    "types-peewee>=3.18.3",
 ]
 opt-metrics = [
     "pyscipopt>=5.6.0",
+]
+plot = [
+    "matplotlib>=3.10.8",
 ]

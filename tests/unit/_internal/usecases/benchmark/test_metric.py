@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from luna_bench._internal.interfaces.metric import Metric
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.user_models import FeatureUserModel, MetricUserModel
 from luna_bench._internal.user_models.algorithm_result_usermodel import AlgorithmResultUserModel
+from luna_bench.base_components import BaseMetric
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from tests.unit.fixtures.mock_database import SetupBenchmark
 
 
-def _empty_metric(name: str, metric: Metric) -> MetricUserModel:
+def _empty_metric(name: str, metric: BaseMetric) -> MetricUserModel:
     return MetricUserModel(
         name=name,
         status=JobStatus.CREATED,
@@ -43,7 +43,7 @@ class TestMetric:
         [
             ("non-existing", "existing", MockMetric(), Failure(DataNotExistError())),
             ("existing", "existing", MockMetric(), Failure(DataNotUniqueError())),
-            ("existing", "non-existing", UnregisteredMetric(), Failure(UnknownComponentError("", Metric))),
+            ("existing", "non-existing", UnregisteredMetric(), Failure(UnknownComponentError("", BaseMetric))),
             ("existing", "non-existing", MockMetric(), Success(_empty_metric("non-existing", MockMetric()))),
         ],
     )
@@ -52,7 +52,7 @@ class TestMetric:
         usecase: UsecaseContainer,
         benchmark_name: str,
         metric_name: str,
-        metric: Metric,
+        metric: BaseMetric,
         exp: Result[
             MetricUserModel,
             DataNotUniqueError

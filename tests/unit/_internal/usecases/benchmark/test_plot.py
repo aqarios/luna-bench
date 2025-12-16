@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from luna_bench._internal.interfaces import Plot
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
 from luna_bench._internal.user_models import BenchmarkUserModel, PlotUserModel
+from luna_bench.base_components import BasePlot
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
 
-def _empty_plot(name: str, plot: Plot[Any]) -> PlotUserModel:
+def _empty_plot(name: str, plot: BasePlot[Any]) -> PlotUserModel:
     return PlotUserModel(
         name=name,
         status=JobStatus.CREATED,
@@ -38,7 +38,7 @@ class TestPlot:
         [
             ("non-existing", "existing", MockPlot(), Failure(DataNotExistError())),
             ("existing", "existing", MockPlot(), Failure(DataNotUniqueError())),
-            ("existing", "non-existing", UnregisteredPlot(), Failure(UnknownComponentError("", Plot))),
+            ("existing", "non-existing", UnregisteredPlot(), Failure(UnknownComponentError("", BasePlot))),
             ("existing", "non-existing", MockPlot(), Success(_empty_plot("non-existing", MockPlot()))),
         ],
     )
@@ -47,7 +47,7 @@ class TestPlot:
         usecase: UsecaseContainer,
         benchmark_name: str,
         plot_name: str,
-        plot: Plot[Any],
+        plot: BasePlot[Any],
         exp: Result[
             PlotUserModel,
             DataNotUniqueError
@@ -117,7 +117,7 @@ class TestPlot:
         self,
         usecase: UsecaseContainer,
         error_handling_mode: UseCaseErrorHandlingMode,
-        plot: Plot[Any],
+        plot: BasePlot[Any],
         exp: Result[
             PlotUserModel,
             DataNotUniqueError

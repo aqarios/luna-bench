@@ -1,7 +1,6 @@
 import typing
 
 import pytest
-from luna_bench._internal.interfaces.metric import Metric
 from luna_quantum import Solution
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
@@ -9,6 +8,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
+from luna_bench.base_components import BaseMetric
 from luna_bench.components.metrics.fake_metric import FakeMetricResult
 from luna_bench.components.plots.generics.metrics_plot import GenericMetricsPlot, MetricsValidationResult
 from luna_bench.errors.run_errors.plots_errors.metrics_missing_error import MetricsMissingError
@@ -25,7 +25,7 @@ class _FakePlot(GenericMetricsPlot):
 
 
 @metric(metric_id="mock_metric_new")  # type: ignore[arg-type]
-class MockMetricNew(Metric):  # type: ignore[misc]
+class MockMetricNew(BaseMetric):  # type: ignore[misc]
     def run(self, solution: Solution) -> FakeMetricResult:
         raise NotImplementedError
 
@@ -101,7 +101,7 @@ class TestGenericMetricsPlot:
     )
     def test_prepare_metrics(
         self,
-        metrics: tuple[tuple[str, Metric]],
+        metrics: tuple[tuple[str, BaseMetric]],
         plot_metrics: set[str],
         exp: Result[dict[str, MetricUserModel], MetricsMissingError | UnknownLunaBenchError],
     ) -> None:

@@ -9,7 +9,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.background_tasks.huey.huey_algorithm_runner import HueyAlgorithmRunner
 from luna_bench._internal.dao import DaoTransaction
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
@@ -29,12 +29,12 @@ _solution: Solution = Solution._build(  # type: ignore[attr-defined]
 )
 
 
-class SuccessAlgorithmSync(AlgorithmSync):
+class SuccessAlgorithmSync(BaseAlgorithmSync):
     def run(self, model: Model) -> Solution:  # noqa: ARG002
         return _solution
 
 
-class SuccessAlgorithmAsync(AlgorithmAsync[ArbitraryDataDomain]):
+class SuccessAlgorithmAsync(BaseAlgorithmAsync[ArbitraryDataDomain]):
     @property
     def model_type(self) -> type[ArbitraryDataDomain]:
         return ArbitraryDataDomain
@@ -46,12 +46,12 @@ class SuccessAlgorithmAsync(AlgorithmAsync[ArbitraryDataDomain]):
         return Success(_solution)
 
 
-class FailureAlgorithmSync(AlgorithmSync):
+class FailureAlgorithmSync(BaseAlgorithmSync):
     def run(self, model: Model) -> Solution:  # noqa: ARG002
         raise RuntimeError
 
 
-class FailureAlgorithmAsync(AlgorithmAsync[ArbitraryDataDomain]):
+class FailureAlgorithmAsync(BaseAlgorithmAsync[ArbitraryDataDomain]):
     @property
     def model_type(self) -> type[ArbitraryDataDomain]:
         return ArbitraryDataDomain
@@ -112,7 +112,7 @@ class TestHueyAlgorithmRunner:
         self,
         transaction: DaoTransaction,  # noqa: ARG002
         model_id: int,
-        algorithm: AlgorithmSync,
+        algorithm: BaseAlgorithmSync,
         exp: Result[Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         result = HueyAlgorithmRunner._run_sync(algorithm, model_id)
@@ -138,7 +138,7 @@ class TestHueyAlgorithmRunner:
         self,
         transaction: DaoTransaction,  # noqa: ARG002
         model_id: int,
-        algorithm: AlgorithmAsync[Any],
+        algorithm: BaseAlgorithmAsync[Any],
         exp: Result[BaseModel, ModelDecodingError | DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         result = HueyAlgorithmRunner._run_async(algorithm, model_id)

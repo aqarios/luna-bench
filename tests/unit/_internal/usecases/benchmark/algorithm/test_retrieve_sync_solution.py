@@ -8,13 +8,13 @@ from returns.result import Failure, Result, Success
 
 from luna_bench import MapperContainer  # type: ignore[attr-defined]
 from luna_bench._internal.domain_models import AlgorithmResultDomain, JobStatus
-from luna_bench._internal.interfaces import AlgorithmSync
 from luna_bench._internal.usecases.benchmark import (
     AlgorithmRetrieveSyncSolutionsUcImpl,
 )
 from luna_bench._internal.usecases.benchmark.protocols import BackgroundRetrieveAlgorithmSyncUc
 from luna_bench._internal.user_models import BenchmarkUserModel
 from luna_bench._internal.user_models.algorithm_result_usermodel import AlgorithmResultUserModel
+from luna_bench.base_components import BaseAlgorithmSync
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
@@ -111,14 +111,14 @@ class TestRetrieveSyncSolution:
         # Check user model set correct
         for a in benchmark.algorithms:
             if is_successful(exp):
-                if isinstance(a.algorithm, AlgorithmSync):
+                if isinstance(a.algorithm, BaseAlgorithmSync):
                     assert a.results["default_model"].solution is return_values[1].unwrap().unwrap()
                     assert a.results["default_model"].status is JobStatus.DONE
                 else:
                     assert a.results["default_model"].solution is None
                     assert a.results["default_model"].status is JobStatus.RUNNING
             else:
-                if isinstance(a.algorithm, AlgorithmSync):
+                if isinstance(a.algorithm, BaseAlgorithmSync):
                     assert a.results["default_model"].status is JobStatus.FAILED
                     assert a.results["default_model"].error == exp.failure()
                 else:

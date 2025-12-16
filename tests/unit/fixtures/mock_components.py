@@ -2,16 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync
-from luna_bench._internal.interfaces.feature import Feature
-from luna_bench._internal.interfaces.metric import Metric
-from luna_bench._internal.interfaces.plot import Plot
 from luna_quantum import Model, Solution
 from pydantic import BaseModel
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.helpers.decorators import algorithm, feature, metric, plot
@@ -24,24 +21,24 @@ if TYPE_CHECKING:
 
 
 @feature(feature_id="mock_feature")  # type: ignore[arg-type]
-class MockFeature(Feature):  # type: ignore[misc]
+class MockFeature(BaseFeature):  # type: ignore[misc]
     def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
         return ArbitraryDataDomain.model_construct(solution="xD")  # type: ignore[call-arg] # Fake data
 
 
 @feature
-class MockFeatureFailing(Feature):
+class MockFeatureFailing(BaseFeature):
     def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
         raise ValueError("Model failed.")  # noqa: TRY003 # Just simulating a random error
 
 
-class UnregisteredFeature(Feature):
+class UnregisteredFeature(BaseFeature):
     def run(self, model: Model) -> ArbitraryDataDomain:
         raise NotImplementedError
 
 
 @algorithm
-class MockAlgorithm(AlgorithmSync):
+class MockAlgorithm(BaseAlgorithmSync):
     def run(self, model: Model) -> Solution:
         raise NotImplementedError
 
@@ -51,7 +48,7 @@ class AsyncReturnData(BaseModel):
 
 
 @algorithm
-class MockAsyncAlgorithm(AlgorithmAsync[AsyncReturnData]):
+class MockAsyncAlgorithm(BaseAlgorithmAsync[AsyncReturnData]):
     @property
     def model_type(self) -> type[AsyncReturnData]:
         return AsyncReturnData
@@ -74,13 +71,13 @@ class MockAsyncAlgorithm(AlgorithmAsync[AsyncReturnData]):
         )
 
 
-class UnregisteredAlgorithm(AlgorithmSync):
+class UnregisteredAlgorithm(BaseAlgorithmSync):
     def run(self, model: Model) -> Solution:
         raise NotImplementedError
 
 
 @plot
-class MockPlot(Plot[str]):
+class MockPlot(BasePlot[str]):
     def run(self, data: str) -> None:
         raise NotImplementedError
 
@@ -91,7 +88,7 @@ class MockPlot(Plot[str]):
         return Success("test")
 
 
-class UnregisteredPlot(Plot[str]):
+class UnregisteredPlot(BasePlot[str]):
     def run(self, data: str) -> None:
         raise NotImplementedError
 
@@ -103,7 +100,7 @@ class UnregisteredPlot(Plot[str]):
 
 
 @plot
-class MockPlotWithValidationError(Plot[str]):
+class MockPlotWithValidationError(BasePlot[str]):
     def run(self, data: str) -> None:
         raise NotImplementedError
 
@@ -115,17 +112,17 @@ class MockPlotWithValidationError(Plot[str]):
 
 
 @metric(metric_id="mock_metric")  # type: ignore[arg-type]
-class MockMetric(Metric):  # type: ignore[misc]
+class MockMetric(BaseMetric):  # type: ignore[misc]
     def run(self, solution: Solution) -> ArbitraryDataDomain:  # noqa: ARG002
         return ArbitraryDataDomain()
 
 
 @metric
-class MockMetricError(Metric):
+class MockMetricError(BaseMetric):
     def run(self, solution: Solution) -> ArbitraryDataDomain:
         raise NotImplementedError
 
 
-class UnregisteredMetric(Metric):
+class UnregisteredMetric(BaseMetric):
     def run(self, solution: Solution) -> ArbitraryDataDomain:  # noqa: ARG002
         return ArbitraryDataDomain()

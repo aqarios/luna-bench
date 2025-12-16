@@ -3,8 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from luna_bench._internal.interfaces import AlgorithmSync, IFeature, IMetric, Plot
-from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
 from returns.result import Result, Success
 
 from luna_bench._internal.domain_models import BenchmarkDomain, BenchmarkStatus
@@ -27,6 +25,7 @@ from luna_bench._internal.user_models import AlgorithmUserModel, BenchmarkUserMo
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
 from luna_bench._internal.user_models.model_metadata_usermodel import ModelMetadataUserModel
 from luna_bench._internal.user_models.model_set_usermodel import ModelSetUserModel
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockAsyncAlgorithm, MockFeature, MockMetric, MockPlot
 from tests.utils.luna_model import simple_model
 
@@ -156,11 +155,11 @@ class TestUtils:
         AlgorithmMapper,
         PlotMapper,
     ]:
-        metric_registry = ArbitraryDataRegistry[IMetric]("metric")
-        feature_registry = ArbitraryDataRegistry[IFeature]("feature")
-        algorithm_sync_registry = ArbitraryDataRegistry[AlgorithmSync]("algorithm_sync")
-        algorithm_async_registry = ArbitraryDataRegistry[AlgorithmAsync[Any]]("algorithm_async")
-        plot_registry = ArbitraryDataRegistry[Plot[Any]]("plot")
+        metric_registry = ArbitraryDataRegistry[BaseMetric]("metric")
+        feature_registry = ArbitraryDataRegistry[BaseFeature]("feature")
+        algorithm_sync_registry = ArbitraryDataRegistry[BaseAlgorithmSync]("algorithm_sync")
+        algorithm_async_registry = ArbitraryDataRegistry[BaseAlgorithmAsync[Any]]("algorithm_async")
+        plot_registry = ArbitraryDataRegistry[BasePlot[Any]]("plot")
 
         feature_registry.register("feature", MockFeature)
         metric_registry.register("metric", MockMetric)

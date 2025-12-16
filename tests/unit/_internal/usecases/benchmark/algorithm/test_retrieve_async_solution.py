@@ -6,12 +6,12 @@ from returns.pipeline import is_successful
 from luna_bench import MapperContainer  # type: ignore[attr-defined]
 from luna_bench._internal.domain_models import AlgorithmResultDomain, JobStatus
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.interfaces import AlgorithmAsync
 from luna_bench._internal.usecases.benchmark import (
     AlgorithmRetrieveAsyncSolutionsUcImpl,
 )
 from luna_bench._internal.user_models.algorithm_result_usermodel import AlgorithmResultUserModel
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
+from luna_bench.base_components import BaseAlgorithmAsync
 from tests.unit.fixtures.mock_components import MockAsyncAlgorithm
 from tests.unit.fixtures.mock_database import SetupBenchmark
 
@@ -92,7 +92,7 @@ class TestRetrieveAsyncSolution:
 
         # Check user model set correct
         for a in benchmark.algorithms:
-            if isinstance(a.algorithm, AlgorithmAsync):
+            if isinstance(a.algorithm, BaseAlgorithmAsync):
                 solution = a.results["default_model"].solution
                 fetch_result = MockAsyncAlgorithm().fetch_result(None, None)  # type: ignore[arg-type] # Using none for simplicity. The fake algorithm does nothing with this data anyway.
                 assert solution is not None
@@ -123,7 +123,7 @@ class TestRetrieveAsyncSolution:
         assert is_successful(r)
 
         for a in benchmark.algorithms:
-            if isinstance(a.algorithm, AlgorithmAsync):
+            if isinstance(a.algorithm, BaseAlgorithmAsync):
                 assert a.results["default_model"].error is not None
                 assert a.results["default_model"].status is JobStatus.FAILED
             else:

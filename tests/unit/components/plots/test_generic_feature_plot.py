@@ -1,7 +1,6 @@
 from typing import ClassVar
 
 import pytest
-from luna_bench._internal.interfaces.feature import Feature
 from luna_quantum import Model
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
@@ -11,6 +10,7 @@ from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench._internal.user_models.feature_result_usermodel import FeatureResultUserModel
 from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
+from luna_bench.base_components import BaseFeature
 from luna_bench.components.plots.generics.features_plot import FeaturesValidationResult, GenericFeaturesPlot
 from luna_bench.errors.run_errors.plots_errors.features_missing_error import FeaturesMissingError
 from luna_bench.errors.run_errors.plots_errors.metrics_missing_error import MetricsMissingError
@@ -27,7 +27,7 @@ class _FakePlot(GenericFeaturesPlot):
 
 
 @feature(feature_id="mock_feature_new")  # type: ignore[arg-type]
-class MockFeatureNew(Feature):  # type: ignore[misc]
+class MockFeatureNew(BaseFeature):  # type: ignore[misc]
     def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
         return ArbitraryDataDomain.model_construct(solution="xD")  # type: ignore[call-arg] # Fake data
 
@@ -122,7 +122,7 @@ class TestGenericFeaturesPlot:
     )
     def test_prepare_features(
         self,
-        features: tuple[tuple[str, Feature]],
+        features: tuple[tuple[str, BaseFeature]],
         plot_features: set[str],
         exp: Result[dict[str, FeatureUserModel], MetricsMissingError | UnknownLunaBenchError],
     ) -> None:
