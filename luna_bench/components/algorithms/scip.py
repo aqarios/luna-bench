@@ -32,17 +32,22 @@ class ScipAlgorithm(AlgorithmSync):
     problems using classical branch-and-bound methods. It translates Luna quantum models
     to LP format, solves them with SCIP, and translates the results back.
 
-    Attributes
+    Parameters
     ----------
-        _logger: Class-level logger for tracking algorithm execution.
+    max_runtime: int | None
+        Defines the maximum runtime for the SCIP solver in seconds.
+    quiet_output: bool
+        Defines the verbosity of the SCIP solver output.
+    _logger: Logger
+        Class-level logger for tracking algorithm execution.
 
     Raises
     ------
-        InfeasibleModelError: If the model has no feasible solution.
+    InfeasibleModelError: If the model has no feasible solution.
     """
 
     max_runtime: int | None = None
-    quiet_output:bool = True
+    quiet_output: bool = True
 
     _logger: ClassVar[Logger] = Logging.get_logger(__name__)
 
@@ -50,22 +55,26 @@ class ScipAlgorithm(AlgorithmSync):
         """
         Solve an optimization model using the SCIP classical solver.
 
-        Args:
-            model: The Luna optimization model to solve.
+        Parameters
+        ----------
+        model : Model
+            The Luna optimization model to solve.
 
         Returns
         -------
+        Solution
             Solution object containing the optimal variable assignments,
             objective value, and timing information.
 
         Raises
         ------
-            InfeasibleModelError: If SCIP determines the model is infeasible.
+        InfeasibleModelError
+            If SCIP determines the model is infeasible.
 
-        Example:
-            >>> scip_algo = ScipAlgorithm()
-            >>> solution = scip_algo.run(my_model)
-            >>> print(f"Objective: {solution.objective_value}")
+        Examples
+        --------
+        >>> scip_algo = ScipAlgorithm()
+        >>> solution = scip_algo.run(my_model)
         """
         scip_model = PyScipModel()
         scip_model.hideOutput(quit=self.quiet_output)
@@ -76,7 +85,6 @@ class ScipAlgorithm(AlgorithmSync):
         timer = Timer.start()
 
         self._logger.info(f"Running SCIP for model {model.name}")
-
 
         # Create temporary LP file for SCIP
         with tempfile.NamedTemporaryFile(suffix=".lp", delete=False) as tmp:
