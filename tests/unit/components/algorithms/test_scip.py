@@ -7,11 +7,8 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import patch
 
 import pytest
-from typing import Any
 
 if TYPE_CHECKING:
-    from tempfile import NamedTemporaryFile
-
     from luna_quantum import Model
 
 
@@ -53,7 +50,7 @@ class TestScipAlgorithm:
             assert sample_dict["x"] == 0.0
             assert sample_dict["y"] == 0.0
         else:
-            raise AssertionError("No solution found")
+            raise ValueError
 
     def test_infeasible_model_raises_error(self, infeasible_model: Model) -> None:
         """Test that SCIP raises InfeasibleModelError for infeasible models.
@@ -100,7 +97,7 @@ class TestScipAlgorithm:
         # Patch NamedTemporaryFile to track the temporary file path
         original_tempfile = __import__("tempfile").NamedTemporaryFile
 
-        def tracked_tempfile(*args: Any, **kwargs: Any) -> Any:
+        def tracked_tempfile(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
             temp = original_tempfile(*args, **kwargs)
             temp_file_paths.append(Path(temp.name))
             return temp
