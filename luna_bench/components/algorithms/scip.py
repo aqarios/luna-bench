@@ -80,7 +80,7 @@ class ScipAlgorithm(AlgorithmSync):
         scip_model.hideOutput(quiet=self.quiet_output)
 
         if self.max_runtime is not None:
-            scip_model.setParam("limits/time", self.max_runtime)  # type: ignore[no-untyped-call]
+            scip_model.setParam("limits/time", self.max_runtime)
 
         timer = Timer.start()
 
@@ -95,26 +95,26 @@ class ScipAlgorithm(AlgorithmSync):
                 model,
                 filepath=path,
             )
-            scip_model.readProblem(path)  # type: ignore[no-untyped-call]
+            scip_model.readProblem(path)
         finally:
             if path.exists():
                 path.unlink()
 
-        scip_model.optimize()  # type: ignore[no-untyped-call]
+        scip_model.optimize()
 
         timing = timer.stop()
 
-        if scip_model.getStatus() == "infeasible":  # type: ignore[no-untyped-call]
+        if scip_model.getStatus() == "infeasible":
             raise InfeasibleModelError
 
         self._logger.info(f"Completed SCIP optimization for model {model.name} in {timing.total_seconds:.2f}s")
 
         # Extract solution values from SCIP model
         solution_dict = {}
-        for var in scip_model.getVars():  # type: ignore[no-untyped-call]
-            solution_dict[var.name] = scip_model.getVal(var)  # type: ignore[no-untyped-call]
+        for var in scip_model.getVars():
+            solution_dict[var.name] = scip_model.getVal(var)
 
-        objective_value = scip_model.getObjVal()  # type: ignore[no-untyped-call]
+        objective_value = scip_model.getObjVal()
 
         return Solution.from_dict(
             data=solution_dict,
