@@ -10,8 +10,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.background_tasks.huey_consumer import HueyConsumer
 from luna_bench._internal.dao import DaoTransaction
 from luna_bench._internal.dao.dao_container import DaoContainer
-from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
-from luna_bench._internal.interfaces.algorithm_sync import AlgorithmSync
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
@@ -45,7 +44,7 @@ class HueyAlgorithmRunner:
 
     @staticmethod
     def _run_sync(
-        algorithm: AlgorithmSync,
+        algorithm: BaseAlgorithmSync,
         model_id: int,
     ) -> Result[Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]:
         HueyAlgorithmRunner._logger.info(f"Running algorithm '{algorithm.__class__.__name__}' on model '{model_id}'")
@@ -62,7 +61,7 @@ class HueyAlgorithmRunner:
 
     @staticmethod
     def _run_async[T: BaseModel](
-        algorithm: AlgorithmAsync[T],
+        algorithm: BaseAlgorithmAsync[T],
         model_id: int,
     ) -> Result[T, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]:
         HueyAlgorithmRunner._logger.info(f"Running algorithm {algorithm.__class__.__name__} on model {model_id}")
@@ -79,7 +78,7 @@ class HueyAlgorithmRunner:
     @staticmethod
     @HueyConsumer.huey.task()  # type: ignore[misc] # Huey doesn't support type hints
     def run_sync(
-        algorithm: AlgorithmSync,
+        algorithm: BaseAlgorithmSync,
         model_id: int,
     ) -> Result[Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]:
         return HueyAlgorithmRunner._run_sync(
@@ -89,7 +88,7 @@ class HueyAlgorithmRunner:
     @staticmethod
     @HueyConsumer.huey.task()  # type: ignore[misc] # Huey doesn't support type hints
     def run_async[T: BaseModel](
-        algorithm: AlgorithmAsync[T],
+        algorithm: BaseAlgorithmAsync[T],
         model_id: int,
     ) -> Result[T, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]:
         return HueyAlgorithmRunner._run_async(

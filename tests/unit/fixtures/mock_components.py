@@ -9,6 +9,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
+from luna_bench.base_components.data_types.arbitrary_data import ArbitraryData
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.helpers.decorators import algorithm, feature, metric, plot
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
     from luna_quantum import Model
 
     from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
+    from luna_bench.base_components.data_types.feature_results import FeatureResults
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
@@ -113,16 +115,16 @@ class MockPlotWithValidationError(BasePlot[str]):
 
 @metric(metric_id="mock_metric")  # type: ignore[arg-type]
 class MockMetric(BaseMetric):  # type: ignore[misc]
-    def run(self, solution: Solution) -> ArbitraryDataDomain:  # noqa: ARG002
-        return ArbitraryDataDomain()
+    def run(self, solution: Solution, feature_results: FeatureResults) -> ArbitraryData:  # noqa: ARG002
+        return ArbitraryData()
 
 
 @metric
 class MockMetricError(BaseMetric):
-    def run(self, solution: Solution) -> ArbitraryDataDomain:
+    def run(self, solution: Solution, feature_results: FeatureResults) -> ArbitraryData:
         raise NotImplementedError
 
 
 class UnregisteredMetric(BaseMetric):
-    def run(self, solution: Solution) -> ArbitraryDataDomain:  # noqa: ARG002
-        return ArbitraryDataDomain()
+    def run(self, solution: Solution, feature_results: FeatureResults) -> ArbitraryData:  # noqa: ARG002
+        return ArbitraryData()

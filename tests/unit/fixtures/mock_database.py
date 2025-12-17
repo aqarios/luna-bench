@@ -89,7 +89,7 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
     algorithm_sync_result = empty_transaction.algorithm.add(
         benchmark_name=benchmark_name,
         algorithm_name=algorithm_name,
-        registered_id=MockAlgorithm.registered_id,  # type: ignore[attr-defined] # decorator adds private field
+        registered_id=MockAlgorithm.registered_id,
         algorithm_type=AlgorithmType.SYNC,
         algorithm=ArbitraryDataDomain(),
     )
@@ -98,7 +98,7 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
     algorithm_async_result = empty_transaction.algorithm.add(
         benchmark_name=benchmark_name,
         algorithm_name=algorithm_async_name,
-        registered_id=MockAsyncAlgorithm.registered_id,  # type: ignore[attr-defined] # decorator adds private field
+        registered_id=MockAsyncAlgorithm.registered_id,
         algorithm_type=AlgorithmType.ASYNC,
         algorithm=ArbitraryDataDomain(),
     )
@@ -107,7 +107,7 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
     feature_result = empty_transaction.feature.add(
         benchmark_name=benchmark_name,
         feature_name=feature_name,
-        registered_id=MockFeature.registered_id,  # type: ignore[attr-defined] # decorator adds private field
+        registered_id=MockFeature.registered_id,
         feature_config=ArbitraryDataDomain(),
     )
 
@@ -116,7 +116,7 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
     metric_result = empty_transaction.metric.add(
         benchmark_name=benchmark_name,
         metric_name=metric_name,
-        registered_id=MockMetric.registered_id,  # type: ignore[attr-defined] # decorator adds private field
+        registered_id=MockMetric.registered_id,
         metric_config=ArbitraryDataDomain(),
     )
 
@@ -125,7 +125,7 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
     plot_result = empty_transaction.plot.add(
         benchmark_name=benchmark_name,
         plot_name=plot_name,
-        registered_id=MockPlot.registered_id,  # type: ignore[attr-defined] # decorator adds private field
+        registered_id=MockPlot.registered_id,
         plot_config=ArbitraryDataDomain(),
     )
 

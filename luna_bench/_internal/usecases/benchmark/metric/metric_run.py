@@ -23,10 +23,10 @@ from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMis
 from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
-from luna_bench.types import FeatureConfig, FeatureName, FeatureResult, ModelName
+from luna_bench.types import FeatureName, FeatureResult, ModelName
 
 if TYPE_CHECKING:
-    from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
+    from luna_bench.base_components.data_types.arbitrary_data import ArbitraryData
 
 
 class MetricRunUcImpl(MetricRunUc):
@@ -54,7 +54,7 @@ class MetricRunUcImpl(MetricRunUc):
     def _run(
         self,
         benchmark_name: str,
-        alogorithm_name: str,
+        algorithm_name: str,
         model_name: str,
         algorithm_result: AlgorithmResultUserModel,
         feature_results: FeatureResults,
@@ -62,22 +62,22 @@ class MetricRunUcImpl(MetricRunUc):
     ) -> Result[MetricResultUserModel, AlgorithmNotDoneError | DataNotExistError | UnknownLunaBenchError]:
         # CHECK if result for metric and algorithm already exists and if it should be updated/recalulated or not.
 
-        result: MetricResultUserModel | None = metric.results.get((alogorithm_name, model_name), None)
+        result: MetricResultUserModel | None = metric.results.get((algorithm_name, model_name), None)
 
         if result is not None and result.status == JobStatus.DONE:
             self._logger.info(
-                f"Metric {metric.name} for model {model_name} and algorithm {alogorithm_name} "
+                f"Metric {metric.name} for model {model_name} and algorithm {algorithm_name} "
                 f"already exists and is done."
             )
             return Success(result)
 
         if algorithm_result.status != JobStatus.DONE:
-            return Failure(AlgorithmNotDoneError(alogorithm_name, algorithm_result.status))
+            return Failure(AlgorithmNotDoneError(algorithm_name, algorithm_result.status))
 
         if algorithm_result.solution is None:
             return Failure(DataNotExistError())
 
-        user_result: ArbitraryDataDomain | None = None
+        user_result: ArbitraryData | None = None
         exception: str | None = None
         status: JobStatus
 
@@ -98,7 +98,7 @@ class MetricRunUcImpl(MetricRunUc):
         result_domain = MetricResultDomain.model_construct(
             processing_time_ms=delta_time,
             model_name=model_name,
-            algorithm_name=alogorithm_name,
+            algorithm_name=algorithm_name,
             result=user_result,
             status=status,
             error=exception,
@@ -113,18 +113,19 @@ class MetricRunUcImpl(MetricRunUc):
             return Failure(r.failure())
 
         result = MetricMapper.result_to_user_model(result_domain)
-        metric.results[(alogorithm_name, model_name)] = result
+        metric.results[(algorithm_name, model_name)] = result
         return Success(result)
 
+    @staticmethod
     def _create_feature_result_lookup(
-        self, benchmark: BenchmarkUserModel
-    ) -> dict[tuple[type[BaseFeature], ModelName], dict[FeatureName, tuple[FeatureResult, FeatureConfig]]]:
+        benchmark: BenchmarkUserModel,
+    ) -> dict[tuple[type[BaseFeature], ModelName], dict[FeatureName, tuple[FeatureResult, BaseFeature]]]:
         feature_map: dict[
-            tuple[type[BaseFeature], ModelName], dict[FeatureName, tuple[FeatureResult, FeatureConfig]]
+            tuple[type[BaseFeature], ModelName], dict[FeatureName, tuple[FeatureResult, BaseFeature]]
         ] = {}
         for f in benchmark.features:
             feature_type: type[BaseFeature] = type(f.feature)
-            feature_config: FeatureConfig = f.feature
+            feature_config: BaseFeature = f.feature
             for f_model_name, result in f.results.items():
                 r: FeatureResult = result.result
                 if r is not None:
@@ -138,18 +139,17 @@ class MetricRunUcImpl(MetricRunUc):
         model_name: ModelName,
         metric: MetricUserModel,
         feature_lookup_table: dict[
-            tuple[type[BaseFeature], ModelName], dict[FeatureName, tuple[FeatureResult, FeatureConfig]]
+            tuple[type[BaseFeature], ModelName], dict[FeatureName, tuple[FeatureResult, BaseFeature]]
         ],
     ) -> Result[FeatureResults, RunFeatureMissingError]:
-        feature_data: dict[type[BaseFeature], dict[FeatureName, tuple[FeatureResult, FeatureConfig]]] = {}
+        feature_data: dict[type[BaseFeature], dict[FeatureName, tuple[FeatureResult, BaseFeature]]] = {}
 
         required_features = metric.metric.required_features  # Set in the decorator
-        if required_features is not None:
-            for f in required_features:
-                key = (f, model_name)
-                if key not in feature_lookup_table:
-                    return Failure(RunFeatureMissingError(f, benchmark.name))
-                feature_data[f] = feature_lookup_table[key].copy()
+        for f in required_features:
+            key = (f, model_name)
+            if key not in feature_lookup_table:
+                return Failure(RunFeatureMissingError(f.__name__, benchmark.name))
+            feature_data[f] = feature_lookup_table[key].copy()
 
         return Success(
             FeatureResults(
@@ -160,7 +160,7 @@ class MetricRunUcImpl(MetricRunUc):
 
     def __call__(
         self, benchmark: BenchmarkUserModel, metric: MetricUserModel | None = None
-    ) -> Result[None, RunMetricMissingError | RunModelsetMissingError]:
+    ) -> Result[None, RunMetricMissingError | RunModelsetMissingError | RunFeatureMissingError]:
         metrics: list[MetricUserModel]
         if metric is not None:
             # Check if the feature is part of the benchmark
@@ -178,7 +178,7 @@ class MetricRunUcImpl(MetricRunUc):
                     feature_results = self._create_and_check_feature_results(benchmark, model_name, m, feature_map)
 
                     if not is_successful(feature_results):
-                        return feature_results.failure()
+                        return Failure(feature_results.failure())
 
                     metric_result = self._run(benchmark.name, a.name, model_name, result, feature_results.unwrap(), m)
 

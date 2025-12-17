@@ -77,12 +77,12 @@ class TestGenericFeaturesPlot:
                     ),
                 ),
                 {
-                    MockFeature.registered_id,  # type: ignore[attr-defined]
+                    MockFeature.registered_id,
                     "mock_feature_new",
                 },
                 Success(
                     {
-                        MockFeature.registered_id: FeatureUserModel(  # type: ignore[attr-defined]
+                        MockFeature.registered_id: FeatureUserModel(
                             name="existing_name",
                             status=JobStatus.CREATED,
                             feature=MockFeature(),
@@ -154,7 +154,7 @@ class TestGenericFeaturesPlot:
 
     def test_validate_plot(self) -> None:
         fake_plot = _FakePlot()
-        _FakePlot.features_ids = {MockFeature.registered_id}  # type: ignore[attr-defined]
+        _FakePlot.features_ids = {MockFeature.registered_id}
 
         benchmark = BenchmarkUserModel(
             name="test",
@@ -187,4 +187,4 @@ class TestGenericFeaturesPlot:
         ]
         result = fake_plot.validate_plot(benchmark)
 
-        assert result.unwrap() == FeaturesValidationResult(features={MockFeature.registered_id: benchmark.features[0]})  # type: ignore[attr-defined]
+        assert result.unwrap() == FeaturesValidationResult(features={MockFeature.registered_id: benchmark.features[0]})

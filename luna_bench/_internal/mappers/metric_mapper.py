@@ -26,7 +26,7 @@ class MetricMapper(ModelListMixin[MetricDomain, MetricUserModel]):
             algorithm_name=result.algorithm_name,
             status=result.status,
             error=result.error,
-            result=result.result if result.result else None,
+            result=result.result.model_dump() if result.result else None,
         )
 
     @staticmethod

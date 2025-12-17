@@ -1,10 +1,15 @@
-from luna_bench.base_components.base_feature import BaseFeature
-from luna_bench.base_components.base_metric import ArbitraryData
+from luna_bench.base_components.data_types.arbitrary_data import ArbitraryData
 
+type AlgorithmName = str
+type BenchmarkName = str
 type ModelName = str
 type FeatureName = str
 type MetricName = str
+type PlotName = str
+type ModelSetName = str
 
 
 type FeatureResult = ArbitraryData
-type FeatureConfig = BaseFeature
+
+
+type MetricResult = ArbitraryData

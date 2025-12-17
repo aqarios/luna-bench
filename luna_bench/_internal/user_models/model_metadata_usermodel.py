@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
+from luna_bench.types import ModelName
+
 
 class ModelMetadataUserModel(BaseModel):
     """
@@ -21,5 +23,5 @@ class ModelMetadataUserModel(BaseModel):
     """
 
     id: int
-    name: str
+    name: ModelName
     hash: int

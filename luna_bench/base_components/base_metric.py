@@ -4,8 +4,8 @@ from typing import ClassVar
 from luna_quantum import Solution
 from pydantic import BaseModel
 
-from luna_bench.base_components.data_types.arbitrary_data import ArbitraryData
 from luna_bench.base_components.data_types.feature_results import FeatureResults
+from luna_bench.types import MetricResult
 
 from .base_feature import BaseFeature
 from .meta_classes.metric_class_meta import MetricClassMeta
@@ -22,10 +22,10 @@ class BaseMetric(BaseModel, ABC, metaclass=MetricClassMeta):
     """
 
     registered_id: ClassVar[str]
-    required_features: ClassVar[tuple[BaseFeature, ...] | None]
+    required_features: ClassVar[list[type[BaseFeature]]]
 
     @abstractmethod
-    def run[T: BaseFeature](self, solution: Solution, feature_results: FeatureResults[T]) -> ArbitraryData:
+    def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:
         """
         Compute the metric value for a given solution.
 

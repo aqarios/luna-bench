@@ -17,13 +17,13 @@ from tests.unit.fixtures.mock_components import MockAlgorithm, UnregisteredAlgor
 if TYPE_CHECKING:
     from pydantic import ValidationError
 
-    from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync
     from luna_bench._internal.usecases.usecase_container import UsecaseContainer
+    from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
     from luna_bench.errors.registry.unknown_id_error import UnknownIdError
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-def _empty_algorithm(name: str, algorithm: AlgorithmSync | AlgorithmAsync[Any]) -> AlgorithmUserModel:
+def _empty_algorithm(name: str, algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any]) -> AlgorithmUserModel:
     return AlgorithmUserModel(
         name=name,
         status=JobStatus.CREATED,
@@ -47,7 +47,7 @@ class TestAlgorithm:
         usecase: UsecaseContainer,
         benchmark_name: str,
         algorithm_name: str,
-        algorithm: AlgorithmSync | AlgorithmAsync[Any],
+        algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any],
         exp: Result[
             AlgorithmUserModel,
             DataNotUniqueError

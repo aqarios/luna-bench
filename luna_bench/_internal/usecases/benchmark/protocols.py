@@ -69,7 +69,7 @@ class MetricAddUc(Protocol):
 class MetricRunUc(Protocol):
     def __call__(
         self, benchmark: BenchmarkUserModel, metric: MetricUserModel | None = None
-    ) -> Result[None, RunMetricMissingError | RunModelsetMissingError]: ...
+    ) -> Result[None, RunMetricMissingError | RunModelsetMissingError | RunFeatureMissingError]: ...
 
 
 class FeatureAddUc(Protocol):

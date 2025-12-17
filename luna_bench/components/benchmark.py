@@ -37,7 +37,7 @@ from luna_bench._internal.user_models import (
     PlotUserModel,
 )
 from luna_bench._internal.wrappers import LunaAlgorithmWrapper
-from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
 from luna_bench.components.algorithm import Algorithm
 from luna_bench.components.enums import ErrorHandlingMode
 from luna_bench.components.feature import Feature
@@ -363,7 +363,7 @@ class Benchmark(BenchmarkUserModel):
     def add_feature(
         self,
         name: str,
-        feature: Feature,
+        feature: BaseFeature,
     ) -> Feature:
         """
         Add a feature to the benchmark with a given name.
@@ -440,7 +440,7 @@ class Benchmark(BenchmarkUserModel):
     def add_metric(
         self,
         name: str,
-        metric: Metric,
+        metric: BaseMetric,
     ) -> Metric:
         """
         Add a metric to the benchmark with a given name.
@@ -598,7 +598,7 @@ class Benchmark(BenchmarkUserModel):
     def add_plot(
         self,
         name: str,
-        plot: Plot[Any],
+        plot: BasePlot[Any],
     ) -> Plot:
         """
         Add a plot to the benchmark with a given name.
@@ -697,7 +697,9 @@ class Benchmark(BenchmarkUserModel):
 
     def run_metrics(self) -> None:  # noqa: D102 # Not yet implemented
         benchmark_run_metrics = self.__run_metric_uc()
-        result: Result[None, RunMetricMissingError | RunModelsetMissingError] = benchmark_run_metrics(self)
+        result: Result[None, RunMetricMissingError | RunModelsetMissingError | RunFeatureMissingError] = (
+            benchmark_run_metrics(self)
+        )
 
         if not is_successful(result):
             error = result.failure()

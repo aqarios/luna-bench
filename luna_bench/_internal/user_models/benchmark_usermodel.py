@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
+from luna_bench.types import BenchmarkName
+
 from .algorithm_usermodel import AlgorithmUserModel
 from .feature_usermodel import FeatureUserModel
 from .metric_usermodel import MetricUserModel
@@ -10,7 +12,7 @@ from .plot_usermodel import PlotUserModel
 
 
 class BenchmarkUserModel(BaseModel):
-    name: str
+    name: BenchmarkName
     modelset: ModelSetUserModel | None
 
     features: list[FeatureUserModel]

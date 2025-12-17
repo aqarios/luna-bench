@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
+from luna_bench.types import MetricResult
 
 
 class MetricResultUserModel(BaseModel):
@@ -13,4 +13,4 @@ class MetricResultUserModel(BaseModel):
 
     status: JobStatus
     error: str | None
-    result: ArbitraryDataDomain | None
+    result: MetricResult | None

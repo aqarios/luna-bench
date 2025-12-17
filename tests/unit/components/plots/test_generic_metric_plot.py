@@ -9,6 +9,7 @@ from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
 from luna_bench.base_components import BaseMetric
+from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.components.metrics.fake_metric import FakeMetricResult
 from luna_bench.components.plots.generics.metrics_plot import GenericMetricsPlot, MetricsValidationResult
 from luna_bench.errors.run_errors.plots_errors.metrics_missing_error import MetricsMissingError
@@ -26,7 +27,7 @@ class _FakePlot(GenericMetricsPlot):
 
 @metric(metric_id="mock_metric_new")  # type: ignore[arg-type]
 class MockMetricNew(BaseMetric):  # type: ignore[misc]
-    def run(self, solution: Solution) -> FakeMetricResult:
+    def run(self, solution: Solution, feature_results: FeatureResults) -> FakeMetricResult:
         raise NotImplementedError
 
 

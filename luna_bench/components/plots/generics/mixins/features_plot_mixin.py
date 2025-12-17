@@ -54,8 +54,8 @@ class FeaturesPlotMixin:
         result: dict[str, FeatureUserModel] = {}
 
         for feature in features:
-            if feature.feature.registered_id in self.features_ids:  # type: ignore[attr-defined]
-                result[feature.feature.registered_id] = feature  # type: ignore[attr-defined]
+            if feature.feature.registered_id in self.features_ids:
+                result[feature.feature.registered_id] = feature
         featires_diff = self.features_ids - result.keys()
 
         if len(featires_diff) > 0:

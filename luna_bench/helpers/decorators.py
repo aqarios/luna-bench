@@ -12,7 +12,7 @@ from luna_bench.errors.incompatible_class_error import IncompatibleClassError
 
 
 def _register_class(
-    register_class: type[BaseMetric | BaseFeature | BaseAlgorithmAsync | BaseAlgorithmSync | BasePlot[Any]],
+    register_class: type[BaseMetric | BaseFeature | BaseAlgorithmAsync[Any] | BaseAlgorithmSync | BasePlot[Any]],
     *,
     base: type | tuple[type, ...],
     registered_class_id: str | None,
@@ -25,6 +25,14 @@ def _register_class(
     register_class.registered_id = pid  # We define it here internally.
 
     registry.register(pid, register_class)
+
+
+def _convert_to_list[T](value: T | list[T] | tuple[T, ...] | None) -> list[T]:
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    return [value]
 
 
 @inject
@@ -126,7 +134,7 @@ def metric[T: BaseMetric](
     _cls: type[T] | None = None,
     *,
     metric_id: str | None = None,
-    required_features: tuple[BaseFeature, ...] | None = None,
+    required_features: type[BaseFeature] | list[type[BaseFeature]] | tuple[type[BaseFeature], ...] | None = None,
     metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
 ) -> Callable[[type[T]], type[T]] | type[T]:
     """
@@ -149,10 +157,13 @@ def metric[T: BaseMetric](
     Callable[[type[T]], type[T]] | type[T]
 
     """
+    if required_features is None:
+        required_features = []
 
     def _do_register(cls: type[T]) -> type[T]:
         pid = metric_id or f"{cls.__module__}.{cls.__qualname__}"
-        cls.required_features = required_features
+
+        cls.required_features = _convert_to_list(required_features)
         _register_class(cls, base=BaseMetric, registered_class_id=pid, registry=metric_registry)
 
         return cls
@@ -194,9 +205,9 @@ def plot(
         pid = plot_id or f"{cls.__module__}.{cls.__qualname__}"
         _register_class(cls, base=BasePlot, registered_class_id=pid, registry=plot_registry)
         if metrics_ids is not None:
-            cls.metrics_ids = metrics_ids  # type: ignore[attr-defined]
+            cls.metrics_ids = metrics_ids
         if features_ids is not None:
-            cls.features_ids = features_ids  # type: ignore[attr-defined]
+            cls.features_ids = features_ids
         return cls
 
     if _cls is not None:

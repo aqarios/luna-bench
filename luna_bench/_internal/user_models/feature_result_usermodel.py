@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench.types import ModelName
+from luna_bench.types import FeatureResult, ModelName
 
 
 class FeatureResultUserModel(BaseModel):
@@ -13,4 +12,4 @@ class FeatureResultUserModel(BaseModel):
 
     status: JobStatus
     error: str | None
-    result: ArbitraryDataDomain | None
+    result: FeatureResult | None

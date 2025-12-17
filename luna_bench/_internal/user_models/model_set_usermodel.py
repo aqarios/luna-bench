@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
+from luna_bench.types import ModelSetName
+
 from .model_metadata_usermodel import ModelMetadataUserModel
 
 
@@ -23,5 +25,5 @@ class ModelSetUserModel(BaseModel):
     """
 
     id: int
-    name: str
+    name: ModelSetName
     models: list[ModelMetadataUserModel]
