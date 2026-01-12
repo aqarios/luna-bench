@@ -21,8 +21,8 @@ class TestRightHandSideFeatures:
         assert isinstance(result, RightHandSideFeaturesResult)
 
         # Model has one <= and one >= constraint
-        assert result.mean_right_hand_side_leq_constraints == 10.
-        assert result.mean_right_hand_side_geq_constraints == 5.
+        assert result.mean_right_hand_side_leq_constraints == 10.0
+        assert result.mean_right_hand_side_geq_constraints == 5.0
 
         # No equality constraints
         assert result.mean_right_hand_side_eq_constraints == 0.0

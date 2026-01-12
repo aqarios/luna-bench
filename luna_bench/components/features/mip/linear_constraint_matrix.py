@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from luna_quantum import Vtype
-from numpy.typing import NDArray
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.components.features.utils import constraint_matrix, mean, vc
+from luna_bench.components.helper.model_matrix_extraction import constraint_matrix
+from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
 from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
@@ -136,7 +136,7 @@ class LinearConstraintMatrixFeatures(IFeature):
     variation coefficient metrics.
     """
 
-    def run(self, model: Model) -> ArbitraryDataDomain:
+    def run(self, model: Model) -> LinearConstraintMatrixFeaturesResult:
         """
         Calculate linear constraint matrix features.
 
@@ -176,41 +176,49 @@ class LinearConstraintMatrixFeatures(IFeature):
 
         return LinearConstraintMatrixFeaturesResult(
             # Variable coefficient statistics - continuous
-            mean_variable_coefficient_continuous=mean(ac_vnd),
-            vc_variable_coefficient_continuous=vc(ac_vnd),
+            mean_variable_coefficient_continuous=NumpyStatsHelper.mean(ac_vnd),
+            vc_variable_coefficient_continuous=NumpyStatsHelper.vc(ac_vnd),
             # Variable coefficient statistics - non-continuous
-            mean_variable_coefficient_non_continuous=mean(anc_vnd),
-            vc_variable_coefficient_non_continuous=vc(anc_vnd),
+            mean_variable_coefficient_non_continuous=NumpyStatsHelper.mean(anc_vnd),
+            vc_variable_coefficient_non_continuous=NumpyStatsHelper.vc(anc_vnd),
             # Variable coefficient statistics - all
-            mean_variable_coefficient_all=mean(av_vnd),
-            vc_variable_coefficient_all=vc(av_vnd),
+            mean_variable_coefficient_all=NumpyStatsHelper.mean(av_vnd),
+            vc_variable_coefficient_all=NumpyStatsHelper.vc(av_vnd),
             # Constraint coefficient statistics - continuous
-            mean_constraint_coefficient_continuous=mean(ac_cnd),
-            vc_constraint_coefficient_continuous=vc(ac_cnd),
+            mean_constraint_coefficient_continuous=NumpyStatsHelper.mean(ac_cnd),
+            vc_constraint_coefficient_continuous=NumpyStatsHelper.vc(ac_cnd),
             # Constraint coefficient statistics - non-continuous
-            mean_constraint_coefficient_non_continuous=mean(anc_cnd),
-            vc_constraint_coefficient_non_continuous=vc(anc_cnd),
+            mean_constraint_coefficient_non_continuous=NumpyStatsHelper.mean(anc_cnd),
+            vc_constraint_coefficient_non_continuous=NumpyStatsHelper.vc(anc_cnd),
             # Constraint coefficient statistics - all
-            mean_constraint_coefficient=mean(av_cnd),
-            vc_constraint_coefficient=vc(av_cnd),
+            mean_constraint_coefficient=NumpyStatsHelper.mean(av_cnd),
+            vc_constraint_coefficient=NumpyStatsHelper.vc(av_cnd),
             # Distribution of normalized constraint matrix entries - continuous
-            mean_distribution_of_normalized_constraint_matrix_entries_continuous=mean(ac_norm),
-            vc_distribution_of_normalized_constraint_matrix_entries_continuous=vc(ac_norm),
+            mean_distribution_of_normalized_constraint_matrix_entries_continuous=NumpyStatsHelper.mean(ac_norm),
+            vc_distribution_of_normalized_constraint_matrix_entries_continuous=NumpyStatsHelper.vc(ac_norm),
             # Distribution of normalized constraint matrix entries - non-continuous
-            mean_distribution_of_normalized_constraint_matrix_entries_non_continuous=mean(anc_norm),
-            vc_distribution_of_normalized_constraint_matrix_entries_non_continuous=vc(anc_norm),
+            mean_distribution_of_normalized_constraint_matrix_entries_non_continuous=NumpyStatsHelper.mean(anc_norm),
+            vc_distribution_of_normalized_constraint_matrix_entries_non_continuous=NumpyStatsHelper.vc(anc_norm),
             # Distribution of normalized constraint matrix entries - all
-            mean_distribution_of_normalized_constraint_matrix_entries=mean(av_norm),
-            vc_distribution_of_normalized_constraint_matrix_entries=vc(av_norm),
+            mean_distribution_of_normalized_constraint_matrix_entries=NumpyStatsHelper.mean(av_norm),
+            vc_distribution_of_normalized_constraint_matrix_entries=NumpyStatsHelper.vc(av_norm),
             # Variation coefficient of normalized absolute non-zero entries per row - continuous
-            mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_continuous=mean(ac_vcs),
-            vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_continuous=vc(ac_vcs),
+            mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_continuous=NumpyStatsHelper.mean(
+                ac_vcs
+            ),
+            vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_continuous=NumpyStatsHelper.vc(
+                ac_vcs
+            ),
             # Variation coefficient of normalized absolute non-zero entries per row - non-continuous
-            mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_non_continuous=mean(anc_vcs),
-            vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_non_continuous=vc(anc_vcs),
+            mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_non_continuous=NumpyStatsHelper.mean(
+                anc_vcs
+            ),
+            vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_non_continuous=NumpyStatsHelper.vc(
+                anc_vcs
+            ),
             # Variation coefficient of normalized absolute non-zero entries per row - all
-            mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row=mean(av_vcs),
-            vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row=vc(av_vcs),
+            mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row=NumpyStatsHelper.mean(av_vcs),
+            vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row=NumpyStatsHelper.vc(av_vcs),
         )
 
     def _normalized_constraint_matrix_entries(
@@ -262,5 +270,5 @@ class LinearConstraintMatrixFeatures(IFeature):
             row_mask = row != 0
             if np.any(row_mask) and a_rs[i] != 0:
                 e_nonzero_normed = row[row_mask] / a_rs[i]
-                vcs.append(vc(e_nonzero_normed))
+                vcs.append(NumpyStatsHelper.vc(e_nonzero_normed))
         return np.array(vcs)

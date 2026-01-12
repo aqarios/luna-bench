@@ -104,7 +104,7 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Only continuous variables
-        var_coef = [3,7]
+        var_coef = [3, 7]
         assert result.mean_variable_coefficient_continuous == np.mean(var_coef)
         assert result.mean_variable_coefficient_non_continuous == 0.0
 
@@ -127,7 +127,7 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Only non-continuous variables
-        var_coef = [3,4]
+        var_coef = [3, 4]
         assert result.mean_variable_coefficient_non_continuous == np.mean(var_coef)
         assert result.mean_variable_coefficient_continuous == 0.0
 
@@ -158,8 +158,8 @@ class TestLinearConstraintMatrixFeatures:
         assert result.mean_constraint_coefficient == np.mean(con_coef)
 
         # Most variables appear in most constraints
-        con_vars = [10,4]
-        nc_vars = [5,5]
+        con_vars = [10, 4]
+        nc_vars = [5, 5]
         assert result.mean_variable_coefficient_continuous == np.mean(con_vars)
         assert result.mean_variable_coefficient_non_continuous == np.mean(nc_vars)
 
@@ -217,7 +217,7 @@ class TestLinearConstraintMatrixFeatures:
 
         extractor = LinearConstraintMatrixFeatures()
         result = extractor.run(model)
-        no_mat = np.array([[2,4], [1,2]]) / np.array([[10],[5]])
+        no_mat = np.array([[2, 4], [1, 2]]) / np.array([[10], [5]])
         # Normalized entries should be computed by dividing by RHS
         assert result.mean_distribution_of_normalized_constraint_matrix_entries_continuous == np.mean(no_mat)
 

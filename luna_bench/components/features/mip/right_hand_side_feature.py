@@ -7,7 +7,7 @@ from luna_quantum import Comparator
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.components.features.utils import mean, std
+from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
 from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
@@ -60,7 +60,7 @@ class RightHandSideFeatures(IFeature):
     greater-than-or-equal (>=) constraints.
     """
 
-    def run(self, model: Model) -> ArbitraryDataDomain:
+    def run(self, model: Model) -> RightHandSideFeaturesResult:
         """
         Calculate right-hand side statistical features for constraints.
 
@@ -89,13 +89,13 @@ class RightHandSideFeatures(IFeature):
             elif c.comparator == Comparator.Ge:
                 rhs_geq = np.append(rhs_geq, c.rhs)
             else:
-                raise ValueError()
+                raise ValueError
 
         return RightHandSideFeaturesResult(
-            mean_right_hand_side_leq_constraints=mean(rhs_leq),
-            std_right_hand_side_leq_constraints=std(rhs_leq),
-            mean_right_hand_side_eq_constraints=mean(rhs_eq),
-            std_right_hand_side_eq_constraints=std(rhs_eq),
-            mean_right_hand_side_geq_constraints=mean(rhs_geq),
-            std_right_hand_side_geq_constraints=std(rhs_geq),
+            mean_right_hand_side_leq_constraints=NumpyStatsHelper.mean(rhs_leq),
+            std_right_hand_side_leq_constraints=NumpyStatsHelper.std(rhs_leq),
+            mean_right_hand_side_eq_constraints=NumpyStatsHelper.mean(rhs_eq),
+            std_right_hand_side_eq_constraints=NumpyStatsHelper.std(rhs_eq),
+            mean_right_hand_side_geq_constraints=NumpyStatsHelper.mean(rhs_geq),
+            std_right_hand_side_geq_constraints=NumpyStatsHelper.std(rhs_geq),
         )

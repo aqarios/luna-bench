@@ -112,7 +112,6 @@ def sparse_model() -> Model:
     model.constraints += variables[5] + variables[6] + variables[7] >= 3
     model.constraints += variables[9] == 1
 
-
     return model
 
 
@@ -138,7 +137,6 @@ def dense_model() -> Model:
     model.constraints += 2 * x1 + x2 + 2 * x3 + x4 >= 5
     model.constraints += x1 + 3 * x2 + x3 + 2 * x4 == 7
     model.constraints += 4 * x1 + x2 + x3 + x4 <= 15
-
 
     return model
 

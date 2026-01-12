@@ -7,7 +7,8 @@ from luna_quantum import Model, Unbounded, Vtype
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.components.features.utils import QUADRATIC_DEGREE, constraint_matrix, mean, median, q10, q90, vc
+from luna_bench.components.helper.model_matrix_extraction import QUADRATIC_DEGREE, constraint_matrix
+from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
 from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
@@ -129,7 +130,7 @@ class ProblemSizeFeatures(IFeature):
     fractional values, as well as statistical metrics related to variable support sizes.
     """
 
-    def run(self, model: Model) -> ArbitraryDataDomain:
+    def run(self, model: Model) -> ProblemSizeFeaturesResult:
         """
         Calculate problem size features for the given optimization model.
 
@@ -164,15 +165,16 @@ class ProblemSizeFeatures(IFeature):
                     if isinstance(var.bounds.lower, Unbounded) and isinstance(var.bounds.upper, Unbounded):
                         num_int += 1
                         num_unbound_non_cont += 1
-                    elif (isinstance(var.bounds.lower, Unbounded) or isinstance(var.bounds.upper, Unbounded)) or (isinstance(var.bounds.lower, float) or isinstance(var.bounds.upper, float)) :
+                    elif (isinstance(var.bounds.lower, Unbounded) or isinstance(var.bounds.upper, Unbounded)) or (
+                        isinstance(var.bounds.lower, float) or isinstance(var.bounds.upper, float)
+                    ):
                         num_int += 1
                     else:
                         raise ModelBoundsError(model_name=model.name, expected_bounds="[-inf, inf]")
                 case Vtype.Real:
                     if var.bounds.lower is None or var.bounds.upper is None:
                         raise ModelBoundsError(model_name=model.name, expected_bounds="[-inf, inf]")
-                    else:
-                        num_cont += 1
+                    num_cont += 1
         num_non_cont = num_bool + num_int
 
         support_sizes = self._support_sizes(model)
@@ -197,11 +199,11 @@ class ProblemSizeFeatures(IFeature):
             frac_non_continuous_variables=num_non_cont / num_vars if num_vars > 0 else 0.0,
             num_unbounded_non_continuous_variables=num_unbound_non_cont,
             frac_unbounded_non_continuous_variables=num_unbound_non_cont / num_vars if num_vars > 0 else 0.0,
-            mean_support_size=mean(support_sizes),
-            median_support_size=median(support_sizes),
-            vc_support_size=vc(support_sizes),
-            q90_support_size=q90(support_sizes),
-            q10_support_size=q10(support_sizes),
+            mean_support_size=NumpyStatsHelper.mean(support_sizes),
+            median_support_size=NumpyStatsHelper.median(support_sizes),
+            vc_support_size=NumpyStatsHelper.vc(support_sizes),
+            q90_support_size=NumpyStatsHelper.q90(support_sizes),
+            q10_support_size=NumpyStatsHelper.q10(support_sizes),
         )
 
     def _support_sizes(self, model: Model) -> NDArray[np.float64]:

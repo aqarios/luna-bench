@@ -2,7 +2,6 @@
 
 import pytest
 from luna_quantum import Bounds, Model
-from pygments.util import split_path_re
 
 from luna_bench.components.features.mip.problem_size_feature import (
     ProblemSizeFeatures,
@@ -90,7 +89,7 @@ class TestProblemSizeFeatures:
         extractor = ProblemSizeFeatures()
         result = extractor.run(sparse_model)
 
-        assert result.num_variables == 6 # only active vars considered
+        assert result.num_variables == 6  # only active vars considered
         assert result.num_constraints == 3
 
         # Check sparsity
@@ -162,8 +161,8 @@ class TestProblemSizeFeatures:
         result = extractor.run(model)
 
         assert result.num_variables == 2
-        assert result.num_semi_continuous_variables == 0 # no implemented
-        assert result.num_semi_integer_variables == 0 # no implemented
+        assert result.num_semi_continuous_variables == 0  # no implemented
+        assert result.num_semi_integer_variables == 0  # no implemented
         assert result.frac_semi_continuous_variables == pytest.approx(0)
         assert result.frac_semi_integer_variables == pytest.approx(0)
 
@@ -247,11 +246,11 @@ class TestProblemSizeFeatures:
             variables = [Variable(f"x{i}", vtype=Vtype.Real, bounds=Bounds(0, Unbounded)) for i in range(100)]
 
         # Create objective with all variables
-        model.objective = sum(variables)
+        model.objective += sum(variables)
 
         # Create 50 constraints
         for i in range(50):
-            model.constraints += sum(variables[j] for j in range(i, min(i + 10, 100))) <= 100
+            model.add_constraint(sum(variables[j] for j in range(i, min(i + 10, 100))) <= 100)
 
         extractor = ProblemSizeFeatures()
         result = extractor.run(model)

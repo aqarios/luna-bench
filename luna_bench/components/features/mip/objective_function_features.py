@@ -7,7 +7,8 @@ from luna_quantum import Vtype
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.components.features.utils import constraint_matrix, mean, std
+from luna_bench.components.helper.model_matrix_extraction import constraint_matrix
+from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
 from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
@@ -107,7 +108,7 @@ class ObjectiveFunctionFeatureResult(ArbitraryDataDomain):
 class ObjectiveFunctionFeature(IFeature):
     """Fake feature class."""
 
-    def run(self, model: Model) -> ArbitraryDataDomain:
+    def run(self, model: Model) -> ObjectiveFunctionFeatureResult:
         """
         Calculate statistical features of objective function coefficients.
 
@@ -142,32 +143,32 @@ class ObjectiveFunctionFeature(IFeature):
 
         return ObjectiveFunctionFeatureResult(
             # absolute objective function coefficients - continuous
-            mean_abscoefs_c=mean(abscoefs_c),
-            std_abscoefs_c=std(abscoefs_c),
+            mean_abscoefs_c=NumpyStatsHelper.mean(abscoefs_c),
+            std_abscoefs_c=NumpyStatsHelper.std(abscoefs_c),
             # absolute objective function coefficients - non-continuous
-            mean_abscoefs_nc=mean(abscoefs_nc),
-            std_abscoefs_nc=std(abscoefs_nc),
+            mean_abscoefs_nc=NumpyStatsHelper.mean(abscoefs_nc),
+            std_abscoefs_nc=NumpyStatsHelper.std(abscoefs_nc),
             # absolute objective function coefficients - all
-            mean_abscoefs_v=mean(abscoefs_v),
-            std_abscoefs_v=std(abscoefs_v),
+            mean_abscoefs_v=NumpyStatsHelper.mean(abscoefs_v),
+            std_abscoefs_v=NumpyStatsHelper.std(abscoefs_v),
             # Normalized absolute objective function coefficients - continuous
-            mean_norm_abscoefs_c=mean(norm_abscoefs_c),
-            std_norm_abscoefs_c=std(norm_abscoefs_c),
+            mean_norm_abscoefs_c=NumpyStatsHelper.mean(norm_abscoefs_c),
+            std_norm_abscoefs_c=NumpyStatsHelper.std(norm_abscoefs_c),
             # Normalized absolute objective function coefficients - non-continuous
-            mean_norm_abscoefs_nc=mean(norm_abscoefs_nc),
-            std_norm_abscoefs_nc=std(norm_abscoefs_nc),
+            mean_norm_abscoefs_nc=NumpyStatsHelper.mean(norm_abscoefs_nc),
+            std_norm_abscoefs_nc=NumpyStatsHelper.std(norm_abscoefs_nc),
             # Normalized absolute objective function coefficients - all
-            mean_norm_abscoefs_v=mean(norm_abscoefs_v),
-            std_norm_abscoefs_v=std(norm_abscoefs_v),
+            mean_norm_abscoefs_v=NumpyStatsHelper.mean(norm_abscoefs_v),
+            std_norm_abscoefs_v=NumpyStatsHelper.std(norm_abscoefs_v),
             # Square-root-normalized absolute objective function coefficients - continuous
-            mean_sqrtnorm_abscoefs_c=mean(sqrtnorm_abscoefs_c),
-            std_sqrtnorm_abscoefs_c=std(sqrtnorm_abscoefs_c),
+            mean_sqrtnorm_abscoefs_c=NumpyStatsHelper.mean(sqrtnorm_abscoefs_c),
+            std_sqrtnorm_abscoefs_c=NumpyStatsHelper.std(sqrtnorm_abscoefs_c),
             # Square-root-normalized absolute objective function coefficients - non-continuous
-            mean_sqrtnorm_abscoefs_nc=mean(sqrtnorm_abscoefs_nc),
-            std_sqrtnorm_abscoefs_nc=std(sqrtnorm_abscoefs_nc),
+            mean_sqrtnorm_abscoefs_nc=NumpyStatsHelper.mean(sqrtnorm_abscoefs_nc),
+            std_sqrtnorm_abscoefs_nc=NumpyStatsHelper.std(sqrtnorm_abscoefs_nc),
             # Square-root-normalized absolute objective function coefficients - all
-            mean_sqrtnorm_abscoefs_v=mean(sqrtnorm_abscoefs_v),
-            std_sqrtnorm_abscoefs_v=std(sqrtnorm_abscoefs_v),
+            mean_sqrtnorm_abscoefs_v=NumpyStatsHelper.mean(sqrtnorm_abscoefs_v),
+            std_sqrtnorm_abscoefs_v=NumpyStatsHelper.std(sqrtnorm_abscoefs_v),
         )
 
     def _normalize(
