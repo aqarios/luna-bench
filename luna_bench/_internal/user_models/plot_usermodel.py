@@ -10,4 +10,4 @@ class PlotUserModel(BaseModel):
     name: str
     status: JobStatus
 
-    plot: IPlot
+    plot: IPlot  # type: ignore[type-arg]

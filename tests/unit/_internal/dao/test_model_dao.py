@@ -7,7 +7,7 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
-from tests.unit.fixtures.mock_model import _dummy_model
+from tests.utils.luna_model import simple_model
 
 if TYPE_CHECKING:
     from luna_quantum import Model
@@ -22,8 +22,8 @@ class TestModelDAO:
     @staticmethod
     def setup_transaction(empty_transaction: DaoTransaction) -> DaoTransaction:
         """Provide a transaction fixture with a default model for testing the ModelDAOs."""
-        model: Model = _dummy_model("M1")
-        model2: Model = _dummy_model("M2")
+        model: Model = simple_model("M1")
+        model2: Model = simple_model("M2")
         empty_transaction.model.get_or_create(model_name=model.name, model_hash=model.__hash__(), binary=model.encode())
         empty_transaction.model.get_or_create(
             model_name=model2.name, model_hash=model2.__hash__(), binary=model2.encode()
@@ -44,8 +44,8 @@ class TestModelDAO:
     @pytest.mark.parametrize(
         ("model_hash", "exp"),
         [
-            (_dummy_model("M1").__hash__(), Success(_dummy_model("M1"))),
-            (_dummy_model("M2").__hash__(), Success(_dummy_model("M2"))),
+            (simple_model("M1").__hash__(), Success(simple_model("M1"))),
+            (simple_model("M2").__hash__(), Success(simple_model("M2"))),
             (1, Failure(DataNotExistError())),
         ],
     )
@@ -63,7 +63,7 @@ class TestModelDAO:
         elif isinstance(exp, Failure):
             TestModelDAO._check_exception(result.failure(), exp.failure())
 
-    @pytest.mark.parametrize("exp", [([_dummy_model("M1"), _dummy_model("M2")])])
+    @pytest.mark.parametrize("exp", [([simple_model("M1"), simple_model("M2")])])
     def test_get_all_model(self, setup_transaction: DaoTransaction, exp: list[Model]) -> None:
         result: list[ModelMetadataDomain] = setup_transaction.model.get_all()
 
@@ -76,8 +76,8 @@ class TestModelDAO:
     @pytest.mark.parametrize(
         ("model", "exp"),
         [
-            (_dummy_model("Test"), Success(_dummy_model("Test"))),
-            (_dummy_model("M1"), Success(_dummy_model("M1"))),
+            (simple_model("Test"), Success(simple_model("Test"))),
+            (simple_model("M1"), Success(simple_model("M1"))),
         ],
     )
     def test_get_or_create_model(
@@ -102,7 +102,7 @@ class TestModelDAO:
             TestModelDAO._check_exception(result.failure(), exp.failure())
 
     def test_fetch_model(self, setup_transaction: DaoTransaction) -> None:
-        model_exists = _dummy_model("M1")
+        model_exists = simple_model("M1")
         model_stored = setup_transaction.model.get(model_hash=model_exists.__hash__())
 
         fetch_success = setup_transaction.model.load(model_id=model_stored.unwrap().id)

@@ -12,15 +12,16 @@ _database: Database = SqliteDatabase(None)
 
 
 def setup_db_proxy(connection_string: str, tables: list[Any]) -> Database:
-    _database.init(
-        connection_string,
-        pragmas=(
-            ("cache_size", -1024 * 64),  # 64MB page-cache.
-            ("journal_mode", "wal"),  # Use WAL-mode (you should always use this!).
-            ("foreign_keys", 1),  # Enforce foreign-key constraints.
-        ),
-    )
-    _database.create_tables(tables, safe=True)
+    if _database.is_closed():
+        _database.init(
+            connection_string,
+            pragmas=(
+                ("cache_size", -1024 * 64),  # 64MB page-cache.
+                ("journal_mode", "wal"),  # Use WAL-mode (you should always use this!).
+                ("foreign_keys", 1),  # Enforce foreign-key constraints.
+            ),
+        )
+        _database.create_tables(tables, safe=True)
 
     return _database
 

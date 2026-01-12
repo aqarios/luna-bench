@@ -108,7 +108,7 @@ class BenchmarkSqlDao(BenchmarkDao):
             status=BenchmarkStatus(benchmark.status),
             modelset=ModelSetSqlDao.modelset_to_domain(benchmark.modelset) if benchmark.modelset else None,
             features=[FeatureSqlDao.feature_to_domain(feature) for feature in benchmark.features],
-            algorithms=[AlgorithmSqlDao.solvejob_to_domain(solvejob) for solvejob in benchmark.algorithms],
+            algorithms=[AlgorithmSqlDao.algorithm_to_domain(solvejob) for solvejob in benchmark.algorithms],
             metrics=[MetricSqlDao.metric_to_domain(metric) for metric in benchmark.metrics],
             plots=[PlotSqlDao.plot_to_domain(plot) for plot in benchmark.plots],
         )

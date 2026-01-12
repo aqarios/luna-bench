@@ -20,7 +20,7 @@ body:
         - Critical
     validations:
       required: true
-  
+
   - type: textarea
     id: problem
     attributes:
@@ -38,7 +38,7 @@ body:
       placeholder: Any additional information that might be helpful
     validations:
       required: false
-  
+
   - type: textarea
     id: solution
     attributes:
@@ -47,4 +47,3 @@ body:
       placeholder: How would you like this to work?  What other options did you think about?
     validations:
       required: false
-

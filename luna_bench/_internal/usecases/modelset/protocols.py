@@ -92,7 +92,10 @@ class ModelAddUc(Protocol):
 
     def __call__(
         self, modelset_name: str, model: Model
-    ) -> Result[ModelSetUserModel, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError]:
+    ) -> Result[
+        ModelSetUserModel,
+        DataNotExistError | DataNotUniqueError | UnknownLunaBenchError,
+    ]:
         """
         Add a model to the model set.
 

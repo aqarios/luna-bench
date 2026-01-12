@@ -1,9 +1,18 @@
-from luna_bench._internal.interfaces import IPlot
+from luna_bench.components.plots.generics.features_metrics_plot import (
+    FeaturesAndMetricsValidationResult,
+    GenericFeaturesMetricsPlot,
+)
 from luna_bench.helpers.decorators import plot
 
 
-@plot
-class FakePlot(IPlot):
-    """Fake plot class."""
+@plot(metrics_ids=("test",), features_ids=("test",))
+class FakePlot(GenericFeaturesMetricsPlot):  # type: ignore[call-arg]
+    """
+    Fake plot implementation for testing purposes.
 
-    def run(self) -> None: ...  # noqa: D102 # Not yet implemented
+    This plot requires a metric named 'test' and a feature named 'test'.
+    Used primarily for testing the plot infrastructure.
+    """
+
+    def run(self, data: FeaturesAndMetricsValidationResult) -> None:
+        """Execute the fake plot generation."""

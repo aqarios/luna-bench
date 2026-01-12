@@ -8,7 +8,8 @@ requires-python = ">=3.13"
 dependencies = [
     "dependency-injector>=4.48.2",
     "huey>=2.5.3",
-    "luna-quantum>=1.0.8rc2",
+    "luna-quantum>=1.1.0",
+    "matplotlib>=3.10.8",
     "peewee>=3.18.2",
     "pydantic-settings>=2.11.0",
     "returns[compatible-mypy]>=0.26.0",
@@ -20,7 +21,10 @@ dev = [
     "mypy>=1.17.1",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
-    "ruff>=0.13.3",
+    "ruff>=0.14.1",
     "tox>=4.30.3",
     "types-peewee>=3.18.2",
+]
+opt-metrics = [
+    "pyscipopt>=5.6.0",
 ]

@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Use this template to create a task for work that needs to be completed.
-  
+
   - type: textarea
     id: description
     attributes:
@@ -16,7 +16,7 @@ body:
       placeholder: What is the task?
     validations:
       required: true
-  
+
   - type: textarea
     id: acceptance-criteria
     attributes:
@@ -28,7 +28,7 @@ body:
         - [ ] Criterion 3
     validations:
       required: false
-  
+
   - type: textarea
     id: technical-details
     attributes:
@@ -37,7 +37,7 @@ body:
       placeholder: Include any relevant technical information
     validations:
       required: false
-  
+
   - type: textarea
     id: related-issues
     attributes:
