@@ -39,6 +39,7 @@ class OptSolFeatureResult(ArbitraryDataDomain):
 
     best_sol: float
     pre_terminated: bool
+    runtime: float
 
 
 @feature
@@ -135,4 +136,8 @@ class OptSolFeature(IFeature):
         if scip_model.getStatus() == "timelimit":  # type: ignore[no-untyped-call]
             pre_terminated = True
 
-        return OptSolFeatureResult(best_sol=scip_model.getObjVal(), pre_terminated=pre_terminated)  # type: ignore[no-untyped-call]
+        return OptSolFeatureResult(
+            best_sol=scip_model.getObjVal(),
+            pre_terminated=pre_terminated,
+            runtime=scip_model.getSolvingTime()
+        )  # type: ignore[no-untyped-call]

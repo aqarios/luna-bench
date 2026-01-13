@@ -8,6 +8,8 @@ from luna_bench.components.features.mip.objective_function_features import (
     ObjectiveFunctionFeatureResult,
 )
 
+import numpy as np
+
 
 class TestObjectiveFunctionFeature:
     """Test suite for ObjectiveFunctionFeature extractor."""
@@ -20,8 +22,8 @@ class TestObjectiveFunctionFeature:
         assert isinstance(result, ObjectiveFunctionFeatureResult)
 
         # All variables are continuous
-        assert result.mean_abscoefs_c > 0
-        assert result.std_abscoefs_c >= 0
+        assert result.mean_abscoefs_c == pytest.approx(2.5)
+        assert result.std_abscoefs_c == pytest.approx(0.5)
 
         # No non-continuous variables
         assert result.mean_abscoefs_nc == 0.0
@@ -56,6 +58,16 @@ class TestObjectiveFunctionFeature:
         assert result.mean_sqrtnorm_abscoefs_nc >= 0
         assert result.mean_sqrtnorm_abscoefs_v >= 0
 
+        assert result.mean_abscoefs_c == pytest.approx(3.5)
+        assert result.std_abscoefs_c == pytest.approx(2.5)
+
+        assert result.mean_abscoefs_nc == pytest.approx(3.5)
+        assert result.std_abscoefs_nc == pytest.approx(np.std([5, 3, 2, 4]))
+
+        assert result.mean_abscoefs_v == pytest.approx(3.5)
+        assert result.std_abscoefs_v == pytest.approx(np.std([5, 3, 2, 4, 1, 6]))
+
+
     def test_empty_model(self, empty_model: Model) -> None:
         """Test feature extraction on an empty model."""
         extractor = ObjectiveFunctionFeature()
@@ -84,13 +96,14 @@ class TestObjectiveFunctionFeature:
         extractor = ObjectiveFunctionFeature()
         result = extractor.run(model)
 
-        # Only continuous variables
-        assert result.mean_abscoefs_c > 0
-        assert result.mean_abscoefs_nc == 0.0
-
-        # Check mean calculation
+        # Only continuous variables: |3|, |5|, |2|
         expected_mean = (3 + 5 + 2) / 3
+        expected_std = np.std([3, 5, 2])
+
         assert result.mean_abscoefs_c == pytest.approx(expected_mean)
+        assert result.std_abscoefs_c == pytest.approx(expected_std)
+        assert result.mean_abscoefs_nc == 0.0
+        assert result.std_abscoefs_nc == 0.0
 
     def test_integer_only_objective(self) -> None:
         """Test objective with only integer variables."""
@@ -107,13 +120,14 @@ class TestObjectiveFunctionFeature:
         extractor = ObjectiveFunctionFeature()
         result = extractor.run(model)
 
-        # Only non-continuous variables
-        assert result.mean_abscoefs_nc > 0
-        assert result.mean_abscoefs_c == 0.0
-
-        # Check mean calculation
+        # Only non-continuous variables: |4|, |6|, |2|
         expected_mean = (4 + 6 + 2) / 3
+        expected_std = np.std([4, 6, 2])
+
         assert result.mean_abscoefs_nc == pytest.approx(expected_mean)
+        assert result.std_abscoefs_nc == pytest.approx(expected_std)
+        assert result.mean_abscoefs_c == 0.0
+        assert result.std_abscoefs_c == 0.0
 
     def test_negative_coefficients(self) -> None:
         """Test that absolute values are correctly computed for negative coefficients."""
@@ -129,8 +143,10 @@ class TestObjectiveFunctionFeature:
         extractor = ObjectiveFunctionFeature()
         result = extractor.run(model)
 
-        # Mean of absolute values should be (3 + 5) / 2 = 4
+        # Mean of absolute values: (|3| + |-5|) / 2 = 4
+        # Std of |3|, |5| = 1
         assert result.mean_abscoefs_c == pytest.approx(4.0)
+        assert result.std_abscoefs_c == pytest.approx(1.0)
 
     def test_normalized_coefficients(self) -> None:
         """Test normalized coefficient calculations."""
@@ -161,11 +177,13 @@ class TestObjectiveFunctionFeature:
         extractor = ObjectiveFunctionFeature()
         result = extractor.run(sparse_model)
 
-        # Should only consider variables in the objective
-        assert result.mean_abscoefs_c > 0
-
-        # All objective variables are continuous in sparse_model
+        # Objective: 2*x0 + 3*x5 + x9 (all continuous)
+        # Mean: (2 + 3 + 1) / 3 = 2.0
+        # Std: std([2, 3, 1]) ≈ 0.816
+        assert result.mean_abscoefs_c == pytest.approx(2.0)
+        assert result.std_abscoefs_c == pytest.approx(np.std([2, 3, 1]))
         assert result.mean_abscoefs_nc == 0.0
+        assert result.std_abscoefs_nc == 0.0
 
     def test_zero_coefficient_handling(self) -> None:
         """Test handling when some variables don't appear in constraints."""
@@ -213,9 +231,16 @@ class TestObjectiveFunctionFeature:
         extractor = ObjectiveFunctionFeature()
         result = extractor.run(quadratic_model)
 
-        # Should only consider linear terms in objective
-        assert result.mean_abscoefs_c > 0 or result.mean_abscoefs_nc > 0
-        assert result.mean_abscoefs_v > 0
+        # Objective: x + 2*y + z (x, y continuous; z integer)
+        # Continuous: |1|, |2| -> mean=1.5, std=0.5
+        # Non-continuous: |1| -> mean=1.0, std=0.0
+        # All: mean=(1+2+1)/3=4/3≈1.333, std≈0.471
+        assert result.mean_abscoefs_c == pytest.approx(1.5)
+        assert result.std_abscoefs_c == pytest.approx(0.5)
+        assert result.mean_abscoefs_nc == pytest.approx(1.0)
+        assert result.std_abscoefs_nc == pytest.approx(0.0)
+        assert result.mean_abscoefs_v == pytest.approx(4/3)
+        assert result.std_abscoefs_v == pytest.approx(np.std([1, 2, 1]))
 
     def test_standard_deviation_calculation(self) -> None:
         """Test standard deviation calculation with known values."""
@@ -236,9 +261,7 @@ class TestObjectiveFunctionFeature:
         # Mean = (2 + 4 + 6) / 3 = 4
         assert result.mean_abscoefs_c == pytest.approx(4.0)
 
-        # Std = sqrt(((2-4)^2 + (4-4)^2 + (6-4)^2) / 3) = sqrt(8/3) ≈ 1.633
-        import numpy as np
-
+        # Std = np.std([2, 4, 6])
         expected_std = np.std([2, 4, 6])
         assert result.std_abscoefs_c == pytest.approx(expected_std)
 
@@ -255,8 +278,8 @@ class TestObjectiveFunctionFeature:
         extractor = ObjectiveFunctionFeature()
         result = extractor.run(model)
 
-        assert result.mean_abscoefs_c == 5.0
-        assert result.std_abscoefs_c == 0.0  # Single value has no deviation
+        assert result.mean_abscoefs_c == pytest.approx(5.0)
+        assert result.std_abscoefs_c == pytest.approx(0.0)  # Single value has no deviation
 
     def test_all_statistics_non_negative(self, mixed_integer_model: Model) -> None:
         """Test that all statistics are non-negative."""
@@ -291,7 +314,7 @@ class TestObjectiveFunctionFeature:
         result1 = extractor.run(mixed_integer_model)
         result2 = extractor.run(mixed_integer_model)
 
-        assert result1.mean_abscoefs_c == result2.mean_abscoefs_c
-        assert result1.mean_abscoefs_nc == result2.mean_abscoefs_nc
-        assert result1.std_abscoefs_v == result2.std_abscoefs_v
-        assert result1.mean_norm_abscoefs_c == result2.mean_norm_abscoefs_c
+        assert result1.mean_abscoefs_c == pytest.approx(result2.mean_abscoefs_c)
+        assert result1.mean_abscoefs_nc == pytest.approx(result2.mean_abscoefs_nc)
+        assert result1.std_abscoefs_v == pytest.approx(result2.std_abscoefs_v)
+        assert result1.mean_norm_abscoefs_c == pytest.approx(result2.mean_norm_abscoefs_c)
