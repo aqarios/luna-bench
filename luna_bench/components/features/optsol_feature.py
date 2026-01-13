@@ -137,7 +137,7 @@ class OptSolFeature(IFeature):
             pre_terminated = True
 
         return OptSolFeatureResult(
-            best_sol=scip_model.getObjVal(),
+            best_sol=scip_model.getObjVal(),  # type: ignore[no-untyped-call]
             pre_terminated=pre_terminated,
-            runtime=scip_model.getSolvingTime()
-        )  # type: ignore[no-untyped-call]
+            runtime=scip_model.getSolTime(scip_model.getSols),  # type: ignore[no-untyped-call]
+        )

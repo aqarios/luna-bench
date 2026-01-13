@@ -2,8 +2,8 @@ from luna_quantum import Model
 
 from luna_bench.components.features.fake_feature import FakeFeature
 
-class TestFakeFeature:
 
+class TestFakeFeature:
     def test_range_fake(self) -> None:
         """Simple test to check if a random number within the defined range is generated."""
         f_feature = FakeFeature()

@@ -1,5 +1,6 @@
 """Tests for ObjectiveFunctionFeature extractor."""
 
+import numpy as np
 import pytest
 from luna_quantum import Bounds, Model, Unbounded, Variable, Vtype
 
@@ -7,8 +8,6 @@ from luna_bench.components.features.mip.objective_function_features import (
     ObjectiveFunctionFeature,
     ObjectiveFunctionFeatureResult,
 )
-
-import numpy as np
 
 
 class TestObjectiveFunctionFeature:
@@ -66,7 +65,6 @@ class TestObjectiveFunctionFeature:
 
         assert result.mean_abscoefs_v == pytest.approx(3.5)
         assert result.std_abscoefs_v == pytest.approx(np.std([5, 3, 2, 4, 1, 6]))
-
 
     def test_empty_model(self, empty_model: Model) -> None:
         """Test feature extraction on an empty model."""
@@ -178,7 +176,7 @@ class TestObjectiveFunctionFeature:
         result = extractor.run(sparse_model)
 
         # Objective: 2*x0 + 3*x5 + x9 (all continuous)
-        # Mean: (2 + 3 + 1) / 3 = 2.0
+        # Mean: (2 + 3 + 1) / 3 = 2.0                   # noqa: ERA001
         # Std: std([2, 3, 1]) ≈ 0.816
         assert result.mean_abscoefs_c == pytest.approx(2.0)
         assert result.std_abscoefs_c == pytest.approx(np.std([2, 3, 1]))
@@ -239,7 +237,7 @@ class TestObjectiveFunctionFeature:
         assert result.std_abscoefs_c == pytest.approx(0.5)
         assert result.mean_abscoefs_nc == pytest.approx(1.0)
         assert result.std_abscoefs_nc == pytest.approx(0.0)
-        assert result.mean_abscoefs_v == pytest.approx(4/3)
+        assert result.mean_abscoefs_v == pytest.approx(4 / 3)
         assert result.std_abscoefs_v == pytest.approx(np.std([1, 2, 1]))
 
     def test_standard_deviation_calculation(self) -> None:
@@ -261,7 +259,7 @@ class TestObjectiveFunctionFeature:
         # Mean = (2 + 4 + 6) / 3 = 4
         assert result.mean_abscoefs_c == pytest.approx(4.0)
 
-        # Std = np.std([2, 4, 6])
+        # Std = np.std([2, 4, 6])               # noqa: ERA001
         expected_std = np.std([2, 4, 6])
         assert result.std_abscoefs_c == pytest.approx(expected_std)
 
