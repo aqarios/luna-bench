@@ -1,14 +1,17 @@
 """Tests for RightHandSideFeatures extractor."""
 
+from unittest.mock import MagicMock
+
 import numpy as np
 import pytest
 from luna_quantum import Bounds, Model, Unbounded, Variable, Vtype
 
 from luna_bench.components.features.mip.right_hand_side_feature import (
+    ComparatorError,
     RightHandSideFeatures,
     RightHandSideFeaturesResult,
 )
-from unittest.mock import MagicMock
+
 
 class TestRightHandSideFeatures:
     """Test suite for RightHandSideFeatures extractor."""
@@ -339,8 +342,6 @@ class TestRightHandSideFeatures:
 
     def test_invalid_comparator(self) -> None:
         """Test that an invalid comparator raises an error."""
-
-
         # Create a mock constraint with an invalid comparator
         mock_constraint = MagicMock()
         mock_constraint.comparator = "INVALID"  # Not Le, Eq, or Ge
@@ -351,5 +352,5 @@ class TestRightHandSideFeatures:
 
         extractor = RightHandSideFeatures()
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ComparatorError):
             extractor.run(mock_model)

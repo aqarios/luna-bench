@@ -7,7 +7,7 @@ def test_instantiation() -> None:
     assert str(err) == ""
 
 
-def test_with_model_name_only():
+def test_with_model_name_only() -> None:
     err = ModelBoundsError(model_name="MyModel")
     s = str(err)
     assert "(model: MyModel)" in s
@@ -15,12 +15,9 @@ def test_with_model_name_only():
     assert "(expected:" not in s
 
 
-def test_with_expected_bounds_only():
+def test_with_expected_bounds_only() -> None:
     err = ModelBoundsError(expected_bounds="[-1, 1]")
     s = str(err)
     assert "(expected: [-1, 1])" in s
     # no model_name appended
     assert "model:" not in s
-
-
-

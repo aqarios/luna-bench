@@ -1,15 +1,15 @@
 """Tests for ProblemSizeFeatures extractor."""
 
-import pytest
-from luna_quantum import Bounds, Model, quicksum
 from unittest.mock import MagicMock
+
+import pytest
+from luna_quantum import Bounds, Model, Variable, Vtype, quicksum
+
 from luna_bench.components.features.mip.problem_size_feature import (
+    ModelBoundsError,
     ProblemSizeFeatures,
     ProblemSizeFeaturesResult,
 )
-from luna_quantum import Vtype
-from luna_bench.components.features.mip.problem_size_feature import ModelBoundsError
-from luna_quantum import Variable
 
 
 class TestProblemSizeFeatures:
@@ -147,7 +147,7 @@ class TestProblemSizeFeatures:
 
     def test_semi_continuous_semi_integer_variables(self) -> None:
         """Test handling of semi-continuous and semi-integer variables."""
-        from luna_quantum import Variable, Vtype
+        from luna_quantum import Vtype
 
         model = Model("semi_vars")
         with model.environment:
@@ -222,7 +222,7 @@ class TestProblemSizeFeatures:
 
     def test_model_bounds_error_raised(self) -> None:
         """Test that ModelBoundsError is raised when bounds are None."""
-        from luna_quantum import Variable, Vtype
+        from luna_quantum import Vtype
 
         model = Model("invalid_bounds")
         # Note: This test depends on how the library handles None bounds
@@ -240,7 +240,7 @@ class TestProblemSizeFeatures:
 
     def test_large_model_performance(self) -> None:
         """Test that the extractor handles larger models efficiently."""
-        from luna_quantum import Unbounded, Variable, Vtype
+        from luna_quantum import Unbounded, Vtype
 
         model = Model("large_model")
 
@@ -262,10 +262,7 @@ class TestProblemSizeFeatures:
         assert result.num_constraints == 50
         assert result.num_continuous_variables == 100
 
-    def test_integer_none_bounds(self, monkeypatch):
-
-
-
+    def test_integer_none_bounds(self) -> None:
         # Create your mock model
         magic_model = MagicMock()
 
@@ -287,12 +284,10 @@ class TestProblemSizeFeatures:
         extractor = ProblemSizeFeatures()
 
         # now call the code that should trigger the error
-        with pytest.raises(ModelBoundsError):
-            # something that inspects model.variables and validates bounds
+        with pytest.raises(ModelBoundsError, match=r"\(model: test_model\) \(expected: \[-inf, inf\]\)"):
             extractor.run(model=magic_model)
 
-    def test_real_none_bounds(self, monkeypatch):
-
+    def test_real_none_bounds(self) -> None:
         # Create your mock model
         magic_model = MagicMock()
 
@@ -314,7 +309,5 @@ class TestProblemSizeFeatures:
         extractor = ProblemSizeFeatures()
 
         # now call the code that should trigger the error
-        with pytest.raises(ModelBoundsError):
-            # something that inspects model.variables and validates bounds
+        with pytest.raises(ModelBoundsError, match=r"\(model: test_model\) \(expected: \[-inf, inf\]\)"):
             extractor.run(model=magic_model)
-

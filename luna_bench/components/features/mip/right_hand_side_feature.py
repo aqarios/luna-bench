@@ -14,6 +14,21 @@ if TYPE_CHECKING:
     from luna_quantum import Model
 
 
+class ComparatorError(Exception):
+    """
+    Error raised during comparison operations.
+
+    Attributes
+    ----------
+    message : str
+        Description of the error
+    """
+
+    def __init__(self, constraint_name: str) -> None:
+        message = f"No matching constraint comporator found for constraint {constraint_name}!"
+        super().__init__(message)
+
+
 class RightHandSideFeaturesResult(ArbitraryDataDomain):
     """
     Result container for right-hand side feature calculations.
@@ -89,7 +104,7 @@ class RightHandSideFeatures(IFeature):
             elif c.comparator == Comparator.Ge:
                 rhs_geq = np.append(rhs_geq, c.rhs)
             else:
-                raise ValueError
+                raise ComparatorError(constraint_name=c.name)
 
         return RightHandSideFeaturesResult(
             mean_right_hand_side_leq_constraints=NumpyStatsHelper.mean(rhs_leq),
