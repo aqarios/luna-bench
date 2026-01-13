@@ -7,7 +7,8 @@ from luna_quantum import Vtype
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.components.helper.model_matrix_extraction import constraint_matrix
+from luna_bench.components.helper.degree import ConstraintDegree
+from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
 from luna_bench.helpers import feature
 
@@ -154,21 +155,23 @@ class LinearConstraintMatrixFeatures(IFeature):
             Container with constraint matrix statistical measures.
         """
         # Continuous
-        ac, bc = constraint_matrix(model, degree=1, vtype=Vtype.Real, include_b=True)
+        ac, bc = ModelMatrix.constraint_matrix(model, degree=ConstraintDegree.LINEAR, vtype=Vtype.Real, include_b=True)
         ac_vnd = np.sum(ac, axis=0)  # Variable coefficient sums
         ac_cnd = np.sum(ac, axis=1)  # Constraint coefficient sums
         ac_norm = self._normalized_constraint_matrix_entries(ac, bc)
         ac_vcs = self._vc_absolute_normalized_constraint_matrix_entries(ac)
 
         # Non-continuous
-        anc, bnc = constraint_matrix(model, degree=1, vtype=[Vtype.Integer, Vtype.Binary], include_b=True)
+        anc, bnc = ModelMatrix.constraint_matrix(
+            model, degree=ConstraintDegree.LINEAR, vtype=[Vtype.Integer, Vtype.Binary], include_b=True
+        )
         anc_vnd = np.sum(anc, axis=0)
         anc_cnd = np.sum(anc, axis=1)
         anc_norm = self._normalized_constraint_matrix_entries(anc, bnc)
         anc_vcs = self._vc_absolute_normalized_constraint_matrix_entries(anc)
 
         # all variables
-        av, bv = constraint_matrix(model, degree=1, vtype=None, include_b=True)
+        av, bv = ModelMatrix.constraint_matrix(model, degree=ConstraintDegree.LINEAR, vtype=None, include_b=True)
         av_vnd = np.sum(av, axis=0)
         av_cnd = np.sum(av, axis=1)
         av_norm = self._normalized_constraint_matrix_entries(av, bv)

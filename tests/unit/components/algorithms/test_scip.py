@@ -9,8 +9,6 @@ from unittest.mock import patch
 import pytest
 
 if TYPE_CHECKING:
-    from tempfile import NamedTemporaryFile
-
     from luna_quantum import Model
 
 
@@ -38,8 +36,9 @@ class TestScipAlgorithm:
         # Solution of correct type
         assert isinstance(solution, Solution)
 
-        # Objective value should be 0
         best_sample = solution.best()
+        assert best_sample is not None
+        # Objective value should be 0
         assert best_sample.obj_value == 0.0
 
         # Variables are in solution dict
@@ -96,7 +95,7 @@ class TestScipAlgorithm:
         # Patch NamedTemporaryFile to track the temporary file path
         original_tempfile = __import__("tempfile").NamedTemporaryFile
 
-        def tracked_tempfile(*args: Any, **kwargs: Any) -> NamedTemporaryFile:
+        def tracked_tempfile(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
             temp = original_tempfile(*args, **kwargs)
             temp_file_paths.append(Path(temp.name))
             return temp
@@ -122,4 +121,6 @@ class TestScipAlgorithm:
         assert isinstance(solution, Solution)
 
         # Timing object is filled despite pre-exit at max run-time
-        assert solution.runtime.total_seconds > 0
+        timing = solution.runtime
+        if timing is not None:
+            assert timing.total_seconds > 0

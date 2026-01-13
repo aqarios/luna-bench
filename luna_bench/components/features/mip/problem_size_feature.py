@@ -7,7 +7,8 @@ from luna_quantum import Model, Unbounded, Vtype
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.components.helper.model_matrix_extraction import QUADRATIC_DEGREE, constraint_matrix
+from luna_bench.components.helper.degree import ConstraintDegree
+from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
 from luna_bench.helpers import feature
 
@@ -149,10 +150,9 @@ class ProblemSizeFeatures(IFeature):
         """
         num_vars = model.num_variables
         num_cons = model.num_constraints
-        num_non_zero_linear = np.count_nonzero(constraint_matrix(model, 1, None)[0])
-        num_non_zero_quad = np.count_nonzero(constraint_matrix(model, 2, None)[0])
-        num_quad_constr = sum(c.lhs.degree() == QUADRATIC_DEGREE for c in model.constraints)
-
+        num_non_zero_linear = np.count_nonzero(ModelMatrix.constraint_matrix(model, ConstraintDegree.LINEAR, None)[0])
+        num_non_zero_quad = np.count_nonzero(ModelMatrix.constraint_matrix(model, ConstraintDegree.QUADRATIC, None)[0])
+        num_quad_constr = sum(c.lhs.degree() == ConstraintDegree.QUADRATIC for c in model.constraints)
         variables = list(model.variables())
 
         # luna-model does not explicity supports semi continuous / integer variables
@@ -175,8 +175,8 @@ class ProblemSizeFeatures(IFeature):
                     if var.bounds.lower is None or var.bounds.upper is None:
                         raise ModelBoundsError(model_name=model.name, expected_bounds="[-inf, inf]")
                     num_cont += 1
-        num_non_cont = num_bool + num_int
 
+        num_non_cont = num_bool + num_int
         support_sizes = self._support_sizes(model)
 
         return ProblemSizeFeaturesResult(

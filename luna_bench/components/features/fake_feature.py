@@ -22,7 +22,7 @@ class FakeFeatureResult(ArbitraryDataDomain):
 class FakeFeature(IFeature):
     """Fake feature class."""
 
-    def run(self, model: Model) -> ArbitraryDataDomain:
+    def run(self, model: Model) -> FakeFeatureResult:
         """
         Fake feature which will return a random number.
 

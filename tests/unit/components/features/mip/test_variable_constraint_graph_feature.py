@@ -382,11 +382,11 @@ class TestVariableConstraintGraphFeatures:
         result = extractor.run(model)
 
         # Variable degrees: x1=1, x2=2, x3=1
-        # Mean = 4/3
+        # Expect 4/3
         assert result.mean_variable_node_degree_continuous == pytest.approx(4 / 3)
 
         # Constraint degrees: c1=2, c2=2
-        # Mean = 2
+        # Expect 2
         assert result.mean_constraint_node_degree_continuous == pytest.approx(2.0)
 
     def test_large_degree_variation(self) -> None:

@@ -7,7 +7,8 @@ from luna_quantum import Vtype
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.components.helper.model_matrix_extraction import constraint_matrix
+from luna_bench.components.helper.degree import ConstraintDegree
+from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
 from luna_bench.helpers import feature
 
@@ -129,9 +130,11 @@ class ObjectiveFunctionFeature(IFeature):
         """
         (abscoefs_c, abscoefs_nc, abscoefs_v), (indices_c, indices_nc, indices_v) = self._abs_coefficients(model)
 
-        ac, _ = constraint_matrix(model, degree=1, vtype=Vtype.Real)
-        anc, _ = constraint_matrix(model, degree=1, vtype=[Vtype.Integer, Vtype.Binary])
-        av, _ = constraint_matrix(model, degree=1, vtype=None)
+        ac, _ = ModelMatrix.constraint_matrix(model, degree=ConstraintDegree.LINEAR, vtype=Vtype.Real)
+        anc, _ = ModelMatrix.constraint_matrix(
+            model, degree=ConstraintDegree.LINEAR, vtype=[Vtype.Integer, Vtype.Binary]
+        )
+        av, _ = ModelMatrix.constraint_matrix(model, degree=ConstraintDegree.LINEAR, vtype=None)
 
         norm_abscoefs_c = self._normalize(ac, abscoefs_c, indices_c)
         norm_abscoefs_nc = self._normalize(anc, abscoefs_nc, indices_nc)

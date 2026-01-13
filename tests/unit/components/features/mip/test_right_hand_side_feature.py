@@ -8,7 +8,7 @@ from luna_bench.components.features.mip.right_hand_side_feature import (
     RightHandSideFeatures,
     RightHandSideFeaturesResult,
 )
-
+from unittest.mock import MagicMock
 
 class TestRightHandSideFeatures:
     """Test suite for RightHandSideFeatures extractor."""
@@ -235,10 +235,10 @@ class TestRightHandSideFeatures:
         extractor = RightHandSideFeatures()
         result = extractor.run(model)
 
-        # Mean = (5 + 10 + 15) / 3 = 10
+        # expect (5 + 10 + 15) / 3 = 10
         assert result.mean_right_hand_side_geq_constraints == pytest.approx(10.0)
 
-        # Std = std([5, 10, 15])
+        # expect std([5, 10, 15])
         expected_std = np.std([5.0, 10.0, 15.0])
         assert result.std_right_hand_side_geq_constraints == pytest.approx(expected_std)
 
@@ -336,3 +336,20 @@ class TestRightHandSideFeatures:
         assert result.mean_right_hand_side_leq_constraints != 0.0
         assert result.mean_right_hand_side_eq_constraints != 0.0
         assert result.mean_right_hand_side_geq_constraints != 0.0
+
+    def test_invalid_comparator(self) -> None:
+        """Test that an invalid comparator raises an error."""
+
+
+        # Create a mock constraint with an invalid comparator
+        mock_constraint = MagicMock()
+        mock_constraint.comparator = "INVALID"  # Not Le, Eq, or Ge
+
+        # Create a mock model with the invalid constraint
+        mock_model = MagicMock()
+        mock_model.constraints = [mock_constraint]
+
+        extractor = RightHandSideFeatures()
+
+        with pytest.raises(ValueError):
+            extractor.run(mock_model)

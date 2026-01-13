@@ -1,12 +1,15 @@
 """Tests for ProblemSizeFeatures extractor."""
 
 import pytest
-from luna_quantum import Bounds, Model
-
+from luna_quantum import Bounds, Model, quicksum
+from unittest.mock import MagicMock
 from luna_bench.components.features.mip.problem_size_feature import (
     ProblemSizeFeatures,
     ProblemSizeFeaturesResult,
 )
+from luna_quantum import Vtype
+from luna_bench.components.features.mip.problem_size_feature import ModelBoundsError
+from luna_quantum import Variable
 
 
 class TestProblemSizeFeatures:
@@ -246,11 +249,11 @@ class TestProblemSizeFeatures:
             variables = [Variable(f"x{i}", vtype=Vtype.Real, bounds=Bounds(0, Unbounded)) for i in range(100)]
 
         # Create objective with all variables
-        model.objective += sum(variables)
+        model.objective += quicksum(variables)
 
         # Create 50 constraints
         for i in range(50):
-            model.add_constraint(sum(variables[j] for j in range(i, min(i + 10, 100))) <= 100)
+            model.constraints += quicksum(variables[j] for j in range(i, min(i + 10, 100))) <= 100
 
         extractor = ProblemSizeFeatures()
         result = extractor.run(model)
@@ -258,3 +261,60 @@ class TestProblemSizeFeatures:
         assert result.num_variables == 100
         assert result.num_constraints == 50
         assert result.num_continuous_variables == 100
+
+    def test_integer_none_bounds(self, monkeypatch):
+
+
+
+        # Create your mock model
+        magic_model = MagicMock()
+
+        # Create mock variables with the required attributes
+        mock_var = MagicMock()
+        mock_var.vtype = Vtype.Integer  # or whatever Vtype you need
+        mock_var.bounds.lower = None
+        mock_var.bounds.upper = None
+
+        # Make variables() return an iterable
+        magic_model.variables.return_value = [mock_var]  # Returns a list (iterable)
+
+        # Also set the other required attributes
+        magic_model.num_variables = 1
+        magic_model.num_constraints = 0
+        magic_model.constraints = []
+        magic_model.name = "test_model"
+
+        extractor = ProblemSizeFeatures()
+
+        # now call the code that should trigger the error
+        with pytest.raises(ModelBoundsError):
+            # something that inspects model.variables and validates bounds
+            extractor.run(model=magic_model)
+
+    def test_real_none_bounds(self, monkeypatch):
+
+        # Create your mock model
+        magic_model = MagicMock()
+
+        # Create mock variables with the required attributes
+        mock_var = MagicMock()
+        mock_var.vtype = Vtype.Real  # or whatever Vtype you need
+        mock_var.bounds.lower = None
+        mock_var.bounds.upper = None
+
+        # Make variables() return an iterable
+        magic_model.variables.return_value = [mock_var]  # Returns a list (iterable)
+
+        # Also set the other required attributes
+        magic_model.num_variables = 1
+        magic_model.num_constraints = 0
+        magic_model.constraints = []
+        magic_model.name = "test_model"
+
+        extractor = ProblemSizeFeatures()
+
+        # now call the code that should trigger the error
+        with pytest.raises(ModelBoundsError):
+            # something that inspects model.variables and validates bounds
+            extractor.run(model=magic_model)
+
