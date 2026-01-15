@@ -9,7 +9,9 @@ type PlotName = str
 type ModelSetName = str
 
 
-type FeatureResult = ArbitraryData
+class FeatureResult(ArbitraryData):
+    """Specific container for feature results."""
 
 
-type MetricResult = ArbitraryData
+class MetricResult(ArbitraryData):
+    """Specific container for metric results."""

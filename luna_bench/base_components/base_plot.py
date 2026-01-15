@@ -9,7 +9,7 @@ from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunErro
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
-    from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
+    from luna_bench.entities.benchmark_entity import BenchmarkEntity
 
 
 class BasePlot[TValidationResult](BaseModel, ABC, metaclass=RegisteredClassMeta):
@@ -34,14 +34,14 @@ class BasePlot[TValidationResult](BaseModel, ABC, metaclass=RegisteredClassMeta)
     @abstractmethod
     def validate_plot(
         self,
-        benchmark: "BenchmarkUserModel",
+        benchmark: "BenchmarkEntity",
     ) -> Result[TValidationResult, PlotRunError | UnknownLunaBenchError]:
         """
         Validate the plot from benchmark data.
 
         Parameters
         ----------
-        benchmark : BenchmarkUserModel
+        benchmark : BenchmarkEntity
             The benchmark containing metrics, features, and other configuration.
 
         Returns

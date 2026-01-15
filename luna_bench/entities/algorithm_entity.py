@@ -4,17 +4,20 @@ from typing import Any
 
 from pydantic import BaseModel, SkipValidation
 
-from luna_bench._internal.domain_models import JobStatus
-from luna_bench._internal.user_models.algorithm_result_usermodel import AlgorithmResultUserModel
 from luna_bench.base_components.base_algorithm_async import BaseAlgorithmAsync
 from luna_bench.base_components.base_algorithm_sync import BaseAlgorithmSync
 from luna_bench.types import AlgorithmName, ModelName
 
+from .algorithm_result_entity import AlgorithmResultEntity
+from .enums import JobStatus
 
-class AlgorithmUserModel(BaseModel):
+
+class AlgorithmEntity(BaseModel):
+    """Represents a fully configured algorithm."""
+
     name: AlgorithmName
     status: JobStatus
 
     algorithm: SkipValidation[BaseAlgorithmSync | BaseAlgorithmAsync[Any]]
 
-    results: dict[ModelName, AlgorithmResultUserModel]  # key is the model name
+    results: dict[ModelName, AlgorithmResultEntity]  # key is the model name

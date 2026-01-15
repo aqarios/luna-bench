@@ -1,5 +1,4 @@
 import time
-from typing import TYPE_CHECKING
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
@@ -7,26 +6,23 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
-from luna_bench._internal.domain_models import JobStatus, MetricResultDomain, RegisteredDataDomain
+from luna_bench._internal.domain_models import MetricResultDomain, RegisteredDataDomain
+from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.mappers.metric_mapper import MetricMapper
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.protocols import MetricRunUc
-from luna_bench._internal.user_models import BenchmarkUserModel, MetricUserModel
-from luna_bench._internal.user_models.algorithm_result_usermodel import AlgorithmResultUserModel
-from luna_bench._internal.user_models.metric_result_usermodel import MetricResultUserModel
 from luna_bench.base_components import BaseFeature, BaseMetric
 from luna_bench.base_components.data_types.feature_results import FeatureResults
+from luna_bench.entities import AlgorithmResultEntity, BenchmarkEntity, MetricEntity, MetricResultEntity
+from luna_bench.entities.enums import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.run_errors.algorithm_not_done import AlgorithmNotDoneError
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
 from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
-from luna_bench.types import FeatureName, FeatureResult, ModelName
-
-if TYPE_CHECKING:
-    from luna_bench.base_components.data_types.arbitrary_data import ArbitraryData
+from luna_bench.types import FeatureName, FeatureResult, MetricResult, ModelName
 
 
 class MetricRunUcImpl(MetricRunUc):
@@ -51,18 +47,18 @@ class MetricRunUcImpl(MetricRunUc):
         self._transaction = transaction
         self._registry = registry
 
-    def _run(
+    def _run(  # noqa: PLR0913
         self,
         benchmark_name: str,
         algorithm_name: str,
         model_name: str,
-        algorithm_result: AlgorithmResultUserModel,
+        algorithm_result: AlgorithmResultEntity,
         feature_results: FeatureResults,
-        metric: MetricUserModel,
-    ) -> Result[MetricResultUserModel, AlgorithmNotDoneError | DataNotExistError | UnknownLunaBenchError]:
+        metric: MetricEntity,
+    ) -> Result[MetricResultEntity, AlgorithmNotDoneError | DataNotExistError | UnknownLunaBenchError]:
         # CHECK if result for metric and algorithm already exists and if it should be updated/recalulated or not.
 
-        result: MetricResultUserModel | None = metric.results.get((algorithm_name, model_name), None)
+        result: MetricResultEntity | None = metric.results.get((algorithm_name, model_name), None)
 
         if result is not None and result.status == JobStatus.DONE:
             self._logger.info(
@@ -77,7 +73,7 @@ class MetricRunUcImpl(MetricRunUc):
         if algorithm_result.solution is None:
             return Failure(DataNotExistError())
 
-        user_result: ArbitraryData | None = None
+        user_result: MetricResult | None = None
         exception: str | None = None
         status: JobStatus
 
@@ -99,7 +95,7 @@ class MetricRunUcImpl(MetricRunUc):
             processing_time_ms=delta_time,
             model_name=model_name,
             algorithm_name=algorithm_name,
-            result=user_result,
+            result=ArbitraryDataDomain.model_construct(**user_result.model_dump()) if user_result else None,
             status=status,
             error=exception,
         )
@@ -118,7 +114,7 @@ class MetricRunUcImpl(MetricRunUc):
 
     @staticmethod
     def _create_feature_result_lookup(
-        benchmark: BenchmarkUserModel,
+        benchmark: BenchmarkEntity,
     ) -> dict[tuple[type[BaseFeature], ModelName], dict[FeatureName, tuple[FeatureResult, BaseFeature]]]:
         feature_map: dict[
             tuple[type[BaseFeature], ModelName], dict[FeatureName, tuple[FeatureResult, BaseFeature]]
@@ -127,7 +123,7 @@ class MetricRunUcImpl(MetricRunUc):
             feature_type: type[BaseFeature] = type(f.feature)
             feature_config: BaseFeature = f.feature
             for f_model_name, result in f.results.items():
-                r: FeatureResult = result.result
+                r: FeatureResult | None = result.result
                 if r is not None:
                     feature_map.setdefault((feature_type, f_model_name), {})[f.name] = (r, feature_config)
 
@@ -135,9 +131,9 @@ class MetricRunUcImpl(MetricRunUc):
 
     def _create_and_check_feature_results(
         self,
-        benchmark: BenchmarkUserModel,
+        benchmark: BenchmarkEntity,
         model_name: ModelName,
-        metric: MetricUserModel,
+        metric: MetricEntity,
         feature_lookup_table: dict[
             tuple[type[BaseFeature], ModelName], dict[FeatureName, tuple[FeatureResult, BaseFeature]]
         ],
@@ -159,9 +155,9 @@ class MetricRunUcImpl(MetricRunUc):
         )
 
     def __call__(
-        self, benchmark: BenchmarkUserModel, metric: MetricUserModel | None = None
+        self, benchmark: BenchmarkEntity, metric: MetricEntity | None = None
     ) -> Result[None, RunMetricMissingError | RunModelsetMissingError | RunFeatureMissingError]:
-        metrics: list[MetricUserModel]
+        metrics: list[MetricEntity]
         if metric is not None:
             # Check if the feature is part of the benchmark
             if metric not in benchmark.metrics:

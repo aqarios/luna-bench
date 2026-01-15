@@ -4,10 +4,10 @@ from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
-from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
 from luna_bench.base_components import BasePlot
 from luna_bench.components.plots.generics.mixins.metrics_plot_mixin import MetricsPlotMixin
+from luna_bench.entities.benchmark_entity import BenchmarkEntity
+from luna_bench.entities.metric_entity import MetricEntity
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -18,12 +18,12 @@ class MetricsValidationResult(BaseModel):
 
     Attributes
     ----------
-    metrics : dict[str, MetricUserModel]
+    metrics : dict[str, MetricEntity]
         Dictionary mapping metric names to metric instances. Contains only
         the metrics required by the plot.
     """
 
-    metrics: dict[str, MetricUserModel]
+    metrics: dict[str, MetricEntity]
 
 
 class GenericMetricsPlot(BasePlot[MetricsValidationResult], MetricsPlotMixin):
@@ -62,14 +62,14 @@ class GenericMetricsPlot(BasePlot[MetricsValidationResult], MetricsPlotMixin):
 
     def validate_plot(
         self,
-        benchmark: BenchmarkUserModel,
+        benchmark: BenchmarkEntity,
     ) -> Result[MetricsValidationResult, PlotRunError | UnknownLunaBenchError]:
         """
         Validate that required metrics are present in the benchmark.
 
         Parameters
         ----------
-        benchmark : BenchmarkUserModel
+        benchmark : BenchmarkEntity
             The benchmark containing metrics and features.
 
         Returns

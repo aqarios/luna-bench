@@ -4,10 +4,10 @@ from pydantic import BaseModel
 
 from luna_bench.types import ModelSetName
 
-from .model_metadata_usermodel import ModelMetadataUserModel
+from .model_metadata_entity import ModelMetadataEntity
 
 
-class ModelSetUserModel(BaseModel):
+class ModelSetEntity(BaseModel):
     """
     Set of models.
 
@@ -26,4 +26,4 @@ class ModelSetUserModel(BaseModel):
 
     id: int
     name: ModelSetName
-    models: list[ModelMetadataUserModel]
+    models: list[ModelMetadataEntity]

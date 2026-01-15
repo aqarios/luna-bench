@@ -6,9 +6,8 @@ import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench._internal.user_models import BenchmarkUserModel, FeatureUserModel
 from luna_bench.base_components import BaseFeature
+from luna_bench.entities import BenchmarkEntity, FeatureEntity, JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -25,8 +24,8 @@ if TYPE_CHECKING:
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-def _empty_feature(name: str, feature: BaseFeature) -> FeatureUserModel:
-    return FeatureUserModel(
+def _empty_feature(name: str, feature: BaseFeature) -> FeatureEntity:
+    return FeatureEntity(
         name=name,
         status=JobStatus.CREATED,
         feature=feature,
@@ -51,7 +50,7 @@ class TestFeature:
         feature_name: str,
         feature: BaseFeature,
         exp: Result[
-            FeatureUserModel,
+            FeatureEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -61,7 +60,7 @@ class TestFeature:
         ],
     ) -> None:
         result: Result[
-            FeatureUserModel,
+            FeatureEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -89,7 +88,7 @@ class TestFeature:
         benchmark_name: str,
         feature_name: str,
         exp: Result[
-            FeatureUserModel,
+            FeatureEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -120,7 +119,7 @@ class TestFeature:
         self,
         usecase: UsecaseContainer,
         benchmark_name: str,
-        feature: FeatureUserModel | str | None,
+        feature: FeatureEntity | str | None,
         num_models: int,
         exp: Result[None, RunFeatureMissingError | RunModelsetMissingError],
     ) -> None:
@@ -158,7 +157,7 @@ class TestFeature:
 
         assert is_successful(usecase.benchmark_set_modelset_uc()(benchmark_name="existing", modelset_name="existing"))
 
-        benchmark: BenchmarkUserModel = usecase.benchmark_load_uc()(benchmark_name="existing").unwrap()
+        benchmark: BenchmarkEntity = usecase.benchmark_load_uc()(benchmark_name="existing").unwrap()
 
         assert benchmark.modelset is not None
         assert len(benchmark.modelset.models) > 0
@@ -186,7 +185,7 @@ class TestFeature:
         usecase.benchmark_add_feature_uc()(
             benchmark_name="existing", name="failure", feature=MockFeatureFailing()
         ).unwrap()
-        benchmark: BenchmarkUserModel = usecase.benchmark_load_uc()(benchmark_name="existing").unwrap()
+        benchmark: BenchmarkEntity = usecase.benchmark_load_uc()(benchmark_name="existing").unwrap()
 
         feature = next((f for f in benchmark.features if f.name == "failure"), None)
         usecase.benchmark_run_feature_uc()(benchmark=benchmark, feature=feature)

@@ -8,8 +8,8 @@ from luna_bench._internal.domain_models import MetricDomain, RegisteredDataDomai
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.protocols import MetricAddUc
-from luna_bench._internal.user_models import MetricUserModel
 from luna_bench.base_components import BaseMetric
+from luna_bench.entities import MetricEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -41,7 +41,7 @@ class MetricAddUcImpl(MetricAddUc):
     def __call__(
         self, benchmark_name: str, name: str, metric: BaseMetric
     ) -> Result[
-        MetricUserModel,
+        MetricEntity,
         DataNotUniqueError
         | DataNotExistError
         | UnknownLunaBenchError
@@ -71,7 +71,7 @@ class MetricAddUcImpl(MetricAddUc):
                 return Failure(config.failure())
 
             return Success(
-                MetricUserModel(
+                MetricEntity(
                     name=name,
                     status=result.unwrap().status,
                     metric=config.unwrap(),

@@ -6,10 +6,10 @@ import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench._internal.user_models import FeatureUserModel, MetricUserModel
-from luna_bench._internal.user_models.algorithm_result_usermodel import AlgorithmResultUserModel
 from luna_bench.base_components import BaseMetric
+from luna_bench.entities import FeatureEntity, MetricEntity
+from luna_bench.entities.algorithm_result_entity import AlgorithmResultEntity
+from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -28,8 +28,8 @@ if TYPE_CHECKING:
     from tests.unit.fixtures.mock_database import SetupBenchmark
 
 
-def _empty_metric(name: str, metric: BaseMetric) -> MetricUserModel:
-    return MetricUserModel(
+def _empty_metric(name: str, metric: BaseMetric) -> MetricEntity:
+    return MetricEntity(
         name=name,
         status=JobStatus.CREATED,
         metric=metric,
@@ -54,7 +54,7 @@ class TestMetric:
         metric_name: str,
         metric: BaseMetric,
         exp: Result[
-            MetricUserModel,
+            MetricEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -64,7 +64,7 @@ class TestMetric:
         ],
     ) -> None:
         result: Result[
-            MetricUserModel,
+            MetricEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -92,7 +92,7 @@ class TestMetric:
         benchmark_name: str,
         metric_name: str,
         exp: Result[
-            FeatureUserModel,
+            FeatureEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -122,7 +122,7 @@ class TestMetric:
         self,
         setup_benchmark: SetupBenchmark,
         usecase: UsecaseContainer,
-        metric: MetricUserModel | str | None,
+        metric: MetricEntity | str | None,
         mapper: MapperContainer,
         solution: Solution,
         exp: Result[None, RunMetricMissingError | RunModelsetMissingError],
@@ -135,7 +135,7 @@ class TestMetric:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
                 num_metrics_to_calculate += 1
-                a.results[model.name] = AlgorithmResultUserModel(
+                a.results[model.name] = AlgorithmResultEntity(
                     meta_data=None,
                     status=JobStatus.DONE,
                     error=None,
@@ -177,7 +177,7 @@ class TestMetric:
         for a in benchmark.algorithms:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
-                a.results[model.name] = AlgorithmResultUserModel(
+                a.results[model.name] = AlgorithmResultEntity(
                     meta_data=None,
                     status=JobStatus.DONE,
                     error=None,
@@ -212,7 +212,7 @@ class TestMetric:
         for a in benchmark.algorithms:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
-                a.results[model.name] = AlgorithmResultUserModel(
+                a.results[model.name] = AlgorithmResultEntity(
                     meta_data=None,
                     status=JobStatus.RUNNING,
                     error=None,
@@ -237,7 +237,7 @@ class TestMetric:
         for a in benchmark.algorithms:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
-                a.results[model.name] = AlgorithmResultUserModel(
+                a.results[model.name] = AlgorithmResultEntity(
                     meta_data=None,
                     status=JobStatus.DONE,
                     error=None,
@@ -262,7 +262,7 @@ class TestMetric:
         for a in benchmark.algorithms:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
-                a.results[model.name] = AlgorithmResultUserModel(
+                a.results[model.name] = AlgorithmResultEntity(
                     meta_data=None,
                     status=JobStatus.DONE,
                     error=None,

@@ -142,7 +142,6 @@ class TestHueyAlgorithmRunner:
         exp: Result[BaseModel, ModelDecodingError | DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         result = HueyAlgorithmRunner._run_async(algorithm, model_id)
-
         assert type(result) is type(exp)
         if is_successful(result):
             unwrapped_result = result.unwrap()

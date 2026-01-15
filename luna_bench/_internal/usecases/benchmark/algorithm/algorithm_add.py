@@ -11,8 +11,8 @@ from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.protocols import AlgorithmAddUc
-from luna_bench._internal.user_models.algorithm_usermodel import AlgorithmUserModel
 from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
+from luna_bench.entities.algorithm_entity import AlgorithmEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -54,7 +54,7 @@ class AlgorithmAddUcImpl(AlgorithmAddUc):
     def __call__(
         self, benchmark_name: str, name: str, algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any]
     ) -> Result[
-        AlgorithmUserModel,
+        AlgorithmEntity,
         DataNotUniqueError
         | DataNotExistError
         | UnknownLunaBenchError
@@ -100,7 +100,7 @@ class AlgorithmAddUcImpl(AlgorithmAddUc):
             if not is_successful(config):
                 return Failure(config.failure())
             return Success(
-                AlgorithmUserModel.model_construct(
+                AlgorithmEntity.model_construct(
                     name=name, status=result.unwrap().status, algorithm=config.unwrap(), results={}
                 )
             )

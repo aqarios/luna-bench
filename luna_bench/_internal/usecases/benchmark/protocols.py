@@ -7,15 +7,15 @@ from returns.result import Result
 
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
 from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
-from luna_bench._internal.user_models import (
-    AlgorithmUserModel,
-    BenchmarkUserModel,
-    MetricUserModel,
-    ModelMetadataUserModel,
-    PlotUserModel,
-)
-from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
 from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
+from luna_bench.entities import (
+    AlgorithmEntity,
+    BenchmarkEntity,
+    MetricEntity,
+    ModelMetadataEntity,
+    PlotEntity,
+)
+from luna_bench.entities.feature_entity import FeatureEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
@@ -33,7 +33,7 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 class BenchmarkCreateUc(Protocol):
     def __call__(
         self, benchmark_name: str
-    ) -> Result[BenchmarkUserModel, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError]: ...
+    ) -> Result[BenchmarkEntity, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError]: ...
 
 
 class BenchmarkDeleteUc(Protocol):
@@ -43,20 +43,20 @@ class BenchmarkDeleteUc(Protocol):
 class BenchmarkLoadUc(Protocol):
     def __call__(
         self, benchmark_name: str
-    ) -> Result[BenchmarkUserModel, DataNotExistError | UnknownLunaBenchError | UnknownIdError | ValidationError]: ...
+    ) -> Result[BenchmarkEntity, DataNotExistError | UnknownLunaBenchError | UnknownIdError | ValidationError]: ...
 
 
 class BenchmarkLoadAllUc(Protocol):
     def __call__(
         self,
-    ) -> Result[list[BenchmarkUserModel], UnknownLunaBenchError | UnknownIdError | ValidationError]: ...
+    ) -> Result[list[BenchmarkEntity], UnknownLunaBenchError | UnknownIdError | ValidationError]: ...
 
 
 class MetricAddUc(Protocol):
     def __call__(
         self, benchmark_name: str, name: str, metric: BaseMetric
     ) -> Result[
-        MetricUserModel,
+        MetricEntity,
         DataNotUniqueError
         | DataNotExistError
         | UnknownLunaBenchError
@@ -68,7 +68,7 @@ class MetricAddUc(Protocol):
 
 class MetricRunUc(Protocol):
     def __call__(
-        self, benchmark: BenchmarkUserModel, metric: MetricUserModel | None = None
+        self, benchmark: BenchmarkEntity, metric: MetricEntity | None = None
     ) -> Result[None, RunMetricMissingError | RunModelsetMissingError | RunFeatureMissingError]: ...
 
 
@@ -76,7 +76,7 @@ class FeatureAddUc(Protocol):
     def __call__(
         self, benchmark_name: str, name: str, feature: BaseFeature
     ) -> Result[
-        FeatureUserModel,
+        FeatureEntity,
         DataNotUniqueError
         | DataNotExistError
         | UnknownLunaBenchError
@@ -88,7 +88,7 @@ class FeatureAddUc(Protocol):
 
 class FeatureRunUc(Protocol):
     def __call__(
-        self, benchmark: BenchmarkUserModel, feature: FeatureUserModel | None = None
+        self, benchmark: BenchmarkEntity, feature: FeatureEntity | None = None
     ) -> Result[None, RunFeatureMissingError | RunModelsetMissingError]: ...
 
 
@@ -96,7 +96,7 @@ class PlotAddUc(Protocol):
     def __call__(
         self, benchmark_name: str, name: str, plot: BasePlot[Any]
     ) -> Result[
-        PlotUserModel,
+        PlotEntity,
         DataNotUniqueError
         | DataNotExistError
         | UnknownLunaBenchError
@@ -110,7 +110,7 @@ class AlgorithmAddUc(Protocol):
     def __call__(
         self, benchmark_name: str, name: str, algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any]
     ) -> Result[
-        AlgorithmUserModel,
+        AlgorithmEntity,
         DataNotUniqueError
         | DataNotExistError
         | UnknownLunaBenchError
@@ -122,34 +122,34 @@ class AlgorithmAddUc(Protocol):
 
 class AlgorithmRunUc(Protocol):
     def __call__(
-        self, benchmark: BenchmarkUserModel, algorithm: AlgorithmUserModel | None = None
+        self, benchmark: BenchmarkEntity, algorithm: AlgorithmEntity | None = None
     ) -> Result[None, RunAlgorithmMissingError | RunModelsetMissingError]: ...
 
 
 class AlgorithmFilterUc(Protocol):
     def __call__(
-        self, benchmark: BenchmarkUserModel, algorithm_type: AlgorithmType, algorithm: AlgorithmUserModel | None = None
-    ) -> Result[list[AlgorithmUserModel], RunAlgorithmMissingError]: ...
+        self, benchmark: BenchmarkEntity, algorithm_type: AlgorithmType, algorithm: AlgorithmEntity | None = None
+    ) -> Result[list[AlgorithmEntity], RunAlgorithmMissingError]: ...
 
 
 class AlgorithmRunAsBackgroundTasksUc(Protocol):
     def __call__(
         self,
         benchmark_name: str,
-        models: list[ModelMetadataUserModel],
-        algorithms: list[AlgorithmUserModel],
+        models: list[ModelMetadataEntity],
+        algorithms: list[AlgorithmEntity],
     ) -> None: ...
 
 
 class AlgorithmRetrieveAsyncRetrivalDataUc(Protocol):
     def __call__(
-        self, benchmark: BenchmarkUserModel
+        self, benchmark: BenchmarkEntity
     ) -> Result[None, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]: ...
 
 
 class AlgorithmRetrieveAsyncSolutionsUc(Protocol):
     def __call__(
-        self, benchmark: BenchmarkUserModel
+        self, benchmark: BenchmarkEntity
     ) -> Result[
         None, RunAlgorithmMissingError | RunModelsetMissingError | DataNotExistError | UnknownLunaBenchError
     ]: ...
@@ -157,7 +157,7 @@ class AlgorithmRetrieveAsyncSolutionsUc(Protocol):
 
 class AlgorithmRetrieveSyncSolutionsUc(Protocol):
     def __call__(
-        self, benchmark: BenchmarkUserModel
+        self, benchmark: BenchmarkEntity
     ) -> Result[None, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]: ...
 
 
@@ -200,7 +200,7 @@ class PlotsRunUc(Protocol):
 
     def __call__(
         self,
-        benchmark: BenchmarkUserModel,
+        benchmark: BenchmarkEntity,
         error_handling_mode: UseCaseErrorHandlingMode = UseCaseErrorHandlingMode.FAIL_ON_ERROR,
     ) -> Result[None, PlotRunError | UnknownLunaBenchError]: ...
 

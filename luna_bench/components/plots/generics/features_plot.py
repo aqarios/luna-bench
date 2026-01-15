@@ -4,10 +4,10 @@ from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
-from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
 from luna_bench.base_components import BasePlot
 from luna_bench.components.plots.generics.mixins.features_plot_mixin import FeaturesPlotMixin
+from luna_bench.entities.benchmark_entity import BenchmarkEntity
+from luna_bench.entities.feature_entity import FeatureEntity
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -18,12 +18,12 @@ class FeaturesValidationResult(BaseModel):
 
     Attributes
     ----------
-    features : dict[str, FeatureUserModel]
+    features : dict[str, FeatureEntity]
         Dictionary mapping feature names to feature instances. Contains only
         the features required by the plot.
     """
 
-    features: dict[str, FeatureUserModel]
+    features: dict[str, FeatureEntity]
 
 
 class GenericFeaturesPlot(BasePlot[FeaturesValidationResult], FeaturesPlotMixin):
@@ -37,7 +37,7 @@ class GenericFeaturesPlot(BasePlot[FeaturesValidationResult], FeaturesPlotMixin)
     ----------
     features_names : ClassVar[set[str]]
         Set of required feature names for this plot.
-    features: dict[str, FeatureUserModel] | None
+    features: dict[str, FeatureEntity] | None
         Dictionary with features. It should contain features after validation process.
         At the moment when run method will be called it should contain needed featres.
 
@@ -67,14 +67,14 @@ class GenericFeaturesPlot(BasePlot[FeaturesValidationResult], FeaturesPlotMixin)
 
     def validate_plot(
         self,
-        benchmark: BenchmarkUserModel,
+        benchmark: BenchmarkEntity,
     ) -> Result[FeaturesValidationResult, PlotRunError | UnknownLunaBenchError]:
         """
         Validate that required features are present in the benchmark.
 
         Parameters
         ----------
-        benchmark: BenchmarkUserModel
+        benchmark: BenchmarkEntity
             The benchmark containing features.
 
         Returns

@@ -5,16 +5,15 @@ from luna_quantum import Logging
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models import AlgorithmResultDomain
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.mappers.algorithm_mapper import AlgorithmMapper
 from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmRunAsBackgroundTasksUc,
     BackgroundRunAlgorithmAsyncUc,
     BackgroundRunAlgorithmSyncUc,
 )
-from luna_bench._internal.user_models import AlgorithmUserModel
-from luna_bench._internal.user_models.model_metadata_usermodel import ModelMetadataUserModel
 from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
+from luna_bench.entities import AlgorithmEntity, ModelMetadataEntity
+from luna_bench.entities.enums.job_status_enum import JobStatus
 
 
 class AlgorithmRunAsBackgroundTasksUcImpl(AlgorithmRunAsBackgroundTasksUc):
@@ -47,8 +46,8 @@ class AlgorithmRunAsBackgroundTasksUcImpl(AlgorithmRunAsBackgroundTasksUc):
     def __call__(
         self,
         benchmark_name: str,
-        models: list[ModelMetadataUserModel],
-        algorithms: list[AlgorithmUserModel],
+        models: list[ModelMetadataEntity],
+        algorithms: list[AlgorithmEntity],
     ) -> None:
         for a, m in product(algorithms, models):
             if m.name in a.results:

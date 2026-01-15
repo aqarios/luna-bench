@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench.types import MetricResult
 
+from .enums import JobStatus
 
-class MetricResultUserModel(BaseModel):
+
+class MetricResultEntity(BaseModel):
+    """Represents the result of a metric."""
+
     processing_time_ms: int
     model_name: str
     algorithm_name: str

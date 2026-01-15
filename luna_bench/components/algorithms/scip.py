@@ -77,7 +77,7 @@ class ScipAlgorithm(BaseAlgorithmSync):
         >>> solution = scip_algo.run(my_model)
         """
         scip_model = PyScipModel()
-        scip_model.hideOutput(quiet=self.quiet_output)
+        scip_model.hideOutput(quiet=self.quiet_output)  # type: ignore[no-untyped-call]
 
         if self.max_runtime is not None:
             scip_model.setParam("limits/time", self.max_runtime)  # type: ignore[no-untyped-call]
@@ -115,7 +115,7 @@ class ScipAlgorithm(BaseAlgorithmSync):
             solution_dict[var.name] = scip_model.getVal(var)  # type: ignore[no-untyped-call]
 
         objective_value = scip_model.getObjVal()  # type: ignore[no-untyped-call]
-        return Solution.from_dict(
+        return Solution.from_dict(  # type: ignore[call-overload, no-any-return]
             data=solution_dict,
             model=model,
             timing=timing,

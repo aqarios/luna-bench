@@ -3,7 +3,7 @@ from typing import Protocol
 from luna_quantum import Model
 from returns.result import Result
 
-from luna_bench._internal.user_models import ModelMetadataUserModel, ModelSetUserModel
+from luna_bench.entities import ModelMetadataEntity, ModelSetEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -12,13 +12,13 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 class ModelLoadAllUc(Protocol):
     """Protocol for retrieving all models."""
 
-    def __call__(self) -> list[ModelMetadataUserModel]:
+    def __call__(self) -> list[ModelMetadataEntity]:
         """
         Retrieve all models from dao.
 
         Returns
         -------
-        list[ModelMetadataUserModel]
+        list[ModelMetadataEntity]
             A list of all model metadata domain objects.
         """
         ...
@@ -48,7 +48,7 @@ class ModelFetchUc(Protocol):
 class ModelSetCreateUc(Protocol):
     """Protocol for creating a new model set."""
 
-    def __call__(self, modelset_name: str) -> Result[ModelSetUserModel, DataNotUniqueError | UnknownLunaBenchError]:
+    def __call__(self, modelset_name: str) -> Result[ModelSetEntity, DataNotUniqueError | UnknownLunaBenchError]:
         """
         Create a new model set with the given name.
 
@@ -59,7 +59,7 @@ class ModelSetCreateUc(Protocol):
 
         Returns
         -------
-        Result[ModelSetUserModel, DataNotUniqueError | UnknownLunaBenchError]
+        Result[ModelSetEntity, DataNotUniqueError | UnknownLunaBenchError]
             On success: Contains the created model set object
             On failure: An Exception
         """
@@ -69,7 +69,7 @@ class ModelSetCreateUc(Protocol):
 class ModelSetLoadUc(Protocol):
     """Protocol for loading a model set."""
 
-    def __call__(self, modelset_name: str) -> Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError]:
+    def __call__(self, modelset_name: str) -> Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError]:
         """
         Load a specific model set.
 
@@ -80,7 +80,7 @@ class ModelSetLoadUc(Protocol):
 
         Returns
         -------
-        Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError]
+        Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError]
             On success: Contains the model set object
             On failure: An Exception
         """
@@ -93,7 +93,7 @@ class ModelAddUc(Protocol):
     def __call__(
         self, modelset_name: str, model: Model
     ) -> Result[
-        ModelSetUserModel,
+        ModelSetEntity,
         DataNotExistError | DataNotUniqueError | UnknownLunaBenchError,
     ]:
         """
@@ -108,7 +108,7 @@ class ModelAddUc(Protocol):
 
         Returns
         -------
-        Result[ModelSetUserModel, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError]
+        Result[ModelSetEntity, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError]
             On success: Contains the updated model set object
             On failure: An Exception
         """
@@ -120,7 +120,7 @@ class ModelRemoveUc(Protocol):
 
     def __call__(
         self, modelset_name: str, model: Model
-    ) -> Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError]:
+    ) -> Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError]:
         """
         Remove a model from the model set.
 
@@ -133,7 +133,7 @@ class ModelRemoveUc(Protocol):
 
         Returns
         -------
-        Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError]
+        Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError]
             On success: Contains the updated model set object
             On failure: An Exception
         """
@@ -164,13 +164,13 @@ class ModelSetDeleteUc(Protocol):
 class ModelSetLoadAllUc(Protocol):
     """Protocol for loading all model sets."""
 
-    def __call__(self) -> Result[list[ModelSetUserModel], UnknownLunaBenchError]:
+    def __call__(self) -> Result[list[ModelSetEntity], UnknownLunaBenchError]:
         """
         Load all model sets.
 
         Returns
         -------
-        Result[list[ModelSetUserModel], UnknownLunaBenchError]
+        Result[list[ModelSetEntity], UnknownLunaBenchError]
             On success: Contains the list of all model sets
             On failure: An Exception
         """

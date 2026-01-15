@@ -9,8 +9,8 @@ from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDa
 from luna_bench._internal.domain_models.benchmark_domain import BenchmarkDomain
 from luna_bench._internal.domain_models.model_metadata_domain import ModelMetadataDomain
 from luna_bench._internal.domain_models.modelset_domain import ModelSetDomain
-from luna_bench._internal.user_models import BenchmarkUserModel
 from luna_bench.configs.config import Config
+from luna_bench.entities import BenchmarkEntity
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockAsyncAlgorithm, MockFeature, MockMetric, MockPlot
 from tests.utils.luna_model import simple_model
 
@@ -44,7 +44,7 @@ class SetupBenchmark:
     model_name: str
 
     benchmark: BenchmarkDomain
-    benchmark_usermodel: BenchmarkUserModel
+    benchmark_usermodel: BenchmarkEntity
     modelset: ModelSetDomain
     model_metadata: ModelMetadataDomain
     transaction: DaoTransaction

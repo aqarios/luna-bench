@@ -4,7 +4,7 @@ from typing import ClassVar
 
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
+from luna_bench.entities.feature_entity import FeatureEntity
 from luna_bench.errors.run_errors.plots_errors.features_missing_error import FeaturesMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -35,14 +35,14 @@ class FeaturesPlotMixin:
 
     def _prepare_features(
         self,
-        features: list[FeatureUserModel],
-    ) -> Result[dict[str, FeatureUserModel], FeaturesMissingError | UnknownLunaBenchError]:
+        features: list[FeatureEntity],
+    ) -> Result[dict[str, FeatureEntity], FeaturesMissingError | UnknownLunaBenchError]:
         """
         Parse features from benchmark and compare with config.
 
         Parameters
         ----------
-        features : list[FeatureUserModel]
+        features : list[FeatureEntity]
             List of benchmark's features.
 
         Returns
@@ -51,7 +51,7 @@ class FeaturesPlotMixin:
             Success with dictionary mapping feature ids to feature instances,
             or Failure with FeaturesMissingError if required features are missing.
         """
-        result: dict[str, FeatureUserModel] = {}
+        result: dict[str, FeatureEntity] = {}
 
         for feature in features:
             if feature.feature.registered_id in self.features_ids:

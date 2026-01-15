@@ -35,6 +35,24 @@ def _convert_to_list[T](value: T | list[T] | tuple[T, ...] | None) -> list[T]:
     return [value]
 
 
+@overload
+def feature[T: BaseFeature](
+    _cls: type[T],
+    *,
+    feature_id: str | None = None,
+    feature_registry: Registry[BaseFeature] = Provide[RegistryContainer.feature_registry],
+) -> type[T]: ...
+
+
+@overload
+def feature[T: BaseFeature](
+    _cls: None = None,
+    *,
+    feature_id: str | None = None,
+    feature_registry: Registry[BaseFeature] = Provide[RegistryContainer.feature_registry],
+) -> Callable[[type[T]], type[T]]: ...
+
+
 @inject
 def feature[T: BaseFeature](
     _cls: type[T] | None = None,
@@ -119,7 +137,7 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
             _register_class(cls, base=BaseAlgorithmAsync, registered_class_id=pid, registry=algorithm_async_registry)
         elif issubclass(cls, BaseAlgorithmSync):
             _register_class(cls, base=BaseAlgorithmSync, registered_class_id=pid, registry=algorithm_sync_registry)
-        else:
+        else:  # pragma: no cover
             raise IncompatibleClassError(BaseAlgorithmAsync | BaseAlgorithmSync)
         return cls
 
@@ -127,6 +145,26 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
         return _do_register(_cls)
 
     return _do_register
+
+
+@overload
+def metric[T: BaseMetric](
+    _cls: type[T],
+    *,
+    metric_id: str | None = None,
+    required_features: type[BaseFeature] | list[type[BaseFeature]] | tuple[type[BaseFeature], ...] | None = None,
+    metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
+) -> type[T]: ...
+
+
+@overload
+def metric[T: BaseMetric](
+    _cls: None = None,
+    *,
+    metric_id: str | None = None,
+    required_features: type[BaseFeature] | list[type[BaseFeature]] | tuple[type[BaseFeature], ...] | None = None,
+    metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
+) -> Callable[[type[T]], type[T]]: ...
 
 
 @inject
@@ -157,8 +195,6 @@ def metric[T: BaseMetric](
     Callable[[type[T]], type[T]] | type[T]
 
     """
-    if required_features is None:
-        required_features = []
 
     def _do_register(cls: type[T]) -> type[T]:
         pid = metric_id or f"{cls.__module__}.{cls.__qualname__}"
@@ -325,7 +361,7 @@ def registry_info(
     ],
     metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
     plot_registry: Registry[BasePlot[Any]] = Provide[RegistryContainer.plot_registry],
-) -> None:
+) -> None:  # pragma: no cover
     """
     Print information about the registered features, algorithms, metrics, and plots.
 

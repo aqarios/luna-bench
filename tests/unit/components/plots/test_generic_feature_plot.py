@@ -6,12 +6,12 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
-from luna_bench._internal.user_models.feature_result_usermodel import FeatureResultUserModel
-from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
 from luna_bench.base_components import BaseFeature
 from luna_bench.components.plots.generics.features_plot import FeaturesValidationResult, GenericFeaturesPlot
+from luna_bench.entities.benchmark_entity import BenchmarkEntity
+from luna_bench.entities.enums.job_status_enum import JobStatus
+from luna_bench.entities.feature_entity import FeatureEntity
+from luna_bench.entities.feature_result_entity import FeatureResultEntity
 from luna_bench.errors.run_errors.plots_errors.features_missing_error import FeaturesMissingError
 from luna_bench.errors.run_errors.plots_errors.metrics_missing_error import MetricsMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -26,8 +26,8 @@ class _FakePlot(GenericFeaturesPlot):
         pass
 
 
-@feature(feature_id="mock_feature_new")  # type: ignore[arg-type]
-class MockFeatureNew(BaseFeature):  # type: ignore[misc]
+@feature(feature_id="mock_feature_new")
+class MockFeatureNew(BaseFeature):
     def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
         return ArbitraryDataDomain.model_construct(solution="xD")  # type: ignore[call-arg] # Fake data
 
@@ -82,12 +82,12 @@ class TestGenericFeaturesPlot:
                 },
                 Success(
                     {
-                        MockFeature.registered_id: FeatureUserModel(
+                        MockFeature.registered_id: FeatureEntity(
                             name="existing_name",
                             status=JobStatus.CREATED,
                             feature=MockFeature(),
                             results={
-                                "": FeatureResultUserModel.model_construct(
+                                "": FeatureResultEntity.model_construct(
                                     processing_time_ms=0,
                                     model_name="test",
                                     status=JobStatus.CREATED,
@@ -96,12 +96,12 @@ class TestGenericFeaturesPlot:
                                 )
                             },
                         ),
-                        "mock_feature_new": FeatureUserModel(
+                        "mock_feature_new": FeatureEntity(
                             name="existing2_name",
                             status=JobStatus.CREATED,
                             feature=MockFeatureNew(),
                             results={
-                                "": FeatureResultUserModel.model_construct(
+                                "": FeatureResultEntity.model_construct(
                                     processing_time_ms=0,
                                     model_name="test",
                                     status=JobStatus.CREATED,
@@ -124,17 +124,17 @@ class TestGenericFeaturesPlot:
         self,
         features: tuple[tuple[str, BaseFeature]],
         plot_features: set[str],
-        exp: Result[dict[str, FeatureUserModel], MetricsMissingError | UnknownLunaBenchError],
+        exp: Result[dict[str, FeatureEntity], MetricsMissingError | UnknownLunaBenchError],
     ) -> None:
         fake_plot = _FakePlot()
         _FakePlot.features_ids = plot_features
         feature_to_prepares = [
-            FeatureUserModel(
+            FeatureEntity(
                 name=f"{feature[0]}_name",
                 status=JobStatus.CREATED,
                 feature=feature[1],
                 results={
-                    "": FeatureResultUserModel.model_construct(
+                    "": FeatureResultEntity.model_construct(
                         processing_time_ms=0,
                         model_name="test",
                         status=JobStatus.CREATED,
@@ -156,7 +156,7 @@ class TestGenericFeaturesPlot:
         fake_plot = _FakePlot()
         _FakePlot.features_ids = {MockFeature.registered_id}
 
-        benchmark = BenchmarkUserModel(
+        benchmark = BenchmarkEntity(
             name="test",
             modelset=None,
             features=[],
@@ -170,12 +170,12 @@ class TestGenericFeaturesPlot:
         assert isinstance(result.failure(), FeaturesMissingError)
 
         benchmark.features = [
-            FeatureUserModel(
+            FeatureEntity(
                 name="existing",
                 status=JobStatus.CREATED,
                 feature=MockFeature(),
                 results={
-                    "": FeatureResultUserModel.model_construct(
+                    "": FeatureResultEntity.model_construct(
                         processing_time_ms=0,
                         model_name="test",
                         status=JobStatus.CREATED,

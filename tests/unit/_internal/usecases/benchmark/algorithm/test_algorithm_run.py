@@ -11,8 +11,8 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmRetrieveSyncSolutionsUc,
     AlgorithmRunAsBackgroundTasksUc,
 )
-from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
-from luna_bench._internal.user_models.model_set_usermodel import ModelSetUserModel
+from luna_bench.entities.benchmark_entity import BenchmarkEntity
+from luna_bench.entities.model_set_entity import ModelSetEntity
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 
@@ -35,7 +35,7 @@ class TestAlgorithmRunUc:
 
     def test_algorithm_without_modelset_run(self) -> None:
         result = self.uc(
-            BenchmarkUserModel(
+            BenchmarkEntity(
                 name="test",
                 modelset=None,
                 features=[],
@@ -55,9 +55,9 @@ class TestAlgorithmRunUc:
 
     def test_algorithm_modelset_run(self) -> None:
         result = self.uc(
-            BenchmarkUserModel(
+            BenchmarkEntity(
                 name="test",
-                modelset=ModelSetUserModel(id=0, name="test", models=[]),
+                modelset=ModelSetEntity(id=0, name="test", models=[]),
                 features=[],
                 algorithms=[],
                 metrics=[],
@@ -75,7 +75,7 @@ class TestAlgorithmRunUc:
     def test_algorithm_filter_failures_first(self) -> None:
         self.mock_filter.side_effect = [Failure(RunAlgorithmMissingError("mock", "mock")), Success(None)]
         result = self.uc(
-            BenchmarkUserModel(
+            BenchmarkEntity(
                 name="test",
                 modelset=None,
                 features=[],
@@ -96,7 +96,7 @@ class TestAlgorithmRunUc:
     def test_algorithm_filter_failures_second(self) -> None:
         self.mock_filter.side_effect = [Success(None), Failure(RunAlgorithmMissingError("mock", "mock"))]
         result = self.uc(
-            BenchmarkUserModel(
+            BenchmarkEntity(
                 name="test",
                 modelset=None,
                 features=[],

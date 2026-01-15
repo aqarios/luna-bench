@@ -4,12 +4,12 @@ from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
-from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
-from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
 from luna_bench.base_components import BasePlot
 from luna_bench.components.plots.generics.mixins.features_plot_mixin import FeaturesPlotMixin
 from luna_bench.components.plots.generics.mixins.metrics_plot_mixin import MetricsPlotMixin
+from luna_bench.entities.benchmark_entity import BenchmarkEntity
+from luna_bench.entities.feature_entity import FeatureEntity
+from luna_bench.entities.metric_entity import MetricEntity
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -20,16 +20,16 @@ class FeaturesAndMetricsValidationResult(BaseModel):
 
     Attributes
     ----------
-    metrics : dict[str, MetricUserModel]
+    metrics : dict[str, MetricEntity]
         Dictionary mapping metric names to metric instances. Contains only
         the metrics required by the plot.
-    features : dict[str, FeatureUserModel]
+    features : dict[str, FeatureEntity]
         Dictionary mapping feature names to feature instances. Contains only
         the features required by the plot.
     """
 
-    metrics: dict[str, MetricUserModel]
-    features: dict[str, FeatureUserModel]
+    metrics: dict[str, MetricEntity]
+    features: dict[str, FeatureEntity]
 
 
 class GenericFeaturesMetricsPlot(
@@ -49,10 +49,10 @@ class GenericFeaturesMetricsPlot(
         Set of required metric names for this plot.
     features_names : ClassVar[set[str]]
         Set of required feature names for this plot.
-    metrics: dict[str, MetricUserModel] | None
+    metrics: dict[str, MetricEntity] | None
         Dictionary with metrics. It should contain metrics after validation process.
         At the moment when run method will be called it should contain needed metrics.
-    features: dict[str, FeatureUserModel] | None
+    features: dict[str, FeatureEntity] | None
         Dictionary with features. It should contain features after validation process.
         At the moment when run method will be called it should contain needed featres.
     """
@@ -80,14 +80,14 @@ class GenericFeaturesMetricsPlot(
 
     def validate_plot(
         self,
-        benchmark: BenchmarkUserModel,
+        benchmark: BenchmarkEntity,
     ) -> Result[FeaturesAndMetricsValidationResult, PlotRunError | UnknownLunaBenchError]:
         """
         Validate that required metrics and features are present in the benchmark.
 
         Parameters
         ----------
-        benchmark : BenchmarkUserModel
+        benchmark : BenchmarkEntity
             The benchmark containing metrics and features.
 
         Returns

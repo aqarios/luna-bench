@@ -10,8 +10,8 @@ from luna_bench._internal.domain_models import PlotDomain, RegisteredDataDomain
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.protocols import PlotAddUc
-from luna_bench._internal.user_models import PlotUserModel
 from luna_bench.base_components import BasePlot
+from luna_bench.entities import PlotEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -43,7 +43,7 @@ class PlotAddUcImpl(PlotAddUc):
     def __call__(
         self, benchmark_name: str, name: str, plot: BasePlot[Any]
     ) -> Result[
-        PlotUserModel,
+        PlotEntity,
         DataNotUniqueError
         | DataNotExistError
         | UnknownLunaBenchError
@@ -73,7 +73,7 @@ class PlotAddUcImpl(PlotAddUc):
                 return Failure(config.failure())
 
             return Success(
-                PlotUserModel.model_construct(
+                PlotEntity.model_construct(
                     name=name,
                     status=result.unwrap().status,
                     plot=config.unwrap(),

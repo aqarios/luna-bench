@@ -6,10 +6,10 @@ import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
-from luna_bench._internal.user_models import BenchmarkUserModel, PlotUserModel
 from luna_bench.base_components import BasePlot
+from luna_bench.entities import BenchmarkEntity, PlotEntity
+from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -24,8 +24,8 @@ if TYPE_CHECKING:
     from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
 
-def _empty_plot(name: str, plot: BasePlot[Any]) -> PlotUserModel:
-    return PlotUserModel(
+def _empty_plot(name: str, plot: BasePlot[Any]) -> PlotEntity:
+    return PlotEntity(
         name=name,
         status=JobStatus.CREATED,
         plot=plot,
@@ -49,7 +49,7 @@ class TestPlot:
         plot_name: str,
         plot: BasePlot[Any],
         exp: Result[
-            PlotUserModel,
+            PlotEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -59,7 +59,7 @@ class TestPlot:
         ],
     ) -> None:
         result: Result[
-            PlotUserModel,
+            PlotEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -87,7 +87,7 @@ class TestPlot:
         benchmark_name: str,
         plot_name: str,
         exp: Result[
-            PlotUserModel,
+            PlotEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -119,7 +119,7 @@ class TestPlot:
         error_handling_mode: UseCaseErrorHandlingMode,
         plot: BasePlot[Any],
         exp: Result[
-            PlotUserModel,
+            PlotEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -128,7 +128,7 @@ class TestPlot:
             | ValidationError,
         ],
     ) -> None:
-        benchmark = BenchmarkUserModel(
+        benchmark = BenchmarkEntity(
             name="test",
             modelset=None,
             features=[],

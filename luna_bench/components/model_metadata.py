@@ -7,7 +7,7 @@ from returns.pipeline import is_successful
 
 from luna_bench._internal.usecases.modelset.protocols import ModelFetchUc
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
-from luna_bench._internal.user_models.model_metadata_usermodel import ModelMetadataUserModel
+from luna_bench.entities.model_metadata_entity import ModelMetadataEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from returns.result import Result
 
 
-class ModelMetadata(ModelMetadataUserModel):
+class ModelMetadata(ModelMetadataEntity):
     """
     Metadata for a model.
 

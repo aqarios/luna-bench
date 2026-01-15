@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from luna_bench.types import ModelName
 
 
-class ModelMetadataUserModel(BaseModel):
+class ModelMetadataEntity(BaseModel):
     """
     Metadata for a model.
 

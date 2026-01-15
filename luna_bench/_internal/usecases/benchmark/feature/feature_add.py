@@ -8,8 +8,8 @@ from luna_bench._internal.domain_models import FeatureDomain, RegisteredDataDoma
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.protocols import FeatureAddUc
-from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
 from luna_bench.base_components import BaseFeature
+from luna_bench.entities.feature_entity import FeatureEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -41,7 +41,7 @@ class FeatureAddUcImpl(FeatureAddUc):
     def __call__(
         self, benchmark_name: str, name: str, feature: BaseFeature
     ) -> Result[
-        FeatureUserModel,
+        FeatureEntity,
         DataNotUniqueError
         | DataNotExistError
         | UnknownLunaBenchError
@@ -68,6 +68,4 @@ class FeatureAddUcImpl(FeatureAddUc):
             if not is_successful(config):
                 return Failure(config.failure())
 
-            return Success(
-                FeatureUserModel(name=name, status=result.unwrap().status, feature=config.unwrap(), results={})
-            )
+            return Success(FeatureEntity(name=name, status=result.unwrap().status, feature=config.unwrap(), results={}))

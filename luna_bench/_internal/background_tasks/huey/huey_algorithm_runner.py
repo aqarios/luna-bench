@@ -101,7 +101,7 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
     def run_sync(
         algorithm: BaseAlgorithmSync,
         model_id: int,
-    ) -> str:
+    ) -> str:  # pragma: no cover
         return str(
             HueyAlgorithmRunner._run_sync_huey_task(algorithm, model_id).id
         )  # Different type because of the Huey task decorator
@@ -110,7 +110,7 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
     def run_async[T: BaseModel](
         algorithm: BaseAlgorithmAsync[T],
         model_id: int,
-    ) -> str:
+    ) -> str:  # pragma: no cover
         return str(
             HueyAlgorithmRunner._run_async_huey_task(algorithm, model_id).id
         )  # Different type because of the Huey task decorator

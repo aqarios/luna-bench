@@ -4,14 +4,15 @@ from luna_quantum import Solution
 from returns.pipeline import is_successful
 
 from luna_bench import MapperContainer  # type: ignore[attr-defined]
-from luna_bench._internal.domain_models import AlgorithmResultDomain, JobStatus
+from luna_bench._internal.domain_models import AlgorithmResultDomain
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.usecases.benchmark import (
     AlgorithmRetrieveAsyncSolutionsUcImpl,
 )
-from luna_bench._internal.user_models.algorithm_result_usermodel import AlgorithmResultUserModel
-from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
 from luna_bench.base_components import BaseAlgorithmAsync
+from luna_bench.entities import JobStatus
+from luna_bench.entities.algorithm_result_entity import AlgorithmResultEntity
+from luna_bench.entities.benchmark_entity import BenchmarkEntity
 from tests.unit.fixtures.mock_components import MockAsyncAlgorithm
 from tests.unit.fixtures.mock_database import SetupBenchmark
 
@@ -42,13 +43,13 @@ class TestRetrieveAsyncSolution:
         setup_benchmark: SetupBenchmark,
         mapper: MapperContainer,
         retrival_data: ArbitraryDataDomain | None,
-    ) -> BenchmarkUserModel:
+    ) -> BenchmarkEntity:
         benchmark_result = mapper.benchmark_mapper().to_user_model(setup_benchmark.benchmark)
         assert is_successful(benchmark_result), "Failed to load benchmark"
         benchmark = benchmark_result.unwrap()
         assert benchmark.modelset is not None, "Failed to load modelset"
 
-        fake_result_data = AlgorithmResultUserModel(
+        fake_result_data = AlgorithmResultEntity(
             meta_data=None,
             status=JobStatus.RUNNING,
             error=None,

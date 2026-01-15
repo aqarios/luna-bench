@@ -5,13 +5,13 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.domain_models import MetricDomain, MetricResultDomain, RegisteredDataDomain
 from luna_bench._internal.mappers.mixins.model_list_mixin import ModelListMixin
 from luna_bench._internal.registries import PydanticRegistry
-from luna_bench._internal.user_models import MetricUserModel
-from luna_bench._internal.user_models.metric_result_usermodel import MetricResultUserModel
 from luna_bench.base_components import BaseMetric
+from luna_bench.entities import MetricEntity, MetricResultEntity
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
+from luna_bench.types import MetricResult
 
 
-class MetricMapper(ModelListMixin[MetricDomain, MetricUserModel]):
+class MetricMapper(ModelListMixin[MetricDomain, MetricEntity]):
     def __init__(
         self,
         metric_registry: PydanticRegistry[BaseMetric, RegisteredDataDomain],
@@ -19,26 +19,26 @@ class MetricMapper(ModelListMixin[MetricDomain, MetricUserModel]):
         self._metric_registry = metric_registry
 
     @staticmethod
-    def result_to_user_model(result: MetricResultDomain) -> MetricResultUserModel:
-        return MetricResultUserModel.model_construct(
+    def result_to_user_model(result: MetricResultDomain) -> MetricResultEntity:
+        return MetricResultEntity.model_construct(
             processing_time_ms=result.processing_time_ms,
             model_name=result.model_name,
             algorithm_name=result.algorithm_name,
             status=result.status,
             error=result.error,
-            result=result.result.model_dump() if result.result else None,
+            result=MetricResult.model_construct(**result.result.model_dump()) if result.result else None,
         )
 
     @staticmethod
     def result_to_user_model_dict(
         results: dict[tuple[str, str], MetricResultDomain],
-    ) -> dict[tuple[str, str], MetricResultUserModel]:
+    ) -> dict[tuple[str, str], MetricResultEntity]:
         return {(k, m): MetricMapper.result_to_user_model(result) for (k, m), result in results.items()}
 
     def to_user_model(
         self,
         domain: MetricDomain,
-    ) -> Result[MetricUserModel, UnknownIdError | ValidationError]:
+    ) -> Result[MetricEntity, UnknownIdError | ValidationError]:
         """
         Convert the algorithm domain to the user model.
 
@@ -49,7 +49,7 @@ class MetricMapper(ModelListMixin[MetricDomain, MetricUserModel]):
 
         Returns
         -------
-        Result[MetricUserModel, UnknownIdError | ValidationError]
+        Result[MetricEntity, UnknownIdError | ValidationError]
             Successful conversion: The user model. Otherwise, an exception.
 
         """
@@ -60,7 +60,7 @@ class MetricMapper(ModelListMixin[MetricDomain, MetricUserModel]):
             return Failure(user_config.failure())
 
         return Success(
-            MetricUserModel.model_construct(
+            MetricEntity.model_construct(
                 name=domain.name,
                 status=domain.status,
                 metric=user_config.unwrap(),

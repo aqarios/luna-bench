@@ -4,10 +4,13 @@ from luna_quantum import Solution
 from pydantic import BaseModel, ConfigDict
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
+
+from .enums import JobStatus
 
 
-class AlgorithmResultUserModel(BaseModel):
+class AlgorithmResultEntity(BaseModel):
+    """Represents a result of an algorithm execution."""
+
     meta_data: ArbitraryDataDomain | None
     status: JobStatus
     error: str | None

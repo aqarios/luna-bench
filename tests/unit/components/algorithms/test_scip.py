@@ -40,6 +40,7 @@ class TestScipAlgorithm:
 
         # Objective value should be 0
         best_sample = solution.best()
+        assert best_sample is not None
         assert best_sample.obj_value == 0.0
 
         # Variables are in solution dict
@@ -95,8 +96,8 @@ class TestScipAlgorithm:
 
         # Patch NamedTemporaryFile to track the temporary file path
 
-        def tracked_tempfile(*args: Any, **kwargs: Any) -> _TemporaryFileWrapper:
-            temp = NamedTemporaryFile(*args, **kwargs)
+        def tracked_tempfile(*args: Any, **kwargs: Any) -> _TemporaryFileWrapper:  # type: ignore[type-arg]
+            temp = NamedTemporaryFile(*args, **kwargs)  # noqa: SIM115
             temp_file_paths.append(Path(temp.name))
             return temp
 
