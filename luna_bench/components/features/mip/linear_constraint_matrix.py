@@ -16,6 +16,15 @@ if TYPE_CHECKING:
     from luna_quantum import Model
     from numpy.typing import NDArray
 
+from pydantic import BaseModel
+
+
+class CoefStats(BaseModel):
+    """Container for coefficient statistics."""
+
+    coef_mean: float
+    coef_vc: float
+
 
 class LinearConstraintMatrixFeaturesResult(ArbitraryDataDomain):
     """
@@ -27,103 +36,91 @@ class LinearConstraintMatrixFeaturesResult(ArbitraryDataDomain):
 
     Attributes
     ----------
-    mean_variable_coefficient_continuous : float
+    mean_var_coef_cont : float
         Mean of variable coefficients for continuous variables.
-    vc_variable_coefficient_continuous : float
+    vc_var_coef_cont : float
         Variation coefficient of variable coefficients for continuous variables.
-    mean_variable_coefficient_non_continuous : float
+    mean_var_coef_non_cont : float
         Mean of variable coefficients for non-continuous variables.
-    vc_variable_coefficient_non_continuous : float
+    vc_var_coef_non_cont : float
         Variation coefficient of variable coefficients for non-continuous variables.
-    mean_variable_coefficient_all : float
+    mean_var_coef_all : float
         Mean of variable coefficients for all variables.
-    vc_variable_coefficient_all : float
+    vc_var_coef_all : float
         Variation coefficient of variable coefficients for all variables.
-    mean_constraint_coefficient_continuous : float
+    mean_cons_coef_cont : float
         Mean of constraint coefficients for continuous constraints.
-    vc_constraint_coefficient_continuous : float
+    vc_cons_coef_cont : float
         Variation coefficient of constraint coefficients for continuous constraints.
-    mean_constraint_coefficient_non_continuous : float
+    mean_cons_coef_non_cont : float
         Mean of constraint coefficients for non-continuous constraints.
-    vc_constraint_coefficient_non_continuous : float
+    vc_cons_coef_non_cont : float
         Variation coefficient of constraint coefficients for non-continuous constraints.
-    mean_constraint_coefficient : float
+    mean_cons_coefficient : float
         Mean of constraint coefficients for all constraints.
-    vc_constraint_coefficient : float
+    vc_cons_coefficient : float
         Variation coefficient of constraint coefficients for all constraints.
-    mean_distribution_of_normalized_constraint_matrix_entries_continuous : float
+    mean_dist_of_norm_cons_matrix_entr_cont : float
         Mean of normalized constraint matrix entries for continuous variables.
-    vc_distribution_of_normalized_constraint_matrix_entries_continuous : float
+    vc_dist_of_norm_cons_matrix_entr_cont : float
         Variation coefficient of normalized entries for continuous variables.
-    mean_distribution_of_normalized_constraint_matrix_entries_non_continuous : float
+    mean_dist_of_norm_cons_matrix_entr_non_cont : float
         Mean of normalized constraint matrix entries for non-continuous variables.
-    vc_distribution_of_normalized_constraint_matrix_entries_non_continuous : float
+    vc_dist_of_norm_cons_matrix_entr_non_cont : float
         Variation coefficient of normalized entries for non-continuous variables.
-    mean_distribution_of_normalized_constraint_matrix_entries : float
+    mean_dist_of_norm_cons_matrix_entr : float
         Mean of normalized constraint matrix entries for all variables.
-    vc_distribution_of_normalized_constraint_matrix_entries : float
+    vc_dist_of_norm_cons_matrix_entr : float
         Variation coefficient of normalized entries for all variables.
-    mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_continuous : float
+    mean_vari_coef_of_norm_abs_non_zero_entr_per_row_cont : float
         Mean variation coefficient of row-normalized absolute non-zero entries for continuous variables.
-    vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_continuous : float
+    vc_vari_coef_of_norm_abs_non_zero_entr_per_row_cont : float
         Variation coefficient of the variation coefficients for continuous variables.
-    mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_non_continuous : float
+    mean_vari_coef_of_norm_abs_non_zero_entr_per_row_non_cont : float
         Mean variation coefficient of row-normalized absolute non-zero entries for non-continuous variables.
-    vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_non_continuous : float
+    vc_vari_coef_of_norm_abs_non_zero_entr_per_row_non_cont : float
         Variation coefficient of the variation coefficients for non-continuous variables.
-    mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row : float
+    mean_vari_coef_of_norm_abs_non_zero_entr_per_row : float
         Mean variation coefficient of row-normalized absolute non-zero entries for all variables.
-    vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row : float
+    vc_vari_coef_of_norm_abs_non_zero_entr_per_row : float
         Variation coefficient of the variation coefficients for all variables.
     """
 
-    # Variable coefficient statistics - continuous
-    mean_variable_coefficient_continuous: float
-    vc_variable_coefficient_continuous: float
+    mean_var_coef_cont: float
+    vc_var_coef_cont: float
 
-    # Variable coefficient statistics - non-continuous
-    mean_variable_coefficient_non_continuous: float
-    vc_variable_coefficient_non_continuous: float
+    mean_var_coef_non_cont: float
+    vc_var_coef_non_cont: float
 
-    # Variable coefficient statistics - all
-    mean_variable_coefficient_all: float
-    vc_variable_coefficient_all: float
+    mean_var_coef_all: float
+    vc_var_coef_all: float
 
-    # Constraint coefficient statistics - continuous
-    mean_constraint_coefficient_continuous: float
-    vc_constraint_coefficient_continuous: float
+    mean_cons_coef_cont: float
+    vc_cons_coef_cont: float
 
-    # Constraint coefficient statistics - non-continuous
-    mean_constraint_coefficient_non_continuous: float
-    vc_constraint_coefficient_non_continuous: float
+    mean_cons_coef_non_cont: float
+    vc_cons_coef_non_cont: float
 
-    # Constraint coefficient statistics - all
-    mean_constraint_coefficient: float
-    vc_constraint_coefficient: float
+    mean_cons_coefficient: float
+    vc_cons_coefficient: float
 
-    # Distribution of normalized constraint matrix entries - continuous
-    mean_distribution_of_normalized_constraint_matrix_entries_continuous: float
-    vc_distribution_of_normalized_constraint_matrix_entries_continuous: float
+    mean_dist_of_norm_cons_matrix_entr_cont: float
+    vc_dist_of_norm_cons_matrix_entr_cont: float
 
-    # Distribution of normalized constraint matrix entries - non-continuous
-    mean_distribution_of_normalized_constraint_matrix_entries_non_continuous: float
-    vc_distribution_of_normalized_constraint_matrix_entries_non_continuous: float
+    mean_dist_of_norm_cons_matrix_entr_non_cont: float
+    vc_dist_of_norm_cons_matrix_entr_non_cont: float
 
-    # Distribution of normalized constraint matrix entries - all
-    mean_distribution_of_normalized_constraint_matrix_entries: float
-    vc_distribution_of_normalized_constraint_matrix_entries: float
+    mean_dist_of_norm_cons_matrix_entr: float
+    vc_dist_of_norm_cons_matrix_entr: float
 
-    # Variation coefficient of normalized absolute non-zero entries per row - continuous
-    mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_continuous: float
-    vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_continuous: float
+    mean_vari_coef_of_norm_abs_non_zero_entr_per_row_cont: float
+    vc_vari_coef_of_norm_abs_non_zero_entr_per_row_cont: float
 
-    # Variation coefficient of normalized absolute non-zero entries per row - non-continuous
-    mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_non_continuous: float
-    vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_non_continuous: float
+    mean_vari_coef_of_norm_abs_non_zero_entr_per_row_non_cont: float
+    vc_vari_coef_of_norm_abs_non_zero_entr_per_row_non_cont: float
 
-    # Variation coefficient of normalized absolute non-zero entries per row - all
-    mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row: float
-    vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row: float
+    mean_vari_coef_of_norm_abs_non_zero_entr_per_row: float
+    vc_vari_coef_of_norm_abs_non_zero_entr_per_row: float
 
 
 @feature
@@ -156,10 +153,10 @@ class LinearConstraintMatrixFeatures(IFeature):
         """
         # Continuous
         ac, bc = ModelMatrix.constraint_matrix(model, degree=ConstraintDegree.LINEAR, vtype=Vtype.Real, include_b=True)
-        ac_vnd = np.sum(ac, axis=0)  # Variable coefficient sums
-        ac_cnd = np.sum(ac, axis=1)  # Constraint coefficient sums
-        ac_norm = self._normalized_constraint_matrix_entries(ac, bc)
-        ac_vcs = self._vc_absolute_normalized_constraint_matrix_entries(ac)
+        ac_vnd = np.sum(ac, axis=0)
+        ac_cnd = np.sum(ac, axis=1)
+        ac_norm = self._norm_cons_matrix_entr(ac, bc)
+        ac_vcs = self._vc_abs_norm_cons_matrix_entr(ac)
 
         # Non-continuous
         anc, bnc = ModelMatrix.constraint_matrix(
@@ -167,66 +164,44 @@ class LinearConstraintMatrixFeatures(IFeature):
         )
         anc_vnd = np.sum(anc, axis=0)
         anc_cnd = np.sum(anc, axis=1)
-        anc_norm = self._normalized_constraint_matrix_entries(anc, bnc)
-        anc_vcs = self._vc_absolute_normalized_constraint_matrix_entries(anc)
+        anc_norm = self._norm_cons_matrix_entr(anc, bnc)
+        anc_vcs = self._vc_abs_norm_cons_matrix_entr(anc)
 
         # all variables
         av, bv = ModelMatrix.constraint_matrix(model, degree=ConstraintDegree.LINEAR, vtype=None, include_b=True)
         av_vnd = np.sum(av, axis=0)
         av_cnd = np.sum(av, axis=1)
-        av_norm = self._normalized_constraint_matrix_entries(av, bv)
-        av_vcs = self._vc_absolute_normalized_constraint_matrix_entries(av)
+        av_norm = self._norm_cons_matrix_entr(av, bv)
+        av_vcs = self._vc_abs_norm_cons_matrix_entr(av)
 
         return LinearConstraintMatrixFeaturesResult(
-            # Variable coefficient statistics - continuous
-            mean_variable_coefficient_continuous=NumpyStatsHelper.mean(ac_vnd),
-            vc_variable_coefficient_continuous=NumpyStatsHelper.vc(ac_vnd),
-            # Variable coefficient statistics - non-continuous
-            mean_variable_coefficient_non_continuous=NumpyStatsHelper.mean(anc_vnd),
-            vc_variable_coefficient_non_continuous=NumpyStatsHelper.vc(anc_vnd),
-            # Variable coefficient statistics - all
-            mean_variable_coefficient_all=NumpyStatsHelper.mean(av_vnd),
-            vc_variable_coefficient_all=NumpyStatsHelper.vc(av_vnd),
-            # Constraint coefficient statistics - continuous
-            mean_constraint_coefficient_continuous=NumpyStatsHelper.mean(ac_cnd),
-            vc_constraint_coefficient_continuous=NumpyStatsHelper.vc(ac_cnd),
-            # Constraint coefficient statistics - non-continuous
-            mean_constraint_coefficient_non_continuous=NumpyStatsHelper.mean(anc_cnd),
-            vc_constraint_coefficient_non_continuous=NumpyStatsHelper.vc(anc_cnd),
-            # Constraint coefficient statistics - all
-            mean_constraint_coefficient=NumpyStatsHelper.mean(av_cnd),
-            vc_constraint_coefficient=NumpyStatsHelper.vc(av_cnd),
-            # Distribution of normalized constraint matrix entries - continuous
-            mean_distribution_of_normalized_constraint_matrix_entries_continuous=NumpyStatsHelper.mean(ac_norm),
-            vc_distribution_of_normalized_constraint_matrix_entries_continuous=NumpyStatsHelper.vc(ac_norm),
-            # Distribution of normalized constraint matrix entries - non-continuous
-            mean_distribution_of_normalized_constraint_matrix_entries_non_continuous=NumpyStatsHelper.mean(anc_norm),
-            vc_distribution_of_normalized_constraint_matrix_entries_non_continuous=NumpyStatsHelper.vc(anc_norm),
-            # Distribution of normalized constraint matrix entries - all
-            mean_distribution_of_normalized_constraint_matrix_entries=NumpyStatsHelper.mean(av_norm),
-            vc_distribution_of_normalized_constraint_matrix_entries=NumpyStatsHelper.vc(av_norm),
-            # Variation coefficient of normalized absolute non-zero entries per row - continuous
-            mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_continuous=NumpyStatsHelper.mean(
-                ac_vcs
-            ),
-            vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_continuous=NumpyStatsHelper.vc(
-                ac_vcs
-            ),
-            # Variation coefficient of normalized absolute non-zero entries per row - non-continuous
-            mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_non_continuous=NumpyStatsHelper.mean(
-                anc_vcs
-            ),
-            vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_non_continuous=NumpyStatsHelper.vc(
-                anc_vcs
-            ),
-            # Variation coefficient of normalized absolute non-zero entries per row - all
-            mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row=NumpyStatsHelper.mean(av_vcs),
-            vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row=NumpyStatsHelper.vc(av_vcs),
+            mean_var_coef_cont=NumpyStatsHelper.mean(ac_vnd),
+            vc_var_coef_cont=NumpyStatsHelper.vc(ac_vnd),
+            mean_var_coef_non_cont=NumpyStatsHelper.mean(anc_vnd),
+            vc_var_coef_non_cont=NumpyStatsHelper.vc(anc_vnd),
+            mean_var_coef_all=NumpyStatsHelper.mean(av_vnd),
+            vc_var_coef_all=NumpyStatsHelper.vc(av_vnd),
+            mean_cons_coef_cont=NumpyStatsHelper.mean(ac_cnd),
+            vc_cons_coef_cont=NumpyStatsHelper.vc(ac_cnd),
+            mean_cons_coef_non_cont=NumpyStatsHelper.mean(anc_cnd),
+            vc_cons_coef_non_cont=NumpyStatsHelper.vc(anc_cnd),
+            mean_cons_coefficient=NumpyStatsHelper.mean(av_cnd),
+            vc_cons_coefficient=NumpyStatsHelper.vc(av_cnd),
+            mean_dist_of_norm_cons_matrix_entr_cont=NumpyStatsHelper.mean(ac_norm),
+            vc_dist_of_norm_cons_matrix_entr_cont=NumpyStatsHelper.vc(ac_norm),
+            mean_dist_of_norm_cons_matrix_entr_non_cont=NumpyStatsHelper.mean(anc_norm),
+            vc_dist_of_norm_cons_matrix_entr_non_cont=NumpyStatsHelper.vc(anc_norm),
+            mean_dist_of_norm_cons_matrix_entr=NumpyStatsHelper.mean(av_norm),
+            vc_dist_of_norm_cons_matrix_entr=NumpyStatsHelper.vc(av_norm),
+            mean_vari_coef_of_norm_abs_non_zero_entr_per_row_cont=NumpyStatsHelper.mean(ac_vcs),
+            vc_vari_coef_of_norm_abs_non_zero_entr_per_row_cont=NumpyStatsHelper.vc(ac_vcs),
+            mean_vari_coef_of_norm_abs_non_zero_entr_per_row_non_cont=NumpyStatsHelper.mean(anc_vcs),
+            vc_vari_coef_of_norm_abs_non_zero_entr_per_row_non_cont=NumpyStatsHelper.vc(anc_vcs),
+            mean_vari_coef_of_norm_abs_non_zero_entr_per_row=NumpyStatsHelper.mean(av_vcs),
+            vc_vari_coef_of_norm_abs_non_zero_entr_per_row=NumpyStatsHelper.vc(av_vcs),
         )
 
-    def _normalized_constraint_matrix_entries(
-        self, a: NDArray[np.float64], b: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+    def _norm_cons_matrix_entr(self, a: NDArray[np.float64], b: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Normalize constraint matrix entries by dividing by RHS values.
 
@@ -250,7 +225,7 @@ class LinearConstraintMatrixFeatures(IFeature):
         normalized: NDArray[np.float64] = (a_nz / b_nz[:, None]).flatten()
         return normalized
 
-    def _vc_absolute_normalized_constraint_matrix_entries(self, a: NDArray[np.float64]) -> NDArray[np.float64]:
+    def _vc_abs_norm_cons_matrix_entr(self, a: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Calculate variation coefficient of row-normalized absolute entries.
 

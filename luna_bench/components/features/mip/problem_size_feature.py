@@ -45,7 +45,7 @@ class ProblemSizeFeaturesResult(ArbitraryDataDomain):
 
     Attributes
     ----------
-    num_variables : int
+    num_vars : int
         Total number of variables in the model.
     num_constraints : int
         Total number of constraints in the model.
@@ -55,33 +55,33 @@ class ProblemSizeFeaturesResult(ArbitraryDataDomain):
         Number of quadratic constraints.
     num_non_zero_entries_quadratic_constraint_matrix : int
         Number of non-zero entries in the quadratic constraint matrix.
-    num_boolean_variables : int
+    num_boolean_vars : int
         Number of binary/boolean variables.
-    num_integer_variables : int
+    num_integer_vars : int
         Number of integer variables.
-    num_continuous_variables : int
+    num_cont_vars : int
         Number of continuous (real) variables.
-    num_semi_continuous_variables : int
+    num_semi_cont_vars : int
         Number of semi-continuous variables.
-    num_semi_integer_variables : int
+    num_semi_integer_vars : int
         Number of semi-integer variables.
-    frac_boolean_variables : float
+    frac_boolean_vars : float
         Fraction of boolean variables relative to total variables.
-    frac_integer_variables : float
+    frac_integer_vars : float
         Fraction of integer variables relative to total variables.
-    frac_continuous_variables : float
+    frac_cont_vars : float
         Fraction of continuous variables relative to total variables.
-    frac_semi_continuous_variables : float
+    frac_semi_cont_vars : float
         Fraction of semi-continuous variables relative to total variables.
-    frac_semi_integer_variables : float
+    frac_semi_integer_vars : float
         Fraction of semi-integer variables relative to total variables.
-    num_non_continuous_variables : int
+    num_non_cont_vars : int
         Total number of non-continuous variables (binary + integer).
-    frac_non_continuous_variables : float
+    frac_non_cont_vars : float
         Fraction of non-continuous variables relative to total variables.
-    num_unbounded_non_continuous_variables : int
+    num_unbounded_non_cont_vars : int
         Number of non-continuous variables without bounds.
-    frac_unbounded_non_continuous_variables : float
+    frac_unbounded_non_cont_vars : float
         Fraction of unbounded non-continuous variables relative to total variables.
     mean_support_size : float
         Mean support size across bounded variables.
@@ -95,25 +95,25 @@ class ProblemSizeFeaturesResult(ArbitraryDataDomain):
         10th percentile of support sizes.
     """
 
-    num_variables: int
+    num_vars: int
     num_constraints: int
     num_non_zero_entries_linear_constraint_matrix: int
     num_quadratic_constraints: int
     num_non_zero_entries_quadratic_constraint_matrix: int
-    num_boolean_variables: int
-    num_integer_variables: int
-    num_continuous_variables: int
-    num_semi_continuous_variables: int
-    num_semi_integer_variables: int
-    frac_boolean_variables: float
-    frac_integer_variables: float
-    frac_continuous_variables: float
-    frac_semi_continuous_variables: float
-    frac_semi_integer_variables: float
-    num_non_continuous_variables: int
-    frac_non_continuous_variables: float
-    num_unbounded_non_continuous_variables: int
-    frac_unbounded_non_continuous_variables: float
+    num_boolean_vars: int
+    num_integer_vars: int
+    num_cont_vars: int
+    num_semi_cont_vars: int
+    num_semi_integer_vars: int
+    frac_boolean_vars: float
+    frac_integer_vars: float
+    frac_cont_vars: float
+    frac_semi_cont_vars: float
+    frac_semi_integer_vars: float
+    num_non_cont_vars: int
+    frac_non_cont_vars: float
+    num_unbounded_non_cont_vars: int
+    frac_unbounded_non_cont_vars: float
     mean_support_size: float
     median_support_size: float
     vc_support_size: float
@@ -148,7 +148,7 @@ class ProblemSizeFeatures(IFeature):
         ProblemSizeFeaturesResult
             Container with problem size metrics.
         """
-        num_vars = model.num_variables
+        num_vars = model.num_vars
         num_cons = model.num_constraints
         num_non_zero_linear = np.count_nonzero(ModelMatrix.constraint_matrix(model, ConstraintDegree.LINEAR, None)[0])
         num_non_zero_quad = np.count_nonzero(ModelMatrix.constraint_matrix(model, ConstraintDegree.QUADRATIC, None)[0])
@@ -180,25 +180,25 @@ class ProblemSizeFeatures(IFeature):
         support_sizes = self._support_sizes(model)
 
         return ProblemSizeFeaturesResult(
-            num_variables=num_vars,
+            num_vars=num_vars,
             num_constraints=num_cons,
             num_non_zero_entries_linear_constraint_matrix=num_non_zero_linear.astype(int),
             num_quadratic_constraints=num_quad_constr,
             num_non_zero_entries_quadratic_constraint_matrix=num_non_zero_quad.astype(int),
-            num_boolean_variables=num_bool,
-            num_integer_variables=num_int,
-            num_continuous_variables=num_cont,
-            num_semi_continuous_variables=num_semi_cont,
-            num_semi_integer_variables=num_semi_int,
-            frac_boolean_variables=num_bool / num_vars if num_vars > 0 else 0.0,
-            frac_integer_variables=num_int / num_vars if num_vars > 0 else 0.0,
-            frac_continuous_variables=num_cont / num_vars if num_vars > 0 else 0.0,
-            frac_semi_continuous_variables=num_semi_cont / num_vars if num_vars > 0 else 0.0,
-            frac_semi_integer_variables=num_semi_int / num_vars if num_vars > 0 else 0.0,
-            num_non_continuous_variables=num_non_cont,
-            frac_non_continuous_variables=num_non_cont / num_vars if num_vars > 0 else 0.0,
-            num_unbounded_non_continuous_variables=num_unbound_non_cont,
-            frac_unbounded_non_continuous_variables=num_unbound_non_cont / num_vars if num_vars > 0 else 0.0,
+            num_boolean_vars=num_bool,
+            num_integer_vars=num_int,
+            num_cont_vars=num_cont,
+            num_semi_cont_vars=num_semi_cont,
+            num_semi_integer_vars=num_semi_int,
+            frac_boolean_vars=num_bool / num_vars if num_vars > 0 else 0.0,
+            frac_integer_vars=num_int / num_vars if num_vars > 0 else 0.0,
+            frac_cont_vars=num_cont / num_vars if num_vars > 0 else 0.0,
+            frac_semi_cont_vars=num_semi_cont / num_vars if num_vars > 0 else 0.0,
+            frac_semi_integer_vars=num_semi_int / num_vars if num_vars > 0 else 0.0,
+            num_non_cont_vars=num_non_cont,
+            frac_non_cont_vars=num_non_cont / num_vars if num_vars > 0 else 0.0,
+            num_unbounded_non_cont_vars=num_unbound_non_cont,
+            frac_unbounded_non_cont_vars=num_unbound_non_cont / num_vars if num_vars > 0 else 0.0,
             mean_support_size=NumpyStatsHelper.mean(support_sizes),
             median_support_size=NumpyStatsHelper.median(support_sizes),
             vc_support_size=NumpyStatsHelper.vc(support_sizes),

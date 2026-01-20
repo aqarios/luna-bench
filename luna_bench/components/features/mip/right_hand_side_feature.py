@@ -38,31 +38,31 @@ class RightHandSideFeaturesResult(ArbitraryDataDomain):
 
     Attributes
     ----------
-    mean_right_hand_side_leq_constraints : float
+    mean_rhs_leq_cons : float
         Mean of RHS values for less-than-or-equal constraints.
-    std_right_hand_side_leq_constraints : float
+    std_rhs_leq_cons : float
         Standard deviation of RHS values for less-than-or-equal constraints.
-    mean_right_hand_side_eq_constraints : float
+    mean_rhs_eq_cons : float
         Mean of RHS values for equality constraints.
-    std_right_hand_side_eq_constraints : float
+    std_rhs_eq_cons : float
         Standard deviation of RHS values for equality constraints.
-    mean_right_hand_side_geq_constraints : float
+    mean_rhs_geq_cons : float
         Mean of RHS values for greater-than-or-equal constraints.
-    std_right_hand_side_geq_constraints : float
+    std_rhs_geq_cons : float
         Standard deviation of RHS values for greater-than-or-equal constraints.
     """
 
     # Right-hand side for leq constraints
-    mean_right_hand_side_leq_constraints: float
-    std_right_hand_side_leq_constraints: float
+    mean_rhs_leq_cons: float
+    std_rhs_leq_cons: float
 
     # Right-hand side for eq constraints
-    mean_right_hand_side_eq_constraints: float
-    std_right_hand_side_eq_constraints: float
+    mean_rhs_eq_cons: float
+    std_rhs_eq_cons: float
 
     # Right-hand side for geq constraints
-    mean_right_hand_side_geq_constraints: float
-    std_right_hand_side_geq_constraints: float
+    mean_rhs_geq_cons: float
+    std_rhs_geq_cons: float
 
 
 @feature
@@ -107,10 +107,10 @@ class RightHandSideFeatures(IFeature):
                 raise ComparatorError(constraint_name=c.name)
 
         return RightHandSideFeaturesResult(
-            mean_right_hand_side_leq_constraints=NumpyStatsHelper.mean(rhs_leq),
-            std_right_hand_side_leq_constraints=NumpyStatsHelper.std(rhs_leq),
-            mean_right_hand_side_eq_constraints=NumpyStatsHelper.mean(rhs_eq),
-            std_right_hand_side_eq_constraints=NumpyStatsHelper.std(rhs_eq),
-            mean_right_hand_side_geq_constraints=NumpyStatsHelper.mean(rhs_geq),
-            std_right_hand_side_geq_constraints=NumpyStatsHelper.std(rhs_geq),
+            mean_rhs_leq_cons=NumpyStatsHelper.mean(rhs_leq),
+            std_rhs_leq_cons=NumpyStatsHelper.std(rhs_leq),
+            mean_rhs_eq_cons=NumpyStatsHelper.mean(rhs_eq),
+            std_rhs_eq_cons=NumpyStatsHelper.std(rhs_eq),
+            mean_rhs_geq_cons=NumpyStatsHelper.mean(rhs_geq),
+            std_rhs_geq_cons=NumpyStatsHelper.std(rhs_geq),
         )

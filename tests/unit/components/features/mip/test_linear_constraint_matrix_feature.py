@@ -22,16 +22,16 @@ class TestLinearConstraintMatrixFeatures:
 
         # All variables are continuous
         var_sums = [1 + 2, 1 + 1]
-        assert result.mean_variable_coefficient_continuous == np.mean(var_sums)
-        assert result.vc_variable_coefficient_continuous == np.std(var_sums) / np.mean(var_sums)
+        assert result.mean_var_coef_cont == np.mean(var_sums)
+        assert result.vc_var_coef_cont == np.std(var_sums) / np.mean(var_sums)
 
         # Variable coefficients for all should match continuous
-        assert result.mean_variable_coefficient_all == result.mean_variable_coefficient_continuous
+        assert result.mean_var_coef_all == result.mean_var_coef_cont
 
         # Constraint coefficients should be computed
         cons_sums = [1 + 1, 2 + 1]
-        assert result.mean_constraint_coefficient_continuous == np.mean(cons_sums)
-        assert result.mean_constraint_coefficient >= np.std(cons_sums) / np.mean(cons_sums)
+        assert result.mean_cons_coef_cont == np.mean(cons_sums)
+        assert result.mean_cons_coefficient >= np.std(cons_sums) / np.mean(cons_sums)
 
     def test_mixed_integer_model(self, mixed_integer_model: Model) -> None:
         """Test feature extraction on a mixed-integer model."""
@@ -42,38 +42,31 @@ class TestLinearConstraintMatrixFeatures:
         con_vars = np.array([2, 2])
         n_con_vars = np.array([2, 3, 5, 1])
         all_vars = np.array([2, 3, 5, 1, 2, 2])
-        assert result.mean_variable_coefficient_continuous == con_vars.mean()
-        assert result.mean_variable_coefficient_non_continuous == n_con_vars.mean()
-        assert result.mean_variable_coefficient_all == all_vars.mean()
+        assert result.mean_var_coef_cont == con_vars.mean()
+        assert result.mean_var_coef_non_cont == n_con_vars.mean()
+        assert result.mean_var_coef_all == all_vars.mean()
 
         # Constraint coefficients
         con_cons = np.array([0, 1, 2, 1])
         n_con_cons = np.array([3, 2, 1, 5])
         all_cons = np.array([3, 3, 3, 6])
-        assert result.mean_constraint_coefficient_continuous == con_cons.mean()
-        assert result.mean_constraint_coefficient_non_continuous == n_con_cons.mean()
-        assert result.mean_constraint_coefficient == all_cons.mean()
+        assert result.mean_cons_coef_cont == con_cons.mean()
+        assert result.mean_cons_coef_non_cont == n_con_cons.mean()
+        assert result.mean_cons_coefficient == all_cons.mean()
 
         # Variation coefficients should be non-negative
-        assert result.vc_variable_coefficient_continuous == con_vars.std() / con_vars.mean()
-        assert result.vc_variable_coefficient_non_continuous == n_con_vars.std() / n_con_vars.mean()
-        assert result.vc_variable_coefficient_all == all_vars.std() / all_vars.mean()
+        assert result.vc_var_coef_cont == con_vars.std() / con_vars.mean()
+        assert result.vc_var_coef_non_cont == n_con_vars.std() / n_con_vars.mean()
+        assert result.vc_var_coef_all == all_vars.std() / all_vars.mean()
 
         # Normalized matrix entries
         b = np.array([15, 3, 8, 20])
         con_cons_n = np.array([[0, 1, 1, 0], [0, 0, 1, 1]]) / b
         n_con_cons_n = np.array([[1, 0, 1, 0], [1, 0, 0, 2], [1, 1, 0, 3], [0, 1, 0, 0]]) / b
         all_cons_n = np.array([[1, 0, 1, 0], [1, 0, 0, 2], [1, 1, 0, 3], [0, 1, 0, 0], [0, 1, 1, 0], [0, 0, 1, 1]]) / b
-        assert (
-            result.mean_distribution_of_normalized_constraint_matrix_entries_continuous == con_cons_n.flatten().mean()
-        )
-        assert (
-            result.mean_distribution_of_normalized_constraint_matrix_entries_non_continuous
-            == n_con_cons_n.flatten().mean()
-        )
-        assert result.mean_distribution_of_normalized_constraint_matrix_entries == pytest.approx(
-            all_cons_n.flatten().mean(), abs=1e-6
-        )
+        assert result.mean_dist_of_norm_cons_matrix_entr_cont == con_cons_n.flatten().mean()
+        assert result.mean_dist_of_norm_cons_matrix_entr_non_cont == n_con_cons_n.flatten().mean()
+        assert result.mean_dist_of_norm_cons_matrix_entr == pytest.approx(all_cons_n.flatten().mean(), abs=1e-6)
 
     def test_empty_model(self, empty_model: Model) -> None:
         """Test feature extraction on an empty model."""
@@ -81,14 +74,14 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(empty_model)
 
         # All features should be 0 for empty model
-        assert result.mean_variable_coefficient_continuous == 0.0
-        assert result.mean_variable_coefficient_non_continuous == 0.0
-        assert result.mean_variable_coefficient_all == 0.0
-        assert result.mean_constraint_coefficient_continuous == 0.0
-        assert result.mean_constraint_coefficient_non_continuous == 0.0
-        assert result.mean_constraint_coefficient == 0.0
+        assert result.mean_var_coef_cont == 0.0
+        assert result.mean_var_coef_non_cont == 0.0
+        assert result.mean_var_coef_all == 0.0
+        assert result.mean_cons_coef_cont == 0.0
+        assert result.mean_cons_coef_non_cont == 0.0
+        assert result.mean_cons_coefficient == 0.0
 
-    def test_continuous_only_model(self) -> None:
+    def test_con_only_model(self) -> None:
         """Test model with only continuous variables."""
         model = Model("continuous_only")
 
@@ -105,11 +98,11 @@ class TestLinearConstraintMatrixFeatures:
 
         # Only continuous variables
         var_coef = [3, 7]
-        assert result.mean_variable_coefficient_continuous == np.mean(var_coef)
-        assert result.mean_variable_coefficient_non_continuous == 0.0
+        assert result.mean_var_coef_cont == np.mean(var_coef)
+        assert result.mean_var_coef_non_cont == 0.0
 
         # All variables stats should match continuous
-        assert result.mean_variable_coefficient_all == result.mean_variable_coefficient_continuous
+        assert result.mean_var_coef_all == result.mean_var_coef_cont
 
     def test_integer_only_model(self) -> None:
         """Test model with only integer variables."""
@@ -128,11 +121,11 @@ class TestLinearConstraintMatrixFeatures:
 
         # Only non-continuous variables
         var_coef = [3, 4]
-        assert result.mean_variable_coefficient_non_continuous == np.mean(var_coef)
-        assert result.mean_variable_coefficient_continuous == 0.0
+        assert result.mean_var_coef_non_cont == np.mean(var_coef)
+        assert result.mean_var_coef_cont == 0.0
 
         # All variables stats should match non-continuous
-        assert result.mean_variable_coefficient_all == result.mean_variable_coefficient_non_continuous
+        assert result.mean_var_coef_all == result.mean_var_coef_non_cont
 
     def test_sparse_model(self, sparse_model: Model) -> None:
         """Test feature extraction on a sparse model."""
@@ -141,10 +134,10 @@ class TestLinearConstraintMatrixFeatures:
 
         # Sparse model should have low coefficient sums
         vars_coef = [1, 1, 0, 0, 0, 1, 1, 1, 0, 1]
-        assert result.mean_variable_coefficient_all == np.mean(vars_coef)
+        assert result.mean_var_coef_all == np.mean(vars_coef)
 
         # Variation coefficients may be high due to sparsity
-        assert result.vc_variable_coefficient_all == np.std(vars_coef) / np.mean(vars_coef)
+        assert result.vc_var_coef_all == np.std(vars_coef) / np.mean(vars_coef)
 
     def test_dense_model(self, dense_model: Model) -> None:
         """Test feature extraction on a dense model."""
@@ -154,16 +147,16 @@ class TestLinearConstraintMatrixFeatures:
         # Dense model should have higher coefficient sums
         vars_coef = [10, 4, 5, 5]
         con_coef = [4, 6, 7, 7]
-        assert result.mean_variable_coefficient_all == np.mean(vars_coef)
-        assert result.mean_constraint_coefficient == np.mean(con_coef)
+        assert result.mean_var_coef_all == np.mean(vars_coef)
+        assert result.mean_cons_coefficient == np.mean(con_coef)
 
         # Most variables appear in most constraints
         con_vars = [10, 4]
         nc_vars = [5, 5]
-        assert result.mean_variable_coefficient_continuous == np.mean(con_vars)
-        assert result.mean_variable_coefficient_non_continuous == np.mean(nc_vars)
+        assert result.mean_var_coef_cont == np.mean(con_vars)
+        assert result.mean_var_coef_non_cont == np.mean(nc_vars)
 
-    def test_variable_coefficient_calculation(self) -> None:
+    def test_var_coef_calculation(self) -> None:
         """Test variable coefficient sum calculation with known values."""
         model = Model("var_coef_test")
 
@@ -181,9 +174,9 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Mean of variable coefficients should be (3 + 7) / 2 = 5
-        assert result.mean_variable_coefficient_continuous == pytest.approx(5.0)
+        assert result.mean_var_coef_cont == pytest.approx(5.0)
 
-    def test_constraint_coefficient_calculation(self) -> None:
+    def test_cons_coef_calculation(self) -> None:
         """Test constraint coefficient sum calculation with known values."""
         model = Model("cons_coef_test")
 
@@ -201,9 +194,9 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Mean of constraint coefficients should be (5 + 5) / 2 = 5
-        assert result.mean_constraint_coefficient_continuous == pytest.approx(5.0)
+        assert result.mean_cons_coef_cont == pytest.approx(5.0)
 
-    def test_normalized_constraint_matrix_entries(self) -> None:
+    def test_norm_cons_matrix_entr(self) -> None:
         """Test normalized constraint matrix entry calculations."""
         model = Model("normalized_test")
 
@@ -219,7 +212,7 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
         no_mat = np.array([[2, 4], [1, 2]]) / np.array([[10], [5]])
         # Normalized entries should be computed by dividing by RHS
-        assert result.mean_distribution_of_normalized_constraint_matrix_entries_continuous == np.mean(no_mat)
+        assert result.mean_dist_of_norm_cons_matrix_entr_cont == np.mean(no_mat)
 
     def test_zero_rhs_handling(self) -> None:
         """Test that zero RHS values are handled correctly in normalization."""
@@ -237,11 +230,11 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Should handle zero RHS without division by zero
-        assert np.isfinite(result.mean_distribution_of_normalized_constraint_matrix_entries_continuous)
+        assert np.isfinite(result.mean_dist_of_norm_cons_matrix_entr_cont)
 
-    def test_variation_coefficient_normalized_entries(self) -> None:
+    def test_varicoef_norm_entr(self) -> None:
         """Test variation coefficient of normalized entries per row."""
-        model = Model("vc_normalized_test")
+        model = Model("vc_norm_test")
 
         with model.environment:
             x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
@@ -256,8 +249,8 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Variation coefficient per row should be computed
-        assert result.mean_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_continuous >= 0
-        assert result.vc_variation_coefficient_of_normalized_absolute_non_zero_entries_per_row_continuous >= 0
+        assert result.mean_vari_coef_of_norm_abs_non_zero_entr_per_row_cont >= 0
+        assert result.vc_vari_coef_of_norm_abs_non_zero_entr_per_row_cont >= 0
 
     def test_quadratic_model_linear_constraints_only(self, quadratic_model: Model) -> None:
         """Test that only linear constraints are considered."""
@@ -265,8 +258,8 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(quadratic_model)
 
         # Should process linear constraints only
-        assert result.mean_variable_coefficient_all >= 0
-        assert result.mean_constraint_coefficient >= 0
+        assert result.mean_var_coef_all >= 0
+        assert result.mean_cons_coefficient >= 0
 
     def test_negative_coefficients_handling(self) -> None:
         """Test handling of negative coefficients."""
@@ -284,8 +277,8 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Should handle negative coefficients (sums use actual values, not absolute)
-        assert np.isfinite(result.mean_variable_coefficient_continuous)
-        assert np.isfinite(result.mean_constraint_coefficient_continuous)
+        assert np.isfinite(result.mean_var_coef_cont)
+        assert np.isfinite(result.mean_cons_coef_cont)
 
     def test_all_statistics_non_negative_or_valid(self, mixed_integer_model: Model) -> None:
         """Test that all statistics are valid (finite and non-negative where appropriate)."""
@@ -293,20 +286,20 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(mixed_integer_model)
 
         # Check all means are finite
-        assert np.isfinite(result.mean_variable_coefficient_continuous)
-        assert np.isfinite(result.mean_variable_coefficient_non_continuous)
-        assert np.isfinite(result.mean_variable_coefficient_all)
-        assert np.isfinite(result.mean_constraint_coefficient_continuous)
-        assert np.isfinite(result.mean_constraint_coefficient_non_continuous)
-        assert np.isfinite(result.mean_constraint_coefficient)
+        assert np.isfinite(result.mean_var_coef_cont)
+        assert np.isfinite(result.mean_var_coef_non_cont)
+        assert np.isfinite(result.mean_var_coef_all)
+        assert np.isfinite(result.mean_cons_coef_cont)
+        assert np.isfinite(result.mean_cons_coef_non_cont)
+        assert np.isfinite(result.mean_cons_coefficient)
 
         # Check all variation coefficients are non-negative and finite
-        assert result.vc_variable_coefficient_continuous >= 0
-        assert result.vc_variable_coefficient_non_continuous >= 0
-        assert result.vc_variable_coefficient_all >= 0
-        assert result.vc_constraint_coefficient_continuous >= 0
-        assert result.vc_constraint_coefficient_non_continuous >= 0
-        assert result.vc_constraint_coefficient >= 0
+        assert result.vc_var_coef_cont >= 0
+        assert result.vc_var_coef_non_cont >= 0
+        assert result.vc_var_coef_all >= 0
+        assert result.vc_cons_coef_cont >= 0
+        assert result.vc_cons_coef_non_cont >= 0
+        assert result.vc_cons_coefficient >= 0
 
     def test_deterministic_results(self, mixed_integer_model: Model) -> None:
         """Test that multiple runs produce identical results."""
@@ -328,7 +321,7 @@ class TestLinearConstraintMatrixFeatures:
 
             assert value1 == value2, f"Attribute '{attr}' differs between runs"
 
-    def test_single_constraint_single_variable(self) -> None:
+    def test_single_cons_single_variable(self) -> None:
         """Test edge case with single constraint and single variable."""
         model = Model("single_single")
 
@@ -342,13 +335,13 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Single variable coefficient = 5
-        assert result.mean_variable_coefficient_continuous == 5.0
+        assert result.mean_var_coef_cont == 5.0
         # Single constraint coefficient = 5
-        assert result.mean_constraint_coefficient_continuous == 5.0
+        assert result.mean_cons_coef_cont == 5.0
         # No variation with single value
-        assert result.vc_variable_coefficient_continuous == 0.0
+        assert result.vc_var_coef_cont == 0.0
 
-    def test_zero_coefficient_rows(self) -> None:
+    def test_zero_coef_rows(self) -> None:
         """Test handling when some variables don't appear in constraints."""
         model = Model("zero_coef_rows")
 
@@ -369,19 +362,19 @@ class TestLinearConstraintMatrixFeatures:
         # x has coefficient sum of 2 + 1 = 3
         # y has coefficient sum of 3 + 1 = 4
         # Mean = (3 + 4 + 0) / 3 = 7/3
-        assert result.mean_variable_coefficient_continuous == pytest.approx(7 / 3)
+        assert result.mean_var_coef_cont == pytest.approx(7 / 3)
 
-    def test_variation_coefficient_consistency(self, dense_model: Model) -> None:
+    def test_varicoef_consistency(self, dense_model: Model) -> None:
         """Test that variation coefficients are consistent with means and stds."""
         extractor = LinearConstraintMatrixFeatures()
         result = extractor.run(dense_model)
 
         # VC = std / mean (when mean != 0)
         # This is tested implicitly by checking non-negativity
-        assert result.vc_variable_coefficient_all >= 0
-        assert result.vc_constraint_coefficient >= 0
+        assert result.vc_var_coef_all >= 0
+        assert result.vc_cons_coefficient >= 0
 
         # If mean is positive and VC is 0, there should be no variation
-        if result.mean_variable_coefficient_all > 0 and result.vc_variable_coefficient_all == 0:
+        if result.mean_var_coef_all > 0 and result.vc_var_coef_all == 0:
             # All variable coefficients are the same
             pass

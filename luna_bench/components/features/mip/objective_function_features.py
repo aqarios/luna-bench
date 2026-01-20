@@ -68,39 +68,39 @@ class ObjectiveFunctionFeatureResult(ArbitraryDataDomain):
         Standard deviation of square-root-normalized absolute objective function coefficients for all variables.
     """
 
-    # absolute objective function coefficients - continuous
+    # continuous
     mean_abscoefs_c: float
     std_abscoefs_c: float
 
-    # absolute objective function coefficients - non-continuous
+    # non-continuous
     mean_abscoefs_nc: float
     std_abscoefs_nc: float
 
-    # absolute objective function coefficients - all
+    # all types
     mean_abscoefs_v: float
     std_abscoefs_v: float
 
-    # Normalized absolute objective function coefficients - continuous
+    # normalized continuous
     mean_norm_abscoefs_c: float
     std_norm_abscoefs_c: float
 
-    # Normalized absolute objective function coefficients - non-continuous
+    # normalized non-continuous
     mean_norm_abscoefs_nc: float
     std_norm_abscoefs_nc: float
 
-    # Normalized absolute objective function coefficients - all
+    # normalized all types
     mean_norm_abscoefs_v: float
     std_norm_abscoefs_v: float
 
-    # Square-root-normalized absolute objective function coefficients - continuous
+    # sqrt abs continuous
     mean_sqrtnorm_abscoefs_c: float
     std_sqrtnorm_abscoefs_c: float
 
-    # Square-root-normalized absolute objective function coefficients - non-continuous
+    # sqrt abs non-continuous
     mean_sqrtnorm_abscoefs_nc: float
     std_sqrtnorm_abscoefs_nc: float
 
-    # Square-root-normalized absolute objective function coefficients - all
+    # sqrt abs all types
     mean_sqrtnorm_abscoefs_v: float
     std_sqrtnorm_abscoefs_v: float
 
@@ -145,31 +145,31 @@ class ObjectiveFunctionFeature(IFeature):
         sqrtnorm_abscoefs_v = self._normalize(av, abscoefs_v, indices_v, np.sqrt)
 
         return ObjectiveFunctionFeatureResult(
-            # absolute objective function coefficients - continuous
+            # abs continuous
             mean_abscoefs_c=NumpyStatsHelper.mean(abscoefs_c),
             std_abscoefs_c=NumpyStatsHelper.std(abscoefs_c),
-            # absolute objective function coefficients - non-continuous
+            # abs non-continuous
             mean_abscoefs_nc=NumpyStatsHelper.mean(abscoefs_nc),
             std_abscoefs_nc=NumpyStatsHelper.std(abscoefs_nc),
-            # absolute objective function coefficients - all
+            # abs all types
             mean_abscoefs_v=NumpyStatsHelper.mean(abscoefs_v),
             std_abscoefs_v=NumpyStatsHelper.std(abscoefs_v),
-            # Normalized absolute objective function coefficients - continuous
+            # norm abs continuous
             mean_norm_abscoefs_c=NumpyStatsHelper.mean(norm_abscoefs_c),
             std_norm_abscoefs_c=NumpyStatsHelper.std(norm_abscoefs_c),
-            # Normalized absolute objective function coefficients - non-continuous
+            # norm abs non-continuous
             mean_norm_abscoefs_nc=NumpyStatsHelper.mean(norm_abscoefs_nc),
             std_norm_abscoefs_nc=NumpyStatsHelper.std(norm_abscoefs_nc),
-            # Normalized absolute objective function coefficients - all
+            # norm abs all
             mean_norm_abscoefs_v=NumpyStatsHelper.mean(norm_abscoefs_v),
             std_norm_abscoefs_v=NumpyStatsHelper.std(norm_abscoefs_v),
-            # Square-root-normalized absolute objective function coefficients - continuous
+            # sqrt norm abs continuous
             mean_sqrtnorm_abscoefs_c=NumpyStatsHelper.mean(sqrtnorm_abscoefs_c),
             std_sqrtnorm_abscoefs_c=NumpyStatsHelper.std(sqrtnorm_abscoefs_c),
-            # Square-root-normalized absolute objective function coefficients - non-continuous
+            # sqrt norm abs non-continuous
             mean_sqrtnorm_abscoefs_nc=NumpyStatsHelper.mean(sqrtnorm_abscoefs_nc),
             std_sqrtnorm_abscoefs_nc=NumpyStatsHelper.std(sqrtnorm_abscoefs_nc),
-            # Square-root-normalized absolute objective function coefficients - all
+            # sqrt norm abs all types
             mean_sqrtnorm_abscoefs_v=NumpyStatsHelper.mean(sqrtnorm_abscoefs_v),
             std_sqrtnorm_abscoefs_v=NumpyStatsHelper.std(sqrtnorm_abscoefs_v),
         )

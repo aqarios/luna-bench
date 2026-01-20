@@ -26,109 +26,109 @@ class VariableConstraintGraphFeaturesResult(ArbitraryDataDomain):
 
     Attributes
     ----------
-    mean_variable_node_degree_continuous : float
+    mean_var_node_degree_cont : float
         Mean node degree for continuous variables.
-    median_variable_node_degree_continuous : float
+    median_var_node_degree_cont : float
         Median node degree for continuous variables.
-    vc_variable_node_degree_continuous : float
+    vc_var_node_degree_cont : float
         Variation coefficient of node degrees for continuous variables.
-    q90_variable_node_degree_continuous : float
+    q90_var_node_degree_cont : float
         90th percentile of node degrees for continuous variables.
-    q10_variable_node_degree_continuous : float
+    q10_var_node_degree_cont : float
         10th percentile of node degrees for continuous variables.
-    mean_variable_node_degree_non_continuous : float
+    mean_var_node_degree_non_cont : float
         Mean node degree for non-continuous variables.
-    median_variable_node_degree_non_continuous : float
+    median_var_node_degree_non_cont : float
         Median node degree for non-continuous variables.
-    vc_variable_node_degree_non_continuous : float
+    vc_var_node_degree_non_cont : float
         Variation coefficient of node degrees for non-continuous variables.
-    q90_variable_node_degree_non_continuous : float
+    q90_var_node_degree_non_cont : float
         90th percentile of node degrees for non-continuous variables.
-    q10_variable_node_degree_non_continuous : float
+    q10_var_node_degree_non_cont : float
         10th percentile of node degrees for non-continuous variables.
-    mean_variable_node_degree_all : float
+    mean_var_node_degree_all : float
         Mean node degree for all variables.
-    median_variable_node_degree_all : float
+    median_var_node_degree_all : float
         Median node degree for all variables.
-    vc_variable_node_degree_all : float
+    vc_var_node_degree_all : float
         Variation coefficient of node degrees for all variables.
-    q90_variable_node_degree_all : float
+    q90_var_node_degree_all : float
         90th percentile of node degrees for all variables.
-    q10_variable_node_degree_all : float
+    q10_var_node_degree_all : float
         10th percentile of node degrees for all variables.
-    mean_constraint_node_degree : float
+    mean_cons_node_degree : float
         Mean node degree for all constraints.
-    median_constraint_node_degree : float
+    median_cons_node_degree : float
         Median node degree for all constraints.
-    vc_constraint_node_degree : float
+    vc_cons_node_degree : float
         Variation coefficient of constraint node degrees.
-    q90_constraint_node_degree : float
+    q90_cons_node_degree : float
         90th percentile of constraint node degrees.
-    q10_constraint_node_degree : float
+    q10_cons_node_degree : float
         10th percentile of constraint node degrees.
-    mean_constraint_node_degree_continuous : float
+    mean_cons_node_degree_cont : float
         Mean node degree for continuous constraints.
-    median_constraint_node_degree_continuous : float
+    median_cons_node_degree_cont : float
         Median node degree for continuous constraints.
-    vc_constraint_node_degree_continuous : float
+    vc_cons_node_degree_cont : float
         Variation coefficient of node degrees for continuous constraints.
-    q90_constraint_node_degree_continuous : float
+    q90_cons_node_degree_cont : float
         90th percentile of node degrees for continuous constraints.
-    q10_constraint_node_degree_continuous : float
+    q10_cons_node_degree_cont : float
         10th percentile of node degrees for continuous constraints.
-    mean_constraint_node_degree_non_continuous : float
+    mean_cons_node_degree_non_cont : float
         Mean node degree for non-continuous constraints.
-    median_constraint_node_degree_non_continuous : float
+    median_cons_node_degree_non_cont : float
         Median node degree for non-continuous constraints.
-    vc_constraint_node_degree_non_continuous : float
+    vc_cons_node_degree_non_cont : float
         Variation coefficient of node degrees for non-continuous constraints.
-    q90_constraint_node_degree_non_continuous : float
+    q90_cons_node_degree_non_cont : float
         90th percentile of node degrees for non-continuous constraints.
-    q10_constraint_node_degree_non_continuous : float
+    q10_cons_node_degree_non_cont : float
         10th percentile of node degrees for non-continuous constraints.
     """
 
     # Variable node degree statistics - continuous
-    mean_variable_node_degree_continuous: float
-    median_variable_node_degree_continuous: float
-    vc_variable_node_degree_continuous: float
-    q90_variable_node_degree_continuous: float
-    q10_variable_node_degree_continuous: float
+    mean_var_node_degree_cont: float
+    median_var_node_degree_cont: float
+    vc_var_node_degree_cont: float
+    q90_var_node_degree_cont: float
+    q10_var_node_degree_cont: float
 
     # Variable node degree statistics - non-continuous
-    mean_variable_node_degree_non_continuous: float
-    median_variable_node_degree_non_continuous: float
-    vc_variable_node_degree_non_continuous: float
-    q90_variable_node_degree_non_continuous: float
-    q10_variable_node_degree_non_continuous: float
+    mean_var_node_degree_non_cont: float
+    median_var_node_degree_non_cont: float
+    vc_var_node_degree_non_cont: float
+    q90_var_node_degree_non_cont: float
+    q10_var_node_degree_non_cont: float
 
     # Variable node degree statistics - all
-    mean_variable_node_degree_all: float
-    median_variable_node_degree_all: float
-    vc_variable_node_degree_all: float
-    q90_variable_node_degree_all: float
-    q10_variable_node_degree_all: float
+    mean_var_node_degree_all: float
+    median_var_node_degree_all: float
+    vc_var_node_degree_all: float
+    q90_var_node_degree_all: float
+    q10_var_node_degree_all: float
 
     # Constraint node degree statistics - all
-    mean_constraint_node_degree: float
-    median_constraint_node_degree: float
-    vc_constraint_node_degree: float
-    q90_constraint_node_degree: float
-    q10_constraint_node_degree: float
+    mean_cons_node_degree: float
+    median_cons_node_degree: float
+    vc_cons_node_degree: float
+    q90_cons_node_degree: float
+    q10_cons_node_degree: float
 
     # Constraint node degree statistics - continuous
-    mean_constraint_node_degree_continuous: float
-    median_constraint_node_degree_continuous: float
-    vc_constraint_node_degree_continuous: float
-    q90_constraint_node_degree_continuous: float
-    q10_constraint_node_degree_continuous: float
+    mean_cons_node_degree_cont: float
+    median_cons_node_degree_cont: float
+    vc_cons_node_degree_cont: float
+    q90_cons_node_degree_cont: float
+    q10_cons_node_degree_cont: float
 
     # Constraint node degree statistics - non-continuous
-    mean_constraint_node_degree_non_continuous: float
-    median_constraint_node_degree_non_continuous: float
-    vc_constraint_node_degree_non_continuous: float
-    q90_constraint_node_degree_non_continuous: float
-    q10_constraint_node_degree_non_continuous: float
+    mean_cons_node_degree_non_cont: float
+    median_cons_node_degree_non_cont: float
+    vc_cons_node_degree_non_cont: float
+    q90_cons_node_degree_non_cont: float
+    q10_cons_node_degree_non_cont: float
 
 
 @feature
@@ -161,8 +161,8 @@ class VariableConstraintGraphFeatures(IFeature):
         # Continuous
         ac, _ = ModelMatrix.constraint_matrix(model, degree=ConstraintDegree.LINEAR, vtype=Vtype.Real)
         ac_binary = (ac != 0).astype(int)
-        ac_vnd = np.sum(ac_binary, axis=0)  # Variable node degrees
-        ac_cnd = np.sum(ac_binary, axis=1)  # Constraint node degrees
+        ac_vnd = np.sum(ac_binary, axis=0)
+        ac_cnd = np.sum(ac_binary, axis=1)
 
         # Non-continuous
         anc, _ = ModelMatrix.constraint_matrix(
@@ -179,40 +179,40 @@ class VariableConstraintGraphFeatures(IFeature):
         av_cnd = np.sum(av_binary, axis=1)
 
         return VariableConstraintGraphFeaturesResult(
-            # Variable node degree statistics - continuous
-            mean_variable_node_degree_continuous=NumpyStatsHelper.mean(ac_vnd),
-            median_variable_node_degree_continuous=NumpyStatsHelper.median(ac_vnd),
-            vc_variable_node_degree_continuous=NumpyStatsHelper.vc(ac_vnd),
-            q90_variable_node_degree_continuous=NumpyStatsHelper.q90(ac_vnd),
-            q10_variable_node_degree_continuous=NumpyStatsHelper.q10(ac_vnd),
-            # Variable node degree statistics - non-continuous
-            mean_variable_node_degree_non_continuous=NumpyStatsHelper.mean(anc_vnd),
-            median_variable_node_degree_non_continuous=NumpyStatsHelper.median(anc_vnd),
-            vc_variable_node_degree_non_continuous=NumpyStatsHelper.vc(anc_vnd),
-            q90_variable_node_degree_non_continuous=NumpyStatsHelper.q90(anc_vnd),
-            q10_variable_node_degree_non_continuous=NumpyStatsHelper.q10(anc_vnd),
-            # Variable node degree statistics - all
-            mean_variable_node_degree_all=NumpyStatsHelper.mean(av_vnd),
-            median_variable_node_degree_all=NumpyStatsHelper.median(av_vnd),
-            vc_variable_node_degree_all=NumpyStatsHelper.vc(av_vnd),
-            q90_variable_node_degree_all=NumpyStatsHelper.q90(av_vnd),
-            q10_variable_node_degree_all=NumpyStatsHelper.q10(av_vnd),
-            # Constraint node degree statistics - all
-            mean_constraint_node_degree=NumpyStatsHelper.mean(av_cnd),
-            median_constraint_node_degree=NumpyStatsHelper.median(av_cnd),
-            vc_constraint_node_degree=NumpyStatsHelper.vc(av_cnd),
-            q90_constraint_node_degree=NumpyStatsHelper.q90(av_cnd),
-            q10_constraint_node_degree=NumpyStatsHelper.q10(av_cnd),
-            # Constraint node degree statistics - continuous
-            mean_constraint_node_degree_continuous=NumpyStatsHelper.mean(ac_cnd),
-            median_constraint_node_degree_continuous=NumpyStatsHelper.median(ac_cnd),
-            vc_constraint_node_degree_continuous=NumpyStatsHelper.vc(ac_cnd),
-            q90_constraint_node_degree_continuous=NumpyStatsHelper.q90(ac_cnd),
-            q10_constraint_node_degree_continuous=NumpyStatsHelper.q10(ac_cnd),
-            # Constraint node degree statistics - non-continuous
-            mean_constraint_node_degree_non_continuous=NumpyStatsHelper.mean(anc_cnd),
-            median_constraint_node_degree_non_continuous=NumpyStatsHelper.median(anc_cnd),
-            vc_constraint_node_degree_non_continuous=NumpyStatsHelper.vc(anc_cnd),
-            q90_constraint_node_degree_non_continuous=NumpyStatsHelper.q90(anc_cnd),
-            q10_constraint_node_degree_non_continuous=NumpyStatsHelper.q10(anc_cnd),
+            # var continuous
+            mean_var_node_degree_cont=NumpyStatsHelper.mean(ac_vnd),
+            median_var_node_degree_cont=NumpyStatsHelper.median(ac_vnd),
+            vc_var_node_degree_cont=NumpyStatsHelper.vc(ac_vnd),
+            q90_var_node_degree_cont=NumpyStatsHelper.q90(ac_vnd),
+            q10_var_node_degree_cont=NumpyStatsHelper.q10(ac_vnd),
+            # var non-continuous
+            mean_var_node_degree_non_cont=NumpyStatsHelper.mean(anc_vnd),
+            median_var_node_degree_non_cont=NumpyStatsHelper.median(anc_vnd),
+            vc_var_node_degree_non_cont=NumpyStatsHelper.vc(anc_vnd),
+            q90_var_node_degree_non_cont=NumpyStatsHelper.q90(anc_vnd),
+            q10_var_node_degree_non_cont=NumpyStatsHelper.q10(anc_vnd),
+            # var all types vars
+            mean_var_node_degree_all=NumpyStatsHelper.mean(av_vnd),
+            median_var_node_degree_all=NumpyStatsHelper.median(av_vnd),
+            vc_var_node_degree_all=NumpyStatsHelper.vc(av_vnd),
+            q90_var_node_degree_all=NumpyStatsHelper.q90(av_vnd),
+            q10_var_node_degree_all=NumpyStatsHelper.q10(av_vnd),
+            # cons all types
+            mean_cons_node_degree=NumpyStatsHelper.mean(av_cnd),
+            median_cons_node_degree=NumpyStatsHelper.median(av_cnd),
+            vc_cons_node_degree=NumpyStatsHelper.vc(av_cnd),
+            q90_cons_node_degree=NumpyStatsHelper.q90(av_cnd),
+            q10_cons_node_degree=NumpyStatsHelper.q10(av_cnd),
+            # cons continuous
+            mean_cons_node_degree_cont=NumpyStatsHelper.mean(ac_cnd),
+            median_cons_node_degree_cont=NumpyStatsHelper.median(ac_cnd),
+            vc_cons_node_degree_cont=NumpyStatsHelper.vc(ac_cnd),
+            q90_cons_node_degree_cont=NumpyStatsHelper.q90(ac_cnd),
+            q10_cons_node_degree_cont=NumpyStatsHelper.q10(ac_cnd),
+            # cons non-continuous
+            mean_cons_node_degree_non_cont=NumpyStatsHelper.mean(anc_cnd),
+            median_cons_node_degree_non_cont=NumpyStatsHelper.median(anc_cnd),
+            vc_cons_node_degree_non_cont=NumpyStatsHelper.vc(anc_cnd),
+            q90_cons_node_degree_non_cont=NumpyStatsHelper.q90(anc_cnd),
+            q10_cons_node_degree_non_cont=NumpyStatsHelper.q10(anc_cnd),
         )
