@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING
 
 import numpy as np
 from luna_quantum import Model, Unbounded, Vtype
+from pydantic import BaseModel
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
+from luna_bench.components.features.base_results import BaseStatsResult1D
 from luna_bench.components.helper.degree import ConstraintDegree
 from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
@@ -20,19 +23,106 @@ class ModelBoundsError(Exception):
     """Raised when model bounds are None or invalid."""
 
     def __init__(self, model_name: str | None = None, expected_bounds: str | None = None) -> None:
-        """Initialize ModdelBoundError."""
+        """Initialize ModelBoundsError."""
         self.model_name = model_name
         self.expected_bounds = expected_bounds
         super().__init__()
 
     def __str__(self) -> str:
-        """Return string representation of ModelBoundError."""
+        """Return string representation of ModelBoundsError."""
         base_msg = super().__str__()
         if self.model_name:
             base_msg += f" (model: {self.model_name})"
         if self.expected_bounds:
             base_msg += f" (expected: {self.expected_bounds})"
         return base_msg
+
+
+class VarType(str, Enum):
+    """Type of variable being counted."""
+
+    BOOLEAN = "boolean"  # Binary variables
+    INTEGER = "integer"  # Integer variables
+    CONTINUOUS = "continuous"  # Real/continuous variables
+    SEMI_CONTINUOUS = "semi_continuous"  # Semi-continuous variables
+    SEMI_INTEGER = "semi_integer"  # Semi-integer variables
+    NON_CONTINUOUS = "non_continuous"  # Binary + Integer combined
+    UNBOUNDED_NON_CONTINUOUS = "unbounded_non_continuous"  # Non-continuous without bounds
+
+
+class VarCountStats(BaseModel):
+    """
+    Container for variable count statistics.
+
+    Attributes
+    ----------
+    var_type : VarType
+        The type of variable being counted.
+    count : int
+        Absolute count of variables of this type.
+    fraction : float
+        Fraction of total variables (count / num_vars).
+    """
+
+    var_type: VarType
+    count: int
+    fraction: float
+
+    # Add mean property to satisfy BaseStatsResult1D interface
+    @property
+    def mean(self) -> float:
+        """Return fraction as mean for compatibility with base class."""
+        return self.fraction
+
+
+class VarCountResult(BaseStatsResult1D[VarType, VarCountStats]):
+    """
+    Result container for variable count statistics.
+
+    Access patterns:
+        - result.get(VarType.BOOLEAN) -> VarCountStats
+        - result.get_num(VarType.BOOLEAN) -> int
+        - result.get_frac(VarType.BOOLEAN) -> float
+        - result.all_stats() -> Dict[VarType, VarCountStats]
+    """
+
+    @staticmethod
+    def _type_enum() -> type[VarType]:
+        """Return the VarType enum class."""
+        return VarType
+
+    def get_num(self, var_type: VarType) -> int:
+        """Direct access to variable count."""
+        return self.get(var_type).count
+
+    def get_frac(self, var_type: VarType) -> float:
+        """Direct access to variable fraction."""
+        return self.get(var_type).fraction
+
+
+class SupportSizeStats(BaseModel):
+    """
+    Container for support size statistics.
+
+    Attributes
+    ----------
+    mean : float
+        Mean support size across bounded variables.
+    median : float
+        Median support size across bounded variables.
+    variation_coefficient : float
+        Variation coefficient of support sizes.
+    q90 : float
+        90th percentile of support sizes.
+    q10 : float
+        10th percentile of support sizes.
+    """
+
+    mean: float
+    median: float
+    variation_coefficient: float
+    q90: float
+    q10: float
 
 
 class ProblemSizeFeaturesResult(ArbitraryDataDomain):
@@ -42,6 +132,11 @@ class ProblemSizeFeaturesResult(ArbitraryDataDomain):
     This class stores various metrics related to the size and structure of an
     optimization problem, including counts of variables and constraints by type,
     sparsity measures, and support size statistics.
+
+    Access patterns for variable counts:
+        - result.var_counts.get(VarType.BOOLEAN) -> VarCountStats
+        - result.var_counts.get_num(VarType.BOOLEAN) -> int
+        - result.var_counts.get_frac(VarType.BOOLEAN) -> float
 
     Attributes
     ----------
@@ -55,44 +150,10 @@ class ProblemSizeFeaturesResult(ArbitraryDataDomain):
         Number of quadratic constraints.
     num_non_zero_entries_quadratic_constraint_matrix : int
         Number of non-zero entries in the quadratic constraint matrix.
-    num_boolean_vars : int
-        Number of binary/boolean variables.
-    num_integer_vars : int
-        Number of integer variables.
-    num_cont_vars : int
-        Number of continuous (real) variables.
-    num_semi_cont_vars : int
-        Number of semi-continuous variables.
-    num_semi_integer_vars : int
-        Number of semi-integer variables.
-    frac_boolean_vars : float
-        Fraction of boolean variables relative to total variables.
-    frac_integer_vars : float
-        Fraction of integer variables relative to total variables.
-    frac_cont_vars : float
-        Fraction of continuous variables relative to total variables.
-    frac_semi_cont_vars : float
-        Fraction of semi-continuous variables relative to total variables.
-    frac_semi_integer_vars : float
-        Fraction of semi-integer variables relative to total variables.
-    num_non_cont_vars : int
-        Total number of non-continuous variables (binary + integer).
-    frac_non_cont_vars : float
-        Fraction of non-continuous variables relative to total variables.
-    num_unbounded_non_cont_vars : int
-        Number of non-continuous variables without bounds.
-    frac_unbounded_non_cont_vars : float
-        Fraction of unbounded non-continuous variables relative to total variables.
-    mean_support_size : float
-        Mean support size across bounded variables.
-    median_support_size : float
-        Median support size across bounded variables.
-    vc_support_size : float
-        Variation coefficient of support sizes.
-    q90_support_size : float
-        90th percentile of support sizes.
-    q10_support_size : float
-        10th percentile of support sizes.
+    var_counts : VarCountResult
+        Variable count statistics organized by type.
+    support_size : SupportSizeStats
+        Statistical measures of variable support sizes.
     """
 
     num_vars: int
@@ -100,25 +161,8 @@ class ProblemSizeFeaturesResult(ArbitraryDataDomain):
     num_non_zero_entries_linear_constraint_matrix: int
     num_quadratic_constraints: int
     num_non_zero_entries_quadratic_constraint_matrix: int
-    num_boolean_vars: int
-    num_integer_vars: int
-    num_cont_vars: int
-    num_semi_cont_vars: int
-    num_semi_integer_vars: int
-    frac_boolean_vars: float
-    frac_integer_vars: float
-    frac_cont_vars: float
-    frac_semi_cont_vars: float
-    frac_semi_integer_vars: float
-    num_non_cont_vars: int
-    frac_non_cont_vars: float
-    num_unbounded_non_cont_vars: int
-    frac_unbounded_non_cont_vars: float
-    mean_support_size: float
-    median_support_size: float
-    vc_support_size: float
-    q90_support_size: float
-    q10_support_size: float
+    var_counts: VarCountResult
+    support_size: SupportSizeStats
 
 
 @feature
@@ -155,55 +199,67 @@ class ProblemSizeFeatures(IFeature):
         num_quad_constr = sum(c.lhs.degree() == ConstraintDegree.QUADRATIC for c in model.constraints)
         variables = list(model.variables())
 
-        # luna-model does not explicity supports semi continuous / integer variables
-        num_bool, num_int, num_cont, num_semi_cont, num_semi_int, num_unbound_non_cont = 0, 0, 0, 0, 0, 0
+        # Count variables by type
+        counts = {
+            VarType.BOOLEAN: 0,
+            VarType.INTEGER: 0,
+            VarType.CONTINUOUS: 0,
+            VarType.SEMI_CONTINUOUS: 0,
+            VarType.SEMI_INTEGER: 0,
+            VarType.UNBOUNDED_NON_CONTINUOUS: 0,
+        }
+
         for var in variables:
             match var.vtype:
                 case Vtype.Binary:
-                    num_bool += 1
+                    counts[VarType.BOOLEAN] += 1
                 case Vtype.Integer:
                     if isinstance(var.bounds.lower, Unbounded) and isinstance(var.bounds.upper, Unbounded):
-                        num_int += 1
-                        num_unbound_non_cont += 1
+                        counts[VarType.INTEGER] += 1
+                        counts[VarType.UNBOUNDED_NON_CONTINUOUS] += 1
                     elif (isinstance(var.bounds.lower, Unbounded) or isinstance(var.bounds.upper, Unbounded)) or (
                         isinstance(var.bounds.lower, float) or isinstance(var.bounds.upper, float)
                     ):
-                        num_int += 1
+                        counts[VarType.INTEGER] += 1
                     else:
                         raise ModelBoundsError(model_name=model.name, expected_bounds="[-inf, inf]")
                 case Vtype.Real:
                     if var.bounds.lower is None or var.bounds.upper is None:
                         raise ModelBoundsError(model_name=model.name, expected_bounds="[-inf, inf]")
-                    num_cont += 1
+                    counts[VarType.CONTINUOUS] += 1
 
-        num_non_cont = num_bool + num_int
+        # Compute derived count
+        counts[VarType.NON_CONTINUOUS] = counts[VarType.BOOLEAN] + counts[VarType.INTEGER]
+
+        # Build var_counts dict with VarCountStats
+        var_counts_dict: dict[str, VarCountStats] = {}
+        for var_type, count in counts.items():
+            var_counts_dict[VarCountResult.make_key(var_type)] = VarCountStats(
+                var_type=var_type,
+                count=count,
+                fraction=count / num_vars if num_vars > 0 else 0.0,
+            )
+
+        var_counts = VarCountResult(stats=var_counts_dict)
+
+        # Calculate support size statistics
         support_sizes = self._support_sizes(model)
+        support_size_stats = SupportSizeStats(
+            mean=NumpyStatsHelper.mean(support_sizes),
+            median=NumpyStatsHelper.median(support_sizes),
+            variation_coefficient=NumpyStatsHelper.vc(support_sizes),
+            q90=NumpyStatsHelper.q90(support_sizes),
+            q10=NumpyStatsHelper.q10(support_sizes),
+        )
 
         return ProblemSizeFeaturesResult(
             num_vars=num_vars,
             num_constraints=num_cons,
-            num_non_zero_entries_linear_constraint_matrix=num_non_zero_linear.astype(int),
+            num_non_zero_entries_linear_constraint_matrix=int(num_non_zero_linear),
             num_quadratic_constraints=num_quad_constr,
-            num_non_zero_entries_quadratic_constraint_matrix=num_non_zero_quad.astype(int),
-            num_boolean_vars=num_bool,
-            num_integer_vars=num_int,
-            num_cont_vars=num_cont,
-            num_semi_cont_vars=num_semi_cont,
-            num_semi_integer_vars=num_semi_int,
-            frac_boolean_vars=num_bool / num_vars if num_vars > 0 else 0.0,
-            frac_integer_vars=num_int / num_vars if num_vars > 0 else 0.0,
-            frac_cont_vars=num_cont / num_vars if num_vars > 0 else 0.0,
-            frac_semi_cont_vars=num_semi_cont / num_vars if num_vars > 0 else 0.0,
-            frac_semi_integer_vars=num_semi_int / num_vars if num_vars > 0 else 0.0,
-            num_non_cont_vars=num_non_cont,
-            frac_non_cont_vars=num_non_cont / num_vars if num_vars > 0 else 0.0,
-            num_unbounded_non_cont_vars=num_unbound_non_cont,
-            frac_unbounded_non_cont_vars=num_unbound_non_cont / num_vars if num_vars > 0 else 0.0,
-            mean_support_size=NumpyStatsHelper.mean(support_sizes),
-            median_support_size=NumpyStatsHelper.median(support_sizes),
-            vc_support_size=NumpyStatsHelper.vc(support_sizes),
-            q90_support_size=NumpyStatsHelper.q90(support_sizes),
-            q10_support_size=NumpyStatsHelper.q10(support_sizes),
+            num_non_zero_entries_quadratic_constraint_matrix=int(num_non_zero_quad),
+            var_counts=var_counts,
+            support_size=support_size_stats,
         )
 
     def _support_sizes(self, model: Model) -> NDArray[np.float64]:
@@ -225,7 +281,7 @@ class ProblemSizeFeatures(IFeature):
             Array of support sizes for bounded variables.
         """
         # Because luna model defines upper / lowerbound as unbounded and none, typing gives an irrelevant
-        # errror.
+        # error.
         support_sizes = [
             v.bounds.upper - v.bounds.lower + 1  # type: ignore[operator]
             for v in model.variables()

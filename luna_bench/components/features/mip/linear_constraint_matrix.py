@@ -1,32 +1,57 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING
 
 import numpy as np
 from luna_quantum import Vtype
+from pydantic import BaseModel
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
+from luna_bench.components.features.base_results import BaseStatsResultWithVarScope
 from luna_bench.components.helper.degree import ConstraintDegree
 from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
+from luna_bench.components.helper.var_scope import VarScope
 from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
     from luna_quantum import Model
     from numpy.typing import NDArray
 
-from pydantic import BaseModel
+
+class CoefType(str, Enum):
+    """Type of coefficient being measured."""
+
+    VARIABLE = "variable"  # Sum over constraints (column-wise sum of A)
+    CONSTRAINT = "constraint"  # Sum over variables (row-wise sum of A)
+    NORMALIZED = "normalized"  # Normalized matrix entries: a_ij / b_i
+    ROW_VARIATION = "row_variation"  # VC of row-normalized absolute non-zero entries
 
 
 class CoefStats(BaseModel):
-    """Container for coefficient statistics."""
+    """
+    Container for coefficient statistics with descriptive context.
 
-    coef_mean: float
-    coef_vc: float
+    Attributes
+    ----------
+    coef_type : CoefType
+        The type of coefficient being measured (variable, constraint, normalized, row_variation).
+    var_scope : VarScope
+        The scope of variables included (continuous, non_continuous, all).
+    mean : float
+        Mean value of the coefficients.
+    variation_coefficient : float
+        Variation coefficient (std/mean) of the coefficients.
+    """
+
+    coef_type: CoefType
+    var_scope: VarScope
+    mean: float
+    variation_coefficient: float
 
 
-class LinearConstraintMatrixFeaturesResult(ArbitraryDataDomain):
+class LinearConstraintMatrixFeaturesResult(BaseStatsResultWithVarScope[CoefType, CoefStats]):
     """
     Result container for linear constraint matrix feature calculations.
 
@@ -34,93 +59,27 @@ class LinearConstraintMatrixFeaturesResult(ArbitraryDataDomain):
     including variable and constraint coefficients, normalized matrix entries,
     and variation coefficients for different variable types.
 
+    Access patterns:
+        - result.get(CoefType.VARIABLE, VarScope.CONTINUOUS) -> CoefStats
+        - result.get_mean(CoefType.VARIABLE, VarScope.CONTINUOUS) -> float
+        - result.get_vc(CoefType.VARIABLE, VarScope.CONTINUOUS) -> float
+        - result.by_type(CoefType.VARIABLE) -> Dict[VarScope, CoefStats]
+        - result.by_scope(VarScope.CONTINUOUS) -> Dict[CoefType, CoefStats]
+
     Attributes
     ----------
-    mean_var_coef_cont : float
-        Mean of variable coefficients for continuous variables.
-    vc_var_coef_cont : float
-        Variation coefficient of variable coefficients for continuous variables.
-    mean_var_coef_non_cont : float
-        Mean of variable coefficients for non-continuous variables.
-    vc_var_coef_non_cont : float
-        Variation coefficient of variable coefficients for non-continuous variables.
-    mean_var_coef_all : float
-        Mean of variable coefficients for all variables.
-    vc_var_coef_all : float
-        Variation coefficient of variable coefficients for all variables.
-    mean_cons_coef_cont : float
-        Mean of constraint coefficients for continuous constraints.
-    vc_cons_coef_cont : float
-        Variation coefficient of constraint coefficients for continuous constraints.
-    mean_cons_coef_non_cont : float
-        Mean of constraint coefficients for non-continuous constraints.
-    vc_cons_coef_non_cont : float
-        Variation coefficient of constraint coefficients for non-continuous constraints.
-    mean_cons_coefficient : float
-        Mean of constraint coefficients for all constraints.
-    vc_cons_coefficient : float
-        Variation coefficient of constraint coefficients for all constraints.
-    mean_dist_of_norm_cons_matrix_entr_cont : float
-        Mean of normalized constraint matrix entries for continuous variables.
-    vc_dist_of_norm_cons_matrix_entr_cont : float
-        Variation coefficient of normalized entries for continuous variables.
-    mean_dist_of_norm_cons_matrix_entr_non_cont : float
-        Mean of normalized constraint matrix entries for non-continuous variables.
-    vc_dist_of_norm_cons_matrix_entr_non_cont : float
-        Variation coefficient of normalized entries for non-continuous variables.
-    mean_dist_of_norm_cons_matrix_entr : float
-        Mean of normalized constraint matrix entries for all variables.
-    vc_dist_of_norm_cons_matrix_entr : float
-        Variation coefficient of normalized entries for all variables.
-    mean_vari_coef_of_norm_abs_non_zero_entr_per_row_cont : float
-        Mean variation coefficient of row-normalized absolute non-zero entries for continuous variables.
-    vc_vari_coef_of_norm_abs_non_zero_entr_per_row_cont : float
-        Variation coefficient of the variation coefficients for continuous variables.
-    mean_vari_coef_of_norm_abs_non_zero_entr_per_row_non_cont : float
-        Mean variation coefficient of row-normalized absolute non-zero entries for non-continuous variables.
-    vc_vari_coef_of_norm_abs_non_zero_entr_per_row_non_cont : float
-        Variation coefficient of the variation coefficients for non-continuous variables.
-    mean_vari_coef_of_norm_abs_non_zero_entr_per_row : float
-        Mean variation coefficient of row-normalized absolute non-zero entries for all variables.
-    vc_vari_coef_of_norm_abs_non_zero_entr_per_row : float
-        Variation coefficient of the variation coefficients for all variables.
+    stats : Dict[str, CoefStats]
+        Dictionary mapping "{coef_type}_{var_scope}" keys to CoefStats objects.
     """
 
-    mean_var_coef_cont: float
-    vc_var_coef_cont: float
+    @staticmethod
+    def _type_enum() -> type[CoefType]:
+        """Return the CoefType enum class."""
+        return CoefType
 
-    mean_var_coef_non_cont: float
-    vc_var_coef_non_cont: float
-
-    mean_var_coef_all: float
-    vc_var_coef_all: float
-
-    mean_cons_coef_cont: float
-    vc_cons_coef_cont: float
-
-    mean_cons_coef_non_cont: float
-    vc_cons_coef_non_cont: float
-
-    mean_cons_coefficient: float
-    vc_cons_coefficient: float
-
-    mean_dist_of_norm_cons_matrix_entr_cont: float
-    vc_dist_of_norm_cons_matrix_entr_cont: float
-
-    mean_dist_of_norm_cons_matrix_entr_non_cont: float
-    vc_dist_of_norm_cons_matrix_entr_non_cont: float
-
-    mean_dist_of_norm_cons_matrix_entr: float
-    vc_dist_of_norm_cons_matrix_entr: float
-
-    mean_vari_coef_of_norm_abs_non_zero_entr_per_row_cont: float
-    vc_vari_coef_of_norm_abs_non_zero_entr_per_row_cont: float
-
-    mean_vari_coef_of_norm_abs_non_zero_entr_per_row_non_cont: float
-    vc_vari_coef_of_norm_abs_non_zero_entr_per_row_non_cont: float
-
-    mean_vari_coef_of_norm_abs_non_zero_entr_per_row: float
-    vc_vari_coef_of_norm_abs_non_zero_entr_per_row: float
+    def get_vc(self, coef_type: CoefType, var_scope: VarScope) -> float:
+        """Direct access to variation coefficient."""
+        return self.get(coef_type, var_scope).variation_coefficient
 
 
 @feature
@@ -151,55 +110,56 @@ class LinearConstraintMatrixFeatures(IFeature):
         LinearConstraintMatrixFeaturesResult
             Container with constraint matrix statistical measures.
         """
-        # Continuous
-        ac, bc = ModelMatrix.constraint_matrix(model, degree=ConstraintDegree.LINEAR, vtype=Vtype.Real, include_b=True)
-        ac_vnd = np.sum(ac, axis=0)
-        ac_cnd = np.sum(ac, axis=1)
-        ac_norm = self._norm_cons_matrix_entr(ac, bc)
-        ac_vcs = self._vc_abs_norm_cons_matrix_entr(ac)
+        stats: dict[str, CoefStats] = {}
 
-        # Non-continuous
-        anc, bnc = ModelMatrix.constraint_matrix(
-            model, degree=ConstraintDegree.LINEAR, vtype=[Vtype.Integer, Vtype.Binary], include_b=True
-        )
-        anc_vnd = np.sum(anc, axis=0)
-        anc_cnd = np.sum(anc, axis=1)
-        anc_norm = self._norm_cons_matrix_entr(anc, bnc)
-        anc_vcs = self._vc_abs_norm_cons_matrix_entr(anc)
+        # Define the variable type configurations
+        scope_configs = [
+            (VarScope.CONTINUOUS, Vtype.Real),
+            (VarScope.NON_CONTINUOUS, [Vtype.Integer, Vtype.Binary]),
+            (VarScope.ALL, None),
+        ]
 
-        # all variables
-        av, bv = ModelMatrix.constraint_matrix(model, degree=ConstraintDegree.LINEAR, vtype=None, include_b=True)
-        av_vnd = np.sum(av, axis=0)
-        av_cnd = np.sum(av, axis=1)
-        av_norm = self._norm_cons_matrix_entr(av, bv)
-        av_vcs = self._vc_abs_norm_cons_matrix_entr(av)
+        for var_scope, vtype in scope_configs:
+            # Get constraint matrix for this variable scope
+            a, b = ModelMatrix.constraint_matrix(model, degree=ConstraintDegree.LINEAR, vtype=vtype, include_b=True)
 
-        return LinearConstraintMatrixFeaturesResult(
-            mean_var_coef_cont=NumpyStatsHelper.mean(ac_vnd),
-            vc_var_coef_cont=NumpyStatsHelper.vc(ac_vnd),
-            mean_var_coef_non_cont=NumpyStatsHelper.mean(anc_vnd),
-            vc_var_coef_non_cont=NumpyStatsHelper.vc(anc_vnd),
-            mean_var_coef_all=NumpyStatsHelper.mean(av_vnd),
-            vc_var_coef_all=NumpyStatsHelper.vc(av_vnd),
-            mean_cons_coef_cont=NumpyStatsHelper.mean(ac_cnd),
-            vc_cons_coef_cont=NumpyStatsHelper.vc(ac_cnd),
-            mean_cons_coef_non_cont=NumpyStatsHelper.mean(anc_cnd),
-            vc_cons_coef_non_cont=NumpyStatsHelper.vc(anc_cnd),
-            mean_cons_coefficient=NumpyStatsHelper.mean(av_cnd),
-            vc_cons_coefficient=NumpyStatsHelper.vc(av_cnd),
-            mean_dist_of_norm_cons_matrix_entr_cont=NumpyStatsHelper.mean(ac_norm),
-            vc_dist_of_norm_cons_matrix_entr_cont=NumpyStatsHelper.vc(ac_norm),
-            mean_dist_of_norm_cons_matrix_entr_non_cont=NumpyStatsHelper.mean(anc_norm),
-            vc_dist_of_norm_cons_matrix_entr_non_cont=NumpyStatsHelper.vc(anc_norm),
-            mean_dist_of_norm_cons_matrix_entr=NumpyStatsHelper.mean(av_norm),
-            vc_dist_of_norm_cons_matrix_entr=NumpyStatsHelper.vc(av_norm),
-            mean_vari_coef_of_norm_abs_non_zero_entr_per_row_cont=NumpyStatsHelper.mean(ac_vcs),
-            vc_vari_coef_of_norm_abs_non_zero_entr_per_row_cont=NumpyStatsHelper.vc(ac_vcs),
-            mean_vari_coef_of_norm_abs_non_zero_entr_per_row_non_cont=NumpyStatsHelper.mean(anc_vcs),
-            vc_vari_coef_of_norm_abs_non_zero_entr_per_row_non_cont=NumpyStatsHelper.vc(anc_vcs),
-            mean_vari_coef_of_norm_abs_non_zero_entr_per_row=NumpyStatsHelper.mean(av_vcs),
-            vc_vari_coef_of_norm_abs_non_zero_entr_per_row=NumpyStatsHelper.vc(av_vcs),
-        )
+            # Variable coefficients (column sums)
+            var_coef = np.sum(a, axis=0)
+            stats[LinearConstraintMatrixFeaturesResult.make_key(CoefType.VARIABLE, var_scope)] = CoefStats(
+                coef_type=CoefType.VARIABLE,
+                var_scope=var_scope,
+                mean=NumpyStatsHelper.mean(var_coef),
+                variation_coefficient=NumpyStatsHelper.vc(var_coef),
+            )
+
+            # Constraint coefficients (row sums)
+            cons_coef = np.sum(a, axis=1)
+            stats[LinearConstraintMatrixFeaturesResult.make_key(CoefType.CONSTRAINT, var_scope)] = CoefStats(
+                coef_type=CoefType.CONSTRAINT,
+                var_scope=var_scope,
+                mean=NumpyStatsHelper.mean(cons_coef),
+                variation_coefficient=NumpyStatsHelper.vc(cons_coef),
+            )
+
+            # Normalized matrix entries (a_ij / b_i)
+            norm_entries = self._norm_cons_matrix_entr(a, b)
+            stats[LinearConstraintMatrixFeaturesResult.make_key(CoefType.NORMALIZED, var_scope)] = CoefStats(
+                coef_type=CoefType.NORMALIZED,
+                var_scope=var_scope,
+                mean=NumpyStatsHelper.mean(norm_entries),
+                variation_coefficient=NumpyStatsHelper.vc(norm_entries),
+            )
+
+            # Row variation coefficients
+            row_vcs = self._vc_abs_norm_cons_matrix_entr(a)
+            stats[LinearConstraintMatrixFeaturesResult.make_key(CoefType.ROW_VARIATION, var_scope)] = CoefStats(
+                coef_type=CoefType.ROW_VARIATION,
+                var_scope=var_scope,
+                mean=NumpyStatsHelper.mean(row_vcs),
+                variation_coefficient=NumpyStatsHelper.vc(row_vcs),
+            )
+
+        return LinearConstraintMatrixFeaturesResult(stats=stats)
 
     def _norm_cons_matrix_entr(self, a: NDArray[np.float64], b: NDArray[np.float64]) -> NDArray[np.float64]:
         """
@@ -239,7 +199,7 @@ class LinearConstraintMatrixFeatures(IFeature):
         Returns
         -------
         NDArray
-            array of variation coefficients per row.
+            Array of variation coefficients per row.
         """
         vcs = []
         a_rs = np.sum(np.abs(a), axis=1)

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING
 
 import numpy as np
 from luna_quantum import Comparator
+from pydantic import BaseModel
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
+from luna_bench.components.features.base_results import BaseStatsResult1D
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
 from luna_bench.helpers import feature
 
@@ -25,44 +27,64 @@ class ComparatorError(Exception):
     """
 
     def __init__(self, constraint_name: str) -> None:
-        message = f"No matching constraint comporator found for constraint {constraint_name}!"
+        message = f"No matching constraint comparator found for constraint {constraint_name}!"
         super().__init__(message)
 
 
-class RightHandSideFeaturesResult(ArbitraryDataDomain):
+class ConstraintSense(str, Enum):
+    """Sense/type of constraint based on comparator."""
+
+    LEQ = "leq"  # Less-than-or-equal (<=)
+    EQ = "eq"  # Equality (==)
+    GEQ = "geq"  # Greater-than-or-equal (>=)
+
+
+class RhsStats(BaseModel):
+    """
+    Container for right-hand side statistics with descriptive context.
+
+    Attributes
+    ----------
+    constraint_sense : ConstraintSense
+        The sense of the constraint (leq, eq, geq).
+    mean : float
+        Mean of RHS values.
+    std : float
+        Standard deviation of RHS values.
+    """
+
+    constraint_sense: ConstraintSense
+    mean: float
+    std: float
+
+
+class RightHandSideFeaturesResult(BaseStatsResult1D[ConstraintSense, RhsStats]):
     """
     Result container for right-hand side feature calculations.
 
     This class stores statistical measures of right-hand side (RHS) values
     for different types of constraints in an optimization problem.
 
+    Access patterns:
+        - result.get(ConstraintSense.LEQ) -> RhsStats
+        - result.get_mean(ConstraintSense.LEQ) -> float
+        - result.get_std(ConstraintSense.LEQ) -> float
+        - result.all_stats() -> Dict[ConstraintSense, RhsStats]
+
     Attributes
     ----------
-    mean_rhs_leq_cons : float
-        Mean of RHS values for less-than-or-equal constraints.
-    std_rhs_leq_cons : float
-        Standard deviation of RHS values for less-than-or-equal constraints.
-    mean_rhs_eq_cons : float
-        Mean of RHS values for equality constraints.
-    std_rhs_eq_cons : float
-        Standard deviation of RHS values for equality constraints.
-    mean_rhs_geq_cons : float
-        Mean of RHS values for greater-than-or-equal constraints.
-    std_rhs_geq_cons : float
-        Standard deviation of RHS values for greater-than-or-equal constraints.
+    stats : Dict[str, RhsStats]
+        Dictionary mapping constraint_sense keys to RhsStats objects.
     """
 
-    # Right-hand side for leq constraints
-    mean_rhs_leq_cons: float
-    std_rhs_leq_cons: float
+    @staticmethod
+    def _type_enum() -> type[ConstraintSense]:
+        """Return the ConstraintSense enum class."""
+        return ConstraintSense
 
-    # Right-hand side for eq constraints
-    mean_rhs_eq_cons: float
-    std_rhs_eq_cons: float
-
-    # Right-hand side for geq constraints
-    mean_rhs_geq_cons: float
-    std_rhs_geq_cons: float
+    def get_std(self, constraint_sense: ConstraintSense) -> float:
+        """Direct access to standard deviation."""
+        return self.get(constraint_sense).std
 
 
 @feature
@@ -92,25 +114,34 @@ class RightHandSideFeatures(IFeature):
         RightHandSideFeaturesResult
             Container with RHS statistical measures for each constraint type.
         """
-        rhs_leq: np.typing.NDArray[np.float64] = np.array([])
-        rhs_eq: np.typing.NDArray[np.float64] = np.array([])
-        rhs_geq: np.typing.NDArray[np.float64] = np.array([])
+        # Map Comparator to ConstraintSense
+        comparator_to_sense = {
+            Comparator.Le: ConstraintSense.LEQ,
+            Comparator.Eq: ConstraintSense.EQ,
+            Comparator.Ge: ConstraintSense.GEQ,
+        }
+
+        # Collect RHS values by constraint sense
+        rhs_values: dict[ConstraintSense, list[float]] = {
+            ConstraintSense.LEQ: [],
+            ConstraintSense.EQ: [],
+            ConstraintSense.GEQ: [],
+        }
 
         for c in model.constraints:
-            if c.comparator == Comparator.Le:
-                rhs_leq = np.append(rhs_leq, c.rhs)
-            elif c.comparator == Comparator.Eq:
-                rhs_eq = np.append(rhs_eq, c.rhs)
-            elif c.comparator == Comparator.Ge:
-                rhs_geq = np.append(rhs_geq, c.rhs)
-            else:
+            sense = comparator_to_sense.get(c.comparator)
+            if sense is None:
                 raise ComparatorError(constraint_name=c.name)
+            rhs_values[sense].append(c.rhs)
 
-        return RightHandSideFeaturesResult(
-            mean_rhs_leq_cons=NumpyStatsHelper.mean(rhs_leq),
-            std_rhs_leq_cons=NumpyStatsHelper.std(rhs_leq),
-            mean_rhs_eq_cons=NumpyStatsHelper.mean(rhs_eq),
-            std_rhs_eq_cons=NumpyStatsHelper.std(rhs_eq),
-            mean_rhs_geq_cons=NumpyStatsHelper.mean(rhs_geq),
-            std_rhs_geq_cons=NumpyStatsHelper.std(rhs_geq),
-        )
+        # Build stats dict
+        stats: dict[str, RhsStats] = {}
+        for sense in ConstraintSense:
+            rhs_array = np.array(rhs_values[sense])
+            stats[RightHandSideFeaturesResult.make_key(sense)] = RhsStats(
+                constraint_sense=sense,
+                mean=NumpyStatsHelper.mean(rhs_array),
+                std=NumpyStatsHelper.std(rhs_array),
+            )
+
+        return RightHandSideFeaturesResult(stats=stats)
