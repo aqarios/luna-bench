@@ -1,62 +1,61 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-from unittest.mock import MagicMock
+from typing import TYPE_CHECKING, cast
 
-from luna_bench import _registry_container
-from luna_bench.helpers.decorators import (
-    algorithms_async,
-    algorithms_sync,
-    features,
-    metrics,
-    plots,
-)
+from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
+from luna_bench._internal.interfaces import IFeature
+from luna_bench.helpers import feature_function, features
 
 if TYPE_CHECKING:
-    from pydantic import BaseModel
-
-    from luna_bench._internal.registries.protocols import Registry
-    from luna_bench.base_components import (
-        BaseAlgorithmAsync,
-        BaseAlgorithmSync,
-        BaseFeature,
-        BaseMetric,
-        BasePlot,
-    )
+    from luna_quantum import Model
 
 
-class TestDecoratorsRegistryInjection:
-    def test_features_registry_injection(self) -> None:
-        """Verify that the feature registry is correctly injected and returned."""
-        mock_registry: MagicMock = MagicMock()
-        with _registry_container.feature_registry.override(mock_registry):
-            registry: Registry[BaseFeature] = features()
-            assert registry is mock_registry
+class TestFeatureFunction:
+    """Test the feature_function decorator."""
 
-    def test_algorithms_sync_registry_injection(self) -> None:
-        """Verify that the synchronous algorithm registry is correctly injected and returned."""
-        mock_registry: MagicMock = MagicMock()
-        with _registry_container.algorithm_sync_registry.override(mock_registry):
-            registry: Registry[BaseAlgorithmSync] = algorithms_sync()
-            assert registry is mock_registry
+    def test_feature_function_registration(self) -> None:
+        """Test that a function decorated with feature_function is registered correctly."""
 
-    def test_algorithms_async_registry_injection(self) -> None:
-        """Verify that the asynchronous algorithm registry is correctly injected and returned."""
-        mock_registry: MagicMock = MagicMock()
-        with _registry_container.algorithm_async_registry.override(mock_registry):
-            registry: Registry[BaseAlgorithmAsync[BaseModel]] = algorithms_async()
-            assert registry is mock_registry
+        @feature_function
+        def my_test_feature(self: IFeature, model: Model) -> int:
+            """Docstring."""
+            _ = self
+            _ = model
+            return 42
 
-    def test_metrics_registry_injection(self) -> None:
-        """Verify that the metric registry is correctly injected and returned."""
-        mock_registry: MagicMock = MagicMock()
-        with _registry_container.metric_registry.override(mock_registry):
-            registry: Registry[BaseMetric] = metrics()
-            assert registry is mock_registry
+        # Verify it's a class
+        assert isinstance(my_test_feature, type)
+        assert issubclass(my_test_feature, IFeature)
+        assert my_test_feature.__name__ == "my_test_feature"
 
-    def test_plots_registry_injection(self) -> None:
-        """Verify that the plot registry is correctly injected and returned."""
-        mock_registry: MagicMock = MagicMock()
-        with _registry_container.plot_registry.override(mock_registry):
-            registry: Registry[BasePlot[Any]] = plots()
-            assert registry is mock_registry
+        # Verify registration in registry
+        registry = features()
+        assert any("my_test_feature" in r_id for r_id in registry.ids())
+
+    def test_feature_function_execution(self) -> None:
+        """Test that the wrapped function can be executed."""
+
+        @feature_function
+        def another_test_feature(self: IFeature, model: Model) -> int:
+            """Docstring."""
+            _ = self
+            _ = model
+            return 123
+
+        # Instantiate and run
+        # We use type: ignore because Mypy is confused by the dynamic class
+        feature_inst = another_test_feature()  # type: ignore[call-arg]
+        assert feature_inst.run(cast("Model", None)) == ArbitraryDataDomain.model_construct(result=123)  # type: ignore[arg-type, call-arg]
+
+    def test_feature_function_with_id(self) -> None:
+        """Test that feature_function works with a custom ID."""
+
+        @feature_function(feature_id="custom_id")  # type: ignore[misc, call-arg]
+        def feature_with_id(self: IFeature, model: Model) -> int:
+            """Docstring."""
+            _ = self
+            _ = model
+            return 0
+
+        registry = features()
+        assert "custom_id" in registry.ids()
