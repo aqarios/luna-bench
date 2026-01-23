@@ -1,8 +1,9 @@
 from luna_quantum import Solution
 
+from luna_bench.entities.enums.job_status_enum import JobStatus
+
 from .arbitrary_data_domain import ArbitraryDataDomain
 from .base_domain import BaseDomain
-from .job_status_enum import JobStatus
 
 
 class AlgorithmResultDomain(BaseDomain):

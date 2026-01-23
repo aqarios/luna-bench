@@ -3,12 +3,12 @@ from unittest.mock import MagicMock
 from returns.pipeline import is_successful
 
 from luna_bench import MapperContainer  # type: ignore[attr-defined]
-from luna_bench._internal.domain_models import JobStatus
 from luna_bench._internal.usecases.benchmark import AlgorithmRunAsBackgroundTasksUcImpl
 from luna_bench._internal.usecases.benchmark.protocols import (
     BackgroundRunAlgorithmAsyncUc,
     BackgroundRunAlgorithmSyncUc,
 )
+from luna_bench.entities import JobStatus
 from tests.unit.fixtures.mock_database import SetupBenchmark
 
 

@@ -5,12 +5,13 @@ from luna_quantum import Solution
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench._internal.interfaces.metric_i import IMetric
-from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
-from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
+from luna_bench.base_components import BaseMetric
+from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.components.metrics.fake_metric import FakeMetricResult
 from luna_bench.components.plots.generics.metrics_plot import GenericMetricsPlot, MetricsValidationResult
+from luna_bench.entities.benchmark_entity import BenchmarkEntity
+from luna_bench.entities.enums.job_status_enum import JobStatus
+from luna_bench.entities.metric_entity import MetricEntity
 from luna_bench.errors.run_errors.plots_errors.metrics_missing_error import MetricsMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.helpers.decorators import metric
@@ -24,9 +25,9 @@ class _FakePlot(GenericMetricsPlot):
         pass
 
 
-@metric(metric_id="mock_metric_new")  # type: ignore[arg-type]
-class MockMetricNew(IMetric):  # type: ignore[misc]
-    def run(self, solution: Solution) -> FakeMetricResult:
+@metric(metric_id="mock_metric_new")
+class MockMetricNew(BaseMetric):
+    def run(self, solution: Solution, feature_results: FeatureResults) -> FakeMetricResult:
         raise NotImplementedError
 
 
@@ -77,13 +78,13 @@ class TestGenericMetricsPlot:
                 {"mock_metric", "mock_metric_new"},
                 Success(
                     {
-                        "mock_metric": MetricUserModel(
+                        "mock_metric": MetricEntity(
                             name="existing_name",
                             status=JobStatus.CREATED,
                             metric=MockMetric(),
                             results={},
                         ),
-                        "mock_metric_new": MetricUserModel(
+                        "mock_metric_new": MetricEntity(
                             name="existing2_name",
                             status=JobStatus.CREATED,
                             metric=MockMetricNew(),
@@ -101,14 +102,14 @@ class TestGenericMetricsPlot:
     )
     def test_prepare_metrics(
         self,
-        metrics: tuple[tuple[str, IMetric]],
+        metrics: tuple[tuple[str, BaseMetric]],
         plot_metrics: set[str],
-        exp: Result[dict[str, MetricUserModel], MetricsMissingError | UnknownLunaBenchError],
+        exp: Result[dict[str, MetricEntity], MetricsMissingError | UnknownLunaBenchError],
     ) -> None:
         fake_plot = _FakePlot()
         _FakePlot.metrics_ids = plot_metrics
         metrics_to_prepare = [
-            MetricUserModel(
+            MetricEntity(
                 name=metric[0],
                 status=JobStatus.CREATED,
                 metric=metric[1],
@@ -127,7 +128,7 @@ class TestGenericMetricsPlot:
         fake_plot = _FakePlot()
         _FakePlot.metrics_ids = {"mock_metric"}
 
-        benchmark = BenchmarkUserModel(
+        benchmark = BenchmarkEntity(
             name="test",
             modelset=None,
             features=[],
@@ -141,7 +142,7 @@ class TestGenericMetricsPlot:
         assert isinstance(result.failure(), MetricsMissingError)
 
         benchmark.metrics = [
-            MetricUserModel(
+            MetricEntity(
                 name="existing_name",
                 status=JobStatus.CREATED,
                 metric=MockMetric(),

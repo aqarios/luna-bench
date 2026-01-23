@@ -9,8 +9,8 @@ from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDa
 from luna_bench._internal.domain_models.benchmark_domain import BenchmarkDomain
 from luna_bench._internal.domain_models.model_metadata_domain import ModelMetadataDomain
 from luna_bench._internal.domain_models.modelset_domain import ModelSetDomain
-from luna_bench._internal.user_models import BenchmarkUserModel
 from luna_bench.configs.config import Config
+from luna_bench.entities import BenchmarkEntity
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockAsyncAlgorithm, MockFeature, MockMetric, MockPlot
 from tests.utils.luna_model import simple_model
 
@@ -44,7 +44,7 @@ class SetupBenchmark:
     model_name: str
 
     benchmark: BenchmarkDomain
-    benchmark_usermodel: BenchmarkUserModel
+    benchmark_usermodel: BenchmarkEntity
     modelset: ModelSetDomain
     model_metadata: ModelMetadataDomain
     transaction: DaoTransaction
@@ -89,7 +89,7 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
     algorithm_sync_result = empty_transaction.algorithm.add(
         benchmark_name=benchmark_name,
         algorithm_name=algorithm_name,
-        registered_id=MockAlgorithm._registered_id,  # type: ignore[attr-defined] # decorator adds private field
+        registered_id=MockAlgorithm.registered_id,
         algorithm_type=AlgorithmType.SYNC,
         algorithm=ArbitraryDataDomain(),
     )
@@ -98,7 +98,7 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
     algorithm_async_result = empty_transaction.algorithm.add(
         benchmark_name=benchmark_name,
         algorithm_name=algorithm_async_name,
-        registered_id=MockAsyncAlgorithm._registered_id,  # type: ignore[attr-defined] # decorator adds private field
+        registered_id=MockAsyncAlgorithm.registered_id,
         algorithm_type=AlgorithmType.ASYNC,
         algorithm=ArbitraryDataDomain(),
     )
@@ -107,7 +107,7 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
     feature_result = empty_transaction.feature.add(
         benchmark_name=benchmark_name,
         feature_name=feature_name,
-        registered_id=MockFeature._registered_id,  # type: ignore[attr-defined] # decorator adds private field
+        registered_id=MockFeature.registered_id,
         feature_config=ArbitraryDataDomain(),
     )
 
@@ -116,7 +116,7 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
     metric_result = empty_transaction.metric.add(
         benchmark_name=benchmark_name,
         metric_name=metric_name,
-        registered_id=MockMetric._registered_id,  # type: ignore[attr-defined] # decorator adds private field
+        registered_id=MockMetric.registered_id,
         metric_config=ArbitraryDataDomain(),
     )
 
@@ -125,7 +125,7 @@ def setup_benchmark(empty_transaction: DaoTransaction) -> SetupBenchmark:
     plot_result = empty_transaction.plot.add(
         benchmark_name=benchmark_name,
         plot_name=plot_name,
-        registered_id=MockPlot._registered_id,  # type: ignore[attr-defined] # decorator adds private field
+        registered_id=MockPlot.registered_id,
         plot_config=ArbitraryDataDomain(),
     )
 

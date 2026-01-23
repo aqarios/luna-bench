@@ -4,9 +4,9 @@ from peewee import AutoField, CharField, ForeignKeyField, ModelSelect
 from playhouse.sqlite_ext import JSONField
 
 from luna_bench._internal.dao.tables.base_table import BaseTable
-from luna_bench._internal.domain_models import JobStatus
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
+from luna_bench.entities.enums import JobStatus
 
 from .benchmark_table import BenchmarkTable
 

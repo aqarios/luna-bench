@@ -16,8 +16,8 @@ from luna_bench._internal.usecases.modelset.protocols import (
     ModelSetLoadUc,
 )
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
-from luna_bench._internal.user_models import ModelSetUserModel
 from luna_bench.components.model_metadata import ModelMetadata
+from luna_bench.entities import ModelSetEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from returns.result import Result
 
 
-class ModelSet(ModelSetUserModel):
+class ModelSet(ModelSetEntity):
     """
     Set of models.
 
@@ -120,7 +120,7 @@ class ModelSet(ModelSetUserModel):
         """
         modelset_create = ModelSet.__create_uc()
 
-        result: Result[ModelSetUserModel, DataNotUniqueError | UnknownLunaBenchError] = modelset_create(
+        result: Result[ModelSetEntity, DataNotUniqueError | UnknownLunaBenchError] = modelset_create(
             modelset_name=modelset_name
         )
 
@@ -152,7 +152,7 @@ class ModelSet(ModelSetUserModel):
         """
         modelset_load = ModelSet.__load_uc()
 
-        result: Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError] = modelset_load(modelset_name=name)
+        result: Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError] = modelset_load(modelset_name=name)
 
         if not is_successful(result):
             error = result.failure()
@@ -175,7 +175,7 @@ class ModelSet(ModelSetUserModel):
         """
         modelset_load_all = ModelSet.__load_all_uc()
 
-        result: Result[list[ModelSetUserModel], UnknownLunaBenchError] = modelset_load_all()
+        result: Result[list[ModelSetEntity], UnknownLunaBenchError] = modelset_load_all()
 
         if not is_successful(result):
             error = result.failure()
@@ -221,8 +221,8 @@ class ModelSet(ModelSetUserModel):
         """
         modelset_add = self.__model_add_uc()
 
-        result: Result[ModelSetUserModel, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError] = (
-            modelset_add(modelset_name=self.name, model=model)
+        result: Result[ModelSetEntity, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError] = modelset_add(
+            modelset_name=self.name, model=model
         )
 
         if not is_successful(result):
@@ -249,7 +249,7 @@ class ModelSet(ModelSetUserModel):
         """
         modelset_remove = self.__model_remove_uc()
 
-        result: Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError] = modelset_remove(
+        result: Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError] = modelset_remove(
             modelset_name=self.name, model=model
         )
 
@@ -279,7 +279,7 @@ class ModelSet(ModelSetUserModel):
             ModelSet._logger.info(f"Error: {error}")
             raise RuntimeError(error)
 
-    def _update(self, modelset: ModelSetUserModel) -> None:
+    def _update(self, modelset: ModelSetEntity) -> None:
         """
         Update this model set with data from a domain model.
 

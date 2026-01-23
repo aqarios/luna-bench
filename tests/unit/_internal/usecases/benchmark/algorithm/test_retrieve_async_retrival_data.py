@@ -6,15 +6,16 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench import MapperContainer  # type: ignore[attr-defined]
-from luna_bench._internal.domain_models import AlgorithmResultDomain, JobStatus
+from luna_bench._internal.domain_models import AlgorithmResultDomain
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
 from luna_bench._internal.usecases.benchmark import AlgorithmRetrieveAsyncRetrivalDataUcImpl
 from luna_bench._internal.usecases.benchmark.protocols import (
     BackgroundRetrieveAlgorithmAsyncUc,
 )
-from luna_bench._internal.user_models.algorithm_result_usermodel import AlgorithmResultUserModel
-from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
+from luna_bench.base_components import BaseAlgorithmAsync
+from luna_bench.entities import JobStatus
+from luna_bench.entities.algorithm_result_entity import AlgorithmResultEntity
+from luna_bench.entities.benchmark_entity import BenchmarkEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
@@ -28,13 +29,13 @@ class TestRetrieveAsyncRetrivalData:
         cls,
         setup_benchmark: SetupBenchmark,
         mapper: MapperContainer,
-    ) -> BenchmarkUserModel:
+    ) -> BenchmarkEntity:
         benchmark_result = mapper.benchmark_mapper().to_user_model(setup_benchmark.benchmark)
         assert is_successful(benchmark_result), "Failed to load benchmark"
         benchmark = benchmark_result.unwrap()
         assert benchmark.modelset is not None, "Failed to load modelset"
 
-        fake_result_data = AlgorithmResultUserModel(
+        fake_result_data = AlgorithmResultEntity(
             meta_data=None,
             status=JobStatus.RUNNING,
             error=None,
@@ -105,7 +106,7 @@ class TestRetrieveAsyncRetrivalData:
         # Check user model set correct
         for a in benchmark.algorithms:
             if is_successful(exp):
-                if isinstance(a.algorithm, AlgorithmAsync):
+                if isinstance(a.algorithm, BaseAlgorithmAsync):
                     assert a.results["default_model"].solution is None
                     assert a.results["default_model"].retrival_data == return_values[1].unwrap().unwrap()
                     assert a.results["default_model"].status is JobStatus.RUNNING
@@ -114,7 +115,7 @@ class TestRetrieveAsyncRetrivalData:
                     assert a.results["default_model"].retrival_data is None
                     assert a.results["default_model"].status is JobStatus.RUNNING
             else:
-                if isinstance(a.algorithm, AlgorithmAsync):
+                if isinstance(a.algorithm, BaseAlgorithmAsync):
                     assert a.results["default_model"].solution is None
                     assert a.results["default_model"].retrival_data is None
                     assert a.results["default_model"].status is JobStatus.FAILED

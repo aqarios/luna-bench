@@ -1,6 +1,7 @@
 from luna_quantum import Solution
 
-from luna_bench._internal.domain_models import AlgorithmResultDomain, JobStatus
+from luna_bench._internal.domain_models import AlgorithmResultDomain
+from luna_bench.entities import JobStatus
 
 
 class TestAlgorithmResultDomain:

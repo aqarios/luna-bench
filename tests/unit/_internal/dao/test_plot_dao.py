@@ -6,10 +6,11 @@ import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.domain_models import JobStatus, PlotDomain
+from luna_bench._internal.domain_models import PlotDomain
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.benchmark_status_enum import BenchmarkStatus
 from luna_bench._internal.domain_models.registered_data_domain import RegisteredDataDomain
+from luna_bench.entities import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from tests.unit.fixtures.mock_config import MockConfig
