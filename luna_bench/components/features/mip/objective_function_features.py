@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 from luna_quantum import Vtype
 from pydantic import BaseModel
 
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.components.features.base_results import BaseStatsResultWithVarScope
+from luna_bench.components.features.base_feature import BaseFeatureResult
 from luna_bench.components.helper.degree import ConstraintDegree
 from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
@@ -30,72 +30,36 @@ class NormType(str, Enum):
     SQRT_NORMALIZED = "sqrt_normalized"  # |c_j| / sqrt(nnz(A_j))
 
 
+class ObjCoefStatsKey(NamedTuple):
+    """Key for accessing objective coefficient statistics."""
+
+    norm_type: NormType
+    var_scope: VarScope
+
+
 class ObjCoefStats(BaseModel):
     """
-    Container for objective coefficient statistics with descriptive context.
+    Container for objective coefficient statistics.
 
     Attributes
     ----------
-    norm_type : NormType
-        The type of normalization applied (absolute, normalized, sqrt_normalized).
-    var_scope : VarScope
-        The scope of variables included (continuous, non_continuous, all).
     mean : float
         Mean value of the coefficients.
     std : float
         Standard deviation of the coefficients.
     """
 
-    norm_type: NormType
-    var_scope: VarScope
     mean: float
     std: float
 
-    @property
-    def description(self) -> str:
-        """Human-readable description of what this stat represents."""
-        norm_desc = {
-            NormType.ABSOLUTE: "absolute objective coefficients |c_j|",
-            NormType.NORMALIZED: "normalized objective coefficients |c_j| / nnz(A_j)",
-            NormType.SQRT_NORMALIZED: "sqrt-normalized objective coefficients |c_j| / sqrt(nnz(A_j))",
-        }
-        scope_desc = {
-            VarScope.CONTINUOUS: "continuous variables only",
-            VarScope.NON_CONTINUOUS: "integer/binary variables only",
-            VarScope.ALL: "all variables",
-        }
-        return f"{norm_desc[self.norm_type]} for {scope_desc[self.var_scope]}"
 
-
-class ObjectiveFunctionFeatureResult(BaseStatsResultWithVarScope[NormType, ObjCoefStats]):
+class ObjectiveFunctionFeatureResult(BaseFeatureResult[ObjCoefStatsKey, ObjCoefStats]):
     """
     Result container for objective function feature calculations.
 
-    This class stores statistical measures of objective function coefficients,
-    including absolute values and normalized versions using different normalization
-    strategies (standard and square-root normalization) across different variable types.
-
-    Access patterns:
-        - result.get(NormType.ABSOLUTE, VarScope.CONTINUOUS) -> ObjCoefStats
-        - result.get_mean(NormType.ABSOLUTE, VarScope.CONTINUOUS) -> float
-        - result.get_std(NormType.ABSOLUTE, VarScope.CONTINUOUS) -> float
-        - result.by_type(NormType.ABSOLUTE) -> Dict[VarScope, ObjCoefStats]
-        - result.by_scope(VarScope.CONTINUOUS) -> Dict[NormType, ObjCoefStats]
-
-    Attributes
-    ----------
-    stats : Dict[str, ObjCoefStats]
-        Dictionary mapping "{norm_type}_{var_scope}" keys to ObjCoefStats objects.
+    Access via ObjCoefStatsKey:
+        result.stats[ObjCoefStatsKey(norm_type=NormType.ABSOLUTE, var_scope=VarScope.CONTINUOUS).key]
     """
-
-    @staticmethod
-    def _type_enum() -> type[NormType]:
-        """Return the NormType enum class."""
-        return NormType
-
-    def get_std(self, norm_type: NormType, var_scope: VarScope) -> float:
-        """Direct access to standard deviation."""
-        return self.get(norm_type, var_scope).std
 
 
 @feature
@@ -160,10 +124,8 @@ class ObjectiveFunctionFeature(IFeature):
                     # Apply normalization
                     normalized_coefs = self._normalize(a, coefs, var_indices, norm_func)
 
-                key = ObjectiveFunctionFeatureResult.make_key(norm_type, var_scope)
-                stats[key] = ObjCoefStats(
-                    norm_type=norm_type,
-                    var_scope=var_scope,
+                key = ObjCoefStatsKey(norm_type=norm_type, var_scope=var_scope)
+                stats[str(key._asdict())] = ObjCoefStats(
                     mean=NumpyStatsHelper.mean(normalized_coefs),
                     std=NumpyStatsHelper.std(normalized_coefs),
                 )

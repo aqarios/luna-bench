@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 from luna_quantum import Model, Unbounded, Vtype
@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.components.features.base_results import BaseStatsResult1D
+from luna_bench.components.features.base_feature import BaseFeatureResult
 from luna_bench.components.helper.degree import ConstraintDegree
 from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
@@ -50,54 +50,35 @@ class VarType(str, Enum):
     UNBOUNDED_NON_CONTINUOUS = "unbounded_non_continuous"  # Non-continuous without bounds
 
 
+class VarTypeKey(NamedTuple):
+    """Key for accessing variable count statistics."""
+
+    var_type: VarType
+
+
 class VarCountStats(BaseModel):
     """
     Container for variable count statistics.
 
     Attributes
     ----------
-    var_type : VarType
-        The type of variable being counted.
     count : int
         Absolute count of variables of this type.
     fraction : float
         Fraction of total variables (count / num_vars).
     """
 
-    var_type: VarType
     count: int
     fraction: float
 
-    # Add mean property to satisfy BaseStatsResult1D interface
-    @property
-    def mean(self) -> float:
-        """Return fraction as mean for compatibility with base class."""
-        return self.fraction
 
-
-class VarCountResult(BaseStatsResult1D[VarType, VarCountStats]):
+class VarCountResult(BaseFeatureResult[VarTypeKey, VarCountStats]):
     """
     Result container for variable count statistics.
 
-    Access patterns:
-        - result.get(VarType.BOOLEAN) -> VarCountStats
-        - result.get_num(VarType.BOOLEAN) -> int
-        - result.get_frac(VarType.BOOLEAN) -> float
-        - result.all_stats() -> Dict[VarType, VarCountStats]
+    Access via VarTypeKey:
+        result.stats[VarTypeKey(var_type=VarType.BOOLEAN).key]
     """
-
-    @staticmethod
-    def _type_enum() -> type[VarType]:
-        """Return the VarType enum class."""
-        return VarType
-
-    def get_num(self, var_type: VarType) -> int:
-        """Direct access to variable count."""
-        return self.get(var_type).count
-
-    def get_frac(self, var_type: VarType) -> float:
-        """Direct access to variable fraction."""
-        return self.get(var_type).fraction
 
 
 class SupportSizeStats(BaseModel):
@@ -192,7 +173,7 @@ class ProblemSizeFeatures(IFeature):
         ProblemSizeFeaturesResult
             Container with problem size metrics.
         """
-        num_vars = model.num_vars
+        num_vars = model.num_variables
         num_cons = model.num_constraints
         num_non_zero_linear = np.count_nonzero(ModelMatrix.constraint_matrix(model, ConstraintDegree.LINEAR, None)[0])
         num_non_zero_quad = np.count_nonzero(ModelMatrix.constraint_matrix(model, ConstraintDegree.QUADRATIC, None)[0])
@@ -234,8 +215,8 @@ class ProblemSizeFeatures(IFeature):
         # Build var_counts dict with VarCountStats
         var_counts_dict: dict[str, VarCountStats] = {}
         for var_type, count in counts.items():
-            var_counts_dict[VarCountResult.make_key(var_type)] = VarCountStats(
-                var_type=var_type,
+            key = VarTypeKey(var_type=var_type)
+            var_counts_dict[str(key._asdict())] = VarCountStats(
                 count=count,
                 fraction=count / num_vars if num_vars > 0 else 0.0,
             )

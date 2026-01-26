@@ -5,7 +5,7 @@ import pytest
 from luna_quantum import Bounds, Model, Unbounded, Variable, Vtype
 
 from luna_bench.components.features.mip.linear_constraint_matrix import (
-    CoefStats,
+    CoefStatsKey,
     CoefType,
     LinearConstraintMatrixFeatures,
     LinearConstraintMatrixFeaturesResult,
@@ -25,18 +25,23 @@ class TestLinearConstraintMatrixFeatures:
 
         # All variables are continuous
         var_sums = [1 + 2, 1 + 1]
-        assert result.get_mean(CoefType.VARIABLE, VarScope.CONTINUOUS) == np.mean(var_sums)
-        assert result.get_vc(CoefType.VARIABLE, VarScope.CONTINUOUS) == np.std(var_sums) / np.mean(var_sums)
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).mean == np.mean(var_sums)
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).variation_coefficient == np.std(
+            var_sums
+        ) / np.mean(var_sums)
 
         # Variable coefficients for all should match continuous
-        assert result.get_mean(CoefType.VARIABLE, VarScope.ALL) == result.get_mean(
-            CoefType.VARIABLE, VarScope.CONTINUOUS
+        assert (
+            result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).mean
+            == result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).mean
         )
 
         # Constraint coefficients should be computed
         cons_sums = [1 + 1, 2 + 1]
-        assert result.get_mean(CoefType.CONSTRAINT, VarScope.CONTINUOUS) == np.mean(cons_sums)
-        assert result.get_mean(CoefType.CONSTRAINT, VarScope.ALL) >= np.std(cons_sums) / np.mean(cons_sums)
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.CONTINUOUS)).mean == np.mean(cons_sums)
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.ALL)).mean >= np.std(cons_sums) / np.mean(
+            cons_sums
+        )
 
     def test_mixed_integer_model(self, mixed_integer_model: Model) -> None:
         """Test feature extraction on a mixed-integer model."""
@@ -47,31 +52,42 @@ class TestLinearConstraintMatrixFeatures:
         con_vars = np.array([2, 2])
         n_con_vars = np.array([2, 3, 5, 1])
         all_vars = np.array([2, 3, 5, 1, 2, 2])
-        assert result.get_mean(CoefType.VARIABLE, VarScope.CONTINUOUS) == con_vars.mean()
-        assert result.get_mean(CoefType.VARIABLE, VarScope.NON_CONTINUOUS) == n_con_vars.mean()
-        assert result.get_mean(CoefType.VARIABLE, VarScope.ALL) == all_vars.mean()
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).mean == con_vars.mean()
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.NON_CONTINUOUS)).mean == n_con_vars.mean()
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).mean == all_vars.mean()
 
         # Constraint coefficients
         con_cons = np.array([0, 1, 2, 1])
         n_con_cons = np.array([3, 2, 1, 5])
         all_cons = np.array([3, 3, 3, 6])
-        assert result.get_mean(CoefType.CONSTRAINT, VarScope.CONTINUOUS) == con_cons.mean()
-        assert result.get_mean(CoefType.CONSTRAINT, VarScope.NON_CONTINUOUS) == n_con_cons.mean()
-        assert result.get_mean(CoefType.CONSTRAINT, VarScope.ALL) == all_cons.mean()
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.CONTINUOUS)).mean == con_cons.mean()
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.NON_CONTINUOUS)).mean == n_con_cons.mean()
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.ALL)).mean == all_cons.mean()
 
         # Variation coefficients should be non-negative
-        assert result.get_vc(CoefType.VARIABLE, VarScope.CONTINUOUS) == con_vars.std() / con_vars.mean()
-        assert result.get_vc(CoefType.VARIABLE, VarScope.NON_CONTINUOUS) == n_con_vars.std() / n_con_vars.mean()
-        assert result.get_vc(CoefType.VARIABLE, VarScope.ALL) == all_vars.std() / all_vars.mean()
+        assert (
+            result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).variation_coefficient
+            == con_vars.std() / con_vars.mean()
+        )
+        assert (
+            result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.NON_CONTINUOUS)).variation_coefficient
+            == n_con_vars.std() / n_con_vars.mean()
+        )
+        assert (
+            result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).variation_coefficient
+            == all_vars.std() / all_vars.mean()
+        )
 
         # Normalized matrix entries
         b = np.array([15, 3, 8, 20])
         con_cons_n = np.array([[0, 1, 1, 0], [0, 0, 1, 1]]) / b
         n_con_cons_n = np.array([[1, 0, 1, 0], [1, 0, 0, 2], [1, 1, 0, 3], [0, 1, 0, 0]]) / b
         all_cons_n = np.array([[1, 0, 1, 0], [1, 0, 0, 2], [1, 1, 0, 3], [0, 1, 0, 0], [0, 1, 1, 0], [0, 0, 1, 1]]) / b
-        assert result.get_mean(CoefType.NORMALIZED, VarScope.CONTINUOUS) == con_cons_n.flatten().mean()
-        assert result.get_mean(CoefType.NORMALIZED, VarScope.NON_CONTINUOUS) == n_con_cons_n.flatten().mean()
-        assert result.get_mean(CoefType.NORMALIZED, VarScope.ALL) == pytest.approx(
+        assert result.get(CoefStatsKey(CoefType.NORMALIZED, VarScope.CONTINUOUS)).mean == con_cons_n.flatten().mean()
+        assert (
+            result.get(CoefStatsKey(CoefType.NORMALIZED, VarScope.NON_CONTINUOUS)).mean == n_con_cons_n.flatten().mean()
+        )
+        assert result.get(CoefStatsKey(CoefType.NORMALIZED, VarScope.ALL)).mean == pytest.approx(
             all_cons_n.flatten().mean(), abs=1e-6
         )
 
@@ -81,12 +97,12 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(empty_model)
 
         # All features should be 0 for empty model
-        assert result.get_mean(CoefType.VARIABLE, VarScope.CONTINUOUS) == 0.0
-        assert result.get_mean(CoefType.VARIABLE, VarScope.NON_CONTINUOUS) == 0.0
-        assert result.get_mean(CoefType.VARIABLE, VarScope.ALL) == 0.0
-        assert result.get_mean(CoefType.CONSTRAINT, VarScope.CONTINUOUS) == 0.0
-        assert result.get_mean(CoefType.CONSTRAINT, VarScope.NON_CONTINUOUS) == 0.0
-        assert result.get_mean(CoefType.CONSTRAINT, VarScope.ALL) == 0.0
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).mean == 0.0
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.NON_CONTINUOUS)).mean == 0.0
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).mean == 0.0
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.CONTINUOUS)).mean == 0.0
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.NON_CONTINUOUS)).mean == 0.0
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.ALL)).mean == 0.0
 
     def test_con_only_model(self) -> None:
         """Test model with only continuous variables."""
@@ -105,12 +121,13 @@ class TestLinearConstraintMatrixFeatures:
 
         # Only continuous variables
         var_coef = [3, 7]
-        assert result.get_mean(CoefType.VARIABLE, VarScope.CONTINUOUS) == np.mean(var_coef)
-        assert result.get_mean(CoefType.VARIABLE, VarScope.NON_CONTINUOUS) == 0.0
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).mean == np.mean(var_coef)
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.NON_CONTINUOUS)).mean == 0.0
 
         # All variables stats should match continuous
-        assert result.get_mean(CoefType.VARIABLE, VarScope.ALL) == result.get_mean(
-            CoefType.VARIABLE, VarScope.CONTINUOUS
+        assert (
+            result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).mean
+            == result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).mean
         )
 
     def test_integer_only_model(self) -> None:
@@ -130,12 +147,13 @@ class TestLinearConstraintMatrixFeatures:
 
         # Only non-continuous variables
         var_coef = [3, 4]
-        assert result.get_mean(CoefType.VARIABLE, VarScope.NON_CONTINUOUS) == np.mean(var_coef)
-        assert result.get_mean(CoefType.VARIABLE, VarScope.CONTINUOUS) == 0.0
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.NON_CONTINUOUS)).mean == np.mean(var_coef)
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).mean == 0.0
 
         # All variables stats should match non-continuous
-        assert result.get_mean(CoefType.VARIABLE, VarScope.ALL) == result.get_mean(
-            CoefType.VARIABLE, VarScope.NON_CONTINUOUS
+        assert (
+            result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).mean
+            == result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.NON_CONTINUOUS)).mean
         )
 
     def test_sparse_model(self, sparse_model: Model) -> None:
@@ -145,10 +163,12 @@ class TestLinearConstraintMatrixFeatures:
 
         # Sparse model should have low coefficient sums
         vars_coef = [1, 1, 0, 0, 0, 1, 1, 1, 0, 1]
-        assert result.get_mean(CoefType.VARIABLE, VarScope.ALL) == np.mean(vars_coef)
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).mean == np.mean(vars_coef)
 
         # Variation coefficients may be high due to sparsity
-        assert result.get_vc(CoefType.VARIABLE, VarScope.ALL) == np.std(vars_coef) / np.mean(vars_coef)
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).variation_coefficient == np.std(
+            vars_coef
+        ) / np.mean(vars_coef)
 
     def test_dense_model(self, dense_model: Model) -> None:
         """Test feature extraction on a dense model."""
@@ -158,14 +178,14 @@ class TestLinearConstraintMatrixFeatures:
         # Dense model should have higher coefficient sums
         vars_coef = [10, 4, 5, 5]
         con_coef = [4, 6, 7, 7]
-        assert result.get_mean(CoefType.VARIABLE, VarScope.ALL) == np.mean(vars_coef)
-        assert result.get_mean(CoefType.CONSTRAINT, VarScope.ALL) == np.mean(con_coef)
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).mean == np.mean(vars_coef)
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.ALL)).mean == np.mean(con_coef)
 
         # Most variables appear in most constraints
         con_vars = [10, 4]
         nc_vars = [5, 5]
-        assert result.get_mean(CoefType.VARIABLE, VarScope.CONTINUOUS) == np.mean(con_vars)
-        assert result.get_mean(CoefType.VARIABLE, VarScope.NON_CONTINUOUS) == np.mean(nc_vars)
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).mean == np.mean(con_vars)
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.NON_CONTINUOUS)).mean == np.mean(nc_vars)
 
     def test_var_coef_calculation(self) -> None:
         """Test variable coefficient sum calculation with known values."""
@@ -185,7 +205,7 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Mean of variable coefficients should be (3 + 7) / 2 = 5
-        assert result.get_mean(CoefType.VARIABLE, VarScope.CONTINUOUS) == pytest.approx(5.0)
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).mean == pytest.approx(5.0)
 
     def test_cons_coef_calculation(self) -> None:
         """Test constraint coefficient sum calculation with known values."""
@@ -205,7 +225,7 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Mean of constraint coefficients should be (5 + 5) / 2 = 5
-        assert result.get_mean(CoefType.CONSTRAINT, VarScope.CONTINUOUS) == pytest.approx(5.0)
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.CONTINUOUS)).mean == pytest.approx(5.0)
 
     def test_norm_cons_matrix_entr(self) -> None:
         """Test normalized constraint matrix entry calculations."""
@@ -223,7 +243,7 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
         no_mat = np.array([[2, 4], [1, 2]]) / np.array([[10], [5]])
         # Normalized entries should be computed by dividing by RHS
-        assert result.get_mean(CoefType.NORMALIZED, VarScope.CONTINUOUS) == np.mean(no_mat)
+        assert result.get(CoefStatsKey(CoefType.NORMALIZED, VarScope.CONTINUOUS)).mean == np.mean(no_mat)
 
     def test_zero_rhs_handling(self) -> None:
         """Test that zero RHS values are handled correctly in normalization."""
@@ -241,7 +261,7 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Should handle zero RHS without division by zero
-        assert np.isfinite(result.get_mean(CoefType.NORMALIZED, VarScope.CONTINUOUS))
+        assert np.isfinite(result.get(CoefStatsKey(CoefType.NORMALIZED, VarScope.CONTINUOUS)).mean)
 
     def test_varicoef_norm_entr(self) -> None:
         """Test variation coefficient of normalized entries per row."""
@@ -260,8 +280,8 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Variation coefficient per row should be computed
-        assert result.get_mean(CoefType.ROW_VARIATION, VarScope.CONTINUOUS) >= 0
-        assert result.get_vc(CoefType.ROW_VARIATION, VarScope.CONTINUOUS) >= 0
+        assert result.get(CoefStatsKey(CoefType.ROW_VARIATION, VarScope.CONTINUOUS)).mean >= 0
+        assert result.get(CoefStatsKey(CoefType.ROW_VARIATION, VarScope.CONTINUOUS)).variation_coefficient >= 0
 
     def test_quadratic_model_linear_constraints_only(self, quadratic_model: Model) -> None:
         """Test that only linear constraints are considered."""
@@ -269,8 +289,8 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(quadratic_model)
 
         # Should process linear constraints only
-        assert result.get_mean(CoefType.VARIABLE, VarScope.ALL) >= 0
-        assert result.get_mean(CoefType.CONSTRAINT, VarScope.ALL) >= 0
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).mean >= 0
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.ALL)).mean >= 0
 
     def test_negative_coefficients_handling(self) -> None:
         """Test handling of negative coefficients."""
@@ -288,8 +308,8 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Should handle negative coefficients (sums use actual values, not absolute)
-        assert np.isfinite(result.get_mean(CoefType.VARIABLE, VarScope.CONTINUOUS))
-        assert np.isfinite(result.get_mean(CoefType.CONSTRAINT, VarScope.CONTINUOUS))
+        assert np.isfinite(result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).mean)
+        assert np.isfinite(result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.CONTINUOUS)).mean)
 
     def test_all_statistics_non_negative_or_valid(self, mixed_integer_model: Model) -> None:
         """Test that all statistics are valid (finite and non-negative where appropriate)."""
@@ -297,20 +317,20 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(mixed_integer_model)
 
         # Check all means are finite
-        assert np.isfinite(result.get_mean(CoefType.VARIABLE, VarScope.CONTINUOUS))
-        assert np.isfinite(result.get_mean(CoefType.VARIABLE, VarScope.NON_CONTINUOUS))
-        assert np.isfinite(result.get_mean(CoefType.VARIABLE, VarScope.ALL))
-        assert np.isfinite(result.get_mean(CoefType.CONSTRAINT, VarScope.CONTINUOUS))
-        assert np.isfinite(result.get_mean(CoefType.CONSTRAINT, VarScope.NON_CONTINUOUS))
-        assert np.isfinite(result.get_mean(CoefType.CONSTRAINT, VarScope.ALL))
+        assert np.isfinite(result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).mean)
+        assert np.isfinite(result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.NON_CONTINUOUS)).mean)
+        assert np.isfinite(result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).mean)
+        assert np.isfinite(result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.CONTINUOUS)).mean)
+        assert np.isfinite(result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.NON_CONTINUOUS)).mean)
+        assert np.isfinite(result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.ALL)).mean)
 
         # Check all variation coefficients are non-negative and finite
-        assert result.get_vc(CoefType.VARIABLE, VarScope.CONTINUOUS) >= 0
-        assert result.get_vc(CoefType.VARIABLE, VarScope.NON_CONTINUOUS) >= 0
-        assert result.get_vc(CoefType.VARIABLE, VarScope.ALL) >= 0
-        assert result.get_vc(CoefType.CONSTRAINT, VarScope.CONTINUOUS) >= 0
-        assert result.get_vc(CoefType.CONSTRAINT, VarScope.NON_CONTINUOUS) >= 0
-        assert result.get_vc(CoefType.CONSTRAINT, VarScope.ALL) >= 0
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).variation_coefficient >= 0
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.NON_CONTINUOUS)).variation_coefficient >= 0
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).variation_coefficient >= 0
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.CONTINUOUS)).variation_coefficient >= 0
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.NON_CONTINUOUS)).variation_coefficient >= 0
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.ALL)).variation_coefficient >= 0
 
     def test_deterministic_results(self, mixed_integer_model: Model) -> None:
         """Test that multiple runs produce identical results."""
@@ -337,11 +357,11 @@ class TestLinearConstraintMatrixFeatures:
         result = extractor.run(model)
 
         # Single variable coefficient = 5
-        assert result.get_mean(CoefType.VARIABLE, VarScope.CONTINUOUS) == 5.0
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).mean == 5.0
         # Single constraint coefficient = 5
-        assert result.get_mean(CoefType.CONSTRAINT, VarScope.CONTINUOUS) == 5.0
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.CONTINUOUS)).mean == 5.0
         # No variation with single value
-        assert result.get_vc(CoefType.VARIABLE, VarScope.CONTINUOUS) == 0.0
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).variation_coefficient == 0.0
 
     def test_zero_coef_rows(self) -> None:
         """Test handling when some variables don't appear in constraints."""
@@ -364,7 +384,7 @@ class TestLinearConstraintMatrixFeatures:
         # x has coefficient sum of 2 + 1 = 3
         # y has coefficient sum of 3 + 1 = 4
         # Mean = (3 + 4 + 0) / 3 = 7/3
-        assert result.get_mean(CoefType.VARIABLE, VarScope.CONTINUOUS) == pytest.approx(7 / 3)
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).mean == pytest.approx(7 / 3)
 
     def test_varicoef_consistency(self, dense_model: Model) -> None:
         """Test that variation coefficients are consistent with means and stds."""
@@ -373,56 +393,25 @@ class TestLinearConstraintMatrixFeatures:
 
         # VC = std / mean (when mean != 0)
         # This is tested implicitly by checking non-negativity
-        assert result.get_vc(CoefType.VARIABLE, VarScope.ALL) >= 0
-        assert result.get_vc(CoefType.CONSTRAINT, VarScope.ALL) >= 0
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).variation_coefficient >= 0
+        assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.ALL)).variation_coefficient >= 0
 
         # If mean is positive and VC is 0, there should be no variation
-        if result.get_mean(CoefType.VARIABLE, VarScope.ALL) > 0 and result.get_vc(CoefType.VARIABLE, VarScope.ALL) == 0:
+        if (
+            result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).mean > 0
+            and result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).variation_coefficient == 0
+        ):
             # All variable coefficients are the same
             pass
-
-    def test_coef_stats_description(self) -> None:
-        """Test that CoefStats provides meaningful descriptions."""
-        stats = CoefStats(
-            coef_type=CoefType.VARIABLE,
-            var_scope=VarScope.CONTINUOUS,
-            mean=5.0,
-            variation_coefficient=0.2,
-        )
-        assert "variable coefficients" in stats.description
-        assert "continuous" in stats.description
-
-    def test_by_type_accessor(self, mixed_integer_model: Model) -> None:
-        """Test the by_type accessor method."""
-        extractor = LinearConstraintMatrixFeatures()
-        result = extractor.run(mixed_integer_model)
-
-        var_stats = result.by_type(CoefType.VARIABLE)
-        assert len(var_stats) == 3  # CONTINUOUS, NON_CONTINUOUS, ALL
-        assert VarScope.CONTINUOUS in var_stats
-        assert VarScope.NON_CONTINUOUS in var_stats
-        assert VarScope.ALL in var_stats
-
-    def test_by_scope_accessor(self, mixed_integer_model: Model) -> None:
-        """Test the by_scope accessor method."""
-        extractor = LinearConstraintMatrixFeatures()
-        result = extractor.run(mixed_integer_model)
-
-        cont_stats = result.by_scope(VarScope.CONTINUOUS)
-        assert len(cont_stats) == 4  # VARIABLE, CONSTRAINT, NORMALIZED, ROW_VARIATION
-        assert CoefType.VARIABLE in cont_stats
-        assert CoefType.CONSTRAINT in cont_stats
-        assert CoefType.NORMALIZED in cont_stats
-        assert CoefType.ROW_VARIATION in cont_stats
 
     def test_get_accessor(self, mixed_integer_model: Model) -> None:
         """Test the get accessor method returns correct CoefStats."""
         extractor = LinearConstraintMatrixFeatures()
         result = extractor.run(mixed_integer_model)
 
-        stats = result.get(CoefType.VARIABLE, VarScope.CONTINUOUS)
-        assert isinstance(stats, CoefStats)
-        assert stats.coef_type == CoefType.VARIABLE
-        assert stats.var_scope == VarScope.CONTINUOUS
-        assert stats.mean == result.get_mean(CoefType.VARIABLE, VarScope.CONTINUOUS)
-        assert stats.variation_coefficient == result.get_vc(CoefType.VARIABLE, VarScope.CONTINUOUS)
+        stats = result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS))
+        assert stats.mean == result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).mean
+        assert (
+            stats.variation_coefficient
+            == result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.CONTINUOUS)).variation_coefficient
+        )

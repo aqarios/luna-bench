@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 from luna_quantum import Vtype
 from pydantic import BaseModel
 
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.components.features.base_results import BaseStatsResultWithVarScope
 from luna_bench.components.helper.degree import ConstraintDegree
 from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
@@ -19,6 +18,8 @@ if TYPE_CHECKING:
     from luna_quantum import Model
     from numpy.typing import NDArray
 
+from luna_bench.components.features.base_feature import BaseFeatureResult
+
 
 class NodeType(str, Enum):
     """Type of node in the variable-constraint bipartite graph."""
@@ -27,16 +28,24 @@ class NodeType(str, Enum):
     CONSTRAINT = "constraint"  # Constraint nodes (row degree)
 
 
+class NodeDegreeStatsKey(NamedTuple):
+    """Key for accessing node degree statistics."""
+
+    node_type: NodeType
+    var_scope: VarScope
+
+    @property
+    def key(self) -> str:
+        """Generate string key from tuple values."""
+        return "_".join(v.value for v in self)
+
+
 class NodeDegreeStats(BaseModel):
     """
-    Container for node degree statistics with descriptive context.
+    Container for node degree statistics.
 
     Attributes
     ----------
-    node_type : NodeType
-        The type of node (variable or constraint).
-    var_scope : VarScope
-        The scope of variables included (continuous, non_continuous, all).
     mean : float
         Mean node degree.
     median : float
@@ -49,8 +58,6 @@ class NodeDegreeStats(BaseModel):
         10th percentile of node degrees.
     """
 
-    node_type: NodeType
-    var_scope: VarScope
     mean: float
     median: float
     variation_coefficient: float
@@ -58,50 +65,13 @@ class NodeDegreeStats(BaseModel):
     q10: float
 
 
-class VariableConstraintGraphFeaturesResult(BaseStatsResultWithVarScope[NodeType, NodeDegreeStats]):
+class VariableConstraintGraphFeaturesResult(BaseFeatureResult[NodeDegreeStatsKey, NodeDegreeStats]):
     """
     Result container for variable-constraint graph feature calculations.
 
-    This class stores graph-based statistics for variables and constraints,
-    including node degree measures for continuous, non-continuous, and all
-    variable/constraint types.
-
-    Access patterns:
-        - result.get(NodeType.VARIABLE, VarScope.CONTINUOUS) -> NodeDegreeStats
-        - result.get_mean(NodeType.VARIABLE, VarScope.CONTINUOUS) -> float
-        - result.get_median(NodeType.VARIABLE, VarScope.CONTINUOUS) -> float
-        - result.get_vc(NodeType.VARIABLE, VarScope.CONTINUOUS) -> float
-        - result.get_q90(NodeType.VARIABLE, VarScope.CONTINUOUS) -> float
-        - result.get_q10(NodeType.VARIABLE, VarScope.CONTINUOUS) -> float
-        - result.by_type(NodeType.VARIABLE) -> Dict[VarScope, NodeDegreeStats]
-        - result.by_scope(VarScope.CONTINUOUS) -> Dict[NodeType, NodeDegreeStats]
-
-    Attributes
-    ----------
-    stats : Dict[str, NodeDegreeStats]
-        Dictionary mapping "{node_type}_{var_scope}" keys to NodeDegreeStats objects.
+    Access via NodeDegreeStatsKey:
+        result.stats[NodeDegreeStatsKey(node_type=NodeType.VARIABLE, var_scope=VarScope.CONTINUOUS).key]
     """
-
-    @staticmethod
-    def _type_enum() -> type[NodeType]:
-        """Return the NodeType enum class."""
-        return NodeType
-
-    def get_median(self, node_type: NodeType, var_scope: VarScope) -> float:
-        """Direct access to median value."""
-        return self.get(node_type, var_scope).median
-
-    def get_vc(self, node_type: NodeType, var_scope: VarScope) -> float:
-        """Direct access to variation coefficient."""
-        return self.get(node_type, var_scope).variation_coefficient
-
-    def get_q90(self, node_type: NodeType, var_scope: VarScope) -> float:
-        """Direct access to 90th percentile."""
-        return self.get(node_type, var_scope).q90
-
-    def get_q10(self, node_type: NodeType, var_scope: VarScope) -> float:
-        """Direct access to 10th percentile."""
-        return self.get(node_type, var_scope).q10
 
 
 @feature
@@ -149,33 +119,24 @@ class VariableConstraintGraphFeatures(IFeature):
 
             # Variable node degrees (column sums = connections per variable)
             var_node_degrees = np.sum(a_binary, axis=0)
-            stats[VariableConstraintGraphFeaturesResult.make_key(NodeType.VARIABLE, var_scope)] = (
-                self._compute_degree_stats(NodeType.VARIABLE, var_scope, var_node_degrees)
+            stats[str(NodeDegreeStatsKey(node_type=NodeType.VARIABLE, var_scope=var_scope)._asdict())] = (
+                self._compute_degree_stats(var_node_degrees)
             )
 
             # Constraint node degrees (row sums = connections per constraint)
             cons_node_degrees = np.sum(a_binary, axis=1)
-            stats[VariableConstraintGraphFeaturesResult.make_key(NodeType.CONSTRAINT, var_scope)] = (
-                self._compute_degree_stats(NodeType.CONSTRAINT, var_scope, cons_node_degrees)
+            stats[str(NodeDegreeStatsKey(node_type=NodeType.CONSTRAINT, var_scope=var_scope)._asdict())] = (
+                self._compute_degree_stats(cons_node_degrees)
             )
 
         return VariableConstraintGraphFeaturesResult(stats=stats)
 
-    def _compute_degree_stats(
-        self,
-        node_type: NodeType,
-        var_scope: VarScope,
-        degrees: NDArray[np.int_],
-    ) -> NodeDegreeStats:
+    def _compute_degree_stats(self, degrees: NDArray[np.int_]) -> NodeDegreeStats:
         """
         Compute all degree statistics for a given array of node degrees.
 
         Parameters
         ----------
-        node_type : NodeType
-            The type of node.
-        var_scope : VarScope
-            The scope of variables.
         degrees : NDArray
             Array of node degrees.
 
@@ -185,8 +146,6 @@ class VariableConstraintGraphFeatures(IFeature):
             Container with all statistical measures.
         """
         return NodeDegreeStats(
-            node_type=node_type,
-            var_scope=var_scope,
             mean=NumpyStatsHelper.mean(degrees),
             median=NumpyStatsHelper.median(degrees),
             variation_coefficient=NumpyStatsHelper.vc(degrees),

@@ -9,6 +9,8 @@ from luna_bench.components.features.mip.problem_size_feature import (
     ModelBoundsError,
     ProblemSizeFeatures,
     ProblemSizeFeaturesResult,
+    VarType,
+    VarTypeKey,
 )
 
 
@@ -21,47 +23,47 @@ class TestProblemSizeFeatures:
         result = extractor.run(simple_linear_model)
 
         assert isinstance(result, ProblemSizeFeaturesResult)
-        assert result.num_variables == 2
+        assert result.num_vars == 2
         assert result.num_constraints == 2
-        assert result.num_continuous_variables == 2
-        assert result.num_boolean_variables == 0
-        assert result.num_integer_variables == 0
-        assert result.frac_continuous_variables == 1.0
-        assert result.frac_boolean_variables == 0.0
-        assert result.num_non_continuous_variables == 0
-        assert result.num_unbounded_non_continuous_variables == 0
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.CONTINUOUS)).count == 2
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.BOOLEAN)).count == 0
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.INTEGER)).count == 0
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.CONTINUOUS)).fraction == 1.0
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.BOOLEAN)).fraction == 0.0
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.NON_CONTINUOUS)).count == 0
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.UNBOUNDED_NON_CONTINUOUS)).count == 0
 
     def test_mixed_integer_model(self, mixed_integer_model: Model) -> None:
         """Test feature extraction on a mixed-integer model."""
         extractor = ProblemSizeFeatures()
         result = extractor.run(mixed_integer_model)
 
-        assert result.num_variables == 6
+        assert result.num_vars == 6
         assert result.num_constraints == 4
 
         # Check variable type counts
-        assert result.num_boolean_variables == 2
-        assert result.num_integer_variables == 2
-        assert result.num_continuous_variables == 2
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.BOOLEAN)).count == 2
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.INTEGER)).count == 2
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.CONTINUOUS)).count == 2
 
         # Check fractions
-        assert result.frac_boolean_variables == pytest.approx(2 / 6)
-        assert result.frac_integer_variables == pytest.approx(2 / 6)
-        assert result.frac_continuous_variables == pytest.approx(2 / 6)
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.BOOLEAN)).fraction == pytest.approx(2 / 6)
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.INTEGER)).fraction == pytest.approx(2 / 6)
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.CONTINUOUS)).fraction == pytest.approx(2 / 6)
 
         # Check non-continuous counts
-        assert result.num_non_continuous_variables == 4
-        assert result.frac_non_continuous_variables == pytest.approx(4 / 6)
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.NON_CONTINUOUS)).count == 4
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.NON_CONTINUOUS)).fraction == pytest.approx(4 / 6)
 
         # Check unbounded non-continuous (i2 is unbounded)
-        assert result.num_unbounded_non_continuous_variables == 1
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.UNBOUNDED_NON_CONTINUOUS)).count == 1
 
     def test_quadratic_model(self, quadratic_model: Model) -> None:
         """Test feature extraction on a model with quadratic constraints."""
         extractor = ProblemSizeFeatures()
         result = extractor.run(quadratic_model)
 
-        assert result.num_variables == 3
+        assert result.num_vars == 3
         assert result.num_constraints == 4
         assert result.num_quadratic_constraints == 2
         assert result.num_non_zero_entries_quadratic_constraint_matrix > 0
@@ -74,29 +76,29 @@ class TestProblemSizeFeatures:
         extractor = ProblemSizeFeatures()
         result = extractor.run(empty_model)
 
-        assert result.num_variables == 0
+        assert result.num_vars == 0
         assert result.num_constraints == 0
         assert result.num_non_zero_entries_linear_constraint_matrix == 0
         assert result.num_quadratic_constraints == 0
 
         # Fractions should be 0 for empty model
-        assert result.frac_boolean_variables == 0.0
-        assert result.frac_continuous_variables == 0.0
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.BOOLEAN)).fraction == 0.0
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.CONTINUOUS)).fraction == 0.0
 
         # Support size statistics should handle empty arrays
-        assert result.mean_support_size == 0.0
-        assert result.median_support_size == 0.0
+        assert result.support_size.mean == 0.0
+        assert result.support_size.median == 0.0
 
     def test_sparse_model(self, sparse_model: Model) -> None:
         """Test feature extraction on a sparse model."""
         extractor = ProblemSizeFeatures()
         result = extractor.run(sparse_model)
 
-        assert result.num_variables == 6  # only active vars considered
+        assert result.num_vars == 6  # only active vars considered
         assert result.num_constraints == 3
 
         # Check sparsity
-        total_possible_entries = result.num_variables * result.num_constraints
+        total_possible_entries = result.num_vars * result.num_constraints
         sparsity_ratio = result.num_non_zero_entries_linear_constraint_matrix / total_possible_entries
         assert sparsity_ratio < 0.5  # Should be sparse
 
@@ -105,11 +107,11 @@ class TestProblemSizeFeatures:
         extractor = ProblemSizeFeatures()
         result = extractor.run(dense_model)
 
-        assert result.num_variables == 4
+        assert result.num_vars == 4
         assert result.num_constraints == 4
 
         # Check density
-        total_possible_entries = result.num_variables * result.num_constraints
+        total_possible_entries = result.num_vars * result.num_constraints
         density_ratio = result.num_non_zero_entries_linear_constraint_matrix / total_possible_entries
         assert density_ratio > 0.8  # Should be dense
 
@@ -118,13 +120,13 @@ class TestProblemSizeFeatures:
         extractor = ProblemSizeFeatures()
         result = extractor.run(unbounded_variables_model)
 
-        assert result.num_variables == 4
-        assert result.num_integer_variables == 3
-        assert result.num_continuous_variables == 1
+        assert result.num_vars == 4
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.INTEGER)).count == 3
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.CONTINUOUS)).count == 1
 
         # Check unbounded non-continuous variables
-        assert result.num_unbounded_non_continuous_variables == 1
-        assert result.frac_unbounded_non_continuous_variables == pytest.approx(1 / 4)
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.UNBOUNDED_NON_CONTINUOUS)).count == 1
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.UNBOUNDED_NON_CONTINUOUS)).fraction == pytest.approx(1 / 4)
 
     def test_support_sizes(self, mixed_integer_model: Model) -> None:
         """Test support size calculations for bounded variables."""
@@ -136,14 +138,14 @@ class TestProblemSizeFeatures:
         # c2 has bounds (0, 100) so support size is 101
 
         # Support sizes should be calculated
-        assert result.mean_support_size > 0
-        assert result.median_support_size > 0
+        assert result.support_size.mean > 0
+        assert result.support_size.median > 0
 
         # Variation coefficient should be non-negative
-        assert result.vc_support_size >= 0
+        assert result.support_size.variation_coefficient >= 0
 
         # Quantiles should be ordered
-        assert result.q10_support_size <= result.median_support_size <= result.q90_support_size
+        assert result.support_size.q10 <= result.support_size.median <= result.support_size.q90
 
     def test_semi_continuous_semi_integer_variables(self) -> None:
         """Test handling of semi-continuous and semi-integer variables."""
@@ -163,11 +165,11 @@ class TestProblemSizeFeatures:
         extractor = ProblemSizeFeatures()
         result = extractor.run(model)
 
-        assert result.num_variables == 2
-        assert result.num_semi_continuous_variables == 0  # no implemented
-        assert result.num_semi_integer_variables == 0  # no implemented
-        assert result.frac_semi_continuous_variables == pytest.approx(0)
-        assert result.frac_semi_integer_variables == pytest.approx(0)
+        assert result.num_vars == 2
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.SEMI_CONTINUOUS)).count == 0  # not implemented
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.SEMI_INTEGER)).count == 0  # not implemented
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.SEMI_CONTINUOUS)).fraction == pytest.approx(0)
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.SEMI_INTEGER)).fraction == pytest.approx(0)
 
     def test_variable_type_fractions_sum_to_one(self, mixed_integer_model: Model) -> None:
         """Test that all variable type fractions sum to 1."""
@@ -175,11 +177,11 @@ class TestProblemSizeFeatures:
         result = extractor.run(mixed_integer_model)
 
         total_fraction = (
-            result.frac_boolean_variables
-            + result.frac_integer_variables
-            + result.frac_continuous_variables
-            + result.frac_semi_continuous_variables
-            + result.frac_semi_integer_variables
+            result.var_counts.get(VarTypeKey(var_type=VarType.BOOLEAN)).fraction
+            + result.var_counts.get(VarTypeKey(var_type=VarType.INTEGER)).fraction
+            + result.var_counts.get(VarTypeKey(var_type=VarType.CONTINUOUS)).fraction
+            + result.var_counts.get(VarTypeKey(var_type=VarType.SEMI_CONTINUOUS)).fraction
+            + result.var_counts.get(VarTypeKey(var_type=VarType.SEMI_INTEGER)).fraction
         )
 
         assert total_fraction == pytest.approx(1.0)
@@ -190,7 +192,7 @@ class TestProblemSizeFeatures:
         result = extractor.run(dense_model)
 
         # Non-zero entries should not exceed matrix size
-        max_entries = result.num_variables * result.num_constraints
+        max_entries = result.num_vars * result.num_constraints
         assert result.num_non_zero_entries_linear_constraint_matrix <= max_entries
 
     def test_support_size_statistics_validity(self, mixed_integer_model: Model) -> None:
@@ -199,15 +201,15 @@ class TestProblemSizeFeatures:
         result = extractor.run(mixed_integer_model)
 
         # All statistics should be non-negative
-        assert result.mean_support_size >= 0
-        assert result.median_support_size >= 0
-        assert result.vc_support_size >= 0
-        assert result.q10_support_size >= 0
-        assert result.q90_support_size >= 0
+        assert result.support_size.mean >= 0
+        assert result.support_size.median >= 0
+        assert result.support_size.variation_coefficient >= 0
+        assert result.support_size.q10 >= 0
+        assert result.support_size.q90 >= 0
 
         # Mean and median should be reasonable
-        if result.mean_support_size > 0:
-            assert result.median_support_size > 0
+        if result.support_size.mean > 0:
+            assert result.support_size.median > 0
 
     def test_multiple_runs_deterministic(self, mixed_integer_model: Model) -> None:
         """Test that running the extractor multiple times gives consistent results."""
@@ -215,10 +217,13 @@ class TestProblemSizeFeatures:
         result1 = extractor.run(mixed_integer_model)
         result2 = extractor.run(mixed_integer_model)
 
-        assert result1.num_variables == result2.num_variables
+        assert result1.num_vars == result2.num_vars
         assert result1.num_constraints == result2.num_constraints
-        assert result1.num_boolean_variables == result2.num_boolean_variables
-        assert result1.mean_support_size == result2.mean_support_size
+        assert (
+            result1.var_counts.get(VarTypeKey(var_type=VarType.BOOLEAN)).count
+            == result2.var_counts.get(VarTypeKey(var_type=VarType.BOOLEAN)).count
+        )
+        assert result1.support_size.mean == result2.support_size.mean
 
     def test_model_bounds_error_raised(self) -> None:
         """Test that ModelBoundsError is raised when bounds are None."""
@@ -236,7 +241,7 @@ class TestProblemSizeFeatures:
 
         model.objective += x
         result = extractor.run(model)
-        assert result.num_variables == 1
+        assert result.num_vars == 1
 
     def test_large_model_performance(self) -> None:
         """Test that the extractor handles larger models efficiently."""
@@ -258,9 +263,9 @@ class TestProblemSizeFeatures:
         extractor = ProblemSizeFeatures()
         result = extractor.run(model)
 
-        assert result.num_variables == 100
+        assert result.num_vars == 100
         assert result.num_constraints == 50
-        assert result.num_continuous_variables == 100
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.CONTINUOUS)).count == 100
 
     def test_integer_none_bounds(self) -> None:
         # Create your mock model

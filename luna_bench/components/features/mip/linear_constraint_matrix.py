@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 from luna_quantum import Vtype
 from pydantic import BaseModel
 
 from luna_bench._internal.interfaces import IFeature
-from luna_bench.components.features.base_results import BaseStatsResultWithVarScope
+from luna_bench.components.features.base_feature import BaseFeatureResult
 from luna_bench.components.helper.degree import ConstraintDegree
 from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
@@ -29,57 +29,36 @@ class CoefType(str, Enum):
     ROW_VARIATION = "row_variation"  # VC of row-normalized absolute non-zero entries
 
 
+class CoefStatsKey(NamedTuple):
+    """Key for accessing coefficient statistics."""
+
+    coef_type: CoefType
+    var_scope: VarScope
+
+
 class CoefStats(BaseModel):
     """
     Container for coefficient statistics with descriptive context.
 
     Attributes
     ----------
-    coef_type : CoefType
-        The type of coefficient being measured (variable, constraint, normalized, row_variation).
-    var_scope : VarScope
-        The scope of variables included (continuous, non_continuous, all).
     mean : float
         Mean value of the coefficients.
     variation_coefficient : float
         Variation coefficient (std/mean) of the coefficients.
     """
 
-    coef_type: CoefType
-    var_scope: VarScope
     mean: float
     variation_coefficient: float
 
 
-class LinearConstraintMatrixFeaturesResult(BaseStatsResultWithVarScope[CoefType, CoefStats]):
+class LinearConstraintMatrixFeaturesResult(BaseFeatureResult[CoefStatsKey, CoefStats]):
     """
     Result container for linear constraint matrix feature calculations.
 
-    This class stores statistical measures of linear constraint matrix properties,
-    including variable and constraint coefficients, normalized matrix entries,
-    and variation coefficients for different variable types.
-
-    Access patterns:
-        - result.get(CoefType.VARIABLE, VarScope.CONTINUOUS) -> CoefStats
-        - result.get_mean(CoefType.VARIABLE, VarScope.CONTINUOUS) -> float
-        - result.get_vc(CoefType.VARIABLE, VarScope.CONTINUOUS) -> float
-        - result.by_type(CoefType.VARIABLE) -> Dict[VarScope, CoefStats]
-        - result.by_scope(VarScope.CONTINUOUS) -> Dict[CoefType, CoefStats]
-
-    Attributes
-    ----------
-    stats : Dict[str, CoefStats]
-        Dictionary mapping "{coef_type}_{var_scope}" keys to CoefStats objects.
+    Access via CoefStatsKey:
+        result.stats[str(CoefStatsKey(coef_type=CoefType.VARIABLE, var_scope=VarScope.CONTINUOUS).key]
     """
-
-    @staticmethod
-    def _type_enum() -> type[CoefType]:
-        """Return the CoefType enum class."""
-        return CoefType
-
-    def get_vc(self, coef_type: CoefType, var_scope: VarScope) -> float:
-        """Direct access to variation coefficient."""
-        return self.get(coef_type, var_scope).variation_coefficient
 
 
 @feature
@@ -125,36 +104,28 @@ class LinearConstraintMatrixFeatures(IFeature):
 
             # Variable coefficients (column sums)
             var_coef = np.sum(a, axis=0)
-            stats[LinearConstraintMatrixFeaturesResult.make_key(CoefType.VARIABLE, var_scope)] = CoefStats(
-                coef_type=CoefType.VARIABLE,
-                var_scope=var_scope,
+            stats[str(CoefStatsKey(coef_type=CoefType.VARIABLE, var_scope=var_scope)._asdict())] = CoefStats(
                 mean=NumpyStatsHelper.mean(var_coef),
                 variation_coefficient=NumpyStatsHelper.vc(var_coef),
             )
 
             # Constraint coefficients (row sums)
             cons_coef = np.sum(a, axis=1)
-            stats[LinearConstraintMatrixFeaturesResult.make_key(CoefType.CONSTRAINT, var_scope)] = CoefStats(
-                coef_type=CoefType.CONSTRAINT,
-                var_scope=var_scope,
+            stats[str(CoefStatsKey(coef_type=CoefType.CONSTRAINT, var_scope=var_scope)._asdict())] = CoefStats(
                 mean=NumpyStatsHelper.mean(cons_coef),
                 variation_coefficient=NumpyStatsHelper.vc(cons_coef),
             )
 
             # Normalized matrix entries (a_ij / b_i)
             norm_entries = self._norm_cons_matrix_entr(a, b)
-            stats[LinearConstraintMatrixFeaturesResult.make_key(CoefType.NORMALIZED, var_scope)] = CoefStats(
-                coef_type=CoefType.NORMALIZED,
-                var_scope=var_scope,
+            stats[str(CoefStatsKey(coef_type=CoefType.NORMALIZED, var_scope=var_scope)._asdict())] = CoefStats(
                 mean=NumpyStatsHelper.mean(norm_entries),
                 variation_coefficient=NumpyStatsHelper.vc(norm_entries),
             )
 
             # Row variation coefficients
             row_vcs = self._vc_abs_norm_cons_matrix_entr(a)
-            stats[LinearConstraintMatrixFeaturesResult.make_key(CoefType.ROW_VARIATION, var_scope)] = CoefStats(
-                coef_type=CoefType.ROW_VARIATION,
-                var_scope=var_scope,
+            stats[str(CoefStatsKey(coef_type=CoefType.ROW_VARIATION, var_scope=var_scope)._asdict())] = CoefStats(
                 mean=NumpyStatsHelper.mean(row_vcs),
                 variation_coefficient=NumpyStatsHelper.vc(row_vcs),
             )

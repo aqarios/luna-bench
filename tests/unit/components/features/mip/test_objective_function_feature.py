@@ -5,9 +5,12 @@ import pytest
 from luna_quantum import Bounds, Model, Unbounded, Variable, Vtype
 
 from luna_bench.components.features.mip.objective_function_features import (
+    NormType,
+    ObjCoefStatsKey,
     ObjectiveFunctionFeature,
     ObjectiveFunctionFeatureResult,
 )
+from luna_bench.components.helper.var_scope import VarScope
 
 
 class TestObjectiveFunctionFeature:
@@ -21,16 +24,22 @@ class TestObjectiveFunctionFeature:
         assert isinstance(result, ObjectiveFunctionFeatureResult)
 
         # All variables are continuous
-        assert result.mean_abscoefs_c == pytest.approx(2.5)
-        assert result.std_abscoefs_c == pytest.approx(0.5)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean == pytest.approx(2.5)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).std == pytest.approx(0.5)
 
         # No non-continuous variables
-        assert result.mean_abscoefs_nc == 0.0
-        assert result.std_abscoefs_nc == 0.0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).mean == 0.0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).std == 0.0
 
         # All variables stats should match continuous stats
-        assert result.mean_abscoefs_v == result.mean_abscoefs_c
-        assert result.std_abscoefs_v == result.std_abscoefs_c
+        assert (
+            result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.ALL)).mean
+            == result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean
+        )
+        assert (
+            result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.ALL)).std
+            == result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).std
+        )
 
     def test_mixed_integer_model(self, mixed_integer_model: Model) -> None:
         """Test feature extraction on a mixed-integer model."""
@@ -38,33 +47,37 @@ class TestObjectiveFunctionFeature:
         result = extractor.run(mixed_integer_model)
 
         # All coefficient groups should have values
-        assert result.mean_abscoefs_c > 0
-        assert result.mean_abscoefs_nc > 0
-        assert result.mean_abscoefs_v > 0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean > 0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).mean > 0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.ALL)).mean > 0
 
         # Standard deviations should be non-negative
-        assert result.std_abscoefs_c >= 0
-        assert result.std_abscoefs_nc >= 0
-        assert result.std_abscoefs_v >= 0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).std >= 0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).std >= 0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.ALL)).std >= 0
 
         # Normalized coefficients should also be computed
-        assert result.mean_norm_abscoefs_c >= 0
-        assert result.mean_norm_abscoefs_nc >= 0
-        assert result.mean_norm_abscoefs_v >= 0
+        assert result.get(ObjCoefStatsKey(NormType.NORMALIZED, VarScope.CONTINUOUS)).mean >= 0
+        assert result.get(ObjCoefStatsKey(NormType.NORMALIZED, VarScope.NON_CONTINUOUS)).mean >= 0
+        assert result.get(ObjCoefStatsKey(NormType.NORMALIZED, VarScope.ALL)).mean >= 0
 
         # Square-root normalized coefficients
-        assert result.mean_sqrtnorm_abscoefs_c >= 0
-        assert result.mean_sqrtnorm_abscoefs_nc >= 0
-        assert result.mean_sqrtnorm_abscoefs_v >= 0
+        assert result.get(ObjCoefStatsKey(NormType.SQRT_NORMALIZED, VarScope.CONTINUOUS)).mean >= 0
+        assert result.get(ObjCoefStatsKey(NormType.SQRT_NORMALIZED, VarScope.NON_CONTINUOUS)).mean >= 0
+        assert result.get(ObjCoefStatsKey(NormType.SQRT_NORMALIZED, VarScope.ALL)).mean >= 0
 
-        assert result.mean_abscoefs_c == pytest.approx(3.5)
-        assert result.std_abscoefs_c == pytest.approx(2.5)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean == pytest.approx(3.5)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).std == pytest.approx(2.5)
 
-        assert result.mean_abscoefs_nc == pytest.approx(3.5)
-        assert result.std_abscoefs_nc == pytest.approx(np.std([5, 3, 2, 4]))
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).mean == pytest.approx(3.5)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).std == pytest.approx(
+            np.std([5, 3, 2, 4])
+        )
 
-        assert result.mean_abscoefs_v == pytest.approx(3.5)
-        assert result.std_abscoefs_v == pytest.approx(np.std([5, 3, 2, 4, 1, 6]))
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.ALL)).mean == pytest.approx(3.5)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.ALL)).std == pytest.approx(
+            np.std([5, 3, 2, 4, 1, 6])
+        )
 
     def test_empty_model(self, empty_model: Model) -> None:
         """Test feature extraction on an empty model."""
@@ -72,12 +85,12 @@ class TestObjectiveFunctionFeature:
         result = extractor.run(empty_model)
 
         # All features should be 0 for empty model
-        assert result.mean_abscoefs_c == 0.0
-        assert result.mean_abscoefs_nc == 0.0
-        assert result.mean_abscoefs_v == 0.0
-        assert result.std_abscoefs_c == 0.0
-        assert result.std_abscoefs_nc == 0.0
-        assert result.std_abscoefs_v == 0.0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean == 0.0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).mean == 0.0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.ALL)).mean == 0.0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).std == 0.0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).std == 0.0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.ALL)).std == 0.0
 
     def test_continuous_only_objective(self) -> None:
         """Test objective with only continuous variables."""
@@ -98,10 +111,10 @@ class TestObjectiveFunctionFeature:
         expected_mean = (3 + 5 + 2) / 3
         expected_std = np.std([3, 5, 2])
 
-        assert result.mean_abscoefs_c == pytest.approx(expected_mean)
-        assert result.std_abscoefs_c == pytest.approx(expected_std)
-        assert result.mean_abscoefs_nc == 0.0
-        assert result.std_abscoefs_nc == 0.0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean == pytest.approx(expected_mean)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).std == pytest.approx(expected_std)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).mean == 0.0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).std == 0.0
 
     def test_integer_only_objective(self) -> None:
         """Test objective with only integer variables."""
@@ -122,10 +135,14 @@ class TestObjectiveFunctionFeature:
         expected_mean = (4 + 6 + 2) / 3
         expected_std = np.std([4, 6, 2])
 
-        assert result.mean_abscoefs_nc == pytest.approx(expected_mean)
-        assert result.std_abscoefs_nc == pytest.approx(expected_std)
-        assert result.mean_abscoefs_c == 0.0
-        assert result.std_abscoefs_c == 0.0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).mean == pytest.approx(
+            expected_mean
+        )
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).std == pytest.approx(
+            expected_std
+        )
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean == 0.0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).std == 0.0
 
     def test_negative_coefficients(self) -> None:
         """Test that absolute values are correctly computed for negative coefficients."""
@@ -143,8 +160,8 @@ class TestObjectiveFunctionFeature:
 
         # Mean of absolute values: (|3| + |-5|) / 2 = 4
         # Std of |3|, |5| = 1
-        assert result.mean_abscoefs_c == pytest.approx(4.0)
-        assert result.std_abscoefs_c == pytest.approx(1.0)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean == pytest.approx(4.0)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).std == pytest.approx(1.0)
 
     def test_normalized_coefficients(self) -> None:
         """Test normalized coefficient calculations."""
@@ -163,12 +180,12 @@ class TestObjectiveFunctionFeature:
         result = extractor.run(model)
 
         # Normalized coefficients should be computed
-        assert result.mean_norm_abscoefs_c >= 0
-        assert result.std_norm_abscoefs_c >= 0
+        assert result.get(ObjCoefStatsKey(NormType.NORMALIZED, VarScope.CONTINUOUS)).mean >= 0
+        assert result.get(ObjCoefStatsKey(NormType.NORMALIZED, VarScope.CONTINUOUS)).std >= 0
 
         # Square-root normalized should also be valid
-        assert result.mean_sqrtnorm_abscoefs_c >= 0
-        assert result.std_sqrtnorm_abscoefs_c >= 0
+        assert result.get(ObjCoefStatsKey(NormType.SQRT_NORMALIZED, VarScope.CONTINUOUS)).mean >= 0
+        assert result.get(ObjCoefStatsKey(NormType.SQRT_NORMALIZED, VarScope.CONTINUOUS)).std >= 0
 
     def test_sparse_objective(self, sparse_model: Model) -> None:
         """Test objective with sparse coefficients (many variables, few in objective)."""
@@ -178,10 +195,12 @@ class TestObjectiveFunctionFeature:
         # Objective: 2*x0 + 3*x5 + x9 (all continuous)
         # Mean: (2 + 3 + 1) / 3 = 2.0                   # noqa: ERA001
         # Std: std([2, 3, 1]) ≈ 0.816
-        assert result.mean_abscoefs_c == pytest.approx(2.0)
-        assert result.std_abscoefs_c == pytest.approx(np.std([2, 3, 1]))
-        assert result.mean_abscoefs_nc == 0.0
-        assert result.std_abscoefs_nc == 0.0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean == pytest.approx(2.0)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).std == pytest.approx(
+            np.std([2, 3, 1])
+        )
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).mean == 0.0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).std == 0.0
 
     def test_zero_coefficient_handling(self) -> None:
         """Test handling when some variables don't appear in constraints."""
@@ -200,8 +219,8 @@ class TestObjectiveFunctionFeature:
         result = extractor.run(model)
 
         # Should handle variables that don't appear in all constraints
-        assert result.mean_abscoefs_c > 0
-        assert result.std_abscoefs_c >= 0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean > 0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).std >= 0
 
     def test_normalization_with_zero_constraint_coefficients(self) -> None:
         """Test normalization when a variable doesn't appear in any constraint."""
@@ -221,8 +240,8 @@ class TestObjectiveFunctionFeature:
 
         # Should handle normalization gracefully
         # When a variable has 0 constraint coefficients, normalization should return 0
-        assert isinstance(result.mean_norm_abscoefs_c, float)
-        assert isinstance(result.mean_sqrtnorm_abscoefs_c, float)
+        assert isinstance(result.get(ObjCoefStatsKey(NormType.NORMALIZED, VarScope.CONTINUOUS)).mean, float)
+        assert isinstance(result.get(ObjCoefStatsKey(NormType.SQRT_NORMALIZED, VarScope.CONTINUOUS)).mean, float)
 
     def test_quadratic_model_linear_objective(self, quadratic_model: Model) -> None:
         """Test that only linear objective terms are considered."""
@@ -233,12 +252,12 @@ class TestObjectiveFunctionFeature:
         # Continuous: |1|, |2| -> mean=1.5, std=0.5
         # Non-continuous: |1| -> mean=1.0, std=0.0
         # All: mean=(1+2+1)/3=4/3≈1.333, std≈0.471
-        assert result.mean_abscoefs_c == pytest.approx(1.5)
-        assert result.std_abscoefs_c == pytest.approx(0.5)
-        assert result.mean_abscoefs_nc == pytest.approx(1.0)
-        assert result.std_abscoefs_nc == pytest.approx(0.0)
-        assert result.mean_abscoefs_v == pytest.approx(4 / 3)
-        assert result.std_abscoefs_v == pytest.approx(np.std([1, 2, 1]))
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean == pytest.approx(1.5)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).std == pytest.approx(0.5)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).mean == pytest.approx(1.0)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).std == pytest.approx(0.0)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.ALL)).mean == pytest.approx(4 / 3)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.ALL)).std == pytest.approx(np.std([1, 2, 1]))
 
     def test_standard_deviation_calculation(self) -> None:
         """Test standard deviation calculation with known values."""
@@ -257,11 +276,11 @@ class TestObjectiveFunctionFeature:
         result = extractor.run(model)
 
         # Mean = (2 + 4 + 6) / 3 = 4
-        assert result.mean_abscoefs_c == pytest.approx(4.0)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean == pytest.approx(4.0)
 
         # Std = np.std([2, 4, 6])               # noqa: ERA001
         expected_std = np.std([2, 4, 6])
-        assert result.std_abscoefs_c == pytest.approx(expected_std)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).std == pytest.approx(expected_std)
 
     def test_single_variable_objective(self) -> None:
         """Test objective with single variable."""
@@ -276,8 +295,10 @@ class TestObjectiveFunctionFeature:
         extractor = ObjectiveFunctionFeature()
         result = extractor.run(model)
 
-        assert result.mean_abscoefs_c == pytest.approx(5.0)
-        assert result.std_abscoefs_c == pytest.approx(0.0)  # Single value has no deviation
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean == pytest.approx(5.0)
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).std == pytest.approx(
+            0.0
+        )  # Single value has no deviation
 
     def test_all_statistics_non_negative(self, mixed_integer_model: Model) -> None:
         """Test that all statistics are non-negative."""
@@ -285,26 +306,26 @@ class TestObjectiveFunctionFeature:
         result = extractor.run(mixed_integer_model)
 
         # All means should be non-negative (absolute values)
-        assert result.mean_abscoefs_c >= 0
-        assert result.mean_abscoefs_nc >= 0
-        assert result.mean_abscoefs_v >= 0
-        assert result.mean_norm_abscoefs_c >= 0
-        assert result.mean_norm_abscoefs_nc >= 0
-        assert result.mean_norm_abscoefs_v >= 0
-        assert result.mean_sqrtnorm_abscoefs_c >= 0
-        assert result.mean_sqrtnorm_abscoefs_nc >= 0
-        assert result.mean_sqrtnorm_abscoefs_v >= 0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean >= 0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).mean >= 0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.ALL)).mean >= 0
+        assert result.get(ObjCoefStatsKey(NormType.NORMALIZED, VarScope.CONTINUOUS)).mean >= 0
+        assert result.get(ObjCoefStatsKey(NormType.NORMALIZED, VarScope.NON_CONTINUOUS)).mean >= 0
+        assert result.get(ObjCoefStatsKey(NormType.NORMALIZED, VarScope.ALL)).mean >= 0
+        assert result.get(ObjCoefStatsKey(NormType.SQRT_NORMALIZED, VarScope.CONTINUOUS)).mean >= 0
+        assert result.get(ObjCoefStatsKey(NormType.SQRT_NORMALIZED, VarScope.NON_CONTINUOUS)).mean >= 0
+        assert result.get(ObjCoefStatsKey(NormType.SQRT_NORMALIZED, VarScope.ALL)).mean >= 0
 
         # All standard deviations should be non-negative
-        assert result.std_abscoefs_c >= 0
-        assert result.std_abscoefs_nc >= 0
-        assert result.std_abscoefs_v >= 0
-        assert result.std_norm_abscoefs_c >= 0
-        assert result.std_norm_abscoefs_nc >= 0
-        assert result.std_norm_abscoefs_v >= 0
-        assert result.std_sqrtnorm_abscoefs_c >= 0
-        assert result.std_sqrtnorm_abscoefs_nc >= 0
-        assert result.std_sqrtnorm_abscoefs_v >= 0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).std >= 0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).std >= 0
+        assert result.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.ALL)).std >= 0
+        assert result.get(ObjCoefStatsKey(NormType.NORMALIZED, VarScope.CONTINUOUS)).std >= 0
+        assert result.get(ObjCoefStatsKey(NormType.NORMALIZED, VarScope.NON_CONTINUOUS)).std >= 0
+        assert result.get(ObjCoefStatsKey(NormType.NORMALIZED, VarScope.ALL)).std >= 0
+        assert result.get(ObjCoefStatsKey(NormType.SQRT_NORMALIZED, VarScope.CONTINUOUS)).std >= 0
+        assert result.get(ObjCoefStatsKey(NormType.SQRT_NORMALIZED, VarScope.NON_CONTINUOUS)).std >= 0
+        assert result.get(ObjCoefStatsKey(NormType.SQRT_NORMALIZED, VarScope.ALL)).std >= 0
 
     def test_deterministic_results(self, mixed_integer_model: Model) -> None:
         """Test that multiple runs produce identical results."""
@@ -312,7 +333,15 @@ class TestObjectiveFunctionFeature:
         result1 = extractor.run(mixed_integer_model)
         result2 = extractor.run(mixed_integer_model)
 
-        assert result1.mean_abscoefs_c == pytest.approx(result2.mean_abscoefs_c)
-        assert result1.mean_abscoefs_nc == pytest.approx(result2.mean_abscoefs_nc)
-        assert result1.std_abscoefs_v == pytest.approx(result2.std_abscoefs_v)
-        assert result1.mean_norm_abscoefs_c == pytest.approx(result2.mean_norm_abscoefs_c)
+        assert result1.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean == pytest.approx(
+            result2.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.CONTINUOUS)).mean
+        )
+        assert result1.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).mean == pytest.approx(
+            result2.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.NON_CONTINUOUS)).mean
+        )
+        assert result1.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.ALL)).std == pytest.approx(
+            result2.get(ObjCoefStatsKey(NormType.ABSOLUTE, VarScope.ALL)).std
+        )
+        assert result1.get(ObjCoefStatsKey(NormType.NORMALIZED, VarScope.CONTINUOUS)).mean == pytest.approx(
+            result2.get(ObjCoefStatsKey(NormType.NORMALIZED, VarScope.CONTINUOUS)).mean
+        )
