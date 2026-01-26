@@ -1,0 +1,207 @@
+"""Tests for the TimeToSolution metric."""
+
+from __future__ import annotations
+
+import time
+from collections.abc import Mapping
+
+import numpy as np
+from luna_quantum import Sense, Solution, Timer, Vtype
+
+from luna_bench.base_components import BaseFeature
+from luna_bench.base_components.data_types.feature_results import FeatureResults
+from luna_bench.components.features.optsol_feature import OptSolFeature, OptSolFeatureResult
+from luna_bench.components.metrics.time_to_solution import TimeToSolution, TimeToSolutionResult
+from luna_bench.types import FeatureName, FeatureResult
+
+
+def _create_solution(
+    obj_values: list[float],
+    sense: Sense = Sense.Min,
+    runtime_seconds: float = 0.1,
+) -> Solution:
+    """Helper to create a Solution with specific objective values."""
+    timer = Timer.start()
+    time.sleep(runtime_seconds)
+    timing = timer.stop()
+
+    num_samples = len(obj_values)
+    return Solution._build(  # type: ignore[attr-defined,no-any-return]
+        component_types=[Vtype.Binary],
+        binary_cols=[[0] * num_samples],
+        raw_energies=obj_values,
+        timing=timing,
+        counts=[1] * num_samples,
+        sense=sense,
+        obj_values=obj_values,
+        feasible=[True] * num_samples,
+    )
+
+
+def _create_feature_results(optimal_value: float) -> FeatureResults:
+    """Helper to create FeatureResults with OptSolFeature result."""
+    opt_feature = OptSolFeature()
+    opt_result = OptSolFeatureResult(best_sol=optimal_value, pre_terminated=False)
+    data: Mapping[type[BaseFeature], Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
+        OptSolFeature: {"optsol": (opt_result, opt_feature)}  # type: ignore[dict-item]
+    }
+    return FeatureResults(allowed=[OptSolFeature], data=data)
+
+
+class TestTimeToSolutionResult:
+    """Tests for TimeToSolutionResult."""
+
+    def test_valid_result(self) -> None:
+        """Test that TimeToSolutionResult stores values correctly."""
+        result = TimeToSolutionResult(
+            time_to_solution=1.5,
+            probability_optimal=0.5,
+            num_optimal_found=5,
+            num_samples=10,
+        )
+        assert result.time_to_solution == 1.5
+        assert result.probability_optimal == 0.5
+        assert result.num_optimal_found == 5
+        assert result.num_samples == 10
+
+    def test_infinity_tts(self) -> None:
+        """Test that infinite TTS is valid."""
+        result = TimeToSolutionResult(
+            time_to_solution=float("inf"),
+            probability_optimal=0.0,
+            num_optimal_found=0,
+            num_samples=10,
+        )
+        assert result.time_to_solution == float("inf")
+        assert result.probability_optimal == 0.0
+
+
+class TestTimeToSolution:
+    """Tests for the TimeToSolution metric."""
+
+    def test_all_optimal_solutions(self) -> None:
+        """Test TTS when all samples are optimal (p* = 1)."""
+        optimal = 5.0
+        solution = _create_solution(obj_values=[5.0, 5.0, 5.0], sense=Sense.Min, runtime_seconds=0.1)
+        feature_results = _create_feature_results(optimal_value=optimal)
+
+        metric = TimeToSolution()
+        result = metric.run(solution, feature_results)
+
+        assert isinstance(result, TimeToSolutionResult)
+        assert result.probability_optimal == 1.0
+        assert result.num_optimal_found == 3
+        assert result.num_samples == 3
+        # When p* = 1, TTS = t_per_sample = total_time / num_samples
+        expected_t_per_sample = result.time_to_solution
+        assert expected_t_per_sample > 0
+
+    def test_no_optimal_solutions(self) -> None:
+        """Test TTS = infinity when no optimal solutions found (p* = 0)."""
+        optimal = 5.0
+        solution = _create_solution(obj_values=[10.0, 15.0, 20.0], sense=Sense.Min)
+        feature_results = _create_feature_results(optimal_value=optimal)
+
+        metric = TimeToSolution()
+        result = metric.run(solution, feature_results)
+
+        assert isinstance(result, TimeToSolutionResult)
+        assert result.probability_optimal == 0.0
+        assert result.num_optimal_found == 0
+        assert result.num_samples == 3
+        assert result.time_to_solution == float("inf")
+
+    def test_some_optimal_solutions(self) -> None:
+        """Test TTS calculation when some samples are optimal (0 < p* < 1)."""
+        optimal = 5.0
+        # 2 out of 4 samples are optimal
+        solution = _create_solution(obj_values=[5.0, 10.0, 5.0, 15.0], sense=Sense.Min, runtime_seconds=0.1)
+        feature_results = _create_feature_results(optimal_value=optimal)
+
+        metric = TimeToSolution()
+        result = metric.run(solution, feature_results)
+
+        assert isinstance(result, TimeToSolutionResult)
+        assert result.probability_optimal == 0.5
+        assert result.num_optimal_found == 2
+        assert result.num_samples == 4
+
+        # TTS formula: (t/M) * ceil(log(1-0.99) / log(1-p*))
+        # With p* = 0.5: ceil(log(0.01) / log(0.5)) = ceil(6.64) = 7
+        total_runtime = solution.runtime.total_seconds
+        t_per_sample = total_runtime / 4
+        expected_tts = t_per_sample * np.ceil(np.log(0.01) / np.log(0.5))
+        assert np.isclose(result.time_to_solution, expected_tts, rtol=0.01)
+
+    def test_empty_solution(self) -> None:
+        """Test that empty solution returns infinity."""
+        timer = Timer.start()
+        time.sleep(0.01)
+        timing = timer.stop()
+
+        solution = Solution._build(  # type: ignore[attr-defined]
+            component_types=[Vtype.Binary],
+            binary_cols=[[]],
+            timing=timing,
+            sense=Sense.Min,
+        )
+        feature_results = _create_feature_results(optimal_value=5.0)
+
+        metric = TimeToSolution()
+        result = metric.run(solution, feature_results)
+
+        assert isinstance(result, TimeToSolutionResult)
+        assert result.time_to_solution == float("inf")
+        assert result.probability_optimal == 0.0
+        assert result.num_optimal_found == 0
+        assert result.num_samples == 0
+
+    def test_maximization_problem(self) -> None:
+        """Test TTS for maximization problems."""
+        optimal = 20.0
+        # 1 out of 3 samples is optimal
+        solution = _create_solution(obj_values=[10.0, 20.0, 15.0], sense=Sense.Max)
+        feature_results = _create_feature_results(optimal_value=optimal)
+
+        metric = TimeToSolution()
+        result = metric.run(solution, feature_results)
+
+        assert isinstance(result, TimeToSolutionResult)
+        assert np.isclose(result.probability_optimal, 1 / 3, rtol=0.01)
+        assert result.num_optimal_found == 1
+        assert result.num_samples == 3
+        assert result.time_to_solution < float("inf")
+
+    def test_custom_target_probability(self) -> None:
+        """Test TTS with custom target probability."""
+        optimal = 5.0
+        solution = _create_solution(obj_values=[5.0, 10.0, 15.0], sense=Sense.Min)
+        feature_results = _create_feature_results(optimal_value=optimal)
+
+        # With 99% target probability (default)
+        metric_99 = TimeToSolution(target_probability=0.99)
+        result_99 = metric_99.run(solution, feature_results)
+
+        # With 90% target probability (requires fewer repetitions)
+        metric_90 = TimeToSolution(target_probability=0.90)
+        result_90 = metric_90.run(solution, feature_results)
+
+        assert result_90.time_to_solution < result_99.time_to_solution
+
+    def test_custom_tolerance(self) -> None:
+        """Test TTS with custom tolerance for optimal comparison."""
+        optimal = 5.0
+        # Values close to optimal but not exactly equal
+        solution = _create_solution(obj_values=[5.0001, 5.0002, 10.0], sense=Sense.Min)
+        feature_results = _create_feature_results(optimal_value=optimal)
+
+        # With default tolerance (1e-6), none should match
+        metric_strict = TimeToSolution(abs_tol=1e-6)
+        result_strict = metric_strict.run(solution, feature_results)
+
+        # With larger tolerance (1e-3), first two should match
+        metric_loose = TimeToSolution(abs_tol=1e-3)
+        result_loose = metric_loose.run(solution, feature_results)
+
+        assert result_strict.num_optimal_found == 0
+        assert result_loose.num_optimal_found == 2
