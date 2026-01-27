@@ -11,11 +11,11 @@ from pydantic import BaseModel
 from returns.pipeline import is_successful
 
 from luna_bench._internal.domain_models import RegisteredDataDomain
-from luna_bench._internal.interfaces import AlgorithmAsync
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.wrappers.luna_quantum import algorithms
 from luna_bench._internal.wrappers.luna_quantum.algorithms import LunaAlgorithm
+from luna_bench.base_components import BaseAlgorithmAsync
 from luna_bench.errors.bench_type_errors.algorithm_sub_type_error import AlgorithmSubTypeError
 from luna_bench.helpers.decorators import algorithm
 
@@ -77,14 +77,14 @@ class LunaAlgorithmWrapper:
     @inject
     def wrap(
         algorithm: IAlgorithm[Any],
-        registry: PydanticRegistry[AlgorithmAsync[BaseModel], RegisteredDataDomain] = Provide[
+        registry: PydanticRegistry[BaseAlgorithmAsync[BaseModel], RegisteredDataDomain] = Provide[
             RegistryContainer.algorithm_async_registry
         ],
     ) -> LunaAlgorithm:
         result = registry.get_by_id(LunaAlgorithmWrapper._get_id(algorithm.__class__))
         if not is_successful(result):
             raise result.failure()
-        cls: type[AlgorithmAsync[Any]] = result.unwrap()
+        cls: type[BaseAlgorithmAsync[Any]] = result.unwrap()
 
         if not issubclass(cls, LunaAlgorithm):
             raise AlgorithmSubTypeError("LunaAlgorithm")

@@ -5,7 +5,7 @@ from typing import ClassVar
 
 from luna_quantum import Logging, Model, Solution
 
-from luna_bench._internal.interfaces.algorithm_sync import AlgorithmSync
+from luna_bench.base_components import BaseAlgorithmSync
 from luna_bench.helpers import algorithm
 
 
@@ -17,7 +17,7 @@ class _CustomError(Exception):
 
 
 @algorithm
-class FailingAlgorithm(AlgorithmSync):
+class FailingAlgorithm(BaseAlgorithmSync):
     """
     Fake algorithm that does nothing.
 

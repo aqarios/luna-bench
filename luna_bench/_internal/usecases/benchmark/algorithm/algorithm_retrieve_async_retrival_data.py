@@ -11,16 +11,15 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
 from luna_bench._internal.mappers.algorithm_mapper import AlgorithmMapper
 from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmRetrieveAsyncRetrivalDataUc,
     BackgroundRetrieveAlgorithmAsyncUc,
 )
-from luna_bench._internal.user_models import AlgorithmUserModel, BenchmarkUserModel
-from luna_bench._internal.user_models.algorithm_result_usermodel import AlgorithmResultUserModel
+from luna_bench.base_components import BaseAlgorithmAsync
 from luna_bench.configs.config import config
+from luna_bench.entities import AlgorithmEntity, AlgorithmResultEntity, BenchmarkEntity
+from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
@@ -56,9 +55,9 @@ class AlgorithmRetrieveAsyncRetrivalDataUcImpl(AlgorithmRetrieveAsyncRetrivalDat
 
     def _apply_async_retrival_data(
         self,
-        benchmark: BenchmarkUserModel,
-        algorithm: AlgorithmUserModel,
-        result: AlgorithmResultUserModel,
+        benchmark: BenchmarkEntity,
+        algorithm: AlgorithmEntity,
+        result: AlgorithmResultEntity,
         retrival_data: BaseModel,
     ) -> Result[None, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]:
         try:
@@ -76,9 +75,9 @@ class AlgorithmRetrieveAsyncRetrivalDataUcImpl(AlgorithmRetrieveAsyncRetrivalDat
 
     def _apply_error(
         self,
-        benchmark: BenchmarkUserModel,
-        algorithm: AlgorithmUserModel,
-        result: AlgorithmResultUserModel,
+        benchmark: BenchmarkEntity,
+        algorithm: AlgorithmEntity,
+        result: AlgorithmResultEntity,
         error: ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError,
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         error_msg: str
@@ -99,12 +98,12 @@ class AlgorithmRetrieveAsyncRetrivalDataUcImpl(AlgorithmRetrieveAsyncRetrivalDat
             )
 
     def __call__(
-        self, benchmark: BenchmarkUserModel
+        self, benchmark: BenchmarkEntity
     ) -> Result[None, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]:
-        to_retrieve: deque[tuple[AlgorithmUserModel, AlgorithmResultUserModel]] = deque(
+        to_retrieve: deque[tuple[AlgorithmEntity, AlgorithmResultEntity]] = deque(
             (a, r)
             for a in benchmark.algorithms
-            if isinstance(a.algorithm, AlgorithmAsync)
+            if isinstance(a.algorithm, BaseAlgorithmAsync)
             for r in a.results.values()
             if r.status == JobStatus.RUNNING and r.task_id is not None
         )

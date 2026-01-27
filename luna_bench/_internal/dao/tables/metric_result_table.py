@@ -5,8 +5,8 @@ from luna_bench._internal.dao.tables import AlgorithmTable
 from luna_bench._internal.dao.tables.base_table import BaseTable
 from luna_bench._internal.dao.tables.metric_table import MetricTable
 from luna_bench._internal.dao.tables.model_metadata_table import ModelMetadataTable
-from luna_bench._internal.domain_models import JobStatus
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
+from luna_bench.entities.enums import JobStatus
 
 
 class MetricResultTable(BaseTable):

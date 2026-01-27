@@ -1,5 +1,5 @@
 from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
-from luna_bench.components.enums import ErrorHandlingMode
+from luna_bench.entities.enums import ErrorHandlingMode
 
 
 class TestEnums:

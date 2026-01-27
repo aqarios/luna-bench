@@ -12,6 +12,8 @@ if TYPE_CHECKING:
     from luna_quantum import Model
 
 
+from tempfile import NamedTemporaryFile, _TemporaryFileWrapper
+
 from luna_quantum import Solution
 
 from luna_bench.components.algorithms.scip import InfeasibleModelError, ScipAlgorithm
@@ -38,19 +40,17 @@ class TestScipAlgorithm:
 
         # Objective value should be 0
         best_sample = solution.best()
-        if best_sample is not None:
-            assert best_sample.obj_value == 0.0
+        assert best_sample is not None
+        assert best_sample.obj_value == 0.0
 
-            # Variables are in solution dict
-            sample_dict = best_sample.sample.to_dict()
-            assert "x" in sample_dict
-            assert "y" in sample_dict
+        # Variables are in solution dict
+        sample_dict = best_sample.sample.to_dict()
+        assert "x" in sample_dict
+        assert "y" in sample_dict
 
-            # Both variables are 0
-            assert sample_dict["x"] == 0.0
-            assert sample_dict["y"] == 0.0
-        else:
-            raise ValueError
+        # Both variables are 0
+        assert sample_dict["x"] == 0.0
+        assert sample_dict["y"] == 0.0
 
     def test_infeasible_model_raises_error(self, infeasible_model: Model) -> None:
         """Test that SCIP raises InfeasibleModelError for infeasible models.
@@ -95,10 +95,9 @@ class TestScipAlgorithm:
         temp_file_paths: list[Path] = []
 
         # Patch NamedTemporaryFile to track the temporary file path
-        original_tempfile = __import__("tempfile").NamedTemporaryFile
 
-        def tracked_tempfile(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
-            temp = original_tempfile(*args, **kwargs)
+        def tracked_tempfile(*args: Any, **kwargs: Any) -> _TemporaryFileWrapper:  # type: ignore[type-arg]
+            temp = NamedTemporaryFile(*args, **kwargs)  # noqa: SIM115
             temp_file_paths.append(Path(temp.name))
             return temp
 
@@ -123,5 +122,5 @@ class TestScipAlgorithm:
         assert isinstance(solution, Solution)
 
         # Timing object is filled despite pre-exit at max run-time
-        if solution.runtime is not None:
-            assert solution.runtime.total_seconds > 0
+        assert solution.runtime is not None
+        assert solution.runtime.total_seconds > 0

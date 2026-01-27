@@ -10,7 +10,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.dao import DaoTransaction, ModelSetDao
 from luna_bench._internal.usecases.modelset import ModelSetLoadAllUcImpl
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
-from luna_bench._internal.user_models.model_set_usermodel import ModelSetUserModel
+from luna_bench.entities.model_set_entity import ModelSetEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -26,17 +26,17 @@ class TestModelsetUc:
         ("modelset_name", "exp"),
         [
             ("existing", Failure(DataNotUniqueError())),
-            ("non-existing", Success(ModelSetUserModel(id=2, name="non-existing", models=[]))),
+            ("non-existing", Success(ModelSetEntity(id=2, name="non-existing", models=[]))),
         ],
     )
     def test_create(
         self,
         usecase: UsecaseContainer,
         modelset_name: str,
-        exp: Result[ModelSetUserModel, DataNotUniqueError | UnknownLunaBenchError],
+        exp: Result[ModelSetEntity, DataNotUniqueError | UnknownLunaBenchError],
     ) -> None:
         uc: ModelSetCreateUc = usecase.modelset_create_uc()
-        result: Result[ModelSetUserModel, DataNotUniqueError | UnknownLunaBenchError] = uc(
+        result: Result[ModelSetEntity, DataNotUniqueError | UnknownLunaBenchError] = uc(
             modelset_name=modelset_name,
         )
         assert type(result) is type(exp)
@@ -60,11 +60,11 @@ class TestModelsetUc:
         modelset_name: str,
         model: Model,
         models_after_add: int,
-        exp: Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError],
+        exp: Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         uc: ModelAddUc = usecase.model_add_uc()
         result: Result[
-            ModelSetUserModel,
+            ModelSetEntity,
             DataNotExistError | DataNotUniqueError | UnknownLunaBenchError,
         ] = uc(modelset_name=modelset_name, model=model)
         assert type(result) is type(exp)
@@ -88,7 +88,7 @@ class TestModelsetUc:
         uc._transaction = nullcontext(transaction_mock)  # type: ignore[attr-defined] # Overwrite the var so we can return a failure here
 
         result: Result[
-            ModelSetUserModel,
+            ModelSetEntity,
             DataNotExistError | DataNotUniqueError | UnknownLunaBenchError,
         ] = uc(modelset_name="A", model=simple_model("M3"))
         assert isinstance(result.failure(), UnknownLunaBenchError)
@@ -97,17 +97,17 @@ class TestModelsetUc:
         ("modelset_name", "exp"),
         [
             ("existing", Failure(DataNotUniqueError())),
-            ("non-existing", Success(ModelSetUserModel(id=2, name="non-existing", models=[]))),
+            ("non-existing", Success(ModelSetEntity(id=2, name="non-existing", models=[]))),
         ],
     )
     def test_model_create(
         self,
         usecase: UsecaseContainer,
         modelset_name: str,
-        exp: Result[ModelSetUserModel, DataNotUniqueError | UnknownLunaBenchError],
+        exp: Result[ModelSetEntity, DataNotUniqueError | UnknownLunaBenchError],
     ) -> None:
         uc: ModelSetCreateUc = usecase.modelset_create_uc()
-        result: Result[ModelSetUserModel, DataNotUniqueError | UnknownLunaBenchError] = uc(
+        result: Result[ModelSetEntity, DataNotUniqueError | UnknownLunaBenchError] = uc(
             modelset_name=modelset_name,
         )
         assert type(result) is type(exp)
@@ -124,7 +124,7 @@ class TestModelsetUc:
                 "existing",
                 simple_model("existing"),
                 Success(
-                    ModelSetUserModel(
+                    ModelSetEntity(
                         id=1,
                         name="existing",
                         models=[],
@@ -140,10 +140,10 @@ class TestModelsetUc:
         usecase: UsecaseContainer,
         modelset_name: str,
         model: Model,
-        exp: Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError],
+        exp: Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         uc: ModelRemoveUc = usecase.model_remove_uc()
-        result: Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError] = uc(
+        result: Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError] = uc(
             modelset_name=modelset_name, model=model
         )
         assert type(result) is type(exp)
@@ -178,7 +178,7 @@ class TestModelsetUc:
     @pytest.mark.parametrize(
         ("modelset_name", "exp"),
         [
-            ("existing", Success(ModelSetUserModel(id=1, name="existing", models=[]))),
+            ("existing", Success(ModelSetEntity(id=1, name="existing", models=[]))),
             ("non-existing", Failure(DataNotExistError())),
         ],
     )
@@ -186,10 +186,10 @@ class TestModelsetUc:
         self,
         usecase: UsecaseContainer,
         modelset_name: str,
-        exp: Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError],
+        exp: Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         uc: ModelSetLoadUc = usecase.modelset_load_uc()
-        result: Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError] = uc(modelset_name=modelset_name)
+        result: Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError] = uc(modelset_name=modelset_name)
         assert type(result) is type(exp)
 
         if is_successful(exp):
@@ -207,7 +207,7 @@ class TestModelsetUc:
         usecase: UsecaseContainer,
     ) -> None:
         uc: ModelSetLoadAllUc = usecase.modelset_load_all_uc()
-        result: Result[list[ModelSetUserModel], UnknownLunaBenchError] = uc()
+        result: Result[list[ModelSetEntity], UnknownLunaBenchError] = uc()
 
         assert is_successful(result)
 

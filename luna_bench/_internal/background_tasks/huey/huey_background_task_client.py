@@ -5,7 +5,7 @@ from multiprocessing import Process
 from typing import TYPE_CHECKING
 
 from huey import MemoryHuey, SqliteHuey
-from huey.consumer import WORKER_THREAD, Consumer
+from huey.consumer import WORKER_PROCESS, Consumer
 from luna_quantum import Logging
 
 from luna_bench._internal.background_tasks.protocols import BackgroundTaskClient
@@ -22,7 +22,12 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
     huey: SqliteHuey | MemoryHuey = (
         MemoryHuey()
         if config.DB_JOBS_CONNECTION_STRING == ":memory:"
-        else SqliteHuey("luna-bench-background_tasks", filename=config.DB_JOBS_CONNECTION_STRING)
+        else SqliteHuey(
+            name="luna-bench-background_tasks",
+            filename=config.DB_JOBS_CONNECTION_STRING,
+            timeout=30,
+            journal_mode="wal",
+        )
     )
 
     @staticmethod
@@ -35,7 +40,7 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
             backoff=1.15,
             max_delay=10.0,
             scheduler_interval=1,
-            worker_type=WORKER_THREAD,
+            worker_type=WORKER_PROCESS,
             check_worker_health=True,
             health_check_interval=1,
             flush_locks=True,

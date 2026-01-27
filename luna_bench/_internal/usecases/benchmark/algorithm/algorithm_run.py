@@ -14,7 +14,7 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmRunAsBackgroundTasksUc,
     AlgorithmRunUc,
 )
-from luna_bench._internal.user_models import AlgorithmUserModel, BenchmarkUserModel
+from luna_bench.entities import AlgorithmEntity, BenchmarkEntity
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 
@@ -62,7 +62,7 @@ class AlgorithmRunUcImpl(AlgorithmRunUc):
         self._bg_task_client = bg_task_client
 
     def __call__(
-        self, benchmark: BenchmarkUserModel, algorithm: AlgorithmUserModel | None = None
+        self, benchmark: BenchmarkEntity, algorithm: AlgorithmEntity | None = None
     ) -> Result[None, RunAlgorithmMissingError | RunModelsetMissingError]:
         result_sync = self._algorithm_filter(benchmark, algorithm_type=AlgorithmType.SYNC, algorithm=algorithm)
         result_async = self._algorithm_filter(benchmark, algorithm_type=AlgorithmType.ASYNC, algorithm=algorithm)
@@ -73,8 +73,8 @@ class AlgorithmRunUcImpl(AlgorithmRunUc):
         if not is_successful(result_async):
             return Failure(result_async.failure())
 
-        algorithms_sync: list[AlgorithmUserModel] = result_sync.unwrap()
-        algorithms_async: list[AlgorithmUserModel] = result_async.unwrap()
+        algorithms_sync: list[AlgorithmEntity] = result_sync.unwrap()
+        algorithms_async: list[AlgorithmEntity] = result_async.unwrap()
 
         if benchmark.modelset is None:
             self._logger.debug(f"Modelset is missing for benchmark '{benchmark.name}'")

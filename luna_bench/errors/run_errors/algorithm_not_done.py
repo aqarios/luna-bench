@@ -1,4 +1,4 @@
-from luna_bench._internal.domain_models import JobStatus
+from luna_bench.entities.enums import JobStatus
 
 from .run_error import RunError
 

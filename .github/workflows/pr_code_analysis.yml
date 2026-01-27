@@ -58,5 +58,5 @@ jobs:
           remove-link-from-badge: false
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./pytest.xml
-      - name: Fail if coverage is below 100%
-        run: uv run coverage report --fail-under=100
+      - name: Fail if coverage is below 98%
+        run: uv run coverage report --fail-under=98

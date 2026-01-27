@@ -7,8 +7,8 @@ from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench._internal.user_models import AlgorithmUserModel
+from luna_bench.entities import AlgorithmEntity
+from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -17,14 +17,14 @@ from tests.unit.fixtures.mock_components import MockAlgorithm, UnregisteredAlgor
 if TYPE_CHECKING:
     from pydantic import ValidationError
 
-    from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync
     from luna_bench._internal.usecases.usecase_container import UsecaseContainer
+    from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
     from luna_bench.errors.registry.unknown_id_error import UnknownIdError
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-def _empty_algorithm(name: str, algorithm: AlgorithmSync | AlgorithmAsync[Any]) -> AlgorithmUserModel:
-    return AlgorithmUserModel(
+def _empty_algorithm(name: str, algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any]) -> AlgorithmEntity:
+    return AlgorithmEntity(
         name=name,
         status=JobStatus.CREATED,
         algorithm=algorithm,
@@ -47,9 +47,9 @@ class TestAlgorithm:
         usecase: UsecaseContainer,
         benchmark_name: str,
         algorithm_name: str,
-        algorithm: AlgorithmSync | AlgorithmAsync[Any],
+        algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any],
         exp: Result[
-            AlgorithmUserModel,
+            AlgorithmEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -60,7 +60,7 @@ class TestAlgorithm:
     ) -> None:
         uc = usecase.benchmark_add_algorithm_uc()
         result: Result[
-            AlgorithmUserModel,
+            AlgorithmEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -88,7 +88,7 @@ class TestAlgorithm:
         benchmark_name: str,
         algorithm_name: str,
         exp: Result[
-            AlgorithmUserModel,
+            AlgorithmEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError

@@ -1,5 +1,5 @@
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
+from luna_bench.entities.enums.job_status_enum import JobStatus
 
 from .base_domain import BaseDomain
 

@@ -7,7 +7,7 @@ from luna_quantum import Logging, Model, Solution, Timer
 from luna_quantum.translator import LpTranslator
 from pyscipopt import Model as PyScipModel
 
-from luna_bench._internal.interfaces.algorithm_sync import AlgorithmSync
+from luna_bench.base_components import BaseAlgorithmSync
 from luna_bench.helpers import algorithm
 
 
@@ -24,7 +24,7 @@ class InfeasibleModelError(Exception):
 
 
 @algorithm()
-class ScipAlgorithm(AlgorithmSync):
+class ScipAlgorithm(BaseAlgorithmSync):
     """
     Classical exact optimization algorithm using SCIP (Solving Constraint Integer Programs).
 
@@ -77,10 +77,10 @@ class ScipAlgorithm(AlgorithmSync):
         >>> solution = scip_algo.run(my_model)
         """
         scip_model = PyScipModel()
-        scip_model.hideOutput(quiet=self.quiet_output)
+        scip_model.hideOutput(quiet=self.quiet_output)  # type: ignore[no-untyped-call]
 
         if self.max_runtime is not None:
-            scip_model.setParam("limits/time", self.max_runtime)
+            scip_model.setParam("limits/time", self.max_runtime)  # type: ignore[no-untyped-call]
 
         timer = Timer.start()
 
@@ -95,28 +95,27 @@ class ScipAlgorithm(AlgorithmSync):
                 model,
                 filepath=path,
             )
-            scip_model.readProblem(path)
+            scip_model.readProblem(path)  # type: ignore[no-untyped-call]
         finally:
             if path.exists():
                 path.unlink()
 
-        scip_model.optimize()
+        scip_model.optimize()  # type: ignore[no-untyped-call]
 
         timing = timer.stop()
 
-        if scip_model.getStatus() == "infeasible":
+        if scip_model.getStatus() == "infeasible":  # type: ignore[no-untyped-call]
             raise InfeasibleModelError
 
         self._logger.info(f"Completed SCIP optimization for model {model.name} in {timing.total_seconds:.2f}s")
 
         # Extract solution values from SCIP model
         solution_dict = {}
-        for var in scip_model.getVars():
-            solution_dict[var.name] = scip_model.getVal(var)
+        for var in scip_model.getVars():  # type: ignore[no-untyped-call]
+            solution_dict[var.name] = scip_model.getVal(var)  # type: ignore[no-untyped-call]
 
-        objective_value = scip_model.getObjVal()
-
-        return Solution.from_dict(
+        objective_value = scip_model.getObjVal()  # type: ignore[no-untyped-call]
+        return Solution.from_dict(  # type: ignore[call-overload, no-any-return]
             data=solution_dict,
             model=model,
             timing=timing,

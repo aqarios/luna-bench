@@ -2,46 +2,43 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from luna_quantum import Model, Solution
+from luna_quantum import Solution
 from pydantic import BaseModel
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync
-from luna_bench._internal.interfaces.feature_i import IFeature
-from luna_bench._internal.interfaces.metric_i import IMetric
-from luna_bench._internal.interfaces.plot_i import IPlot
-from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
-from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.helpers.decorators import algorithm, feature, metric, plot
+from luna_bench.types import MetricResult
 
 if TYPE_CHECKING:
     from luna_quantum import Model
 
-    from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
+    from luna_bench.base_components.data_types.feature_results import FeatureResults
+    from luna_bench.entities.benchmark_entity import BenchmarkEntity
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-@feature(feature_id="mock_feature")  # type: ignore[arg-type]
-class MockFeature(IFeature):  # type: ignore[misc]
+@feature(feature_id="mock_feature")
+class MockFeature(BaseFeature):
     def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
         return ArbitraryDataDomain.model_construct(solution="xD")  # type: ignore[call-arg] # Fake data
 
 
 @feature
-class MockFeatureFailing(IFeature):
+class MockFeatureFailing(BaseFeature):
     def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
         raise ValueError("Model failed.")  # noqa: TRY003 # Just simulating a random error
 
 
-class UnregisteredFeature(IFeature):
+class UnregisteredFeature(BaseFeature):
     def run(self, model: Model) -> ArbitraryDataDomain:
         raise NotImplementedError
 
 
 @algorithm
-class MockAlgorithm(AlgorithmSync):
+class MockAlgorithm(BaseAlgorithmSync):
     def run(self, model: Model) -> Solution:
         raise NotImplementedError
 
@@ -51,7 +48,7 @@ class AsyncReturnData(BaseModel):
 
 
 @algorithm
-class MockAsyncAlgorithm(AlgorithmAsync[AsyncReturnData]):
+class MockAsyncAlgorithm(BaseAlgorithmAsync[AsyncReturnData]):
     @property
     def model_type(self) -> type[AsyncReturnData]:
         return AsyncReturnData
@@ -74,58 +71,58 @@ class MockAsyncAlgorithm(AlgorithmAsync[AsyncReturnData]):
         )
 
 
-class UnregisteredAlgorithm(AlgorithmSync):
+class UnregisteredAlgorithm(BaseAlgorithmSync):
     def run(self, model: Model) -> Solution:
         raise NotImplementedError
 
 
 @plot
-class MockPlot(IPlot[str]):
+class MockPlot(BasePlot[str]):
     def run(self, data: str) -> None:
         raise NotImplementedError
 
     def validate_plot(
         self,
-        benchmark: BenchmarkUserModel,  # noqa: ARG002
+        benchmark: BenchmarkEntity,  # noqa: ARG002
     ) -> Result[str, PlotRunError | UnknownLunaBenchError]:
         return Success("test")
 
 
-class UnregisteredPlot(IPlot[str]):
+class UnregisteredPlot(BasePlot[str]):
     def run(self, data: str) -> None:
         raise NotImplementedError
 
     def validate_plot(
         self,
-        benchmark: BenchmarkUserModel,
+        benchmark: BenchmarkEntity,
     ) -> Result[str, PlotRunError | UnknownLunaBenchError]:
         raise NotImplementedError
 
 
 @plot
-class MockPlotWithValidationError(IPlot[str]):
+class MockPlotWithValidationError(BasePlot[str]):
     def run(self, data: str) -> None:
         raise NotImplementedError
 
     def validate_plot(
         self,
-        benchmark: BenchmarkUserModel,  # noqa: ARG002
+        benchmark: BenchmarkEntity,  # noqa: ARG002
     ) -> Result[str, PlotRunError | UnknownLunaBenchError]:
         return Failure(PlotRunError())
 
 
-@metric(metric_id="mock_metric")  # type: ignore[arg-type]
-class MockMetric(IMetric):  # type: ignore[misc]
-    def run(self, solution: Solution) -> ArbitraryDataDomain:  # noqa: ARG002
-        return ArbitraryDataDomain()
+@metric(metric_id="mock_metric")
+class MockMetric(BaseMetric):
+    def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:  # noqa: ARG002
+        return MetricResult()
 
 
 @metric
-class MockMetricError(IMetric):
-    def run(self, solution: Solution) -> ArbitraryDataDomain:
+class MockMetricError(BaseMetric):
+    def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:
         raise NotImplementedError
 
 
-class UnregisteredMetric(IMetric):
-    def run(self, solution: Solution) -> ArbitraryDataDomain:  # noqa: ARG002
-        return ArbitraryDataDomain()
+class UnregisteredMetric(BaseMetric):
+    def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:  # noqa: ARG002
+        return MetricResult()

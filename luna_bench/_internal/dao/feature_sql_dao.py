@@ -11,10 +11,10 @@ from luna_bench._internal.domain_models import (
     BenchmarkStatus,
     FeatureDomain,
     FeatureResultDomain,
-    JobStatus,
     RegisteredDataDomain,
 )
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
+from luna_bench.entities.enums import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 

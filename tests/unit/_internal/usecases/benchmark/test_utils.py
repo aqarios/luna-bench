@@ -10,23 +10,27 @@ from luna_bench._internal.domain_models.algorithm_domain import AlgorithmDomain
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.feature_domain import FeatureDomain
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
 from luna_bench._internal.domain_models.metric_domain import MetricDomain
 from luna_bench._internal.domain_models.model_metadata_domain import ModelMetadataDomain
 from luna_bench._internal.domain_models.modelset_domain import ModelSetDomain
 from luna_bench._internal.domain_models.registered_data_domain import RegisteredDataDomain
-from luna_bench._internal.interfaces import AlgorithmSync, IFeature, IMetric, IPlot
-from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
 from luna_bench._internal.mappers.algorithm_mapper import AlgorithmMapper
 from luna_bench._internal.mappers.benchmark_mapper import BenchmarkMapper
 from luna_bench._internal.mappers.feature_mapper import FeatureMapper
 from luna_bench._internal.mappers.metric_mapper import MetricMapper
 from luna_bench._internal.mappers.plot_mapper import PlotMapper
 from luna_bench._internal.registries.arbitrary_data_registry import ArbitraryDataRegistry
-from luna_bench._internal.user_models import AlgorithmUserModel, BenchmarkUserModel, MetricUserModel, PlotUserModel
-from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
-from luna_bench._internal.user_models.model_metadata_usermodel import ModelMetadataUserModel
-from luna_bench._internal.user_models.model_set_usermodel import ModelSetUserModel
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
+from luna_bench.entities import (
+    AlgorithmEntity,
+    BenchmarkEntity,
+    FeatureEntity,
+    MetricEntity,
+    ModelMetadataEntity,
+    ModelSetEntity,
+    PlotEntity,
+)
+from luna_bench.entities.enums import JobStatus
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockAsyncAlgorithm, MockFeature, MockMetric, MockPlot
 from tests.utils.luna_model import simple_model
 
@@ -36,8 +40,8 @@ if TYPE_CHECKING:
     from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
 
-def _empty_benchmark_usermodel(name: str) -> BenchmarkUserModel:
-    return BenchmarkUserModel(
+def _empty_benchmark_usermodel(name: str) -> BenchmarkEntity:
+    return BenchmarkEntity(
         name=name,
         modelset=None,
         features=[],
@@ -47,31 +51,31 @@ def _empty_benchmark_usermodel(name: str) -> BenchmarkUserModel:
     )
 
 
-def _full_benchmark_usermodel(name: str) -> BenchmarkUserModel:
+def _full_benchmark_usermodel(name: str) -> BenchmarkEntity:
     from tests.unit.fixtures.mock_components import MockFeature
 
-    return BenchmarkUserModel(
+    return BenchmarkEntity(
         name=name,
-        modelset=ModelSetUserModel(
+        modelset=ModelSetEntity(
             name="existing",
             id=1,
             models=[
-                ModelMetadataUserModel(
+                ModelMetadataEntity(
                     id=1,
                     name="existing",
                     hash=simple_model("existing").__hash__(),
                 )
             ],
         ),
-        features=[FeatureUserModel(name="existing", status=JobStatus.CREATED, feature=MockFeature(), results={})],
+        features=[FeatureEntity(name="existing", status=JobStatus.CREATED, feature=MockFeature(), results={})],
         algorithms=[
-            AlgorithmUserModel(name="existing", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={}),
-            AlgorithmUserModel(
+            AlgorithmEntity(name="existing", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={}),
+            AlgorithmEntity(
                 name="existing_async", status=JobStatus.CREATED, algorithm=MockAsyncAlgorithm(), results={}
             ),
         ],
-        metrics=[MetricUserModel(name="existing", status=JobStatus.CREATED, metric=MockMetric(), results={})],
-        plots=[PlotUserModel(name="existing", status=JobStatus.CREATED, plot=MockPlot())],
+        metrics=[MetricEntity(name="existing", status=JobStatus.CREATED, metric=MockMetric(), results={})],
+        plots=[PlotEntity(name="existing", status=JobStatus.CREATED, plot=MockPlot())],
     )
 
 
@@ -156,11 +160,11 @@ class TestUtils:
         AlgorithmMapper,
         PlotMapper,
     ]:
-        metric_registry = ArbitraryDataRegistry[IMetric]("metric")
-        feature_registry = ArbitraryDataRegistry[IFeature]("feature")
-        algorithm_sync_registry = ArbitraryDataRegistry[AlgorithmSync]("algorithm_sync")
-        algorithm_async_registry = ArbitraryDataRegistry[AlgorithmAsync[Any]]("algorithm_async")
-        plot_registry = ArbitraryDataRegistry[IPlot[Any]]("plot")
+        metric_registry = ArbitraryDataRegistry[BaseMetric]("metric")
+        feature_registry = ArbitraryDataRegistry[BaseFeature]("feature")
+        algorithm_sync_registry = ArbitraryDataRegistry[BaseAlgorithmSync]("algorithm_sync")
+        algorithm_async_registry = ArbitraryDataRegistry[BaseAlgorithmAsync[Any]]("algorithm_async")
+        plot_registry = ArbitraryDataRegistry[BasePlot[Any]]("plot")
 
         feature_registry.register("feature", MockFeature)
         metric_registry.register("metric", MockMetric)
@@ -191,7 +195,7 @@ class TestUtils:
             PlotMapper,
         ],
         benchmark_domain: BenchmarkDomain,
-        exp: Result[BenchmarkUserModel, UnknownIdError | ValidationError],
+        exp: Result[BenchmarkEntity, UnknownIdError | ValidationError],
     ) -> None:
         r = BenchmarkMapper(
             mappers[0],

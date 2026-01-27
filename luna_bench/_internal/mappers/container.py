@@ -20,42 +20,42 @@ if TYPE_CHECKING:
     from luna_bench._internal.domain_models.metric_domain import MetricDomain
     from luna_bench._internal.domain_models.plot_config_domain import PlotDomain
     from luna_bench._internal.mappers.base_mapper import Mapper
-    from luna_bench._internal.user_models.algorithm_usermodel import AlgorithmUserModel
-    from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
-    from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
-    from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
-    from luna_bench._internal.user_models.plot_usermodel import PlotUserModel
+    from luna_bench.entities.algorithm_entity import AlgorithmEntity
+    from luna_bench.entities.benchmark_entity import BenchmarkEntity
+    from luna_bench.entities.feature_entity import FeatureEntity
+    from luna_bench.entities.metric_entity import MetricEntity
+    from luna_bench.entities.plot_entity import PlotEntity
 
 
 class MapperContainer(containers.DeclarativeContainer):
     registry_container = providers.Container(RegistryContainer)
 
-    algorithm_mapper: Provider[Mapper[AlgorithmDomain, AlgorithmUserModel]] = providers.Factory(
+    algorithm_mapper: Provider[Mapper[AlgorithmDomain, AlgorithmEntity]] = providers.Factory(
         AlgorithmMapper,
         algorithm_sync_registry=registry_container.algorithm_sync_registry,
         algorithm_async_registry=registry_container.algorithm_async_registry,
     )
-    algorithm_async_mapper: Provider[Mapper[AlgorithmDomain, AlgorithmUserModel]] = providers.Factory(
+    algorithm_async_mapper: Provider[Mapper[AlgorithmDomain, AlgorithmEntity]] = providers.Factory(
         AlgorithmMapper,
         algorithm_registry=registry_container.algorithm_async_registry,
     )
 
-    feature_mapper: Provider[Mapper[FeatureDomain, FeatureUserModel]] = providers.Factory(
+    feature_mapper: Provider[Mapper[FeatureDomain, FeatureEntity]] = providers.Factory(
         FeatureMapper,
         feature_registry=registry_container.feature_registry,
     )
 
-    metric_mapper: Provider[Mapper[MetricDomain, MetricUserModel]] = providers.Factory(
+    metric_mapper: Provider[Mapper[MetricDomain, MetricEntity]] = providers.Factory(
         MetricMapper,
         metric_registry=registry_container.metric_registry,
     )
 
-    plot_mapper: Provider[Mapper[PlotDomain, PlotUserModel]] = providers.Factory(
+    plot_mapper: Provider[Mapper[PlotDomain, PlotEntity]] = providers.Factory(
         PlotMapper,
         plot_registry=registry_container.plot_registry,
     )
 
-    benchmark_mapper: Provider[Mapper[BenchmarkDomain, BenchmarkUserModel]] = providers.Factory(
+    benchmark_mapper: Provider[Mapper[BenchmarkDomain, BenchmarkEntity]] = providers.Factory(
         BenchmarkMapper,
         feature_mapper=feature_mapper,
         metric_mapper=metric_mapper,

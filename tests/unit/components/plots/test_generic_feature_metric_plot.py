@@ -1,12 +1,12 @@
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
-from luna_bench._internal.user_models.feature_result_usermodel import FeatureResultUserModel
-from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
-from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
 from luna_bench.components.plots.generics.features_metrics_plot import (
     FeaturesAndMetricsValidationResult,
     GenericFeaturesMetricsPlot,
 )
+from luna_bench.entities.benchmark_entity import BenchmarkEntity
+from luna_bench.entities.enums.job_status_enum import JobStatus
+from luna_bench.entities.feature_entity import FeatureEntity
+from luna_bench.entities.feature_result_entity import FeatureResultEntity
+from luna_bench.entities.metric_entity import MetricEntity
 from luna_bench.errors.run_errors.plots_errors.features_missing_error import FeaturesMissingError
 from luna_bench.errors.run_errors.plots_errors.metrics_missing_error import MetricsMissingError
 from tests.unit.fixtures.mock_components import MockFeature, MockMetric
@@ -19,10 +19,10 @@ class _FakePlot(GenericFeaturesMetricsPlot):
 class TestGenericFeaturesMetricsPlot:
     def test_validate_plot(self) -> None:
         fake_plot = _FakePlot()
-        _FakePlot.features_ids = {MockFeature._registered_id}  # type: ignore[attr-defined]
-        _FakePlot.metrics_ids = {MockMetric._registered_id}  # type: ignore[attr-defined]
+        _FakePlot.features_ids = {MockFeature.registered_id}
+        _FakePlot.metrics_ids = {MockMetric.registered_id}
 
-        benchmark = BenchmarkUserModel(
+        benchmark = BenchmarkEntity(
             name="test",
             modelset=None,
             features=[],
@@ -36,7 +36,7 @@ class TestGenericFeaturesMetricsPlot:
         assert isinstance(result.failure(), MetricsMissingError)
 
         benchmark.metrics = [
-            MetricUserModel(
+            MetricEntity(
                 name="existing",
                 status=JobStatus.CREATED,
                 metric=MockMetric(),
@@ -50,12 +50,12 @@ class TestGenericFeaturesMetricsPlot:
 
         feature = MockFeature()
 
-        feature_user_model = FeatureUserModel(
+        feature_user_model = FeatureEntity(
             name="existing",
             status=JobStatus.CREATED,
             feature=feature,
             results={
-                "": FeatureResultUserModel.model_construct(
+                "": FeatureResultEntity.model_construct(
                     processing_time_ms=0,
                     model_name="test",
                     status=JobStatus.CREATED,
@@ -69,6 +69,6 @@ class TestGenericFeaturesMetricsPlot:
         result = fake_plot.validate_plot(benchmark)
 
         assert result.unwrap() == FeaturesAndMetricsValidationResult(
-            features={MockFeature._registered_id: benchmark.features[0]},  # type: ignore[attr-defined]
-            metrics={MockMetric._registered_id: benchmark.metrics[0]},  # type: ignore[attr-defined]
+            features={MockFeature.registered_id: benchmark.features[0]},
+            metrics={MockMetric.registered_id: benchmark.metrics[0]},
         )
