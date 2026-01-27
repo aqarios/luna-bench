@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 from luna_quantum.translator import LpTranslator
 from pyscipopt import Model as ScipModel
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench.base_components import BaseFeature
 from luna_bench.helpers import feature
+from luna_bench.types import FeatureResult
 
 if TYPE_CHECKING:
     from luna_quantum import Model
@@ -23,7 +23,7 @@ class InfeasibleModelError(Exception):
         super().__init__(msg)
 
 
-class OptSolFeatureResult(ArbitraryDataDomain):
+class OptSolFeatureResult(FeatureResult):
     """
     Result container for optimal solution feature calculations.
 

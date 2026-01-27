@@ -3,16 +3,20 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
 import numpy as np
 from luna_quantum import Sense, Solution, Timer, Vtype
 
-from luna_bench.base_components import BaseFeature
 from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.components.features.optsol_feature import OptSolFeature, OptSolFeatureResult
 from luna_bench.components.metrics.time_to_solution import TimeToSolution, TimeToSolutionResult
-from luna_bench.types import FeatureName, FeatureResult
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from luna_bench.base_components import BaseFeature
+    from luna_bench.types import FeatureName, FeatureResult
 
 
 def _create_solution(
@@ -20,7 +24,7 @@ def _create_solution(
     sense: Sense = Sense.Min,
     runtime_seconds: float = 0.1,
 ) -> Solution:
-    """Helper to create a Solution with specific objective values."""
+    """Create a Solution with specific objective values."""
     timer = Timer.start()
     time.sleep(runtime_seconds)
     timing = timer.stop()
@@ -39,11 +43,11 @@ def _create_solution(
 
 
 def _create_feature_results(optimal_value: float) -> FeatureResults:
-    """Helper to create FeatureResults with OptSolFeature result."""
+    """Create FeatureResults with OptSolFeature result."""
     opt_feature = OptSolFeature()
     opt_result = OptSolFeatureResult(best_sol=optimal_value, pre_terminated=False)
     data: Mapping[type[BaseFeature], Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
-        OptSolFeature: {"optsol": (opt_result, opt_feature)}  # type: ignore[dict-item]
+        OptSolFeature: {"optsol": (opt_result, opt_feature)}
     }
     return FeatureResults(allowed=[OptSolFeature], data=data)
 
@@ -185,7 +189,6 @@ class TestTimeToSolution:
         # With 90% target probability (requires fewer repetitions)
         metric_90 = TimeToSolution(target_probability=0.90)
         result_90 = metric_90.run(solution, feature_results)
-
         assert result_90.time_to_solution < result_99.time_to_solution
 
     def test_custom_tolerance(self) -> None:
@@ -205,3 +208,177 @@ class TestTimeToSolution:
 
         assert result_strict.num_optimal_found == 0
         assert result_loose.num_optimal_found == 2
+
+    def test_single_optimal_sample(self) -> None:
+        """Test TTS with a single optimal sample."""
+        optimal = 5.0
+        solution = _create_solution(obj_values=[5.0], sense=Sense.Min, runtime_seconds=0.1)
+        feature_results = _create_feature_results(optimal_value=optimal)
+
+        metric = TimeToSolution()
+        result = metric.run(solution, feature_results)
+
+        assert isinstance(result, TimeToSolutionResult)
+        assert result.probability_optimal == 1.0
+        assert result.num_optimal_found == 1
+        assert result.num_samples == 1
+        # When p* = 1, TTS = t_per_sample
+        assert result.time_to_solution > 0
+
+    def test_single_non_optimal_sample(self) -> None:
+        """Test TTS with a single non-optimal sample."""
+        optimal = 5.0
+        solution = _create_solution(obj_values=[10.0], sense=Sense.Min)
+        feature_results = _create_feature_results(optimal_value=optimal)
+
+        metric = TimeToSolution()
+        result = metric.run(solution, feature_results)
+
+        assert isinstance(result, TimeToSolutionResult)
+        assert result.probability_optimal == 0.0
+        assert result.num_optimal_found == 0
+        assert result.num_samples == 1
+        assert result.time_to_solution == float("inf")
+
+    def test_weighted_samples(self) -> None:
+        """Test TTS calculation with weighted samples (different counts)."""
+        timer = Timer.start()
+        time.sleep(0.1)
+        timing = timer.stop()
+
+        # Create solution with different counts
+        # Values: [5.0, 10.0] with counts [3, 1]
+        # Total samples = 4, optimal found = 3
+        solution = Solution._build(
+            component_types=[Vtype.Binary],
+            binary_cols=[[0, 0]],
+            raw_energies=[5.0, 10.0],
+            timing=timing,
+            counts=[3, 1],
+            sense=Sense.Min,
+            obj_values=[5.0, 10.0],
+            feasible=[True, True],
+        )
+        feature_results = _create_feature_results(optimal_value=5.0)
+
+        metric = TimeToSolution()
+        result = metric.run(solution, feature_results)
+
+        assert isinstance(result, TimeToSolutionResult)
+        # Note: num_samples counts unique samples, not total count
+        assert result.num_samples == 2
+        # Only 1 unique sample is optimal (the one with value 5.0)
+        assert result.num_optimal_found == 1
+        assert result.probability_optimal == 0.5
+
+    def test_low_probability_optimal(self) -> None:
+        """Test TTS with very low probability of finding optimal."""
+        optimal = 5.0
+        # Only 1 out of 10 samples is optimal
+        obj_values = [5.0] + [10.0] * 9
+        solution = _create_solution(obj_values=obj_values, sense=Sense.Min, runtime_seconds=0.1)
+        feature_results = _create_feature_results(optimal_value=optimal)
+
+        metric = TimeToSolution()
+        result = metric.run(solution, feature_results)
+
+        assert isinstance(result, TimeToSolutionResult)
+        assert result.probability_optimal == 0.1
+        assert result.num_optimal_found == 1
+        assert result.num_samples == 10
+        # TTS should be higher than with higher probability
+        assert result.time_to_solution > 0
+        assert result.time_to_solution < float("inf")
+
+    def test_high_probability_optimal(self) -> None:
+        """Test TTS with high probability of finding optimal (9/10)."""
+        optimal = 5.0
+        # 9 out of 10 samples are optimal
+        obj_values = [5.0] * 9 + [10.0]
+        solution = _create_solution(obj_values=obj_values, sense=Sense.Min, runtime_seconds=0.1)
+        feature_results = _create_feature_results(optimal_value=optimal)
+
+        metric = TimeToSolution()
+        result = metric.run(solution, feature_results)
+
+        assert isinstance(result, TimeToSolutionResult)
+        assert result.probability_optimal == 0.9
+        assert result.num_optimal_found == 9
+        assert result.num_samples == 10
+        # TTS should be relatively low
+        assert result.time_to_solution > 0
+        assert result.time_to_solution < float("inf")
+
+    def test_default_parameters(self) -> None:
+        """Test that default parameters are set correctly."""
+        metric = TimeToSolution()
+        assert metric.target_probability == 0.99
+        assert metric.abs_tol == 1e-6
+
+    def test_tts_formula_verification(self) -> None:
+        """Verify TTS formula with specific known values."""
+        optimal = 5.0
+        # 1 out of 4 samples is optimal -> p* = 0.25
+        solution = _create_solution(
+            obj_values=[5.0, 10.0, 15.0, 20.0],
+            sense=Sense.Min,
+            runtime_seconds=0.1,
+        )
+        feature_results = _create_feature_results(optimal_value=optimal)
+
+        metric = TimeToSolution(target_probability=0.99)
+        result = metric.run(solution, feature_results)
+
+        # Manual calculation:
+        # p* = 0.25
+        # num_repetitions = ceil(log(1-0.99) / log(1-0.25)) = ceil(log(0.01) / log(0.75))
+        # log(0.01) ≈ -4.605, log(0.75) ≈ -0.288
+        # num_repetitions = ceil(16.0) = 16
+        total_runtime = solution.runtime.total_seconds
+        t_per_sample = total_runtime / 4
+        expected_num_reps = np.ceil(np.log(0.01) / np.log(0.75))
+        expected_tts = t_per_sample * expected_num_reps
+
+        assert result.probability_optimal == 0.25
+        assert np.isclose(result.time_to_solution, expected_tts, rtol=0.01)
+
+    def test_negative_optimal_value(self) -> None:
+        """Test TTS with negative optimal value (valid for minimization)."""
+        optimal = -10.0
+        solution = _create_solution(obj_values=[-10.0, -5.0, 0.0], sense=Sense.Min)
+        feature_results = _create_feature_results(optimal_value=optimal)
+
+        metric = TimeToSolution()
+        result = metric.run(solution, feature_results)
+
+        assert isinstance(result, TimeToSolutionResult)
+        assert result.num_optimal_found == 1
+        assert np.isclose(result.probability_optimal, 1 / 3, rtol=0.01)
+
+    def test_zero_optimal_value(self) -> None:
+        """Test TTS with zero as optimal value."""
+        optimal = 0.0
+        solution = _create_solution(obj_values=[0.0, 1.0, 2.0], sense=Sense.Min)
+        feature_results = _create_feature_results(optimal_value=optimal)
+
+        metric = TimeToSolution()
+        result = metric.run(solution, feature_results)
+
+        assert isinstance(result, TimeToSolutionResult)
+        assert result.num_optimal_found == 1
+        assert np.isclose(result.probability_optimal, 1 / 3, rtol=0.01)
+
+    def test_very_low_target_probability(self) -> None:
+        """Test TTS with very low target probability (50%)."""
+        optimal = 5.0
+        solution = _create_solution(obj_values=[5.0, 10.0], sense=Sense.Min)
+        feature_results = _create_feature_results(optimal_value=optimal)
+
+        metric = TimeToSolution(target_probability=0.50)
+        result = metric.run(solution, feature_results)
+
+        assert isinstance(result, TimeToSolutionResult)
+        # With p* = 0.5 and target = 0.5, we need ceil(log(0.5)/log(0.5)) = 1 repetition
+        total_runtime = solution.runtime.total_seconds
+        t_per_sample = total_runtime / 2
+        assert np.isclose(result.time_to_solution, t_per_sample, rtol=0.01)

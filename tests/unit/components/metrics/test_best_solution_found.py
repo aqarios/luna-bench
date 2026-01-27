@@ -3,20 +3,24 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
 import pytest
 from luna_quantum import Sense, Solution, Timer, Vtype
+from pydantic import ValidationError
 
-from luna_bench.base_components import BaseFeature
 from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.components.features.optsol_feature import OptSolFeature, OptSolFeatureResult
 from luna_bench.components.metrics.best_solution_found import (
     BestSolutionFound,
-    BestSolutionFoundError,
     BestSolutionFoundResult,
 )
-from luna_bench.types import FeatureName, FeatureResult
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from luna_bench.base_components import BaseFeature
+    from luna_bench.types import FeatureName, FeatureResult
 
 
 def _create_solution(
@@ -24,7 +28,7 @@ def _create_solution(
     sense: Sense = Sense.Min,
     runtime_seconds: float = 0.1,
 ) -> Solution:
-    """Helper to create a Solution with specific objective values."""
+    """Create a Solution with specific objective values."""
     timer = Timer.start()
     time.sleep(runtime_seconds)
     timing = timer.stop()
@@ -43,11 +47,11 @@ def _create_solution(
 
 
 def _create_feature_results(optimal_value: float) -> FeatureResults:
-    """Helper to create FeatureResults with OptSolFeature result."""
+    """Create FeatureResults with OptSolFeature result."""
     opt_feature = OptSolFeature()
     opt_result = OptSolFeatureResult(best_sol=optimal_value, pre_terminated=False)
     data: Mapping[type[BaseFeature], Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
-        OptSolFeature: {"optsol": (opt_result, opt_feature)}  # type: ignore[dict-item]
+        OptSolFeature: {"optsol": (opt_result, opt_feature)}
     }
     return FeatureResults(allowed=[OptSolFeature], data=data)
 
@@ -72,7 +76,7 @@ class TestBestSolutionFoundResult:
 
     def test_invalid_result_less_than_one(self) -> None:
         """Test that BSF < 1.0 raises an error."""
-        with pytest.raises(BestSolutionFoundError):
+        with pytest.raises(ValidationError):
             BestSolutionFoundResult(best_solution_found=0.9)
 
 

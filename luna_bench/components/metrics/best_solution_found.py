@@ -12,7 +12,7 @@ from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.components.features.optsol_feature import OptSolFeature, OptSolFeatureResult
 from luna_bench.helpers import metric
 from luna_bench.types import MetricResult
-
+from pydantic import Field
 
 class BestSolutionFoundError(ValueError):
     """Raised when best solution found validation fails.
@@ -40,7 +40,7 @@ class BestSolutionFoundResult(MetricResult):
         Returns inf if no solution was found.
     """
 
-    best_solution_found: float
+    best_solution_found: float = Field(ge=1.0, description="The calculated best solution found ratio.")
 
     @field_validator("best_solution_found")
     @classmethod
@@ -148,7 +148,8 @@ class BestSolutionFound(BaseMetric):
         # Get the optimal solution from features
         opt_sol: OptSolFeatureResult
         (opt_sol, _) = feature_results.first(feature_cls=OptSolFeature)  # type: ignore[assignment]
-
+        if solution is None:
+            raise ValueError
         # Check if any solution exists
         if len(solution.samples) == 0:
             return BestSolutionFoundResult(best_solution_found=float("inf"))

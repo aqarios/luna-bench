@@ -118,12 +118,22 @@ class TimeToSolution(BaseMetric):
             )
 
         # Count optimal solutions using results (which have obj_value)
-        num_optimal_found = sum(1 for r in solution.results if np.isclose(r.obj_value, optimum, atol=self.abs_tol))
+        from luna_quantum import ResultView
+
+        def is_optimal(s: ResultView) -> bool:
+            if s.obj_value is None:
+                return False
+            return bool(np.isclose(s.obj_value, optimum, atol=self.abs_tol))
+
+        filt_sol = solution.filter(lambda s: is_optimal(s))
+        num_optimal_found = filt_sol.counts.sum()
 
         # Calculate probability of finding optimal
         p_star = num_optimal_found / num_samples
 
         # Calculate time per sample
+        if solution.runtime is None:
+            raise ValueError
         total_runtime = solution.runtime.total_seconds
         t_per_sample = total_runtime / num_samples
 

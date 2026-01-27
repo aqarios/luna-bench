@@ -11,7 +11,7 @@ from luna_bench.components.metrics.runtime import Runtime, RuntimeResult
 
 
 def _create_solution(runtime_seconds: float = 0.1) -> Solution:
-    """Helper to create a Solution with specific runtime."""
+    """Create a Solution with specific runtime."""
     timer = Timer.start()
     time.sleep(runtime_seconds)
     timing = timer.stop()
@@ -29,7 +29,7 @@ def _create_solution(runtime_seconds: float = 0.1) -> Solution:
 
 
 def _create_empty_feature_results() -> FeatureResults:
-    """Helper to create empty FeatureResults (Runtime doesn't need features)."""
+    """Create empty FeatureResults (Runtime doesn't need features)."""
     return FeatureResults(allowed=[], data={})
 
 

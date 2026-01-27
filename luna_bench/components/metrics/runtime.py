@@ -1,12 +1,12 @@
 """Runtime metric for measuring solution computation time."""
 
-from luna_quantum import Solution
+from luna_quantum import Solution, Timing
 
 from luna_bench.base_components import BaseMetric
 from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.helpers import metric
 from luna_bench.types import MetricResult
-
+from pydantic import Field
 
 class RuntimeResult(MetricResult):
     """Result container for the Runtime metric.
@@ -17,7 +17,7 @@ class RuntimeResult(MetricResult):
         The total runtime in seconds for computing the solution.
     """
 
-    runtime_seconds: float
+    runtime_seconds: float = Field(ge=0.0, description="The total runtime in seconds for computing the solution.")
 
 
 @metric
@@ -50,4 +50,8 @@ class Runtime(BaseMetric):
         RuntimeResult
             Contains the total runtime in seconds.
         """
-        return RuntimeResult(runtime_seconds=solution.runtime.total_seconds)
+        match solution.runtime:
+            case None:
+                return RuntimeResult(runtime_seconds=float("inf"))
+            case Timing():
+                return RuntimeResult(runtime_seconds=solution.runtime.total_seconds)
