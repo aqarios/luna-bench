@@ -126,7 +126,9 @@ class TestProblemSizeFeatures:
 
         # Check unbounded non-continuous variables
         assert result.var_counts.get(VarTypeKey(var_type=VarType.UNBOUNDED_NON_CONTINUOUS)).count == 1
-        assert result.var_counts.get(VarTypeKey(var_type=VarType.UNBOUNDED_NON_CONTINUOUS)).fraction == pytest.approx(1 / 4)
+        assert result.var_counts.get(VarTypeKey(var_type=VarType.UNBOUNDED_NON_CONTINUOUS)).fraction == pytest.approx(
+            1 / 4
+        )
 
     def test_support_sizes(self, mixed_integer_model: Model) -> None:
         """Test support size calculations for bounded variables."""

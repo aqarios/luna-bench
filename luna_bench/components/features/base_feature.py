@@ -13,4 +13,4 @@ class BaseFeatureResult[N, T](ArbitraryDataDomain):
 
     def get(self, enum_key: N) -> T:
         """Get stats by type and scope."""
-        return self.stats[str(enum_key._asdict())]
+        return self.stats[str(enum_key._asdict())]  # type: ignore[attr-defined]

@@ -104,7 +104,7 @@ class VariableConstraintGraphFeatures(IFeature):
         stats: dict[str, NodeDegreeStats] = {}
 
         # Define the variable type configurations
-        scope_configs = [
+        scope_configs: list[tuple[VarScope, Vtype | list[Vtype] | None]] = [
             (VarScope.CONTINUOUS, Vtype.Real),
             (VarScope.NON_CONTINUOUS, [Vtype.Integer, Vtype.Binary]),
             (VarScope.ALL, None),
@@ -112,7 +112,7 @@ class VariableConstraintGraphFeatures(IFeature):
 
         for var_scope, vtype in scope_configs:
             # Get constraint matrix for this variable scope
-            a, _ = ModelMatrix.constraint_matrix(model, degree=ConstraintDegree.LINEAR, vtype=vtype)
+            a, _ = ModelMatrix.constraint_matrix(model=model, degree=int(ConstraintDegree.LINEAR), vtype=vtype)
 
             # Convert to binary (non-zero = 1)
             a_binary = (a != 0).astype(int)
@@ -145,10 +145,11 @@ class VariableConstraintGraphFeatures(IFeature):
         NodeDegreeStats
             Container with all statistical measures.
         """
+        degrees_float = degrees.astype(np.float64)
         return NodeDegreeStats(
-            mean=NumpyStatsHelper.mean(degrees),
-            median=NumpyStatsHelper.median(degrees),
-            variation_coefficient=NumpyStatsHelper.vc(degrees),
-            q90=NumpyStatsHelper.q90(degrees),
-            q10=NumpyStatsHelper.q10(degrees),
+            mean=NumpyStatsHelper.mean(degrees_float),
+            median=NumpyStatsHelper.median(degrees_float),
+            variation_coefficient=NumpyStatsHelper.vc(degrees_float),
+            q90=NumpyStatsHelper.q90(degrees_float),
+            q10=NumpyStatsHelper.q10(degrees_float),
         )

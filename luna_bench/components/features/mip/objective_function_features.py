@@ -4,7 +4,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
-from luna_quantum import Vtype
+from luna_quantum import Variable, Vtype
 from pydantic import BaseModel
 
 from luna_bench._internal.interfaces import IFeature
@@ -96,7 +96,7 @@ class ObjectiveFunctionFeature(IFeature):
         abs_coefs, indices = self._abs_coefficients(model)
 
         # Define scope configurations
-        scope_configs = [
+        scope_configs: list[tuple[VarScope, Vtype | list[Vtype] | None]] = [
             (VarScope.CONTINUOUS, Vtype.Real),
             (VarScope.NON_CONTINUOUS, [Vtype.Integer, Vtype.Binary]),
             (VarScope.ALL, None),
@@ -111,7 +111,7 @@ class ObjectiveFunctionFeature(IFeature):
 
         for var_scope, vtype in scope_configs:
             # Get constraint matrix for this variable scope
-            a, _ = ModelMatrix.constraint_matrix(model, degree=ConstraintDegree.LINEAR, vtype=vtype)
+            a, _ = ModelMatrix.constraint_matrix(model, degree=int(ConstraintDegree.LINEAR), vtype=vtype)
 
             coefs = abs_coefs[var_scope]
             var_indices = indices[var_scope]
@@ -178,9 +178,9 @@ class ObjectiveFunctionFeature(IFeature):
         tuple[Dict[VarScope, NDArray], Dict[VarScope, list[int]]]
             Tuple of (coefficients dict, indices dict) keyed by VarScope.
         """
-        d_coefs_c: dict = {}
-        d_coefs_nc: dict = {}
-        d_coefs_v: dict = {}
+        d_coefs_c: dict[Variable, float] = {}
+        d_coefs_nc: dict[Variable, float] = {}
+        d_coefs_v: dict[Variable, float] = {}
 
         for var, v in model.objective.linear_items():
             match var.vtype:
