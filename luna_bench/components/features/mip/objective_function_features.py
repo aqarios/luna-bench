@@ -31,10 +31,24 @@ class NormType(str, Enum):
 
 
 class ObjCoefStatsKey(NamedTuple):
-    """Key for accessing objective coefficient statistics."""
+    """
+    Key for accessing objective coefficient statistics.
+
+    Attributes
+    ----------
+    norm_type : NormType
+        The type of normalization (ABSOLUTE, NORMALIZED, or SQRT_NORMALIZED).
+    var_scope : VarScope
+        The scope of variables (CONTINUOUS, NON_CONTINUOUS, or ALL).
+    """
 
     norm_type: NormType
     var_scope: VarScope
+
+    @property
+    def to_key(self) -> str:
+        """Function to generate key from NamedTuple."""
+        return str(self._asdict())
 
 
 class ObjCoefStats(BaseModel):
@@ -57,8 +71,21 @@ class ObjectiveFunctionFeatureResult(BaseFeatureResult[ObjCoefStatsKey, ObjCoefS
     """
     Result container for objective function feature calculations.
 
-    Access via ObjCoefStatsKey:
-        result.stats[ObjCoefStatsKey(norm_type=NormType.ABSOLUTE, var_scope=VarScope.CONTINUOUS).key]
+    Example
+    -------
+    .. code-block:: python
+
+        from luna_bench.components.features.mip.objective_function_features import (
+            NormType,
+            ObjCoefStatsKey,
+            ObjectiveFunctionFeature,
+        )
+        from luna_bench.components.helper.var_scope import VarScope
+
+        result = ObjectiveFunctionFeature().run(model)
+        obj_stats = result.get(ObjCoefStatsKey(norm_type=NormType.ABSOLUTE, var_scope=VarScope.CONTINUOUS))
+        obj_stats.mean
+        obj_stats.std
     """
 
 
@@ -90,7 +117,7 @@ class ObjectiveFunctionFeature(BaseFeature):
         ObjectiveFunctionFeatureResult
             Container with statistical measures of objective function coefficients.
         """
-        stats: dict[str, ObjCoefStats] = {}
+        obj_result = ObjectiveFunctionFeatureResult()
 
         # Get absolute coefficients for each variable scope
         abs_coefs, indices = self._abs_coefficients(model)
@@ -125,12 +152,15 @@ class ObjectiveFunctionFeature(BaseFeature):
                     normalized_coefs = self._normalize(a, coefs, var_indices, norm_func)
 
                 key = ObjCoefStatsKey(norm_type=norm_type, var_scope=var_scope)
-                stats[str(key._asdict())] = ObjCoefStats(
-                    mean=NumpyStatsHelper.mean(normalized_coefs),
-                    std=NumpyStatsHelper.std(normalized_coefs),
+                obj_result.add(
+                    enum_key=key,
+                    value=ObjCoefStats(
+                        mean=NumpyStatsHelper.mean(normalized_coefs),
+                        std=NumpyStatsHelper.std(normalized_coefs),
+                    ),
                 )
 
-        return ObjectiveFunctionFeatureResult(stats=stats)
+        return obj_result
 
     def _normalize(
         self,

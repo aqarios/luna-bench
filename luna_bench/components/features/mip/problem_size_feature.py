@@ -51,7 +51,14 @@ class VarType(str, Enum):
 
 
 class VarTypeKey(NamedTuple):
-    """Key for accessing variable count statistics."""
+    """
+    Key for accessing variable count statistics.
+
+    Attributes
+    ----------
+    var_type : VarType
+        The type of variable (BOOLEAN, INTEGER, CONTINUOUS, etc.).
+    """
 
     var_type: VarType
 
@@ -76,8 +83,19 @@ class VarCountResult(BaseFeatureResult[VarTypeKey, VarCountStats]):
     """
     Result container for variable count statistics.
 
-    Access via VarTypeKey:
-        result.stats[VarTypeKey(var_type=VarType.BOOLEAN).key]
+    Example
+    -------
+    .. code-block:: python
+
+        from luna_bench.components.features.mip.problem_size_feature import (
+            VarCountResult,
+            VarType,
+            VarTypeKey,
+        )
+
+        var_count_stats = var_count_result.get(VarTypeKey(var_type=VarType.BOOLEAN))
+        var_count_stats.count
+        var_count_stats.fraction
     """
 
 
@@ -213,15 +231,14 @@ class ProblemSizeFeatures(BaseFeature):
         counts[VarType.NON_CONTINUOUS] = counts[VarType.BOOLEAN] + counts[VarType.INTEGER]
 
         # Build var_counts dict with VarCountStats
-        var_counts_dict: dict[str, VarCountStats] = {}
+        var_counts = VarCountResult()
         for var_type, count in counts.items():
-            key = VarTypeKey(var_type=var_type)
-            var_counts_dict[str(key._asdict())] = VarCountStats(
+            stat_key = VarTypeKey(var_type=var_type)
+            stat_value = VarCountStats(
                 count=count,
                 fraction=count / num_vars if num_vars > 0 else 0.0,
             )
-
-        var_counts = VarCountResult(stats=var_counts_dict)
+            var_counts.add(enum_key=stat_key, value=stat_value)
 
         # Calculate support size statistics
         support_sizes = self._support_sizes(model)

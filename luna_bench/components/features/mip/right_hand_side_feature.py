@@ -41,7 +41,14 @@ class ConstraintSense(str, Enum):
 
 
 class RhsStatsKey(NamedTuple):
-    """Key for accessing RHS statistics."""
+    """
+    Key for accessing RHS statistics.
+
+    Attributes
+    ----------
+    constraint_sense : ConstraintSense
+        The sense of the constraint (LEQ, EQ, or GEQ).
+    """
 
     constraint_sense: ConstraintSense
 
@@ -66,8 +73,20 @@ class RightHandSideFeaturesResult(BaseFeatureResult[RhsStatsKey, RhsStats]):
     """
     Result container for right-hand side feature calculations.
 
-    Access via RhsStatsKey:
-        result.stats[RhsStatsKey(constraint_sense=ConstraintSense.LEQ).key]
+    Example
+    -------
+    .. code-block:: python
+
+        from luna_bench.components.features.mip.right_hand_side_feature import (
+            ConstraintSense,
+            RhsStatsKey,
+            RightHandSideFeatures,
+        )
+
+        result = RightHandSideFeatures().run(model)
+        rhs_stats = result.get(RhsStatsKey(constraint_sense=ConstraintSense.LEQ))
+        rhs_stats.mean
+        rhs_stats.std
     """
 
 
@@ -117,12 +136,11 @@ class RightHandSideFeatures(BaseFeature):
                     raise ComparatorError(constraint_name=c.name)
 
         # Build stats dict
-        stats: dict[str, RhsStats] = {}
+        rhs_stats = RightHandSideFeaturesResult()
         for sense in ConstraintSense:
             rhs_array = np.array(rhs_values[sense])
-            stats[str(RhsStatsKey(constraint_sense=sense)._asdict())] = RhsStats(
-                mean=NumpyStatsHelper.mean(rhs_array),
-                std=NumpyStatsHelper.std(rhs_array),
-            )
+            stats_key = RhsStatsKey(constraint_sense=sense)
+            stats_value = RhsStats(mean=NumpyStatsHelper.mean(rhs_array), std=NumpyStatsHelper.std(rhs_array))
+            rhs_stats.add(stats_key, stats_value)
 
-        return RightHandSideFeaturesResult(stats=stats)
+        return rhs_stats

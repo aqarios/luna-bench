@@ -29,15 +29,24 @@ class NodeType(str, Enum):
 
 
 class NodeDegreeStatsKey(NamedTuple):
-    """Key for accessing node degree statistics."""
+    """
+    Key for accessing node degree statistics.
+
+    Attributes
+    ----------
+    node_type : NodeType
+        The type of node (VARIABLE or CONSTRAINT).
+    var_scope : VarScope
+        The scope of variables (CONTINUOUS, NON_CONTINUOUS, or ALL).
+    """
 
     node_type: NodeType
     var_scope: VarScope
 
     @property
-    def key(self) -> str:
-        """Generate string key from tuple values."""
-        return "_".join(v.value for v in self)
+    def to_key(self) -> str:
+        """Function to generate key from NamedTuple."""
+        return str(self._asdict())
 
 
 class NodeDegreeStats(BaseModel):
@@ -69,8 +78,22 @@ class VariableConstraintGraphFeaturesResult(BaseFeatureResult[NodeDegreeStatsKey
     """
     Result container for variable-constraint graph feature calculations.
 
-    Access via NodeDegreeStatsKey:
-        result.stats[NodeDegreeStatsKey(node_type=NodeType.VARIABLE, var_scope=VarScope.CONTINUOUS).key]
+    Example
+    -------
+    .. code-block:: python
+
+        from luna_bench.components.features.mip.variable_constraint_graph_feature import (
+            NodeDegreeStatsKey,
+            NodeType,
+            VariableConstraintGraphFeatures,
+        )
+        from luna_bench.components.helper.var_scope import VarScope
+
+        result = VariableConstraintGraphFeatures().run(model)
+        degree_stats = result.get(NodeDegreeStatsKey(node_type=NodeType.VARIABLE, var_scope=VarScope.CONTINUOUS))
+        degree_stats.mean
+        degree_stats.median
+        degree_stats.variation_coefficient
     """
 
 
@@ -101,7 +124,7 @@ class VariableConstraintGraphFeatures(BaseFeature):
         VariableConstraintGraphFeaturesResult
             Container with graph-based statistical measures.
         """
-        stats: dict[str, NodeDegreeStats] = {}
+        var_con_result = VariableConstraintGraphFeaturesResult()
 
         # Define the variable type configurations
         scope_configs: list[tuple[VarScope, Vtype | list[Vtype] | None]] = [
@@ -119,17 +142,19 @@ class VariableConstraintGraphFeatures(BaseFeature):
 
             # Variable node degrees (column sums = connections per variable)
             var_node_degrees = np.sum(a_binary, axis=0)
-            stats[str(NodeDegreeStatsKey(node_type=NodeType.VARIABLE, var_scope=var_scope)._asdict())] = (
-                self._compute_degree_stats(var_node_degrees)
+            var_con_result.add(
+                enum_key=NodeDegreeStatsKey(node_type=NodeType.VARIABLE, var_scope=var_scope),
+                value=self._compute_degree_stats(var_node_degrees),
             )
 
             # Constraint node degrees (row sums = connections per constraint)
             cons_node_degrees = np.sum(a_binary, axis=1)
-            stats[str(NodeDegreeStatsKey(node_type=NodeType.CONSTRAINT, var_scope=var_scope)._asdict())] = (
-                self._compute_degree_stats(cons_node_degrees)
+            var_con_result.add(
+                enum_key=NodeDegreeStatsKey(node_type=NodeType.CONSTRAINT, var_scope=var_scope),
+                value=self._compute_degree_stats(cons_node_degrees),
             )
 
-        return VariableConstraintGraphFeaturesResult(stats=stats)
+        return var_con_result
 
     def _compute_degree_stats(self, degrees: NDArray[np.int_]) -> NodeDegreeStats:
         """
