@@ -44,12 +44,6 @@ class CoefStatsKey(NamedTuple):
     coef_type: CoefType
     var_scope: VarScope
 
-    @property
-    def to_key(self) -> str:
-        """Function to generate key from NamedTuple."""
-        return str(self._asdict())
-
-
 class CoefStats(BaseModel):
     """
     Container for coefficient statistics with descriptive context.

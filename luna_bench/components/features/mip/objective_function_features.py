@@ -45,11 +45,6 @@ class ObjCoefStatsKey(NamedTuple):
     norm_type: NormType
     var_scope: VarScope
 
-    @property
-    def to_key(self) -> str:
-        """Function to generate key from NamedTuple."""
-        return str(self._asdict())
-
 
 class ObjCoefStats(BaseModel):
     """

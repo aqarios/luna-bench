@@ -43,11 +43,6 @@ class NodeDegreeStatsKey(NamedTuple):
     node_type: NodeType
     var_scope: VarScope
 
-    @property
-    def to_key(self) -> str:
-        """Function to generate key from NamedTuple."""
-        return str(self._asdict())
-
 
 class NodeDegreeStats(BaseModel):
     """
