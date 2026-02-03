@@ -30,11 +30,14 @@ class BaseFeatureResult[N, T](ArbitraryDataDomain):
         class MyKey(NamedTuple):
             name: str
 
+
         class MyStats(BaseModel):
             value: float
 
+
         class MyResult(BaseFeatureResult[MyKey, MyStats]):
             pass
+
 
         result = MyResult()
         result.add(enum_key=MyKey(name="a"), value=MyStats(value=1.0))
