@@ -33,20 +33,26 @@ class ModelMatrix:
         """
         Extract constraint matrix from a Model, optionally filtering by variable type and constraint degree.
 
-        For degree=1: Returns standard constraint matrix where a[i,j] is the coefficient of variable j in constraint i.
-        For degree=2: Returns a flattened representation where quadratic terms x_i*x_j are mapped to columns.
-                      The column ordering is: [linear terms | quadratic terms (i,j) where i <= j]
+        For degree=1: Returns standard constraint matrix where a[i,j] is the coefficient of variable j
+        in constraint i.
+        For degree=2: Returns a flattened representation where quadratic terms x_i*x_j are mapped to
+        columns. The column ordering is: [linear terms | quadratic terms (i,j) where i <= j]
 
-        args:
-            model (Model): The optimization model to extract constraints from.
-            degree (int): The degree of constraints to extract (1 for linear, 2 for quadratic).
-            vtype (list[Vtype] | Vtype | None): Variable type filter.
-            include_b (bool, optional): If True, return both constraint matrix (a) and RHS vector (b).
+        Parameters
+        ----------
+        model : Model
+            The optimization model to extract constraints from.
+        degree : int
+            The degree of constraints to extract (1 for linear, 2 for quadratic).
+        vtype : list[Vtype] | Vtype | None
+            Variable type filter.
+        include_b : bool, optional
+            If True, return both constraint matrix (a) and RHS vector (b).
 
         Returns
         -------
-            NDArray[np.float64] | tuple[NDArray[np.float64], NDArray[np.float64]]: Constraint matrix a
-            (and optionally RHS vector b)
+        tuple[NDArray[np.float64], NDArray[np.float64]] | tuple[NDArray[np.float64], None]
+            Constraint matrix a and RHS vector b (or None if ``include_b`` is False).
         """
         # Filter variables by type
         variables: list[Variable]
