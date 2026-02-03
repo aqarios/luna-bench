@@ -63,7 +63,6 @@ class ModelMatrix:
         else:
             variables = [v for v in model.variables() if v.vtype == vtype]
 
-        # Get constraints of the specified degree
         constraints = [c for c in model.constraints if c.lhs.degree() == degree]
         variable_order = {var: idx for idx, var in enumerate(variables)}
 
@@ -102,32 +101,27 @@ class ModelMatrix:
         # For quadratic constraints, we need to handle both linear and quadratic terms
         # Column structure: [linear terms | quadratic terms]
 
-        # First, collect all unique quadratic variable pairs across all constraints
+        # Determine quadratic variable pairs across all constraints
         quad_pairs = set()
         for c in constraints:
             for var1, var2, _ in c.lhs.quadratic_items():
                 if var1 in variable_order and var2 in variable_order:
-                    # Ensure consistent ordering (i <= j)
                     i, j = sorted([variable_order[var1], variable_order[var2]])
                     pair = (min(i, j), max(i, j))
                     quad_pairs.add(pair)
 
-        # Create ordered list of quadratic pairs
         quad_pairs_list = sorted(quad_pairs)
         quad_pair_to_col = {pair: idx + len(variables) for idx, pair in enumerate(quad_pairs_list)}
 
-        # Total columns: linear terms + quadratic terms
         n_cols = len(variables) + len(quad_pairs_list)
         a = np.zeros((len(constraints), n_cols))
         b = np.zeros(len(constraints))
 
         for i, c in enumerate(constraints):
-            # Handle linear terms
             for var, coef in c.lhs.linear_items():
                 if var in variable_order:
                     a[i, variable_order[var]] = coef
 
-            # Handle quadratic terms
             for var1, var2, coef in c.lhs.quadratic_items():
                 if var1 in variable_order and var2 in variable_order:
                     idx1, idx2 = variable_order[var1], variable_order[var2]

@@ -26,8 +26,8 @@ class NormType(str, Enum):
     """Type of normalization applied to objective coefficients."""
 
     ABSOLUTE = "absolute"  # Raw absolute coefficients |c_j|
-    NORMALIZED = "normalized"  # |c_j| / nnz(A_j) where nnz = count of non-zeros in column
-    SQRT_NORMALIZED = "sqrt_normalized"  # |c_j| / sqrt(nnz(A_j))
+    NORMALIZED = "normalized"  # |c_j| / count_non_zero(A_j)
+    SQRT_NORMALIZED = "sqrt_normalized"  # |c_j| / sqrt(count_non_zero(A_j))
 
 
 class ObjCoefStatsKey(NamedTuple):
@@ -74,8 +74,8 @@ class ObjectiveFunctionFeatureResult(BaseFeatureResult[ObjCoefStatsKey, ObjCoefS
             NormType,
             ObjCoefStatsKey,
             ObjectiveFunctionFeature,
+            VarScope,
         )
-        from luna_bench.components.helper.var_scope import VarScope
 
         result = ObjectiveFunctionFeature().run(model)
         obj_stats = result.get(ObjCoefStatsKey(norm_type=NormType.ABSOLUTE, var_scope=VarScope.CONTINUOUS))

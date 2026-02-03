@@ -81,8 +81,8 @@ class VariableConstraintGraphFeaturesResult(BaseFeatureResult[NodeDegreeStatsKey
             NodeDegreeStatsKey,
             NodeType,
             VariableConstraintGraphFeatures,
+            VarScope,
         )
-        from luna_bench.components.helper.var_scope import VarScope
 
         result = VariableConstraintGraphFeatures().run(model)
         degree_stats = result.get(NodeDegreeStatsKey(node_type=NodeType.VARIABLE, var_scope=VarScope.CONTINUOUS))

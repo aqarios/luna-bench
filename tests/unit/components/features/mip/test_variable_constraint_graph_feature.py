@@ -93,11 +93,8 @@ class TestVariableConstraintGraphFeatures:
 
         var_all = result.get(NodeDegreeStatsKey(node_type=NodeType.VARIABLE, var_scope=VarScope.ALL))
 
-        # Sparse model should have low node degrees
-        # Many variables appear in only one or zero constraints
+        # sparsity causing low mean but high variation
         assert var_all.mean < 2.0
-
-        # Variation should be high due to sparsity
         assert var_all.variation_coefficient >= 0
 
     def test_dense_model(self, dense_model: Model) -> None:
@@ -108,11 +105,8 @@ class TestVariableConstraintGraphFeatures:
         var_all = result.get(NodeDegreeStatsKey(node_type=NodeType.VARIABLE, var_scope=VarScope.ALL))
         cons_all = result.get(NodeDegreeStatsKey(node_type=NodeType.CONSTRAINT, var_scope=VarScope.ALL))
 
-        # Dense model should have high node degrees
-        # Most variables appear in most constraints
+        # Dense model has higher means as matrix has less non-zeros
         assert var_all.mean > 2.0
-
-        # Constraint degrees should also be high
         assert cons_all.mean > 2.0
 
     def test_variable_node_degree_calculation(self) -> None:
@@ -280,11 +274,8 @@ class TestVariableConstraintGraphFeatures:
 
         var_cont = result.get(NodeDegreeStatsKey(node_type=NodeType.VARIABLE, var_scope=VarScope.CONTINUOUS))
 
-        # All variables have degree 2
         assert var_cont.mean == 2.0
         assert var_cont.median == 2.0
-
-        # No variation
         assert var_cont.variation_coefficient == 0.0
 
         # All quantiles should be the same
@@ -300,8 +291,7 @@ class TestVariableConstraintGraphFeatures:
             y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
             z = Variable("z", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
 
-        model.objective = x + y + z
-        # z doesn't appear in any constraint: degree = 0
+        model.objective = x + y + z # z is isolated
         model.constraints += x + y <= 10
         model.constraints += x + y >= 5
 

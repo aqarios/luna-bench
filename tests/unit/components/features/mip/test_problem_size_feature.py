@@ -40,22 +40,14 @@ class TestProblemSizeFeatures:
 
         assert result.num_vars == 6
         assert result.num_constraints == 4
-
-        # Check variable type counts
         assert result.var_counts.get(VarTypeKey(var_type=VarType.BOOLEAN)).count == 2
         assert result.var_counts.get(VarTypeKey(var_type=VarType.INTEGER)).count == 2
         assert result.var_counts.get(VarTypeKey(var_type=VarType.CONTINUOUS)).count == 2
-
-        # Check fractions
         assert result.var_counts.get(VarTypeKey(var_type=VarType.BOOLEAN)).fraction == pytest.approx(2 / 6)
         assert result.var_counts.get(VarTypeKey(var_type=VarType.INTEGER)).fraction == pytest.approx(2 / 6)
         assert result.var_counts.get(VarTypeKey(var_type=VarType.CONTINUOUS)).fraction == pytest.approx(2 / 6)
-
-        # Check non-continuous counts
         assert result.var_counts.get(VarTypeKey(var_type=VarType.NON_CONTINUOUS)).count == 4
         assert result.var_counts.get(VarTypeKey(var_type=VarType.NON_CONTINUOUS)).fraction == pytest.approx(4 / 6)
-
-        # Check unbounded non-continuous (i2 is unbounded)
         assert result.var_counts.get(VarTypeKey(var_type=VarType.UNBOUNDED_NON_CONTINUOUS)).count == 1
 
     def test_quadratic_model(self, quadratic_model: Model) -> None:
@@ -80,12 +72,8 @@ class TestProblemSizeFeatures:
         assert result.num_constraints == 0
         assert result.num_non_zero_entries_linear_constraint_matrix == 0
         assert result.num_quadratic_constraints == 0
-
-        # Fractions should be 0 for empty model
         assert result.var_counts.get(VarTypeKey(var_type=VarType.BOOLEAN)).fraction == 0.0
         assert result.var_counts.get(VarTypeKey(var_type=VarType.CONTINUOUS)).fraction == 0.0
-
-        # Support size statistics should handle empty arrays
         assert result.support_size.mean == 0.0
         assert result.support_size.median == 0.0
 
@@ -96,8 +84,6 @@ class TestProblemSizeFeatures:
 
         assert result.num_vars == 6  # only active vars considered
         assert result.num_constraints == 3
-
-        # Check sparsity
         total_possible_entries = result.num_vars * result.num_constraints
         sparsity_ratio = result.num_non_zero_entries_linear_constraint_matrix / total_possible_entries
         assert sparsity_ratio < 0.5  # Should be sparse
@@ -123,8 +109,6 @@ class TestProblemSizeFeatures:
         assert result.num_vars == 4
         assert result.var_counts.get(VarTypeKey(var_type=VarType.INTEGER)).count == 3
         assert result.var_counts.get(VarTypeKey(var_type=VarType.CONTINUOUS)).count == 1
-
-        # Check unbounded non-continuous variables
         assert result.var_counts.get(VarTypeKey(var_type=VarType.UNBOUNDED_NON_CONTINUOUS)).count == 1
         assert result.var_counts.get(VarTypeKey(var_type=VarType.UNBOUNDED_NON_CONTINUOUS)).fraction == pytest.approx(
             1 / 4
@@ -137,11 +121,10 @@ class TestProblemSizeFeatures:
 
         # Binary variables have support size 2 (0 or 1)
         # i1 has bounds (0, 10) so support size is 11
-        # c2 has bounds (0, 100) so support size is 101
 
         # Support sizes should be calculated
-        assert result.support_size.mean > 0
-        assert result.support_size.median > 0
+        assert result.support_size.mean == pytest.approx((2 + 2 + 11) / 3)
+        assert result.support_size.median == pytest.approx(2)
 
         # Variation coefficient should be non-negative
         assert result.support_size.variation_coefficient >= 0
@@ -227,24 +210,6 @@ class TestProblemSizeFeatures:
         )
         assert result1.support_size.mean == result2.support_size.mean
 
-    def test_model_bounds_error_raised(self) -> None:
-        """Test that ModelBoundsError is raised when bounds are None."""
-        from luna_quantum import Vtype
-
-        model = Model("invalid_bounds")
-        # Note: This test depends on how the library handles None bounds
-        # If the library prevents None bounds, this test might need adjustment
-
-        extractor = ProblemSizeFeatures()
-
-        # The model should work normally if bounds are valid
-        with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, 10))
-
-        model.objective += x
-        result = extractor.run(model)
-        assert result.num_vars == 1
-
     def test_large_model_performance(self) -> None:
         """Test that the extractor handles larger models efficiently."""
         from luna_quantum import Unbounded, Vtype
@@ -255,7 +220,6 @@ class TestProblemSizeFeatures:
             # Create 100 variables
             variables = [Variable(f"x{i}", vtype=Vtype.Real, bounds=Bounds(0, Unbounded)) for i in range(100)]
 
-        # Create objective with all variables
         model.objective += quicksum(variables)
 
         # Create 50 constraints
@@ -269,20 +233,15 @@ class TestProblemSizeFeatures:
         assert result.num_constraints == 50
         assert result.var_counts.get(VarTypeKey(var_type=VarType.CONTINUOUS)).count == 100
 
-    def test_integer_none_bounds(self) -> None:
-        # Create your mock model
+    @pytest.mark.parametrize("vtype", [Vtype.Integer, Vtype.Real])
+    def test_none_bounds_raises_model_bounds_error(self, vtype: Vtype) -> None:
+        """Test that None bounds raise ModelBoundsError for integer and real variables."""
         magic_model = MagicMock()
-
-        # Create mock variables with the required attributes
         mock_var = MagicMock()
-        mock_var.vtype = Vtype.Integer  # or whatever Vtype you need
+        mock_var.vtype = vtype
         mock_var.bounds.lower = None
         mock_var.bounds.upper = None
-
-        # Make variables() return an iterable
-        magic_model.variables.return_value = [mock_var]  # Returns a list (iterable)
-
-        # Also set the other required attributes
+        magic_model.variables.return_value = [mock_var]
         magic_model.num_variables = 1
         magic_model.num_constraints = 0
         magic_model.constraints = []
@@ -290,31 +249,5 @@ class TestProblemSizeFeatures:
 
         extractor = ProblemSizeFeatures()
 
-        # now call the code that should trigger the error
-        with pytest.raises(ModelBoundsError, match=r"\(model: test_model\) \(expected: \[-inf, inf\]\)"):
-            extractor.run(model=magic_model)
-
-    def test_real_none_bounds(self) -> None:
-        # Create your mock model
-        magic_model = MagicMock()
-
-        # Create mock variables with the required attributes
-        mock_var = MagicMock()
-        mock_var.vtype = Vtype.Real  # or whatever Vtype you need
-        mock_var.bounds.lower = None
-        mock_var.bounds.upper = None
-
-        # Make variables() return an iterable
-        magic_model.variables.return_value = [mock_var]  # Returns a list (iterable)
-
-        # Also set the other required attributes
-        magic_model.num_variables = 1
-        magic_model.num_constraints = 0
-        magic_model.constraints = []
-        magic_model.name = "test_model"
-
-        extractor = ProblemSizeFeatures()
-
-        # now call the code that should trigger the error
         with pytest.raises(ModelBoundsError, match=r"\(model: test_model\) \(expected: \[-inf, inf\]\)"):
             extractor.run(model=magic_model)

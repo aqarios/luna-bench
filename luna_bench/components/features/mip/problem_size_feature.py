@@ -41,13 +41,13 @@ class ModelBoundsError(Exception):
 class VarType(str, Enum):
     """Type of variable being counted."""
 
-    BOOLEAN = "boolean"  # Binary variables
-    INTEGER = "integer"  # Integer variables
-    CONTINUOUS = "continuous"  # Real/continuous variables
-    SEMI_CONTINUOUS = "semi_continuous"  # Semi-continuous variables
-    SEMI_INTEGER = "semi_integer"  # Semi-integer variables
-    NON_CONTINUOUS = "non_continuous"  # Binary + Integer combined
-    UNBOUNDED_NON_CONTINUOUS = "unbounded_non_continuous"  # Non-continuous without bounds
+    BOOLEAN = "boolean"  # x ∈ {0, 1}
+    INTEGER = "integer"  # x ∈ Z, with bounds [l, u]
+    CONTINUOUS = "continuous"  # x ∈ R, with bounds [l, u]
+    SEMI_CONTINUOUS = "semi_continuous"  # x ∈ {0} and [l, u], l > 0
+    SEMI_INTEGER = "semi_integer"  # x ∈ {0} and (Z ∩ [l, u]), l > 0
+    NON_CONTINUOUS = "non_continuous"  # BOOLEAN and INTEGER
+    UNBOUNDED_NON_CONTINUOUS = "unbounded_non_continuous"  # x ∈ Z, l = -∞, u = ∞
 
 
 class VarTypeKey(NamedTuple):
@@ -101,7 +101,7 @@ class VarCountResult(BaseFeatureResult[VarTypeKey, VarCountStats]):
 
 class SupportSizeStats(BaseModel):
     """
-    Container for support size statistics.
+    Container for support size statistics for variables of type Vtype.Binary and Vtype.Integer.
 
     Attributes
     ----------
@@ -133,6 +133,7 @@ class ProblemSizeFeaturesResult(ArbitraryDataDomain):
     sparsity measures, and support size statistics.
 
     Access patterns for variable counts:
+        - result.num_vars -> int
         - result.var_counts.get(VarType.BOOLEAN) -> VarCountStats
         - result.var_counts.get_num(VarType.BOOLEAN) -> int
         - result.var_counts.get_frac(VarType.BOOLEAN) -> float

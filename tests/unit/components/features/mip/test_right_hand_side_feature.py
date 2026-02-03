@@ -53,7 +53,7 @@ class TestRightHandSideFeatures:
         extractor = RightHandSideFeatures()
         result = extractor.run(empty_model)
 
-        # All statistics should be 0 for empty model
+        # No statistic for empty model
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.LEQ)).mean == 0.0
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.EQ)).mean == 0.0
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.GEQ)).mean == 0.0
@@ -81,7 +81,7 @@ class TestRightHandSideFeatures:
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.LEQ)).mean > 0
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.LEQ)).std >= 0
 
-        # Mean should be (10 + 15 + 12) / 3
+        # Mean (10 + 15 + 12) / 3
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.LEQ)).mean == pytest.approx(37 / 3)
 
         # No other constraint types
@@ -157,7 +157,7 @@ class TestRightHandSideFeatures:
         extractor = RightHandSideFeatures()
         result = extractor.run(model)
 
-        # Should handle negative values
+        # Handle negative values
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.LEQ)).mean == -5.0
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.GEQ)).mean == -10.0
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.EQ)).mean == -3.0
@@ -178,7 +178,7 @@ class TestRightHandSideFeatures:
         extractor = RightHandSideFeatures()
         result = extractor.run(model)
 
-        # Should handle zero values
+        # Handle zero values
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.LEQ)).mean == 0.0
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.GEQ)).mean == 0.0
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.EQ)).mean == 0.0
@@ -252,8 +252,6 @@ class TestRightHandSideFeatures:
         extractor = RightHandSideFeatures()
         result = extractor.run(quadratic_model)
 
-        # Model should have both linear and quadratic constraints
-        # The RHS extractor should process all of them
         assert (
             result.get(RhsStatsKey(constraint_sense=ConstraintSense.LEQ)).mean > 0
             or result.get(RhsStatsKey(constraint_sense=ConstraintSense.GEQ)).mean > 0
@@ -276,7 +274,6 @@ class TestRightHandSideFeatures:
         extractor = RightHandSideFeatures()
         result = extractor.run(model)
 
-        # Should handle large values
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.LEQ)).mean == pytest.approx(1e10)
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.GEQ)).mean == pytest.approx(1e9)
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.EQ)).mean == pytest.approx(1e8)
@@ -307,7 +304,6 @@ class TestRightHandSideFeatures:
         extractor = RightHandSideFeatures()
         result = extractor.run(mixed_integer_model)
 
-        # Check all values are finite
         assert np.isfinite(result.get(RhsStatsKey(constraint_sense=ConstraintSense.LEQ)).mean)
         assert np.isfinite(result.get(RhsStatsKey(constraint_sense=ConstraintSense.EQ)).mean)
         assert np.isfinite(result.get(RhsStatsKey(constraint_sense=ConstraintSense.GEQ)).mean)
@@ -331,11 +327,6 @@ class TestRightHandSideFeatures:
         extractor = RightHandSideFeatures()
         result = extractor.run(all_constraint_types_model)
 
-        # If mean is non-zero, at least one constraint of that type should exist
-        # This is implicitly tested by checking the model fixture
-        # The all_constraint_types_model has 2 <= , 2 ==, and 2 >= constraints
-
-        # All constraint types should have valid statistics
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.LEQ)).mean != 0.0
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.EQ)).mean != 0.0
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.GEQ)).mean != 0.0
@@ -345,8 +336,6 @@ class TestRightHandSideFeatures:
         # Create a mock constraint with an invalid comparator
         mock_constraint = MagicMock()
         mock_constraint.comparator = "INVALID"  # Not Le, Eq, or Ge
-
-        # Create a mock model with the invalid constraint
         mock_model = MagicMock()
         mock_model.constraints = [mock_constraint]
 

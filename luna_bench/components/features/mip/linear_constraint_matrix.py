@@ -44,6 +44,7 @@ class CoefStatsKey(NamedTuple):
     coef_type: CoefType
     var_scope: VarScope
 
+
 class CoefStats(BaseModel):
     """
     Container for coefficient statistics with descriptive context.
@@ -72,8 +73,8 @@ class LinearConstraintMatrixFeaturesResult(BaseFeatureResult[CoefStatsKey, CoefS
             CoefStatsKey,
             CoefType,
             LinearConstraintMatrixFeatures,
+            VarScope,
         )
-        from luna_bench.components.helper.var_scope import VarScope
 
         result = LinearConstraintMatrixFeatures().run(model)
         coef_stats = result.get(CoefStatsKey(coef_type=CoefType.VARIABLE, var_scope=VarScope.CONTINUOUS))
