@@ -7,7 +7,7 @@ import numpy as np
 from luna_quantum import Variable, Vtype
 from pydantic import BaseModel
 
-from luna_bench._internal.interfaces import IFeature
+from luna_bench.base_components import BaseFeature
 from luna_bench.components.features.base_feature import BaseFeatureResult
 from luna_bench.components.helper.degree import ConstraintDegree
 from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
@@ -63,7 +63,7 @@ class ObjectiveFunctionFeatureResult(BaseFeatureResult[ObjCoefStatsKey, ObjCoefS
 
 
 @feature
-class ObjectiveFunctionFeature(IFeature):
+class ObjectiveFunctionFeature(BaseFeature):
     """
     Feature extractor for objective function coefficient statistics.
 

@@ -115,7 +115,6 @@ class ScipAlgorithm(BaseAlgorithmSync):
             solution_dict[var.name] = scip_model.getVal(var)  # type: ignore[no-untyped-call]
 
         return Solution.from_dict(
-            objective_value = scip_model.getObjVal(),  # type: ignore[no-untyped-call]
             data=solution_dict,
             model=model,
             timing=timing,

@@ -7,7 +7,7 @@ import numpy as np
 from luna_quantum import Vtype
 from pydantic import BaseModel
 
-from luna_bench._internal.interfaces import IFeature
+from luna_bench.base_components import BaseFeature
 from luna_bench.components.helper.degree import ConstraintDegree
 from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
@@ -75,7 +75,7 @@ class VariableConstraintGraphFeaturesResult(BaseFeatureResult[NodeDegreeStatsKey
 
 
 @feature
-class VariableConstraintGraphFeatures(IFeature):
+class VariableConstraintGraphFeatures(BaseFeature):
     """
     Feature extractor for variable-constraint graph properties.
 

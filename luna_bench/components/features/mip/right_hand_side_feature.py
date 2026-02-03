@@ -7,7 +7,7 @@ import numpy as np
 from luna_quantum import Comparator
 from pydantic import BaseModel
 
-from luna_bench._internal.interfaces import IFeature
+from luna_bench.base_components import BaseFeature
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
 from luna_bench.helpers import feature
 
@@ -72,7 +72,7 @@ class RightHandSideFeaturesResult(BaseFeatureResult[RhsStatsKey, RhsStats]):
 
 
 @feature
-class RightHandSideFeatures(IFeature):
+class RightHandSideFeatures(BaseFeature):
     """
     Feature extractor for right-hand side values of constraints.
 

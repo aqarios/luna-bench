@@ -8,7 +8,7 @@ from luna_quantum import Model, Unbounded, Vtype
 from pydantic import BaseModel
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.interfaces import IFeature
+from luna_bench.base_components import BaseFeature
 from luna_bench.components.features.base_feature import BaseFeatureResult
 from luna_bench.components.helper.degree import ConstraintDegree
 from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
@@ -147,7 +147,7 @@ class ProblemSizeFeaturesResult(ArbitraryDataDomain):
 
 
 @feature
-class ProblemSizeFeatures(IFeature):
+class ProblemSizeFeatures(BaseFeature):
     """
     Feature extractor for problem size-related characteristics.
 

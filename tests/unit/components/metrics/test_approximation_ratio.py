@@ -46,7 +46,7 @@ def _create_mock_solution(
 
 def _create_mock_feature_results(optimal_value: float) -> MagicMock:
     """Create a mock FeatureResults object with a given optimal solution value."""
-    opt_sol_result = OptSolFeatureResult(best_sol=optimal_value, pre_terminated=False)
+    opt_sol_result = OptSolFeatureResult(best_sol=optimal_value, runtime=1.0, pre_terminated=False)
     opt_sol_feature = OptSolFeature()
 
     feature_results = MagicMock(spec=FeatureResults)
