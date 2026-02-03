@@ -8,7 +8,7 @@ from luna_quantum.translator import LpTranslator
 from pyscipopt import Model as ScipModel
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.interfaces import IFeature
+from luna_bench.base_components import BaseFeature
 from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
@@ -43,7 +43,7 @@ class OptSolFeatureResult(ArbitraryDataDomain):
 
 
 @feature
-class OptSolFeature(IFeature):
+class OptSolFeature(BaseFeature):
     """
     Feature that computes the optimal (or best feasible) solution for optimization models.
 

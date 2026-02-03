@@ -7,7 +7,7 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.usecases.modelset.protocols import ModelRemoveUc
-from luna_bench._internal.user_models import ModelMetadataUserModel, ModelSetUserModel
+from luna_bench.entities import ModelMetadataEntity, ModelSetEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -34,7 +34,7 @@ class ModelRemoveUcImpl(ModelRemoveUc):
 
     def __call__(
         self, modelset_name: str, model: Model
-    ) -> Result[ModelSetUserModel, DataNotExistError | UnknownLunaBenchError]:
+    ) -> Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError]:
         """
         Remove a model from a model set.
 
@@ -70,11 +70,11 @@ class ModelRemoveUcImpl(ModelRemoveUc):
 
             result_unwrapped: ModelSetDomain = result_dao.unwrap()
             # TODO(Llewellyn): needs to be improved maybe with type adapter or something  # noqa: FIX002
-            result: ModelSetUserModel = ModelSetUserModel(
+            result: ModelSetEntity = ModelSetEntity(
                 id=result_unwrapped.id,
                 name=result_unwrapped.name,
                 models=[
-                    ModelMetadataUserModel.model_validate_json(m.model_dump_json(exclude={"model"}))
+                    ModelMetadataEntity.model_validate_json(m.model_dump_json(exclude={"model"}))
                     for m in result_unwrapped.models
                 ],
             )

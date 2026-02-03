@@ -1,6 +1,7 @@
+from luna_bench.entities.enums.job_status_enum import JobStatus
+
 from .base_domain import BaseDomain
 from .feature_result_domain import FeatureResultDomain
-from .job_status_enum import JobStatus
 from .registered_data_domain import RegisteredDataDomain
 
 

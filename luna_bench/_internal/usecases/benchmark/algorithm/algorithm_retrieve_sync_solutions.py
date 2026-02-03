@@ -8,16 +8,15 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
-from luna_bench._internal.interfaces.algorithm_sync import AlgorithmSync
 from luna_bench._internal.mappers.algorithm_mapper import AlgorithmMapper
 from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmRetrieveSyncSolutionsUc,
     BackgroundRetrieveAlgorithmSyncUc,
 )
-from luna_bench._internal.user_models import AlgorithmUserModel, BenchmarkUserModel
-from luna_bench._internal.user_models.algorithm_result_usermodel import AlgorithmResultUserModel
+from luna_bench.base_components import BaseAlgorithmSync
 from luna_bench.configs.config import config
+from luna_bench.entities import AlgorithmEntity, AlgorithmResultEntity, BenchmarkEntity
+from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
@@ -50,9 +49,9 @@ class AlgorithmRetrieveSyncSolutionsUcImpl(AlgorithmRetrieveSyncSolutionsUc):
 
     def _apply_solution(
         self,
-        benchmark: BenchmarkUserModel,
-        algorithm: AlgorithmUserModel,
-        result: AlgorithmResultUserModel,
+        benchmark: BenchmarkEntity,
+        algorithm: AlgorithmEntity,
+        result: AlgorithmResultEntity,
         s: Solution,
     ) -> Result[
         None,
@@ -70,9 +69,9 @@ class AlgorithmRetrieveSyncSolutionsUcImpl(AlgorithmRetrieveSyncSolutionsUc):
 
     def _apply_error(
         self,
-        benchmark: BenchmarkUserModel,
-        algorithm: AlgorithmUserModel,
-        result: AlgorithmResultUserModel,
+        benchmark: BenchmarkEntity,
+        algorithm: AlgorithmEntity,
+        result: AlgorithmResultEntity,
         error: ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError,
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         error_msg: str
@@ -93,12 +92,12 @@ class AlgorithmRetrieveSyncSolutionsUcImpl(AlgorithmRetrieveSyncSolutionsUc):
             )
 
     def __call__(
-        self, benchmark: BenchmarkUserModel
+        self, benchmark: BenchmarkEntity
     ) -> Result[None, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]:
-        to_retrieve: deque[tuple[AlgorithmUserModel, AlgorithmResultUserModel]] = deque(
+        to_retrieve: deque[tuple[AlgorithmEntity, AlgorithmResultEntity]] = deque(
             (a, r)
             for a in benchmark.algorithms
-            if isinstance(a.algorithm, AlgorithmSync)
+            if isinstance(a.algorithm, BaseAlgorithmSync)
             for r in a.results.values()
             if r.status == JobStatus.RUNNING and r.task_id is not None
         )

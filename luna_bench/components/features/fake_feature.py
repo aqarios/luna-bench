@@ -4,7 +4,7 @@ import random
 from typing import TYPE_CHECKING
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.interfaces import IFeature
+from luna_bench.base_components import BaseFeature
 from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ class FakeFeatureResult(ArbitraryDataDomain):
 
 
 @feature
-class FakeFeature(IFeature):
+class FakeFeature(BaseFeature):
     """Fake feature class."""
 
     def run(self, model: Model) -> FakeFeatureResult:

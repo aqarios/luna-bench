@@ -12,6 +12,8 @@ if TYPE_CHECKING:
     from luna_quantum import Model
 
 
+from tempfile import NamedTemporaryFile, _TemporaryFileWrapper
+
 from luna_quantum import Solution
 
 from luna_bench.components.algorithms.scip import InfeasibleModelError, ScipAlgorithm
@@ -38,7 +40,6 @@ class TestScipAlgorithm:
 
         best_sample = solution.best()
         assert best_sample is not None
-        # Objective value should be 0
         assert best_sample.obj_value == 0.0
 
         # Variables are in solution dict
@@ -93,10 +94,9 @@ class TestScipAlgorithm:
         temp_file_paths: list[Path] = []
 
         # Patch NamedTemporaryFile to track the temporary file path
-        original_tempfile = __import__("tempfile").NamedTemporaryFile
 
-        def tracked_tempfile(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
-            temp = original_tempfile(*args, **kwargs)
+        def tracked_tempfile(*args: Any, **kwargs: Any) -> _TemporaryFileWrapper:  # type: ignore[type-arg]
+            temp = NamedTemporaryFile(*args, **kwargs)  # noqa: SIM115
             temp_file_paths.append(Path(temp.name))
             return temp
 

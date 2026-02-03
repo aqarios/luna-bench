@@ -7,8 +7,8 @@ from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models import BenchmarkDomain
 from luna_bench._internal.mappers.base_mapper import Mapper
 from luna_bench._internal.mappers.container import MapperContainer
-from luna_bench._internal.user_models import (
-    BenchmarkUserModel,
+from luna_bench.entities import (
+    BenchmarkEntity,
 )
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -18,13 +18,13 @@ from .protocols import BenchmarkLoadAllUc
 
 class BenchmarkLoadAllUcImpl(BenchmarkLoadAllUc):
     _transaction: DaoTransaction
-    _benchmark_mapper: Mapper[BenchmarkDomain, BenchmarkUserModel]
+    _benchmark_mapper: Mapper[BenchmarkDomain, BenchmarkEntity]
 
     @inject
     def __init__(
         self,
         transaction: DaoTransaction = Provide[DaoContainer.transaction],
-        benchmark_mapper: Mapper[BenchmarkDomain, BenchmarkUserModel] = Provide[MapperContainer.benchmark_mapper],
+        benchmark_mapper: Mapper[BenchmarkDomain, BenchmarkEntity] = Provide[MapperContainer.benchmark_mapper],
     ) -> None:
         """
         Initialize the BenchmarkLoadAllUc with a dao transaction.
@@ -33,17 +33,17 @@ class BenchmarkLoadAllUcImpl(BenchmarkLoadAllUc):
         ----------
         transaction : DaoTransaction
             The transaction object used to interact with the dao.
-        benchmark_mapper: Mapper[BenchmarkDomain, BenchmarkUserModel]
+        benchmark_mapper: Mapper[BenchmarkDomain, BenchmarkEntity]
             Benchmark mapper.
         """
         self._transaction = transaction
         self._benchmark_mapper = benchmark_mapper
 
-    def __call__(self) -> Result[list[BenchmarkUserModel], UnknownLunaBenchError | UnknownIdError | ValidationError]:
+    def __call__(self) -> Result[list[BenchmarkEntity], UnknownLunaBenchError | UnknownIdError | ValidationError]:
         with self._transaction as t:
             result_dao: Result[list[BenchmarkDomain], UnknownLunaBenchError] = t.benchmark.load_all()
 
-            to_return: list[BenchmarkUserModel] = []
+            to_return: list[BenchmarkEntity] = []
 
             if not is_successful(result_dao):
                 return Failure(result_dao.failure())

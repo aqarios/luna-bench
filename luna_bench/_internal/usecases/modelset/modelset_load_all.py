@@ -5,7 +5,7 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
-from luna_bench._internal.user_models import ModelMetadataUserModel, ModelSetUserModel
+from luna_bench.entities import ModelMetadataEntity, ModelSetEntity
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 from .protocols import ModelSetLoadAllUc
@@ -31,7 +31,7 @@ class ModelSetLoadAllUcImpl(ModelSetLoadAllUc):
         """
         self._transaction = transaction
 
-    def __call__(self) -> Result[list[ModelSetUserModel], UnknownLunaBenchError]:
+    def __call__(self) -> Result[list[ModelSetEntity], UnknownLunaBenchError]:
         """
         Load all model sets.
 
@@ -51,11 +51,11 @@ class ModelSetLoadAllUcImpl(ModelSetLoadAllUc):
             return Success(
                 # TODO(Llewellyn): needs to be optimized. Loop in loop...# noqa: FIX002
                 [
-                    ModelSetUserModel(
+                    ModelSetEntity(
                         id=r.id,
                         name=r.name,
                         models=[
-                            ModelMetadataUserModel.model_validate_json(m.model_dump_json(exclude={"model"}))
+                            ModelMetadataEntity.model_validate_json(m.model_dump_json(exclude={"model"}))
                             for m in r.models
                         ],
                     )

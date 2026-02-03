@@ -14,13 +14,13 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Success
 
 import luna_bench
-from luna_bench._internal.interfaces import AlgorithmAsync
 from luna_bench._internal.registries.arbitrary_data_registry import ArbitraryDataRegistry
 from luna_bench._internal.wrappers.luna_quantum.algorithms.luna_algorithm import LunaAlgorithm as BenchLunaAlgorithm
 from luna_bench._internal.wrappers.luna_quantum.algorithms.luna_algorithm import LunaData
 from luna_bench._internal.wrappers.luna_quantum.luna_algorithm_wrapper import (
     LunaAlgorithmWrapper,
 )
+from luna_bench.base_components import BaseAlgorithmAsync
 from luna_bench.errors.bench_type_errors.algorithm_sub_type_error import AlgorithmSubTypeError
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 
@@ -50,7 +50,7 @@ def ensure_wrapped() -> None:
 
 
 @pytest.fixture(scope="module")
-def algorithm_registry() -> PydanticRegistry[AlgorithmAsync[Any], RegisteredDataDomain]:
+def algorithm_registry() -> PydanticRegistry[BaseAlgorithmAsync[Any], RegisteredDataDomain]:
     from luna_bench import _registry_container
 
     return _registry_container.algorithm_async_registry()
@@ -66,7 +66,7 @@ class TestLunaAlgorithmWrapper:
     @pytest.mark.parametrize("luna_quantum_algorithm", _exported_luna_quantum_algorithm_classes())
     def test_wrapped_algorithms(
         self,
-        algorithm_registry: PydanticRegistry[AlgorithmAsync[BaseModel], Any],
+        algorithm_registry: PydanticRegistry[BaseAlgorithmAsync[BaseModel], Any],
         luna_quantum_algorithm: type[LunaQuantumAlgorithm[Any]],
     ) -> None:
         algo_id = LunaAlgorithmWrapper._get_id(luna_quantum_algorithm)
@@ -80,7 +80,7 @@ class TestLunaAlgorithmWrapper:
         assert cls is not None, f"Failed to retrieve class for {algo_id}"
         assert issubclass(cls, LunaQuantumAlgorithm), f"Class {cls.__name__} is not a subclass of LunaQuantumAlgorithm"
         assert issubclass(cls, BenchLunaAlgorithm), f"Class {cls.__name__} is not a subclass of BenchLunaAlgorithm"
-        assert issubclass(cls, AlgorithmAsync), f"Class {cls.__name__} is not a subclass of AlgorithmAsync"
+        assert issubclass(cls, BaseAlgorithmAsync), f"Class {cls.__name__} is not a subclass of AlgorithmAsync"
 
         assert hasattr(cls, "run_async")
         assert hasattr(cls, "fetch_result")
@@ -88,13 +88,13 @@ class TestLunaAlgorithmWrapper:
         assert cls.model_type.fget(None) is LunaData
 
     def test_all_algorithm_added(self) -> None:
-        registry = ArbitraryDataRegistry[AlgorithmAsync[Any]](kind="algorithm_async")
+        registry = ArbitraryDataRegistry[BaseAlgorithmAsync[Any]](kind="algorithm_async")
         with luna_bench._registry_container.algorithm_async_registry.override(registry):
             LunaAlgorithmWrapper.wrap_all_algorithms()
             assert len(registry.ids()) == len(_exported_luna_quantum_algorithm_classes())
 
     def test_register_algorithm_manually(self) -> None:
-        registry = ArbitraryDataRegistry[AlgorithmAsync[Any]](kind="algorithm_async")
+        registry = ArbitraryDataRegistry[BaseAlgorithmAsync[Any]](kind="algorithm_async")
         with luna_bench._registry_container.algorithm_async_registry.override(registry):
             LunaAlgorithmWrapper.register_luna_quantum_algorithm(algorithm_cls=QAOA)
             assert len(registry.ids()) == 1
@@ -103,7 +103,7 @@ class TestLunaAlgorithmWrapper:
             assert len(registry.ids()) == 1
 
     def test_backend_round_trip_persists_values(
-        self, algorithm_registry: PydanticRegistry[AlgorithmAsync[BaseModel], Any]
+        self, algorithm_registry: PydanticRegistry[BaseAlgorithmAsync[BaseModel], Any]
     ) -> None:
         from luna_quantum.solve.parameters.algorithms import QAOA
         from luna_quantum.solve.parameters.backends import AWS
@@ -143,7 +143,7 @@ class TestLunaAlgorithmWrapper:
         assert rebuild_backend.device == device_name
         assert getattr(rebuilt, "reps", None) == reps
 
-    def test_wrap_errors(self, algorithm_registry: PydanticRegistry[AlgorithmAsync[BaseModel], Any]) -> None:
+    def test_wrap_errors(self, algorithm_registry: PydanticRegistry[BaseAlgorithmAsync[BaseModel], Any]) -> None:
         with patch.object(algorithm_registry, "get_by_id") as mock:
             mock.return_value = Failure(UnknownIdError("name", "id"))
             with pytest.raises(UnknownIdError):

@@ -7,17 +7,16 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
-from luna_bench._internal.domain_models import JobStatus, RegisteredDataDomain
+from luna_bench._internal.domain_models import RegisteredDataDomain
 from luna_bench._internal.domain_models.feature_result_domain import FeatureResultDomain
 from luna_bench._internal.domain_models.model_metadata_domain import ModelMetadataDomain
-from luna_bench._internal.interfaces.feature_i import IFeature
 from luna_bench._internal.mappers import FeatureMapper
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.protocols import FeatureRunUc
-from luna_bench._internal.user_models import BenchmarkUserModel
-from luna_bench._internal.user_models.feature_result_usermodel import FeatureResultUserModel
-from luna_bench._internal.user_models.feature_usermodel import FeatureUserModel
+from luna_bench.base_components import BaseFeature
+from luna_bench.entities import BenchmarkEntity, FeatureEntity, FeatureResultEntity
+from luna_bench.entities.enums import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
@@ -29,14 +28,14 @@ if TYPE_CHECKING:
 
 class FeatureRunUcImpl(FeatureRunUc):
     _transaction: DaoTransaction
-    _registry: PydanticRegistry[IFeature, RegisteredDataDomain]
+    _registry: PydanticRegistry[BaseFeature, RegisteredDataDomain]
     _logger = Logging.get_logger(__name__)
 
     @inject
     def __init__(
         self,
         transaction: DaoTransaction = Provide[DaoContainer.transaction],
-        registry: PydanticRegistry[IFeature, RegisteredDataDomain] = Provide[RegistryContainer.feature_registry],
+        registry: PydanticRegistry[BaseFeature, RegisteredDataDomain] = Provide[RegistryContainer.feature_registry],
     ) -> None:
         """
         Initialize the BenchmarkAddFeatureUc with a dao transaction.
@@ -50,10 +49,10 @@ class FeatureRunUcImpl(FeatureRunUc):
         self._registry = registry
 
     def _run(
-        self, benchmark_name: str, model_metadata: ModelMetadataDomain, model: Model, feature: FeatureUserModel
-    ) -> Result[FeatureResultUserModel, DataNotExistError | UnknownLunaBenchError]:
+        self, benchmark_name: str, model_metadata: ModelMetadataDomain, model: Model, feature: FeatureEntity
+    ) -> Result[FeatureResultEntity, DataNotExistError | UnknownLunaBenchError]:
         # CHECK if result for feature and model already exists and if it should be updated/recalulated or not.
-        result: FeatureResultUserModel | None = feature.results.get(model_metadata.name, None)
+        result: FeatureResultEntity | None = feature.results.get(model_metadata.name, None)
 
         if result is not None and result.status == JobStatus.DONE:
             self._logger.info(f"Feature {feature.name} for model {model_metadata.name} already exists and is done.")
@@ -98,9 +97,9 @@ class FeatureRunUcImpl(FeatureRunUc):
         return Success(result)
 
     def __call__(
-        self, benchmark: BenchmarkUserModel, feature: FeatureUserModel | None = None
+        self, benchmark: BenchmarkEntity, feature: FeatureEntity | None = None
     ) -> Result[None, RunFeatureMissingError | RunModelsetMissingError]:
-        features: list[FeatureUserModel]
+        features: list[FeatureEntity]
         if feature is not None:
             # Check if the feature is part of the benchmark
             if feature not in benchmark.features:
@@ -122,7 +121,7 @@ class FeatureRunUcImpl(FeatureRunUc):
                 m = Model.decode(model_bytes)
 
             for f in features:
-                result: Result[FeatureResultUserModel, DataNotExistError | UnknownLunaBenchError] = self._run(
+                result: Result[FeatureResultEntity, DataNotExistError | UnknownLunaBenchError] = self._run(
                     benchmark.name, model_metadata, m, f
                 )
                 if not is_successful(result):

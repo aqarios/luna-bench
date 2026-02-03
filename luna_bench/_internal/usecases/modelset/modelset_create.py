@@ -5,7 +5,7 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
-from luna_bench._internal.user_models import ModelMetadataUserModel, ModelSetUserModel
+from luna_bench.entities import ModelMetadataEntity, ModelSetEntity
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -32,7 +32,7 @@ class ModelSetCreateUcImpl(ModelSetCreateUc):
         """
         self._transaction = transaction
 
-    def __call__(self, modelset_name: str) -> Result[ModelSetUserModel, DataNotUniqueError | UnknownLunaBenchError]:
+    def __call__(self, modelset_name: str) -> Result[ModelSetEntity, DataNotUniqueError | UnknownLunaBenchError]:
         """
         Create a new model set with the given name.
 
@@ -56,11 +56,11 @@ class ModelSetCreateUcImpl(ModelSetCreateUc):
 
             result_unwrapped: ModelSetDomain = result_dao.unwrap()
             # TODO(Llewellyn): needs to be improved maybe with type adapter or something # noqa: FIX002
-            result: ModelSetUserModel = ModelSetUserModel(
+            result: ModelSetEntity = ModelSetEntity(
                 id=result_unwrapped.id,
                 name=result_unwrapped.name,
                 models=[
-                    ModelMetadataUserModel.model_validate_json(m.model_dump_json(exclude={"model"}))
+                    ModelMetadataEntity.model_validate_json(m.model_dump_json(exclude={"model"}))
                     for m in result_unwrapped.models
                 ],
             )

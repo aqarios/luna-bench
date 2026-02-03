@@ -7,7 +7,7 @@ from luna_quantum import Logging, Model, Solution, Timer
 from luna_quantum.translator import LpTranslator
 from pyscipopt import Model as PyScipModel
 
-from luna_bench._internal.interfaces.algorithm_sync import AlgorithmSync
+from luna_bench.base_components import BaseAlgorithmSync
 from luna_bench.helpers import algorithm
 
 
@@ -24,7 +24,7 @@ class InfeasibleModelError(Exception):
 
 
 @algorithm()
-class ScipAlgorithm(AlgorithmSync):
+class ScipAlgorithm(BaseAlgorithmSync):
     """
     Classical exact optimization algorithm using SCIP (Solving Constraint Integer Programs).
 
@@ -115,6 +115,7 @@ class ScipAlgorithm(AlgorithmSync):
             solution_dict[var.name] = scip_model.getVal(var)  # type: ignore[no-untyped-call]
 
         return Solution.from_dict(
+            objective_value = scip_model.getObjVal(),  # type: ignore[no-untyped-call]
             data=solution_dict,
             model=model,
             timing=timing,

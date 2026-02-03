@@ -6,7 +6,7 @@ import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.user_models import BenchmarkUserModel
+from luna_bench.entities import BenchmarkEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from tests.unit._internal.usecases.benchmark.test_utils import _full_benchmark_usermodel
@@ -19,8 +19,8 @@ if TYPE_CHECKING:
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
-def _empty_benchmark(name: str) -> BenchmarkUserModel:
-    return BenchmarkUserModel(
+def _empty_benchmark(name: str) -> BenchmarkEntity:
+    return BenchmarkEntity(
         name=name,
         modelset=None,
         features=[],
@@ -42,10 +42,10 @@ class TestBenchmark:
         self,
         usecase: UsecaseContainer,
         benchmark_name: str,
-        exp: Result[BenchmarkUserModel, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError],
+        exp: Result[BenchmarkEntity, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError],
     ) -> None:
         result: Result[
-            BenchmarkUserModel, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError
+            BenchmarkEntity, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError
         ] = usecase.benchmark_create_uc()(benchmark_name)
 
         if is_successful(exp):
@@ -84,10 +84,10 @@ class TestBenchmark:
         self,
         usecase: UsecaseContainer,
         benchmark_name: str,
-        exp: Result[BenchmarkUserModel, DataNotExistError | UnknownLunaBenchError],
+        exp: Result[BenchmarkEntity, DataNotExistError | UnknownLunaBenchError],
     ) -> None:
         result: Result[
-            BenchmarkUserModel, DataNotExistError | UnknownLunaBenchError | UnknownIdError | ValidationError
+            BenchmarkEntity, DataNotExistError | UnknownLunaBenchError | UnknownIdError | ValidationError
         ] = usecase.benchmark_load_uc()(benchmark_name)
 
         if is_successful(exp):
@@ -104,9 +104,9 @@ class TestBenchmark:
     def test_load_all(
         self,
         usecase: UsecaseContainer,
-        exp: Result[list[BenchmarkUserModel], DataNotExistError | UnknownLunaBenchError],
+        exp: Result[list[BenchmarkEntity], DataNotExistError | UnknownLunaBenchError],
     ) -> None:
-        result: Result[list[BenchmarkUserModel], UnknownLunaBenchError | UnknownIdError | ValidationError] = (
+        result: Result[list[BenchmarkEntity], UnknownLunaBenchError | UnknownIdError | ValidationError] = (
             usecase.benchmark_load_all_uc()()
         )
 

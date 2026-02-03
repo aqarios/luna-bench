@@ -4,7 +4,7 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
 from luna_bench._internal.usecases.benchmark.protocols import PlotsRunUc
-from luna_bench._internal.user_models.benchmark_usermodel import BenchmarkUserModel
+from luna_bench.entities.benchmark_entity import BenchmarkEntity
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -42,7 +42,7 @@ class PlotsRunUcImpl(PlotsRunUc):
 
     def __call__(
         self,
-        benchmark: BenchmarkUserModel,
+        benchmark: BenchmarkEntity,
         error_handling_mode: UseCaseErrorHandlingMode = UseCaseErrorHandlingMode.FAIL_ON_ERROR,
     ) -> Result[None, PlotRunError | UnknownLunaBenchError]:
         """
@@ -55,7 +55,7 @@ class PlotsRunUcImpl(PlotsRunUc):
 
         Parameters
         ----------
-        benchmark : BenchmarkUserModel
+        benchmark : BenchmarkEntity
             The benchmark containing plots to execute and the data (metrics,
             features, algorithms, models) required for plot generation.
         error_handling_mode : UseCaseErrorHandlingMode, optional

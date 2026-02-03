@@ -4,7 +4,7 @@ from dependency_injector.wiring import Provide, inject
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.usecases.modelset.protocols import ModelLoadAllUc
-from luna_bench._internal.user_models import ModelMetadataUserModel
+from luna_bench.entities import ModelMetadataEntity
 
 if TYPE_CHECKING:
     from luna_bench._internal.domain_models import ModelMetadataDomain
@@ -27,13 +27,13 @@ class ModelLoadAllUcImpl(ModelLoadAllUc):
         """
         self.transaction = transaction
 
-    def __call__(self) -> list[ModelMetadataUserModel]:
+    def __call__(self) -> list[ModelMetadataEntity]:
         """
         Retrieve the metadata of all models from the dao.
 
         Returns
         -------
-        list[ModelMetadataUserModel]
+        list[ModelMetadataEntity]
             A list of all model metadata objects.
         """
         with self.transaction as t:
@@ -42,6 +42,6 @@ class ModelLoadAllUcImpl(ModelLoadAllUc):
             # TODO(Llewellyn): maybe there is a way to do that with a pydantic type adapter. # noqa: FIX002
             #  But not sure because of the exclude.
             return [
-                ModelMetadataUserModel.model_validate_json(domain_model.model_dump_json(exclude={"model"}))
+                ModelMetadataEntity.model_validate_json(domain_model.model_dump_json(exclude={"model"}))
                 for domain_model in domain_models
             ]

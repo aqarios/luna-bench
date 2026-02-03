@@ -3,7 +3,7 @@ from playhouse.sqlite_ext import JSONField
 
 from luna_bench._internal.dao.tables.base_table import BaseTable
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.domain_models.job_status_enum import JobStatus
+from luna_bench.entities.enums.job_status_enum import JobStatus
 
 from .feature_table import FeatureTable
 from .model_metadata_table import ModelMetadataTable

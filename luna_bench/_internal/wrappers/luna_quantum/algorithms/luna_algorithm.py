@@ -10,7 +10,7 @@ from pydantic import BaseModel, field_validator, model_serializer
 from pydantic_core.core_schema import SerializerFunctionWrapHandler
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.interfaces.algorithm_async import AlgorithmAsync
+from luna_bench.base_components import BaseAlgorithmAsync
 
 config.LUNA_LOG_DISABLE_SPINNER = True
 
@@ -20,7 +20,7 @@ class LunaData(BaseModel):
     error_message: str | None = None
 
 
-class LunaAlgorithm(AlgorithmAsync[LunaData], LunaQuantumAlgorithm[IBackend], ABC):
+class LunaAlgorithm(BaseAlgorithmAsync[LunaData], LunaQuantumAlgorithm[IBackend], ABC):
     @field_validator("backend", mode="before")
     @classmethod
     def backend_validator(cls, v: Any) -> IBackend | None:  # noqa: ANN401 # Ignore ANN401 here because the type for validation could be every type.

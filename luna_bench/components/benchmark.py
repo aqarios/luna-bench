@@ -8,10 +8,10 @@ from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from returns.pipeline import is_successful
 
-from luna_bench._internal.interfaces import AlgorithmAsync, AlgorithmSync, IFeature, IMetric, IPlot
 from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
 from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmAddUc,
+    AlgorithmRemoveUc,
     AlgorithmRunUc,
     BenchmarkCreateUc,
     BenchmarkLoadAllUc,
@@ -30,20 +30,17 @@ from luna_bench._internal.usecases.benchmark.protocols import (
 )
 from luna_bench._internal.usecases.modelset.protocols import ModelSetLoadUc
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
-from luna_bench._internal.user_models import (
-    AlgorithmUserModel,
-    BenchmarkUserModel,
-    FeatureUserModel,
-    MetricUserModel,
-    PlotUserModel,
-)
 from luna_bench._internal.wrappers import LunaAlgorithmWrapper
-from luna_bench.components.algorithm import Algorithm
-from luna_bench.components.enums import ErrorHandlingMode
-from luna_bench.components.feature import Feature
-from luna_bench.components.metric import Metric
+from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
 from luna_bench.components.model_set import ModelSet
-from luna_bench.components.plot import Plot
+from luna_bench.entities import (
+    AlgorithmEntity,
+    BenchmarkEntity,
+    FeatureEntity,
+    MetricEntity,
+    PlotEntity,
+)
+from luna_bench.entities.enums import ErrorHandlingMode
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -60,7 +57,7 @@ if TYPE_CHECKING:
     from returns.result import Result
 
 
-class Benchmark(BenchmarkUserModel):
+class Benchmark(BenchmarkEntity):
     """
     Benchmark class represents a benchmark in the LunaBench system.
 
@@ -178,8 +175,8 @@ class Benchmark(BenchmarkUserModel):
     @staticmethod
     @inject
     def __remove_algorithm_uc(
-        benchmark_remove_algorithm: MetricRemoveUc = Provide[UsecaseContainer.benchmark_remove_algorithm_uc],
-    ) -> MetricRemoveUc:
+        benchmark_remove_algorithm: AlgorithmRemoveUc = Provide[UsecaseContainer.benchmark_remove_algorithm_uc],
+    ) -> AlgorithmRemoveUc:
         return benchmark_remove_algorithm
 
     @staticmethod
@@ -219,7 +216,7 @@ class Benchmark(BenchmarkUserModel):
         """
         benchmark_create = Benchmark.__create_uc()
         result: Result[
-            BenchmarkUserModel, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError
+            BenchmarkEntity, DataNotUniqueError | UnknownLunaBenchError | UnknownIdError | ValidationError
         ] = benchmark_create(name)
 
         if not is_successful(result):
@@ -233,9 +230,10 @@ class Benchmark(BenchmarkUserModel):
 
     @staticmethod
     def import_from_file(file_path: str) -> Benchmark:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
-    def delete(self) -> None: ...  # noqa: D102 # Not yet implemented
+    def delete(self) -> None:  # noqa: D102 # Not yet implemented
+        raise NotImplementedError  # pragma: no cover
 
     @staticmethod
     def load(name: str) -> Benchmark:
@@ -255,7 +253,7 @@ class Benchmark(BenchmarkUserModel):
         """
         benchmark_load = Benchmark.__load_uc()
         result: Result[
-            BenchmarkUserModel, DataNotExistError | UnknownLunaBenchError | UnknownIdError | ValidationError
+            BenchmarkEntity, DataNotExistError | UnknownLunaBenchError | UnknownIdError | ValidationError
         ] = benchmark_load(name)
 
         if not is_successful(result):
@@ -282,7 +280,7 @@ class Benchmark(BenchmarkUserModel):
 
         """
         benchmark_load_all = Benchmark.__load_all_uc()
-        result: Result[list[BenchmarkUserModel], UnknownLunaBenchError | UnknownIdError | ValidationError] = (
+        result: Result[list[BenchmarkEntity], UnknownLunaBenchError | UnknownIdError | ValidationError] = (
             benchmark_load_all()
         )
         if not is_successful(result):
@@ -363,8 +361,8 @@ class Benchmark(BenchmarkUserModel):
     def add_feature(
         self,
         name: str,
-        feature: IFeature,
-    ) -> Feature:
+        feature: BaseFeature,
+    ) -> FeatureEntity:
         """
         Add a feature to the benchmark with a given name.
 
@@ -378,7 +376,7 @@ class Benchmark(BenchmarkUserModel):
         ----------
         name: str
             Name of the feature to add.
-        feature: IFeature
+        feature: Feature
             The feature to add.
 
         Returns
@@ -389,7 +387,7 @@ class Benchmark(BenchmarkUserModel):
         benchmark_add_feature = self.__add_feature_uc()
 
         result: Result[
-            FeatureUserModel,
+            FeatureEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -403,26 +401,27 @@ class Benchmark(BenchmarkUserModel):
             if isinstance(error, UnknownLunaBenchError):
                 raise error.error()
             raise error
-        self.features.append(result.unwrap())
-        return Feature.model_validate(result.unwrap(), from_attributes=True)
+        unwrapped_result = result.unwrap()
+        self.features.append(unwrapped_result)
+        return unwrapped_result
 
     def remove_feature(
         self,
-        feature: str | Feature,
+        feature: str | FeatureEntity,
     ) -> None:
         """
         Remove a feature from the benchmark.
 
         Parameters
         ----------
-        feature: str | Feature
-            The name of the feature to remove or the feature object itself. Make sure to use the ``Feature`` object and
-            not only an ``IFeature`` object. This is important because the feature name is used to identify the
-            feature.
+        feature: str | FeatureEntity
+            The name of the feature to remove or the feature object itself. Make sure to use the ``FeatureUserModel``
+            object and not only an ``IFeature`` object. This is important because the feature name is used to identify
+            the feature.
 
         """
         benchmark_remove_feature = self.__remove_feature_uc()
-        feature_name = feature.name if isinstance(feature, Feature) else feature
+        feature_name = feature.name if isinstance(feature, FeatureEntity) else feature
 
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_remove_feature(
             self.name, feature_name
@@ -430,7 +429,7 @@ class Benchmark(BenchmarkUserModel):
 
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to add model metric to benchmark: {error}")
+            Benchmark._logger.error(f"Failed to remove feature from benchmark: {error}")
             if isinstance(error, UnknownLunaBenchError):
                 raise error.error()
             raise error
@@ -440,8 +439,8 @@ class Benchmark(BenchmarkUserModel):
     def add_metric(
         self,
         name: str,
-        metric: IMetric,
-    ) -> Metric:
+        metric: BaseMetric,
+    ) -> MetricEntity:
         """
         Add a metric to the benchmark with a given name.
 
@@ -455,7 +454,7 @@ class Benchmark(BenchmarkUserModel):
         ----------
         name: str
             The name of the metric to add.
-        metric: IMetric
+        metric: Metric
             An instance of the metric to add.
 
         Returns
@@ -465,7 +464,7 @@ class Benchmark(BenchmarkUserModel):
         """
         benchmark_add_metric_uc = self.__add_metric_uc()
         result: Result[
-            MetricUserModel,
+            MetricEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -479,25 +478,26 @@ class Benchmark(BenchmarkUserModel):
             if isinstance(error, UnknownLunaBenchError):
                 raise error.error()
             raise error
-        self.metrics.append(result.unwrap())
-        return Metric.model_validate(result.unwrap(), from_attributes=True)
+        unwrapped_result = result.unwrap()
+        self.metrics.append(unwrapped_result)
+        return unwrapped_result
 
     def remove_metric(
         self,
-        metric: str | Metric,
+        metric: str | MetricEntity,
     ) -> None:
         """
         Remove a metric from the benchmark.
 
         Parameters
         ----------
-        metric: str | Metric
-            The name of the metric to remove or the metric object itself. Make sure to use the ``Metric`` object and
-            not only an ``IMetric`` object. This is important because the metric name is used to identify the
-            metric.
+        metric: str | MetricEntity
+            The name of the metric to remove or the metric object itself. Make sure to use the ``MetricUserModel``
+            object and not only an ``IMetric`` object. This is important because the metric name is used to identify
+            the metric.
         """
         benchmark_remove_metric = self.__remove_metric_uc()
-        metric_name = metric.name if isinstance(metric, Metric) else metric
+        metric_name = metric.name if isinstance(metric, MetricEntity) else metric
 
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_remove_metric(
             self.name, metric_name
@@ -505,7 +505,7 @@ class Benchmark(BenchmarkUserModel):
 
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to add metric to benchmark: {error}")
+            Benchmark._logger.error(f"Failed to remove metric from benchmark: {error}")
             if isinstance(error, UnknownLunaBenchError):
                 raise error.error()
             raise error
@@ -515,8 +515,8 @@ class Benchmark(BenchmarkUserModel):
     def add_algorithm(
         self,
         name: str,
-        algorithm: IAlgorithm[Any] | AlgorithmSync | AlgorithmAsync[Any],
-    ) -> Algorithm:
+        algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+    ) -> AlgorithmEntity:
         """
         Add an algorithm to the benchmark with a given name.
 
@@ -535,7 +535,7 @@ class Benchmark(BenchmarkUserModel):
 
         Returns
         -------
-        Algorithm
+        AlgorithmEntity
             The added algorithm.
         """
         if isinstance(algorithm, IAlgorithm):
@@ -543,7 +543,7 @@ class Benchmark(BenchmarkUserModel):
 
         benchmark_add_algorithm = self.__add_algorithm_uc()
         result: Result[
-            AlgorithmUserModel,
+            AlgorithmEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -560,29 +560,24 @@ class Benchmark(BenchmarkUserModel):
             raise error
         result_algorithm = result.unwrap()
         self.algorithms.append(result_algorithm)
-        return Algorithm.model_construct(
-            name=result_algorithm.name,
-            status=result_algorithm.status,
-            algorithm=result_algorithm.algorithm,
-            results=result_algorithm.results,
-        )
+        return result_algorithm
 
     def remove_algorithm(
         self,
-        algorithm: str | Algorithm,
+        algorithm: str | AlgorithmEntity,
     ) -> None:
         """
         Remove an algorithm from the benchmark.
 
         Parameters
         ----------
-        algorithm: str | Algorithm
-            The name of the algorithm to remove or the algorithm object itself. Make sure to use the ``Algorithm``
-            object and not only an ``IAlgorithm`` object. This is important because the algorithm name is used to
-            identify the algorithm.
+        algorithm: str | AlgorithmEntity
+            The name of the algorithm to remove or the algorithm object itself. Make sure to use the
+            ``AlgorithmUserModel`` object and not only an ``IAlgorithm`` object.
+            This is important because the algorithm name is used to identify the algorithm.
         """
         benchmark_remove_algorithm = self.__remove_algorithm_uc()
-        algorithm_name = algorithm.name if isinstance(algorithm, Algorithm) else algorithm
+        algorithm_name = algorithm.name if isinstance(algorithm, AlgorithmEntity) else algorithm
 
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_remove_algorithm(
             self.name, algorithm_name
@@ -590,16 +585,18 @@ class Benchmark(BenchmarkUserModel):
 
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to add algorithm to benchmark: {error}")
-            raise RuntimeError(error)
+            Benchmark._logger.error(f"Failed to remove algorithm from benchmark: {error}")
+            if isinstance(error, UnknownLunaBenchError):
+                raise error.error()
+            raise error
 
         self._remove_name_from_list(self.algorithms, algorithm_name)
 
     def add_plot(
         self,
         name: str,
-        plot: IPlot[Any],
-    ) -> Plot:
+        plot: BasePlot[Any],
+    ) -> PlotEntity:
         """
         Add a plot to the benchmark with a given name.
 
@@ -613,7 +610,7 @@ class Benchmark(BenchmarkUserModel):
         ----------
         name: str
             The name of the plot to add.
-        plot: IPlot[Any]
+        plot: Plot[Any]
             The plot to add.
 
         Returns
@@ -624,7 +621,7 @@ class Benchmark(BenchmarkUserModel):
         """
         benchmark_add_plot = self.__add_plot_uc()
         result: Result[
-            PlotUserModel,
+            PlotEntity,
             DataNotUniqueError
             | DataNotExistError
             | UnknownLunaBenchError
@@ -638,14 +635,14 @@ class Benchmark(BenchmarkUserModel):
             if isinstance(error, UnknownLunaBenchError):
                 raise error.error()
             raise error
+        unwrapped_result = result.unwrap()
+        self.plots.append(unwrapped_result)
 
-        self.plots.append(result.unwrap())
-
-        return Plot.model_validate(result.unwrap(), from_attributes=True)
+        return unwrapped_result
 
     def remove_plot(
         self,
-        plot: str | Plot,
+        plot: str | PlotEntity,
     ) -> None:
         """
         Remove a plot from the benchmark.
@@ -658,14 +655,16 @@ class Benchmark(BenchmarkUserModel):
             plot.
         """
         benchmark_remove_plot = self.__remove_plot_uc()
-        plot_name = plot.name if isinstance(plot, Plot) else plot
+        plot_name = plot.name if isinstance(plot, PlotEntity) else plot
 
         result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_remove_plot(self.name, plot_name)
 
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to remove plot to benchmark: {error}")
-            raise RuntimeError(error)
+            Benchmark._logger.error(f"Failed to remove plot from benchmark: {error}")
+            if isinstance(error, UnknownLunaBenchError):
+                raise error.error()
+            raise error
 
         self._remove_name_from_list(self.plots, plot_name)
 
@@ -697,7 +696,9 @@ class Benchmark(BenchmarkUserModel):
 
     def run_metrics(self) -> None:  # noqa: D102 # Not yet implemented
         benchmark_run_metrics = self.__run_metric_uc()
-        result: Result[None, RunMetricMissingError | RunModelsetMissingError] = benchmark_run_metrics(self)
+        result: Result[None, RunMetricMissingError | RunModelsetMissingError | RunFeatureMissingError] = (
+            benchmark_run_metrics(self)
+        )
 
         if not is_successful(result):
             error = result.failure()
@@ -754,19 +755,19 @@ class Benchmark(BenchmarkUserModel):
         self.run_plots()
 
     def list_model_metrics_classes(self) -> list[None]:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def list_metrics_classes(self) -> list[None]:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def list_plots_classes(self) -> list[None]:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def list_algorithms(self) -> list[None]:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def list_backends(self) -> list[None]:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @staticmethod
     def _remove_name_from_list[T: BaseModel](obj_list: list[T], name: str) -> None:

@@ -4,7 +4,7 @@ from typing import ClassVar
 
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.user_models.metric_usermodel import MetricUserModel
+from luna_bench.entities.metric_entity import MetricEntity
 from luna_bench.errors.run_errors.plots_errors.metrics_missing_error import MetricsMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -35,14 +35,14 @@ class MetricsPlotMixin:
 
     def _prepare_metrics(
         self,
-        metrics: list[MetricUserModel],
-    ) -> Result[dict[str, MetricUserModel], MetricsMissingError | UnknownLunaBenchError]:
+        metrics: list[MetricEntity],
+    ) -> Result[dict[str, MetricEntity], MetricsMissingError | UnknownLunaBenchError]:
         """
         Parse metrics from benchmark and compare with config.
 
         Parameters
         ----------
-        metrics : list[MetricUserModel]
+        metrics : list[MetricEntity]
             List of benchmark's metrics.
 
         Returns
@@ -51,7 +51,7 @@ class MetricsPlotMixin:
             Success with dictionary mapping metric ids to metric instances,
             or Failure with MetricsMissingError if required metrics are missing.
         """
-        result: dict[str, MetricUserModel] = {}
+        result: dict[str, MetricEntity] = {}
         for metric in metrics:
             if metric.metric._registered_id in self.metrics_ids:  # type: ignore[attr-defined] # noqa: SLF001
                 result[metric.metric._registered_id] = metric  # type: ignore[attr-defined] # noqa: SLF001
