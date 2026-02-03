@@ -81,7 +81,7 @@ class TestRightHandSideFeatures:
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.LEQ)).mean > 0
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.LEQ)).std >= 0
 
-        # Mean (10 + 15 + 12) / 3
+        # Mean (10 + 15 + 12) / 3 # noqa: ERA001
         assert result.get(RhsStatsKey(constraint_sense=ConstraintSense.LEQ)).mean == pytest.approx(37 / 3)
 
         # No other constraint types
