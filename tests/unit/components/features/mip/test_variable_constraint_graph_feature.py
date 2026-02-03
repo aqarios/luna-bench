@@ -291,7 +291,7 @@ class TestVariableConstraintGraphFeatures:
             y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
             z = Variable("z", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
 
-        model.objective = x + y + z # z is isolated
+        model.objective = x + y + z  # z is isolated
         model.constraints += x + y <= 10
         model.constraints += x + y >= 5
 
