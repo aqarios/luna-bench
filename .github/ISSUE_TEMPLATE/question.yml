@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Thanks for asking a question! Please provide as much detail as possible to help us understand and answer your question.
-  
+
   - type: textarea
     id: question
     attributes:
@@ -32,7 +32,7 @@ body:
         - Other
     validations:
       required: true
-  
+
   - type: textarea
     id: context
     attributes:
@@ -41,7 +41,7 @@ body:
       placeholder: What are you trying to accomplish? What have you already looked at?
     validations:
       required: false
-  
+
   - type: textarea
     id: attempted-solutions
     attributes:
@@ -53,7 +53,7 @@ body:
         3. I searched for...
     validations:
       required: false
-  
+
   - type: textarea
     id: additional-info
     attributes:
