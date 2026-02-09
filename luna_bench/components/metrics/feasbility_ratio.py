@@ -1,12 +1,13 @@
 """Feasibility Ratio metric for measuring the proportion of feasible solutions."""
 
 from luna_quantum import Solution
+from pydantic import Field
 
 from luna_bench.base_components import BaseMetric
 from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.helpers import metric
 from luna_bench.types import MetricResult
-from pydantic import Field
+
 
 class FeasibilityRatioResult(MetricResult):
     """Result container for the Feasibility Ratio metric.
@@ -47,7 +48,7 @@ class FeasibilityRatio(BaseMetric):
     object, which is typically computed by the solver or model evaluation.
     """
 
-    def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:  # noqa: ARG002
+    def run(self, solution: Solution, feature_results: FeatureResults) -> FeasibilityRatioResult:  # noqa: ARG002
         """Calculate the feasibility ratio for the given solution.
 
         Parameters

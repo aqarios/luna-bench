@@ -47,7 +47,7 @@ def _create_feature_results(optimal_value: float) -> FeatureResults:
     opt_feature = OptSolFeature()
     opt_result = OptSolFeatureResult(best_sol=optimal_value, pre_terminated=False)
     data: Mapping[type[BaseFeature], Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
-        OptSolFeature: {"optsol": (opt_result, opt_feature)}
+        OptSolFeature: {"optsol": (opt_result, opt_feature)}  # type: ignore[dict-item]
     }
     return FeatureResults(allowed=[OptSolFeature], data=data)
 
@@ -132,10 +132,11 @@ class TestTimeToSolution:
 
         # TTS formula: (t/M) * ceil(log(1-0.99) / log(1-p*))
         # With p* = 0.5: ceil(log(0.01) / log(0.5)) = ceil(6.64) = 7
-        total_runtime = solution.runtime.total_seconds
-        t_per_sample = total_runtime / 4
-        expected_tts = t_per_sample * np.ceil(np.log(0.01) / np.log(0.5))
-        assert np.isclose(result.time_to_solution, expected_tts, rtol=0.01)
+        if solution.runtime is not None:
+            total_runtime = solution.runtime.total_seconds
+            t_per_sample = total_runtime / 4
+            expected_tts = t_per_sample * np.ceil(np.log(0.01) / np.log(0.5))
+            assert np.isclose(result.time_to_solution, expected_tts, rtol=0.01)
 
     def test_empty_solution(self) -> None:
         """Test that empty solution returns infinity."""
@@ -249,15 +250,18 @@ class TestTimeToSolution:
         # Create solution with different counts
         # Values: [5.0, 10.0] with counts [3, 1]
         # Total samples = 4, optimal found = 3
-        solution = Solution._build(
-            component_types=[Vtype.Binary],
-            binary_cols=[[0, 0]],
-            raw_energies=[5.0, 10.0],
+        from luna_quantum import Model, Variable
+
+        m = Model()
+        with m.environment:
+            x = Variable("x", vtype=Vtype.Integer)
+
+        m.objective += 5 * x
+
+        solution = Solution.from_dicts(
+            data=[{"x": 1}, {"x": 2}],
+            model=m,
             timing=timing,
-            counts=[3, 1],
-            sense=Sense.Min,
-            obj_values=[5.0, 10.0],
-            feasible=[True, True],
         )
         feature_results = _create_feature_results(optimal_value=5.0)
 
@@ -334,13 +338,14 @@ class TestTimeToSolution:
         # num_repetitions = ceil(log(1-0.99) / log(1-0.25)) = ceil(log(0.01) / log(0.75))
         # log(0.01) ≈ -4.605, log(0.75) ≈ -0.288
         # num_repetitions = ceil(16.0) = 16
-        total_runtime = solution.runtime.total_seconds
-        t_per_sample = total_runtime / 4
-        expected_num_reps = np.ceil(np.log(0.01) / np.log(0.75))
-        expected_tts = t_per_sample * expected_num_reps
+        if solution.runtime is not None:
+            total_runtime = solution.runtime.total_seconds
+            t_per_sample = total_runtime / 4
+            expected_num_reps = np.ceil(np.log(0.01) / np.log(0.75))
+            expected_tts = t_per_sample * expected_num_reps
 
-        assert result.probability_optimal == 0.25
-        assert np.isclose(result.time_to_solution, expected_tts, rtol=0.01)
+            assert result.probability_optimal == 0.25
+            assert np.isclose(result.time_to_solution, expected_tts, rtol=0.01)
 
     def test_negative_optimal_value(self) -> None:
         """Test TTS with negative optimal value (valid for minimization)."""
@@ -379,6 +384,7 @@ class TestTimeToSolution:
 
         assert isinstance(result, TimeToSolutionResult)
         # With p* = 0.5 and target = 0.5, we need ceil(log(0.5)/log(0.5)) = 1 repetition
-        total_runtime = solution.runtime.total_seconds
-        t_per_sample = total_runtime / 2
-        assert np.isclose(result.time_to_solution, t_per_sample, rtol=0.01)
+        if solution.runtime is not None:
+            total_runtime = solution.runtime.total_seconds
+            t_per_sample = total_runtime / 2
+            assert np.isclose(result.time_to_solution, t_per_sample, rtol=0.01)

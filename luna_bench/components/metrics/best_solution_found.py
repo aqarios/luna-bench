@@ -5,14 +5,14 @@ Metric implemented from https://arxiv.org/pdf/2405.07624
 
 import numpy as np
 from luna_quantum import Sense, Solution
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from luna_bench.base_components import BaseMetric
 from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.components.features.optsol_feature import OptSolFeature, OptSolFeatureResult
 from luna_bench.helpers import metric
 from luna_bench.types import MetricResult
-from pydantic import Field
+
 
 class BestSolutionFoundError(ValueError):
     """Raised when best solution found validation fails.
@@ -119,7 +119,7 @@ class BestSolutionFound(BaseMetric):
 
     abs_tol: float = 1e-3
 
-    def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:
+    def run(self, solution: Solution, feature_results: FeatureResults) -> BestSolutionFoundResult:
         """Calculate the Best Solution Found ratio for the given solution.
 
         Parameters
@@ -155,14 +155,16 @@ class BestSolutionFound(BaseMetric):
             return BestSolutionFoundResult(best_solution_found=float("inf"))
 
         # Get the best objective value based on optimization sense
-        if solution.sense == Sense.Min:
-            best_value = float(min(solution.obj_values))
-            bsf = self._get_ratio(numerator=best_value, denominator=opt_sol.best_sol)
-        else:
-            best_value = float(max(solution.obj_values))
-            bsf = self._get_ratio(numerator=opt_sol.best_sol, denominator=best_value)
+        if solution.obj_values is not None:
+            if solution.sense == Sense.Min:
+                best_value = float(np.min(solution.obj_values))
+                bsf = self._get_ratio(numerator=best_value, denominator=opt_sol.best_sol)
+            else:
+                best_value = float(np.max(solution.obj_values))
+                bsf = self._get_ratio(numerator=opt_sol.best_sol, denominator=best_value)
 
-        return BestSolutionFoundResult(best_solution_found=bsf)
+            return BestSolutionFoundResult(best_solution_found=bsf)
+        return BestSolutionFoundResult(best_solution_found=float("inf"))
 
     def _get_ratio(self, numerator: float, denominator: float) -> float:
         """Calculate the ratio of two values with zero-division protection.

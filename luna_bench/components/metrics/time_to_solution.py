@@ -4,7 +4,7 @@ Metric implemented from https://arxiv.org/pdf/2405.07624
 """
 
 import numpy as np
-from luna_quantum import Solution
+from luna_quantum import ResultView, Solution
 
 from luna_bench.base_components import BaseMetric
 from luna_bench.base_components.data_types.feature_results import FeatureResults
@@ -86,7 +86,7 @@ class TimeToSolution(BaseMetric):
     target_probability: float = 0.99
     abs_tol: float = 1e-6
 
-    def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:
+    def run(self, solution: Solution, feature_results: FeatureResults) -> TimeToSolutionResult:
         """Calculate the Time-to-Solution for the given solution.
 
         Parameters
@@ -118,7 +118,6 @@ class TimeToSolution(BaseMetric):
             )
 
         # Count optimal solutions using results (which have obj_value)
-        from luna_quantum import ResultView
 
         def is_optimal(s: ResultView) -> bool:
             if s.obj_value is None:

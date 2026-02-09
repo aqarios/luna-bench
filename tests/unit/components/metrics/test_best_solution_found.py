@@ -51,7 +51,7 @@ def _create_feature_results(optimal_value: float) -> FeatureResults:
     opt_feature = OptSolFeature()
     opt_result = OptSolFeatureResult(best_sol=optimal_value, pre_terminated=False)
     data: Mapping[type[BaseFeature], Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
-        OptSolFeature: {"optsol": (opt_result, opt_feature)}
+        OptSolFeature: {"optsol": (opt_result, opt_feature)}  # type: ignore[dict-item]
     }
     return FeatureResults(allowed=[OptSolFeature], data=data)
 
