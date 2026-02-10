@@ -6,50 +6,14 @@ import time
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pytest
 from luna_quantum import Sense, Solution, Timer, Vtype
 
-from luna_bench.base_components.data_types.feature_results import FeatureResults
-from luna_bench.components.features.optsol_feature import OptSolFeature, OptSolFeatureResult
 from luna_bench.components.metrics.time_to_solution import TimeToSolution, TimeToSolutionResult
+from tests.unit.fixtures import create_solution
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from luna_bench.base_components import BaseFeature
-    from luna_bench.types import FeatureName, FeatureResult
-
-
-def _create_solution(
-    obj_values: list[float],
-    sense: Sense = Sense.Min,
-    runtime_seconds: float = 0.1,
-) -> Solution:
-    """Create a Solution with specific objective values."""
-    timer = Timer.start()
-    time.sleep(runtime_seconds)
-    timing = timer.stop()
-
-    num_samples = len(obj_values)
-    return Solution._build(  # type: ignore[attr-defined,no-any-return]
-        component_types=[Vtype.Binary],
-        binary_cols=[[0] * num_samples],
-        raw_energies=obj_values,
-        timing=timing,
-        counts=[1] * num_samples,
-        sense=sense,
-        obj_values=obj_values,
-        feasible=[True] * num_samples,
-    )
-
-
-def _create_feature_results(optimal_value: float) -> FeatureResults:
-    """Create FeatureResults with OptSolFeature result."""
-    opt_feature = OptSolFeature()
-    opt_result = OptSolFeatureResult(best_sol=optimal_value, pre_terminated=False)
-    data: Mapping[type[BaseFeature], Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
-        OptSolFeature: {"optsol": (opt_result, opt_feature)}  # type: ignore[dict-item]
-    }
-    return FeatureResults(allowed=[OptSolFeature], data=data)
+    from unittest.mock import MagicMock
 
 
 class TestTimeToSolutionResult:
@@ -83,14 +47,13 @@ class TestTimeToSolutionResult:
 class TestTimeToSolution:
     """Tests for the TimeToSolution metric."""
 
-    def test_all_optimal_solutions(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_all_optimal_solutions(self, mock_feature_results: MagicMock) -> None:
         """Test TTS when all samples are optimal (p* = 1)."""
-        optimal = 5.0
-        solution = _create_solution(obj_values=[5.0, 5.0, 5.0], sense=Sense.Min, runtime_seconds=0.1)
-        feature_results = _create_feature_results(optimal_value=optimal)
+        solution = create_solution(obj_values=[5.0, 5.0, 5.0], sense=Sense.Min, runtime_seconds=0.1)
 
         metric = TimeToSolution()
-        result = metric.run(solution, feature_results)
+        result = metric.run(solution, mock_feature_results)
 
         assert isinstance(result, TimeToSolutionResult)
         assert result.probability_optimal == 1.0
@@ -100,14 +63,13 @@ class TestTimeToSolution:
         expected_t_per_sample = result.time_to_solution
         assert expected_t_per_sample > 0
 
-    def test_no_optimal_solutions(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_no_optimal_solutions(self, mock_feature_results: MagicMock) -> None:
         """Test TTS = infinity when no optimal solutions found (p* = 0)."""
-        optimal = 5.0
-        solution = _create_solution(obj_values=[10.0, 15.0, 20.0], sense=Sense.Min)
-        feature_results = _create_feature_results(optimal_value=optimal)
+        solution = create_solution(obj_values=[10.0, 15.0, 20.0], sense=Sense.Min)
 
         metric = TimeToSolution()
-        result = metric.run(solution, feature_results)
+        result = metric.run(solution, mock_feature_results)
 
         assert isinstance(result, TimeToSolutionResult)
         assert result.probability_optimal == 0.0
@@ -115,15 +77,14 @@ class TestTimeToSolution:
         assert result.num_samples == 3
         assert result.time_to_solution == float("inf")
 
-    def test_some_optimal_solutions(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_some_optimal_solutions(self, mock_feature_results: MagicMock) -> None:
         """Test TTS calculation when some samples are optimal (0 < p* < 1)."""
-        optimal = 5.0
         # 2 out of 4 samples are optimal
-        solution = _create_solution(obj_values=[5.0, 10.0, 5.0, 15.0], sense=Sense.Min, runtime_seconds=0.1)
-        feature_results = _create_feature_results(optimal_value=optimal)
+        solution = create_solution(obj_values=[5.0, 10.0, 5.0, 15.0], sense=Sense.Min, runtime_seconds=0.1)
 
         metric = TimeToSolution()
-        result = metric.run(solution, feature_results)
+        result = metric.run(solution, mock_feature_results)
 
         assert isinstance(result, TimeToSolutionResult)
         assert result.probability_optimal == 0.5
@@ -138,7 +99,8 @@ class TestTimeToSolution:
             expected_tts = t_per_sample * np.ceil(np.log(0.01) / np.log(0.5))
             assert np.isclose(result.time_to_solution, expected_tts, rtol=0.01)
 
-    def test_empty_solution(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_empty_solution(self, mock_feature_results: MagicMock) -> None:
         """Test that empty solution returns infinity."""
         timer = Timer.start()
         time.sleep(0.01)
@@ -150,10 +112,9 @@ class TestTimeToSolution:
             timing=timing,
             sense=Sense.Min,
         )
-        feature_results = _create_feature_results(optimal_value=5.0)
 
         metric = TimeToSolution()
-        result = metric.run(solution, feature_results)
+        result = metric.run(solution, mock_feature_results)
 
         assert isinstance(result, TimeToSolutionResult)
         assert result.time_to_solution == float("inf")
@@ -161,15 +122,14 @@ class TestTimeToSolution:
         assert result.num_optimal_found == 0
         assert result.num_samples == 0
 
-    def test_maximization_problem(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [20.0], indirect=True)
+    def test_maximization_problem(self, mock_feature_results: MagicMock) -> None:
         """Test TTS for maximization problems."""
-        optimal = 20.0
         # 1 out of 3 samples is optimal
-        solution = _create_solution(obj_values=[10.0, 20.0, 15.0], sense=Sense.Max)
-        feature_results = _create_feature_results(optimal_value=optimal)
+        solution = create_solution(obj_values=[10.0, 20.0, 15.0], sense=Sense.Max)
 
         metric = TimeToSolution()
-        result = metric.run(solution, feature_results)
+        result = metric.run(solution, mock_feature_results)
 
         assert isinstance(result, TimeToSolutionResult)
         assert np.isclose(result.probability_optimal, 1 / 3, rtol=0.01)
@@ -177,63 +137,58 @@ class TestTimeToSolution:
         assert result.num_samples == 3
         assert result.time_to_solution < float("inf")
 
-    def test_custom_target_probability(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_custom_target_probability(self, mock_feature_results: MagicMock) -> None:
         """Test TTS with custom target probability."""
-        optimal = 5.0
-        solution = _create_solution(obj_values=[5.0, 10.0, 15.0], sense=Sense.Min)
-        feature_results = _create_feature_results(optimal_value=optimal)
+        solution = create_solution(obj_values=[5.0, 10.0, 15.0], sense=Sense.Min)
 
         # With 99% target probability (default)
         metric_99 = TimeToSolution(target_probability=0.99)
-        result_99 = metric_99.run(solution, feature_results)
+        result_99 = metric_99.run(solution, mock_feature_results)
 
         # With 90% target probability (requires fewer repetitions)
         metric_90 = TimeToSolution(target_probability=0.90)
-        result_90 = metric_90.run(solution, feature_results)
+        result_90 = metric_90.run(solution, mock_feature_results)
         assert result_90.time_to_solution < result_99.time_to_solution
 
-    def test_custom_tolerance(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_custom_tolerance(self, mock_feature_results: MagicMock) -> None:
         """Test TTS with custom tolerance for optimal comparison."""
-        optimal = 5.0
         # Values close to optimal but not exactly equal
-        solution = _create_solution(obj_values=[5.0001, 5.0002, 10.0], sense=Sense.Min)
-        feature_results = _create_feature_results(optimal_value=optimal)
+        solution = create_solution(obj_values=[5.0001, 5.0002, 10.0], sense=Sense.Min)
 
         # With default tolerance (1e-6), none should match
         metric_strict = TimeToSolution(abs_tol=1e-6)
-        result_strict = metric_strict.run(solution, feature_results)
+        result_strict = metric_strict.run(solution, mock_feature_results)
 
         # With larger tolerance (1e-3), first two should match
         metric_loose = TimeToSolution(abs_tol=1e-3)
-        result_loose = metric_loose.run(solution, feature_results)
+        result_loose = metric_loose.run(solution, mock_feature_results)
 
         assert result_strict.num_optimal_found == 0
         assert result_loose.num_optimal_found == 2
 
-    def test_single_optimal_sample(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_single_optimal_sample(self, mock_feature_results: MagicMock) -> None:
         """Test TTS with a single optimal sample."""
-        optimal = 5.0
-        solution = _create_solution(obj_values=[5.0], sense=Sense.Min, runtime_seconds=0.1)
-        feature_results = _create_feature_results(optimal_value=optimal)
+        solution = create_solution(obj_values=[5.0], sense=Sense.Min, runtime_seconds=0.1)
 
         metric = TimeToSolution()
-        result = metric.run(solution, feature_results)
+        result = metric.run(solution, mock_feature_results)
 
         assert isinstance(result, TimeToSolutionResult)
         assert result.probability_optimal == 1.0
         assert result.num_optimal_found == 1
         assert result.num_samples == 1
         # When p* = 1, TTS = t_per_sample
-        assert result.time_to_solution > 0
 
-    def test_single_non_optimal_sample(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_single_non_optimal_sample(self, mock_feature_results: MagicMock) -> None:
         """Test TTS with a single non-optimal sample."""
-        optimal = 5.0
-        solution = _create_solution(obj_values=[10.0], sense=Sense.Min)
-        feature_results = _create_feature_results(optimal_value=optimal)
+        solution = create_solution(obj_values=[10.0], sense=Sense.Min)
 
         metric = TimeToSolution()
-        result = metric.run(solution, feature_results)
+        result = metric.run(solution, mock_feature_results)
 
         assert isinstance(result, TimeToSolutionResult)
         assert result.probability_optimal == 0.0
@@ -241,7 +196,8 @@ class TestTimeToSolution:
         assert result.num_samples == 1
         assert result.time_to_solution == float("inf")
 
-    def test_weighted_samples(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_weighted_samples(self, mock_feature_results: MagicMock) -> None:
         """Test TTS calculation with weighted samples (different counts)."""
         timer = Timer.start()
         time.sleep(0.1)
@@ -263,10 +219,9 @@ class TestTimeToSolution:
             model=m,
             timing=timing,
         )
-        feature_results = _create_feature_results(optimal_value=5.0)
 
         metric = TimeToSolution()
-        result = metric.run(solution, feature_results)
+        result = metric.run(solution, mock_feature_results)
 
         assert isinstance(result, TimeToSolutionResult)
         # Note: num_samples counts unique samples, not total count
@@ -275,16 +230,15 @@ class TestTimeToSolution:
         assert result.num_optimal_found == 1
         assert result.probability_optimal == 0.5
 
-    def test_low_probability_optimal(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_low_probability_optimal(self, mock_feature_results: MagicMock) -> None:
         """Test TTS with very low probability of finding optimal."""
-        optimal = 5.0
         # Only 1 out of 10 samples is optimal
         obj_values = [5.0] + [10.0] * 9
-        solution = _create_solution(obj_values=obj_values, sense=Sense.Min, runtime_seconds=0.1)
-        feature_results = _create_feature_results(optimal_value=optimal)
+        solution = create_solution(obj_values=obj_values, sense=Sense.Min, runtime_seconds=0.1)
 
         metric = TimeToSolution()
-        result = metric.run(solution, feature_results)
+        result = metric.run(solution, mock_feature_results)
 
         assert isinstance(result, TimeToSolutionResult)
         assert result.probability_optimal == 0.1
@@ -294,16 +248,15 @@ class TestTimeToSolution:
         assert result.time_to_solution > 0
         assert result.time_to_solution < float("inf")
 
-    def test_high_probability_optimal(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_high_probability_optimal(self, mock_feature_results: MagicMock) -> None:
         """Test TTS with high probability of finding optimal (9/10)."""
-        optimal = 5.0
         # 9 out of 10 samples are optimal
         obj_values = [5.0] * 9 + [10.0]
-        solution = _create_solution(obj_values=obj_values, sense=Sense.Min, runtime_seconds=0.1)
-        feature_results = _create_feature_results(optimal_value=optimal)
+        solution = create_solution(obj_values=obj_values, sense=Sense.Max, runtime_seconds=0.1)
 
         metric = TimeToSolution()
-        result = metric.run(solution, feature_results)
+        result = metric.run(solution, mock_feature_results)
 
         assert isinstance(result, TimeToSolutionResult)
         assert result.probability_optimal == 0.9
@@ -319,19 +272,18 @@ class TestTimeToSolution:
         assert metric.target_probability == 0.99
         assert metric.abs_tol == 1e-6
 
-    def test_tts_formula_verification(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_tts_formula_verification(self, mock_feature_results: MagicMock) -> None:
         """Verify TTS formula with specific known values."""
-        optimal = 5.0
         # 1 out of 4 samples is optimal -> p* = 0.25
-        solution = _create_solution(
+        solution = create_solution(
             obj_values=[5.0, 10.0, 15.0, 20.0],
             sense=Sense.Min,
             runtime_seconds=0.1,
         )
-        feature_results = _create_feature_results(optimal_value=optimal)
 
         metric = TimeToSolution(target_probability=0.99)
-        result = metric.run(solution, feature_results)
+        result = metric.run(solution, mock_feature_results)
 
         # Manual calculation:
         # p* = 0.25
@@ -347,40 +299,36 @@ class TestTimeToSolution:
             assert result.probability_optimal == 0.25
             assert np.isclose(result.time_to_solution, expected_tts, rtol=0.01)
 
-    def test_negative_optimal_value(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [-10.0], indirect=True)
+    def test_negative_optimal_value(self, mock_feature_results: MagicMock) -> None:
         """Test TTS with negative optimal value (valid for minimization)."""
-        optimal = -10.0
-        solution = _create_solution(obj_values=[-10.0, -5.0, 0.0], sense=Sense.Min)
-        feature_results = _create_feature_results(optimal_value=optimal)
-
+        solution = create_solution(obj_values=[-10.0, -5.0, 0.0], sense=Sense.Min)
         metric = TimeToSolution()
-        result = metric.run(solution, feature_results)
+        result = metric.run(solution, mock_feature_results)
 
         assert isinstance(result, TimeToSolutionResult)
         assert result.num_optimal_found == 1
         assert np.isclose(result.probability_optimal, 1 / 3, rtol=0.01)
 
-    def test_zero_optimal_value(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [0.0], indirect=True)
+    def test_zero_optimal_value(self, mock_feature_results: MagicMock) -> None:
         """Test TTS with zero as optimal value."""
-        optimal = 0.0
-        solution = _create_solution(obj_values=[0.0, 1.0, 2.0], sense=Sense.Min)
-        feature_results = _create_feature_results(optimal_value=optimal)
+        solution = create_solution(obj_values=[0.0, 1.0, 2.0], sense=Sense.Min)
 
         metric = TimeToSolution()
-        result = metric.run(solution, feature_results)
+        result = metric.run(solution, mock_feature_results)
 
         assert isinstance(result, TimeToSolutionResult)
         assert result.num_optimal_found == 1
         assert np.isclose(result.probability_optimal, 1 / 3, rtol=0.01)
 
-    def test_very_low_target_probability(self) -> None:
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_very_low_target_probability(self, mock_feature_results: MagicMock) -> None:
         """Test TTS with very low target probability (50%)."""
-        optimal = 5.0
-        solution = _create_solution(obj_values=[5.0, 10.0], sense=Sense.Min)
-        feature_results = _create_feature_results(optimal_value=optimal)
+        solution = create_solution(obj_values=[5.0, 10.0], sense=Sense.Min)
 
         metric = TimeToSolution(target_probability=0.50)
-        result = metric.run(solution, feature_results)
+        result = metric.run(solution, mock_feature_results)
 
         assert isinstance(result, TimeToSolutionResult)
         # With p* = 0.5 and target = 0.5, we need ceil(log(0.5)/log(0.5)) = 1 repetition

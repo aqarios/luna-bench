@@ -5,27 +5,14 @@ Metric implemented from https://arxiv.org/pdf/2405.07624
 
 import numpy as np
 from luna_quantum import Sense, Solution
-from pydantic import Field, field_validator
+from pydantic import Field
 
 from luna_bench.base_components import BaseMetric
 from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.components.features.optsol_feature import OptSolFeature, OptSolFeatureResult
+from luna_bench.components.helper.divider_helper import get_ratio
 from luna_bench.helpers import metric
 from luna_bench.types import MetricResult
-
-
-class BestSolutionFoundError(ValueError):
-    """Raised when best solution found validation fails.
-
-    The best solution found ratio must be >= 1.0 by definition of metric.
-    A value of 1.0 indicates an optimal solution was found, while values > 1.0
-    indicate progressively worse solution quality.
-    """
-
-    def __init__(self) -> None:
-        """Initialize BestSolutionFoundError with standard message."""
-        msg = "Best Solution Found ratio must be >= 1.0 by definition of metric."
-        super().__init__(msg)
 
 
 class BestSolutionFoundResult(MetricResult):
@@ -41,30 +28,6 @@ class BestSolutionFoundResult(MetricResult):
     """
 
     best_solution_found: float = Field(ge=1.0, description="The calculated best solution found ratio.")
-
-    @field_validator("best_solution_found")
-    @classmethod
-    def validate_best_solution_found(cls, v: float) -> float:
-        """Validate the best solution found value.
-
-        Parameters
-        ----------
-        v : float
-            The best solution found ratio value to validate.
-
-        Returns
-        -------
-        float
-            The validated best solution found ratio.
-
-        Raises
-        ------
-        ValueError
-            If best solution found ratio is less than 1.0.
-        """
-        if v < 1.0:
-            raise BestSolutionFoundError
-        return v
 
 
 @metric(required_features=OptSolFeature)
@@ -88,11 +51,11 @@ class BestSolutionFound(BaseMetric):
 
     For minimization problems:
         BSF = best_found_value / optimal_value
-        - BSF = 1.0 means the best sample equals optimal
-        - BSF > 1.0 means the best sample is worse than optimal
 
     For maximization problems:
         BSF = optimal_value / best_found_value
+
+    Interpretation:
         - BSF = 1.0 means the best sample equals optimal
         - BSF > 1.0 means the best sample is worse than optimal
 
@@ -126,7 +89,6 @@ class BestSolutionFound(BaseMetric):
         ----------
         solution : Solution
             The solution object containing samples from an algorithm run.
-            Must have a valid sense (Min or Max) and provide best_sample().
         feature_results : FeatureResults
             Container with pre-computed feature results. Must include results
             from OptSolFeature which provides the optimal solution value.
@@ -134,7 +96,7 @@ class BestSolutionFound(BaseMetric):
         Returns
         -------
         BestSolutionFoundResult
-            Contains the calculated BSF ratio. Returns inf if no
+            Contains the calculated BSF ratio. Returns inf value if no
             solution samples are available.
 
         Raises
@@ -155,37 +117,19 @@ class BestSolutionFound(BaseMetric):
             return BestSolutionFoundResult(best_solution_found=float("inf"))
 
         # Get the best objective value based on optimization sense
-        if solution.obj_values is not None:
+        best = solution.best()
+        if best is None:
+            return BestSolutionFoundResult(best_solution_found=float("inf"))
+        if best.obj_value is None:
+            return BestSolutionFoundResult(best_solution_found=float("inf"))
+        best_sol = best.obj_value
+        if best_sol is not None:
             if solution.sense == Sense.Min:
-                best_value = float(np.min(solution.obj_values))
-                bsf = self._get_ratio(numerator=best_value, denominator=opt_sol.best_sol)
+                best_value = float(np.min(best_sol))
+                bsf = get_ratio(nominator=best_value, denominator=opt_sol.best_sol, abt_diff=self.abs_tol)
             else:
-                best_value = float(np.max(solution.obj_values))
-                bsf = self._get_ratio(numerator=opt_sol.best_sol, denominator=best_value)
+                best_value = float(np.max(best_sol))
+                bsf = get_ratio(nominator=opt_sol.best_sol, denominator=best_value, abt_diff=self.abs_tol)
 
             return BestSolutionFoundResult(best_solution_found=bsf)
         return BestSolutionFoundResult(best_solution_found=float("inf"))
-
-    def _get_ratio(self, numerator: float, denominator: float) -> float:
-        """Calculate the ratio of two values with zero-division protection.
-
-        Parameters
-        ----------
-        numerator : float
-            The numerator of the ratio.
-        denominator : float
-            The denominator of the ratio.
-
-        Returns
-        -------
-        float
-            The calculated ratio (numerator / denominator).
-
-        Raises
-        ------
-        NotImplementedError
-            If the denominator is close to zero (within abs_tol tolerance).
-        """
-        if np.isclose(denominator, 0, atol=self.abs_tol):
-            raise NotImplementedError("Best Solution Found is not implemented for cases dividing by 0!")
-        return numerator / denominator

@@ -4,7 +4,8 @@ Metric implemented from https://arxiv.org/pdf/2405.07624
 """
 
 import numpy as np
-from luna_quantum import ResultView, Solution
+from luna_quantum import Solution
+from pydantic import Field
 
 from luna_bench.base_components import BaseMetric
 from luna_bench.base_components.data_types.feature_results import FeatureResults
@@ -29,10 +30,10 @@ class TimeToSolutionResult(MetricResult):
         The total number of samples in the solution.
     """
 
-    time_to_solution: float
-    probability_optimal: float
-    num_optimal_found: int
-    num_samples: int
+    time_to_solution: float = Field(ge=0.0, description="The estimated time required to find the optimal solution.")
+    probability_optimal: float = Field(ge=0.0, le=1.0, description="The probability of finding the optimal solution.")
+    num_optimal_found: int = Field(ge=0, description="The number of samples that found the optimal solution.")
+    num_samples: int = Field(ge=0, description="The total number of samples in the solution.")
 
 
 @metric(required_features=OptSolFeature)
@@ -108,7 +109,7 @@ class TimeToSolution(BaseMetric):
         optimum = opt_sol.best_sol
 
         # Check if any solution exists
-        num_samples = len(solution.samples)
+        num_samples = solution.counts.sum()
         if num_samples == 0:
             return TimeToSolutionResult(
                 time_to_solution=float("inf"),
@@ -118,17 +119,13 @@ class TimeToSolution(BaseMetric):
             )
 
         # Count optimal solutions using results (which have obj_value)
-
-        def is_optimal(s: ResultView) -> bool:
-            if s.obj_value is None:
-                return False
-            return bool(np.isclose(s.obj_value, optimum, atol=self.abs_tol))
-
-        filt_sol = solution.filter(lambda s: is_optimal(s))
+        filt_sol = solution.filter_feasible().filter(
+            lambda s: s.obj_value is not None and bool(np.isclose(s.obj_value, optimum, atol=self.abs_tol))
+        )
         num_optimal_found = filt_sol.counts.sum()
 
-        # Calculate probability of finding optimal
-        p_star = num_optimal_found / num_samples
+        # Calculate the probability of finding optimal
+        p_star = float(num_optimal_found / num_samples)
 
         # Calculate time per sample
         if solution.runtime is None:
@@ -138,12 +135,11 @@ class TimeToSolution(BaseMetric):
 
         # Calculate TTS
         tts: float
-        if p_star == 0:
+        if p_star == 0.0:
             tts = float("inf")
-        elif p_star == 1:
+        elif p_star == 1.0:
             tts = t_per_sample
         else:
-            # TTS = t_per_sample * ceil(log(1-target_prob) / log(1-p_star)
             num_repetitions = np.ceil(np.log(1 - self.target_probability) / np.log(1 - p_star))
             tts = t_per_sample * num_repetitions
 

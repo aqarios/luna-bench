@@ -4,7 +4,7 @@ Metric implemented from https://arxiv.org/pdf/2405.07624
 """
 
 import numpy as np
-from luna_quantum import ResultView, Solution
+from luna_quantum import Solution
 from pydantic import Field
 
 from luna_bench.base_components import BaseMetric
@@ -87,7 +87,6 @@ class FractionOfOverallBestSolution(BaseMetric):
         ----------
         solution : Solution
             The solution object containing samples from an algorithm run.
-            Must have a valid sense (Min or Max).
         feature_results : FeatureResults
             Container with pre-computed feature results. Must include results
             from OptSolFeature which provides the optimal solution value.
@@ -105,18 +104,11 @@ class FractionOfOverallBestSolution(BaseMetric):
         opt_sol: OptSolFeatureResult
         (opt_sol, _) = feature_results.first(feature_cls=OptSolFeature)  # type: ignore[assignment]
         optimum = opt_sol.best_sol
-
-        # Filter to feasible samples that match the optimal solution
-
-        def is_optimal_and_feasible(s: ResultView) -> bool:
-            if s.obj_value is None or not s.feasible:
-                return False
-            return bool(np.isclose(s.obj_value, optimum, atol=self.abs_tol))
-
-        filtered_sol = solution.filter(is_optimal_and_feasible)
-        num_optimal_found = int(filtered_sol.counts.sum())
+        filtered_sol = solution.filter_feasible().filter(
+            lambda s: s.obj_value is not None and bool(np.isclose(s.obj_value, optimum, atol=self.abs_tol))
+        )
+        num_optimal_found = filtered_sol.counts.sum()
 
         # Return fraction of all samples that are optimal and feasible
-        fob = num_optimal_found / len(solution.samples)
-
+        fob = num_optimal_found / solution.counts.sum()
         return FractionOfOverallBestSolutionResult(fraction_of_overall_best_solution=fob)
