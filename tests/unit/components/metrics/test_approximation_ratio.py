@@ -22,13 +22,10 @@ class TestApproximationRatio:
 
     @pytest.mark.parametrize("mock_feature_results", [10.0], indirect=True)
     def test_no_solution_returns_infinity(
-            self,
-            mock_metric_solution: MagicMock,
-            mock_feature_results: MagicMock
+        self, mock_metric_solution: MagicMock, mock_feature_results: MagicMock
     ) -> None:
         """Test that when no solution is found, the approximation ratio is infinity."""
-        metric = ApproximationRatio()
-        result = metric.run(mock_metric_solution, mock_feature_results)
+        result = ApproximationRatio().run(mock_metric_solution, mock_feature_results)
 
         assert isinstance(result, ApproximationRatioResult)
         assert result.approximation_ratio == float("inf")
@@ -37,9 +34,11 @@ class TestApproximationRatio:
     def test_optimal_solution_zero_raises_error(
         self, mock_metric_solution: MagicMock, mock_feature_results: MagicMock
     ) -> None:
-        """Test that NotImplementedError is raised when optimal solution is zero."""
-        metric = ApproximationRatio()
+        """Test that ZeroDivisionError is raised when optimal solution is zero.
 
+        This is a special edge case, which we currently do not support.
+        """
+        metric = ApproximationRatio()
         with pytest.raises(ZeroDivisionError) as exc_info:
             metric.run(mock_metric_solution, mock_feature_results)
 
@@ -53,7 +52,7 @@ class TestApproximationRatio:
     def test_optimal_solution_near_zero_raises_error(
         self, mock_metric_solution: MagicMock, mock_feature_results: MagicMock
     ) -> None:
-        """Test that NotImplementedError is raised when optimal solution is near zero."""
+        """Test that ZeroDivisionError is raised when optimal solution is near zero."""
         metric = ApproximationRatio()
 
         with pytest.raises(ZeroDivisionError):
@@ -64,7 +63,7 @@ class TestApproximationRatio:
         [((Sense.Min, 1e-2), 1e-2)],
         indirect=True,
     )
-    def test_optimal_solution_just_above_tolerance(
+    def test_optimal_solution_above_tolerance(
         self, mock_metric_solution: MagicMock, mock_feature_results: MagicMock
     ) -> None:
         """Test that calculation proceeds when optimal is just above the tolerance threshold."""
@@ -95,8 +94,7 @@ class TestApproximationRatio:
         expected_ratio: float,
     ) -> None:
         """Parametrized test for various approximation ratio scenarios."""
-        metric = ApproximationRatio()
-        result = metric.run(mock_metric_solution, mock_feature_results)
+        result = ApproximationRatio().run(mock_metric_solution, mock_feature_results)
 
         assert isinstance(result, ApproximationRatioResult)
         assert result.approximation_ratio == pytest.approx(expected_ratio)
@@ -109,12 +107,6 @@ class TestApproximationRatioResult:
         """Test that an invalid approximation ratio raises an error."""
         with pytest.raises(ValidationError, match=r"Input should be greater than or equal to 1"):
             ApproximationRatioResult(approximation_ratio=0.5)
-
-    def test_result_model_fields(self) -> None:
-        """Test that ApproximationRatioResult has the expected field."""
-        result = ApproximationRatioResult(approximation_ratio=1)
-        assert hasattr(result, "approximation_ratio")
-        assert result.approximation_ratio == 1
 
     def test_result_serialization(self) -> None:
         """Test that the result can be serialized to dict."""

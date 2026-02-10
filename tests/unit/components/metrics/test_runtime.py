@@ -77,3 +77,22 @@ class TestRuntime:
         assert isinstance(result_fast, RuntimeResult)
         assert isinstance(result_slow, RuntimeResult)
         assert result_fast.runtime_seconds < result_slow.runtime_seconds
+
+    def test_none_runtime_returns_infinity(self) -> None:
+        """Test that a solution with runtime=None returns inf."""
+        solution = Solution._build(  # type: ignore[attr-defined]
+            component_types=[Vtype.Binary],
+            binary_cols=[[0]],
+            raw_energies=[1.0],
+            counts=[1],
+            sense=Sense.Min,
+            obj_values=[1.0],
+            feasible=[True],
+        )
+        feature_results = _create_empty_feature_results()
+
+        metric = Runtime()
+        result = metric.run(solution, feature_results)
+
+        assert isinstance(result, RuntimeResult)
+        assert result.runtime_seconds == float("inf")

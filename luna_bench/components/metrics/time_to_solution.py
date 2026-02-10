@@ -129,7 +129,8 @@ class TimeToSolution(BaseMetric):
 
         # Calculate time per sample
         if solution.runtime is None:
-            raise ValueError
+            msg = "Solution runtime must not be None."
+            raise ValueError(msg)
         total_runtime = solution.runtime.total_seconds
         t_per_sample = total_runtime / num_samples
 

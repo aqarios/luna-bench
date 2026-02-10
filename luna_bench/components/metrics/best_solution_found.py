@@ -111,7 +111,8 @@ class BestSolutionFound(BaseMetric):
         opt_sol: OptSolFeatureResult
         (opt_sol, _) = feature_results.first(feature_cls=OptSolFeature)  # type: ignore[assignment]
         if solution is None:
-            raise ValueError
+            msg = "Solution must not be None."
+            raise ValueError(msg)
         # Check if any solution exists
         if len(solution.samples) == 0:
             return BestSolutionFoundResult(best_solution_found=float("inf"))
@@ -123,13 +124,11 @@ class BestSolutionFound(BaseMetric):
         if best.obj_value is None:
             return BestSolutionFoundResult(best_solution_found=float("inf"))
         best_sol = best.obj_value
-        if best_sol is not None:
-            if solution.sense == Sense.Min:
-                best_value = float(np.min(best_sol))
-                bsf = get_ratio(nominator=best_value, denominator=opt_sol.best_sol, abt_diff=self.abs_tol)
-            else:
-                best_value = float(np.max(best_sol))
-                bsf = get_ratio(nominator=opt_sol.best_sol, denominator=best_value, abt_diff=self.abs_tol)
+        if solution.sense == Sense.Min:
+            best_value = float(np.min(best_sol))
+            bsf = get_ratio(nominator=best_value, denominator=opt_sol.best_sol, abt_diff=self.abs_tol)
+        else:
+            best_value = float(np.max(best_sol))
+            bsf = get_ratio(nominator=opt_sol.best_sol, denominator=best_value, abt_diff=self.abs_tol)
 
-            return BestSolutionFoundResult(best_solution_found=bsf)
-        return BestSolutionFoundResult(best_solution_found=float("inf"))
+        return BestSolutionFoundResult(best_solution_found=bsf)

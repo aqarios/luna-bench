@@ -336,3 +336,21 @@ class TestTimeToSolution:
             total_runtime = solution.runtime.total_seconds
             t_per_sample = total_runtime / 2
             assert np.isclose(result.time_to_solution, t_per_sample, rtol=0.01)
+
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_none_runtime_raises_value_error(self, mock_feature_results: MagicMock) -> None:
+        """Test that TTS raises ValueError when solution.runtime is None."""
+        solution = Solution._build(  # type: ignore[attr-defined]
+            component_types=[Vtype.Binary],
+            binary_cols=[[0]],
+            raw_energies=[5.0],
+            counts=[1],
+            sense=Sense.Min,
+            obj_values=[5.0],
+            feasible=[True],
+        )
+
+        metric = TimeToSolution()
+
+        with pytest.raises(ValueError, match="Solution runtime must not be None"):
+            metric.run(solution, mock_feature_results)

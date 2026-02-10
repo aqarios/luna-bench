@@ -1,14 +1,12 @@
+import time
 from unittest.mock import MagicMock
 
 import pytest
 from _pytest.fixtures import FixtureRequest
-from luna_quantum import Sense
+from luna_quantum import Bounds, Model, Sense, Solution, Timer, Unbounded, Variable, Vtype
 
 from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.components.features.optsol_feature import OptSolFeature, OptSolFeatureResult
-
-from luna_quantum import Bounds, Model, Solution, Timer, Variable, Vtype, Unbounded
-import time
 
 
 def create_solution(
@@ -23,25 +21,23 @@ def create_solution(
     time.sleep(runtime_seconds)
     timing = timer.stop()
 
-    m = Model('MockModel')
+    m = Model("MockModel")
     m.set_sense(sense)
     with m.environment:
-        x = Variable('x', vtype=Vtype.Real, bounds=Bounds(lower=Unbounded, upper=Unbounded))
-        y = Variable('y', vtype = Vtype.Integer)
+        x = Variable("x", vtype=Vtype.Real, bounds=Bounds(lower=Unbounded, upper=Unbounded))
+        y = Variable("y", vtype=Vtype.Integer)
     m.objective += x
     m.add_constraint(y == 0)
-    x_data = [{'x': x_val, 'y':0} for x_val in obj_values]
+    x_data = [{"x": x_val, "y": 0} for x_val in obj_values]
     m.add_constraint(y == 0)
     if feasible is not None:
         for i, feas in enumerate(feasible):
-            x_data[i]['y'] = 0 if feas else 1
+            x_data[i]["y"] = 0 if feas else 1
     return Solution.from_dicts(
-        data = x_data,
-        model = m,
-        timing = timing,
+        data=x_data,
+        model=m,
+        timing=timing,
     )
-
-
 
 
 @pytest.fixture()
