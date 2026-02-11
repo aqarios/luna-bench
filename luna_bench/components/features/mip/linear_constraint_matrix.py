@@ -8,7 +8,7 @@ from luna_quantum import Vtype
 from pydantic import BaseModel
 
 from luna_bench.base_components import BaseFeature
-from luna_bench.components.features.base_feature import BaseFeatureResult
+from luna_bench.components.features.enum_feature_result import EnumFeatureResult
 from luna_bench.components.helper.degree import ConstraintDegree
 from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
@@ -61,7 +61,7 @@ class CoefStats(BaseModel):
     variation_coefficient: float
 
 
-class LinearConstraintMatrixFeaturesResult(BaseFeatureResult[CoefStatsKey, CoefStats]):
+class LinearConstraintMatrixFeaturesResult(EnumFeatureResult[CoefStatsKey, CoefStats]):
     """
     Result container for linear constraint matrix feature calculations.
 

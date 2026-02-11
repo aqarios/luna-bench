@@ -14,7 +14,7 @@ from luna_bench.helpers import feature
 if TYPE_CHECKING:
     from luna_quantum import Model
 
-from luna_bench.components.features.base_feature import BaseFeatureResult
+from luna_bench.components.features.enum_feature_result import EnumFeatureResult
 
 
 class ComparatorError(Exception):
@@ -69,7 +69,7 @@ class RhsStats(BaseModel):
     std: float
 
 
-class RightHandSideFeaturesResult(BaseFeatureResult[RhsStatsKey, RhsStats]):
+class RightHandSideFeaturesResult(EnumFeatureResult[RhsStatsKey, RhsStats]):
     """
     Result container for right-hand side feature calculations.
 

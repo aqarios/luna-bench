@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench.base_components import BaseFeature
-from luna_bench.components.features.base_feature import BaseFeatureResult
+from luna_bench.components.features.enum_feature_result import EnumFeatureResult
 from luna_bench.components.helper.degree import ConstraintDegree
 from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
@@ -79,7 +79,7 @@ class VarCountStats(BaseModel):
     fraction: float
 
 
-class VarCountResult(BaseFeatureResult[VarTypeKey, VarCountStats]):
+class VarCountResult(EnumFeatureResult[VarTypeKey, VarCountStats]):
     """
     Result container for variable count statistics.
 

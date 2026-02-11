@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from luna_quantum import Model
     from numpy.typing import NDArray
 
-from luna_bench.components.features.base_feature import BaseFeatureResult
+from luna_bench.components.features.enum_feature_result import EnumFeatureResult
 
 
 class NodeType(str, Enum):
@@ -69,7 +69,7 @@ class NodeDegreeStats(BaseModel):
     q10: float
 
 
-class VariableConstraintGraphFeaturesResult(BaseFeatureResult[NodeDegreeStatsKey, NodeDegreeStats]):
+class VariableConstraintGraphFeaturesResult(EnumFeatureResult[NodeDegreeStatsKey, NodeDegreeStats]):
     """
     Result container for variable-constraint graph feature calculations.
 

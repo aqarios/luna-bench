@@ -8,7 +8,7 @@ T = TypeVar("T")
 N = TypeVar("N", bound=NamedTuple)
 
 
-class BaseFeatureResult[N, T](ArbitraryDataDomain):
+class EnumFeatureResult[N, T](ArbitraryDataDomain):
     """
     Base class for feature results that store stats keyed by a NamedTuple.
 
