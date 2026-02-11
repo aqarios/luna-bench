@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class BenchmarkStatus(str, Enum):
+class BenchmarkStatus(StrEnum):
     """Enum for the status of a benchmark."""
 
     CREATED = "CREATED"

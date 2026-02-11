@@ -171,7 +171,7 @@ class FeatureSqlDao(FeatureDao):
 
         return FeatureDomain(
             name=cast("str", feature.name),
-            status=JobStatus(feature.status),
+            status=JobStatus(cast("str", feature.status)),
             results=result_data,
             config_data=RegisteredDataDomain(
                 registered_id=cast("str", feature.registered_id),
