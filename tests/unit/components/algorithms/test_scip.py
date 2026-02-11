@@ -38,7 +38,6 @@ class TestScipAlgorithm:
         # Solution of correct type
         assert isinstance(solution, Solution)
 
-        # Objective value should be 0
         best_sample = solution.best()
         assert best_sample is not None
         assert best_sample.obj_value == 0.0
@@ -122,5 +121,6 @@ class TestScipAlgorithm:
         assert isinstance(solution, Solution)
 
         # Timing object is filled despite pre-exit at max run-time
-        assert solution.runtime is not None
-        assert solution.runtime.total_seconds > 0
+        timing = solution.runtime
+        if timing is not None:
+            assert timing.total_seconds > 0

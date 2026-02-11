@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Thanks for taking the time to report a bug! Please fill out the information below.
-  
+
   - type: input
     id: summary
     attributes:
@@ -38,7 +38,7 @@ body:
       placeholder: e.g., v1.0.0, commit hash, or branch name
     validations:
       required: true
-  
+
   - type: textarea
     id: description
     attributes:
@@ -47,7 +47,7 @@ body:
       placeholder: What happened?
     validations:
       required: true
-  
+
   - type: textarea
     id: steps-to-reproduce
     attributes:
@@ -59,7 +59,7 @@ body:
         3. See error
     validations:
       required: false
-  
+
   - type: input
     id: expected-behavior
     attributes:
