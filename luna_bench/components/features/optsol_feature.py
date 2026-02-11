@@ -112,7 +112,7 @@ class OptSolFeature(BaseFeature):
         """
         scip_model = ScipModel()
         if self.max_runtime is not None:
-            scip_model.setParam("limits/time", self.max_runtime)  # type: ignore[no-untyped-call]
+            scip_model.setParam("limits/time", self.max_runtime)
 
         with tempfile.NamedTemporaryFile(suffix=".lp", delete=False) as tmp:
             path = Path(tmp.name)
@@ -122,22 +122,22 @@ class OptSolFeature(BaseFeature):
                 model,
                 filepath=path,
             )
-            scip_model.readProblem(path)  # type: ignore[no-untyped-call]
+            scip_model.readProblem(path)
         finally:
             if path.exists():
                 path.unlink()
 
-        scip_model.optimize()  # type: ignore[no-untyped-call]
-        if scip_model.getStatus() == "infeasible":  # type: ignore[no-untyped-call]
+        scip_model.optimize()
+        if scip_model.getStatus() == "infeasible":
             raise InfeasibleModelError
 
         # translate model to
         pre_terminated = False
-        if scip_model.getStatus() == "timelimit":  # type: ignore[no-untyped-call]
+        if scip_model.getStatus() == "timelimit":
             pre_terminated = True
 
         return OptSolFeatureResult(
-            best_sol=scip_model.getObjVal(),  # type: ignore[no-untyped-call]
+            best_sol=scip_model.getObjVal(),
             pre_terminated=pre_terminated,
-            runtime=scip_model.getSolvingTime(),  # type: ignore[no-untyped-call]
+            runtime=scip_model.getSolvingTime(),
         )

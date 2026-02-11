@@ -48,7 +48,7 @@ def mock_feature_results(request: FixtureRequest) -> MagicMock:
     """
     optimal_value: float = getattr(request, "param", 0.0)
 
-    opt_sol_result = OptSolFeatureResult(best_sol=optimal_value, pre_terminated=False)
+    opt_sol_result = OptSolFeatureResult(best_sol=optimal_value, pre_terminated=False, runtime=0.01)
     opt_sol_feature = OptSolFeature()
 
     feature_results = MagicMock(spec=FeatureResults)

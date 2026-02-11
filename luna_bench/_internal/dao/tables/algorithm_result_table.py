@@ -18,14 +18,14 @@ class AlgorithmResultTable(BaseTable):
     encoded_solution: bytes | None = BlobField(null=True)  # type: ignore[assignment]
 
     meta_data: ArbitraryDataDomain | None = JSONField(  # type: ignore[no-untyped-call,assignment]
-        json_loads=lambda x: ArbitraryDataDomain.model_validate_json(x),
+        json_loads=ArbitraryDataDomain.model_validate_json,
         json_dumps=lambda x: x.model_dump_json(),
         null=True,
     )
 
     task_id: str | None = FixedCharField(max_length=36, null=True)  # type: ignore[assignment]
     retrival_data: ArbitraryDataDomain | None = JSONField(  # type: ignore[no-untyped-call,assignment]
-        json_loads=lambda x: ArbitraryDataDomain.model_validate_json(x),
+        json_loads=ArbitraryDataDomain.model_validate_json,
         json_dumps=lambda x: x.model_dump_json(),
         null=True,
     )

@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class AlgorithmType(str, Enum):
+class AlgorithmType(StrEnum):
     """Enum for the type of algorithm."""
 
     SYNC = "SYNC"

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 
-class VarScope(str, Enum):
+class VarScope(StrEnum):
     """Scope of variables included in the calculation."""
 
     CONTINUOUS = "continuous"  # x ∈ R

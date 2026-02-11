@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-class NormType(str, Enum):
+class NormType(StrEnum):
     """Type of normalization applied to objective coefficients."""
 
     ABSOLUTE = "absolute"  # Raw absolute coefficients |c_j|
@@ -126,7 +126,7 @@ class ObjectiveFunctionFeature(BaseFeature):
 
         # Define normalization configurations
         norm_configs: list[tuple[NormType, Callable[[NDArray[np.float64]], NDArray[np.float64]]]] = [
-            (NormType.ABSOLUTE, lambda x: np.ones_like(x)),  # No normalization (divide by 1)
+            (NormType.ABSOLUTE, np.ones_like),  # No normalization (divide by 1)
             (NormType.NORMALIZED, lambda x: x),  # Divide by nnz
             (NormType.SQRT_NORMALIZED, np.sqrt),  # Divide by sqrt(nnz)
         ]

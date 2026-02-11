@@ -26,7 +26,7 @@ class AlgorithmTable(BaseTable):
     )
 
     config_data = JSONField(  # type: ignore[no-untyped-call]
-        json_loads=lambda x: ArbitraryDataDomain.model_validate_json(x),
+        json_loads=ArbitraryDataDomain.model_validate_json,
         json_dumps=lambda x: x.model_dump_json(),
     )
     if TYPE_CHECKING:

@@ -175,7 +175,7 @@ class MetricSqlDao(MetricDao):
 
         return MetricDomain(
             name=cast("str", metric.name),
-            status=JobStatus(metric.status),
+            status=JobStatus(cast("str",metric.status)),
             results=result_data,
             config_data=RegisteredDataDomain(
                 registered_id=cast("str", metric.registered_id),

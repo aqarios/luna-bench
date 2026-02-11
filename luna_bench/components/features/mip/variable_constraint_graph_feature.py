@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 from luna_bench.components.features.enum_feature_result import EnumFeatureResult
 
 
-class NodeType(str, Enum):
+class NodeType(StrEnum):
     """Type of node in the variable-constraint bipartite graph."""
 
     VARIABLE = "variable"  # Variable nodes (column degree)

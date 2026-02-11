@@ -19,6 +19,7 @@ from .mock_usecase import usecase
 __all__ = [
     "all_constraint_types_model",
     "configured_dao",
+    "create_solution",
     "dense_model",
     "empty_model",
     "empty_transaction",
@@ -26,6 +27,8 @@ __all__ = [
     "infeasible_model",
     "mapper",
     "mixed_integer_model",
+    "mock_feature_results",
+    "mock_metric_solution",
     "model",
     "quadratic_model",
     "regular_model",
@@ -35,8 +38,5 @@ __all__ = [
     "sparse_model",
     "unbounded_variables_model",
     "usecase",
-    "mock_feature_results",
-    "mock_metric_solution",
-    "create_solution",
     "zero_coefficient_model",
 ]
