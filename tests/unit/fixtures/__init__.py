@@ -1,4 +1,5 @@
 from .mock_database import configured_dao, empty_transaction, setup_benchmark
+from .mock_feature_results import create_solution, mock_feature_results, mock_solution_config
 from .mock_mapper import mapper
 from .mock_mip_models import (
     all_constraint_types_model,
@@ -18,6 +19,7 @@ from .mock_usecase import usecase
 __all__ = [
     "all_constraint_types_model",
     "configured_dao",
+    "create_solution",
     "dense_model",
     "empty_model",
     "empty_transaction",
@@ -25,6 +27,8 @@ __all__ = [
     "infeasible_model",
     "mapper",
     "mixed_integer_model",
+    "mock_feature_results",
+    "mock_solution_config",
     "model",
     "quadratic_model",
     "regular_model",

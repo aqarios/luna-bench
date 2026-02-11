@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
@@ -38,7 +38,7 @@ class ModelBoundsError(Exception):
         return base_msg
 
 
-class VarType(str, Enum):
+class VarType(StrEnum):
     """Type of variable being counted."""
 
     BOOLEAN = "boolean"  # x ∈ {0, 1}

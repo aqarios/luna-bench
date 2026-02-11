@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
@@ -32,7 +32,7 @@ class ComparatorError(Exception):
         super().__init__(message)
 
 
-class ConstraintSense(str, Enum):
+class ConstraintSense(StrEnum):
     """Sense/type of constraint based on comparator."""
 
     LEQ = "leq"  # Less-than-or-equal (<=)

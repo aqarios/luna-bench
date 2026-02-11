@@ -116,7 +116,7 @@ class PlotSqlDao(PlotDao):
     def plot_to_domain(plot: PlotConfigTable) -> PlotDomain:
         return PlotDomain(
             name=cast("str", plot.name),
-            status=JobStatus(plot.status),
+            status=JobStatus(cast("str", plot.status)),
             config_data=RegisteredDataDomain(
                 registered_id=cast("str", plot.registered_id),
                 data=ArbitraryDataDomain.model_validate(plot.config_data, from_attributes=True),

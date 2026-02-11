@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 
-class CoefType(str, Enum):
+class CoefType(StrEnum):
     """Type of coefficient being measured."""
 
     VARIABLE = "variable"  # Sum over constraints (column-wise sum of A)
