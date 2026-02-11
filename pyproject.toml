@@ -19,16 +19,19 @@ dependencies = [
 [dependency-groups]
 dev = [
     "mypy>=1.17.1",
+    "pandas-stubs>=3.0.0.260204",
     "pyscipopt>=6.0.1",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
     "ruff>=0.14.11",
     "tox>=4.30.3",
     "types-peewee>=3.19.0",
+    "types-seaborn>=0.13.2.20251221",
 ]
 opt-metrics = [
     "pyscipopt>=6.0.1",
 ]
 plot = [
     "matplotlib>=3.10.8",
+    "seaborn>=0.13.0",
 ]
