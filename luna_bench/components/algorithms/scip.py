@@ -110,14 +110,13 @@ class ScipAlgorithm(BaseAlgorithmSync):
         self._logger.info(f"Completed SCIP optimization for model {model.name} in {timing.total_seconds:.2f}s")
 
         # Extract solution values from SCIP model
-        solution_dict = {}
+        solution_dict: dict[str, float] = {}
         for var in scip_model.getVars():  # type: ignore[no-untyped-call]
             solution_dict[var.name] = scip_model.getVal(var)  # type: ignore[no-untyped-call]
 
-        objective_value = scip_model.getObjVal()  # type: ignore[no-untyped-call]
-        return Solution.from_dict(  # type: ignore[call-overload, no-any-return]
+        return Solution.from_dict(
             data=solution_dict,
             model=model,
             timing=timing,
-            energy=objective_value,
+            counts=1,
         )
