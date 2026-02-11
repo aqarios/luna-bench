@@ -20,8 +20,8 @@ def get_ratio(nominator: float, denominator: float, abt_diff: float) -> float:
 
     Raises
     ------
-    NotImplementedError
-        If the denominator is close to zero (within abt_diff tolerance).
+    ZeroDivisionError
+        Raised if the denominator is close to zero (within abt_diff tolerance).
     """
     if np.isclose(denominator, 0, atol=abt_diff):
         msg = "Approximation Ratio is not implemented for cases dividing by 0!"
