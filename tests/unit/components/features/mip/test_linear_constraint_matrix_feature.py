@@ -371,12 +371,13 @@ class TestLinearConstraintMatrixFeatures:
         """Test that variation coefficients are consistent with means and stds."""
         extractor = LinearConstraintMatrixFeatures()
         result = extractor.run(dense_model)
-
         assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).variation_coefficient >= 0
         assert result.get(CoefStatsKey(CoefType.CONSTRAINT, VarScope.ALL)).variation_coefficient >= 0
 
-        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).mean > 0
-        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).variation_coefficient == 0
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).mean == pytest.approx(6)
+        assert result.get(CoefStatsKey(CoefType.VARIABLE, VarScope.ALL)).variation_coefficient == pytest.approx(
+            (np.sqrt(6 / 4) / 6), rel=1e-3
+        )
 
     def test_get_accessor(self, mixed_integer_model: Model) -> None:
         """Test the get accessor method returns correct CoefStats."""
