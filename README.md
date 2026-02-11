@@ -4,11 +4,19 @@
 
 # Luna-Bench
 
-An SDK for benchmarking optimization algorithms across quantum and classical domains. Define your models, plug in solvers, and compare results with standardized features and metrics. Add plots to visualize your benchmark results.
+A framework for benchmarking optimization algorithms across quantum and classical domains. Define your models, plug 
+in solvers, and compare results with predefined features and metrics. Add plots to visualize your benchmark results.
+
+> **Alpha Notice:** Luna-Bench is still in alpha. Many things are not final — for example, how metrics and features are 
+> accessed in plots is something we are still actively experimenting with to find the best approach. We highly welcome 
+> any user input and feedback! Feel free to open an issue or start a discussion.
 
 ## Why
 
-Benchmarking optimization algorithms is tedious. You end up writing the same infrastructure over and over: result storage, metric computation, plotting, managing model sets. Luna-Bench handles all of that so you can focus on the algorithms themselves. Features and metrics are tested and reused across benchmarks, which means fewer bugs and more consistent results.
+Benchmarking optimization algorithms is tedious. You end up writing the same infrastructure over and over: result 
+storage, metric computation, plotting, managing model sets. Luna-Bench handles all of that so you can focus on the 
+algorithms themselves. Features and metrics are tested and reused across benchmarks, which means fewer bugs and more 
+consistent results.
 
 - Compare quantum and classical solvers by adding algorithms easily from luna_quantum or add your own
 - Persistent storage for results and configurations via SQLite
@@ -30,6 +38,13 @@ pip install luna-bench
 ```
 
 ## Quick Start
+
+> **macOS Note:** Due to a known macOS issue with multiprocessing, you need to set the start method before other imports:
+>
+> ```python
+> import multiprocessing
+> multiprocessing.set_start_method("fork")
+> ```
 
 ### Define your models
 
@@ -58,6 +73,7 @@ from luna_bench.components import Benchmark
 from luna_bench.components.algorithms.scip import ScipAlgorithm
 from luna_bench.components.features.optsol_feature import OptSolFeature
 from luna_bench.components.metrics.approximation_ratio import ApproximationRatio
+from luna_bench.components.plots import AverageFeasibilityRatioPlot
 
 benchmark = Benchmark.create("my_benchmark")
 benchmark.set_modelset(modelset)
@@ -72,7 +88,7 @@ benchmark.add_feature("optimal_solution", OptSolFeature())
 benchmark.add_metric("approx_ratio", ApproximationRatio())
 
 # Add a plot to visualize metric results
-benchmark.add_plot("approx_plot", MyApproxPlot())
+benchmark.add_plot("approx_plot", AverageFeasibilityRatioPlot())
 
 # Run everything: features, algorithms, metrics, plots
 benchmark.run()
@@ -97,6 +113,24 @@ class MyAlgorithm(BaseAlgorithmSync):
         # Your solver logic here
         ...
 ```
+### Write your own feature
+
+Features extract properties from models. They run before algorithms and metrics.
+
+```python
+from luna_bench.base_components import BaseFeature
+from luna_bench.helpers import feature
+from luna_bench.types import FeatureResult
+from luna_quantum import Model
+
+class MyFeatureResult(FeatureResult):
+    num_variables: int
+
+@feature
+class MyFeature(BaseFeature):
+    def run(self, model: Model) -> MyFeatureResult:
+        return MyFeatureResult(num_variables=model.num_variables)
+```
 
 ### Write your own metric
 
@@ -117,25 +151,6 @@ class MyMetric(BaseMetric):
     def run(self, solution: Solution, feature_results: FeatureResults) -> MyMetricResult:
         score = solution.expectation_value()
         return MyMetricResult(score=score)
-```
-
-### Write your own feature
-
-Features extract properties from models. They run before algorithms and metrics.
-
-```python
-from luna_bench.base_components import BaseFeature
-from luna_bench.helpers import feature
-from luna_bench.types import FeatureResult
-from luna_quantum import Model
-
-class MyFeatureResult(FeatureResult):
-    num_variables: int
-
-@feature
-class MyFeature(BaseFeature):
-    def run(self, model: Model) -> MyFeatureResult:
-        return MyFeatureResult(num_variables=model.num_variables)
 ```
 
 ## Development
