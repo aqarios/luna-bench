@@ -450,14 +450,14 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "mypy", specifier = ">=1.17.1" },
-    { name = "pyscipopt", specifier = ">=6.0.0" },
+    { name = "pyscipopt", specifier = ">=6.0.1" },
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "ruff", specifier = ">=0.14.11" },
     { name = "tox", specifier = ">=4.30.3" },
     { name = "types-peewee", specifier = ">=3.19.0" },
 ]
-opt-metrics = [{ name = "pyscipopt", specifier = ">=6.0.0" }]
+opt-metrics = [{ name = "pyscipopt", specifier = ">=6.0.1" }]
 plot = [{ name = "matplotlib", specifier = ">=3.10.8" }]
 
 [[package]]

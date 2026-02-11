@@ -19,7 +19,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "mypy>=1.17.1",
-    "pyscipopt>=6.0.0",
+    "pyscipopt>=6.0.1",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
     "ruff>=0.14.11",
@@ -27,7 +27,7 @@ dev = [
     "types-peewee>=3.19.0",
 ]
 opt-metrics = [
-    "pyscipopt>=6.0.0",
+    "pyscipopt>=6.0.1",
 ]
 plot = [
     "matplotlib>=3.10.8",

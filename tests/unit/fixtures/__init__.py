@@ -1,5 +1,5 @@
 from .mock_database import configured_dao, empty_transaction, setup_benchmark
-from .mock_feature_results import create_solution, mock_feature_results, mock_metric_solution
+from .mock_feature_results import create_solution, mock_feature_results, mock_solution_config
 from .mock_mapper import mapper
 from .mock_mip_models import (
     all_constraint_types_model,
@@ -28,7 +28,7 @@ __all__ = [
     "mapper",
     "mixed_integer_model",
     "mock_feature_results",
-    "mock_metric_solution",
+    "mock_solution_config",
     "model",
     "quadratic_model",
     "regular_model",

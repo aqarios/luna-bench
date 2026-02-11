@@ -22,59 +22,62 @@ class TestApproximationRatio:
 
     @pytest.mark.parametrize("mock_feature_results", [10.0], indirect=True)
     def test_no_solution_returns_infinity(
-        self, mock_metric_solution: MagicMock, mock_feature_results: MagicMock
+        self, mock_solution_config: MagicMock, mock_feature_results: MagicMock
     ) -> None:
         """Test that when no solution is found, the approximation ratio is infinity."""
-        result = ApproximationRatio().run(mock_metric_solution, mock_feature_results)
+        result = ApproximationRatio().run(mock_solution_config, mock_feature_results)
 
         assert isinstance(result, ApproximationRatioResult)
         assert result.approximation_ratio == float("inf")
 
-    @pytest.mark.parametrize("mock_metric_solution", [(Sense.Min, 5.0)], indirect=True)
+    @pytest.mark.parametrize("mock_solution_config", [(Sense.Min, 5.0)], indirect=True)
     def test_optimal_solution_zero_raises_error(
-        self, mock_metric_solution: MagicMock, mock_feature_results: MagicMock
+        self, mock_solution_config: MagicMock, mock_feature_results: MagicMock
     ) -> None:
-        """Test that ZeroDivisionError is raised when optimal solution is zero.
+        """Test that ZeroDivisionError is raised when the optimal solution is zero.
 
         This is a special edge case, which we currently do not support.
         """
         metric = ApproximationRatio()
         with pytest.raises(ZeroDivisionError) as exc_info:
-            metric.run(mock_metric_solution, mock_feature_results)
+            metric.run(mock_solution_config, mock_feature_results)
 
         assert "Approximation Ratio is not implemented for cases dividing by 0!" in str(exc_info.value)
 
     @pytest.mark.parametrize(
-        ("mock_metric_solution", "mock_feature_results"),
+        ("mock_solution_config", "mock_feature_results"),
         [((Sense.Min, 5.0), 1e-4)],
         indirect=True,
     )
     def test_optimal_solution_near_zero_raises_error(
-        self, mock_metric_solution: MagicMock, mock_feature_results: MagicMock
+        self, mock_solution_config: MagicMock, mock_feature_results: MagicMock
     ) -> None:
-        """Test that ZeroDivisionError is raised when optimal solution is near zero."""
+        """Test that ZeroDivisionError is raised when the optimal solution is near zero.
+
+        The default absolute tolerance in ApproximationRatio is 1e-3, so 1e-4 should raise.
+        """
         metric = ApproximationRatio()
 
         with pytest.raises(ZeroDivisionError):
-            metric.run(mock_metric_solution, mock_feature_results)
+            metric.run(mock_solution_config, mock_feature_results)
 
     @pytest.mark.parametrize(
-        ("mock_metric_solution", "mock_feature_results"),
+        ("mock_solution_config", "mock_feature_results"),
         [((Sense.Min, 1e-2), 1e-2)],
         indirect=True,
     )
     def test_optimal_solution_above_tolerance(
-        self, mock_metric_solution: MagicMock, mock_feature_results: MagicMock
+        self, mock_solution_config: MagicMock, mock_feature_results: MagicMock
     ) -> None:
         """Test that calculation proceeds when optimal is just above the tolerance threshold."""
         metric = ApproximationRatio(abt_diff=1e-3)
-        result = metric.run(mock_metric_solution, mock_feature_results)
+        result = metric.run(mock_solution_config, mock_feature_results)
 
         assert isinstance(result, ApproximationRatioResult)
         assert result.approximation_ratio == pytest.approx(1.0)
 
     @pytest.mark.parametrize(
-        ("mock_metric_solution", "mock_feature_results", "expected_ratio"),
+        ("mock_solution_config", "mock_feature_results", "expected_ratio"),
         [
             # Minimization: AR = expectation_value / optimal # noqa: ERA001
             ((Sense.Min, 10.0), 10.0, 1.0),  # Perfect: 10/10 = 1.0
@@ -85,16 +88,16 @@ class TestApproximationRatio:
             ((Sense.Max, 50.0), 100.0, 2.0),  # Worse: 100/50 = 2.0
             ((Sense.Max, 20.0), 100.0, 5.0),  # Worse: 100/20 = 5.0
         ],
-        indirect=["mock_metric_solution", "mock_feature_results"],
+        indirect=["mock_solution_config", "mock_feature_results"],
     )
     def test_parametrized_approximation_ratios(
         self,
-        mock_metric_solution: MagicMock,
+        mock_solution_config: MagicMock,
         mock_feature_results: MagicMock,
         expected_ratio: float,
     ) -> None:
         """Parametrized test for various approximation ratio scenarios."""
-        result = ApproximationRatio().run(mock_metric_solution, mock_feature_results)
+        result = ApproximationRatio().run(mock_solution_config, mock_feature_results)
 
         assert isinstance(result, ApproximationRatioResult)
         assert result.approximation_ratio == pytest.approx(expected_ratio)

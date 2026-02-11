@@ -10,6 +10,8 @@ def get_ratio(nominator: float, denominator: float, abt_diff: float) -> float:
         The numerator of the ratio.
     denominator : float
         The denominator of the ratio.
+    abt_diff : float
+        The absolute tolerance for zero-division.
 
     Returns
     -------

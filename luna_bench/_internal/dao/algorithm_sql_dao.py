@@ -198,7 +198,7 @@ class AlgorithmSqlDao(AlgorithmDao):
         return AlgorithmDomain(
             name=cast("str", algorithm.name),
             status=algorithm.status,
-            algorithm_type=AlgorithmType(cast("str",algorithm.algorithm_type)),
+            algorithm_type=AlgorithmType(cast("str", algorithm.algorithm_type)),
             results=result_data,
             config_data=RegisteredDataDomain(
                 registered_id=cast("str", algorithm.registered_id),

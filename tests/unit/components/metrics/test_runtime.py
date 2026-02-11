@@ -2,30 +2,17 @@
 
 from __future__ import annotations
 
-import time
+from typing import TYPE_CHECKING
 
-from luna_quantum import Sense, Solution, Timer, Vtype
+import pytest
 
 from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.components.metrics.runtime import Runtime, RuntimeResult
 
+if TYPE_CHECKING:
+    from unittest.mock import MagicMock
 
-def _create_solution(runtime_seconds: float = 0.1) -> Solution:
-    """Create a Solution with specific runtime."""
-    timer = Timer.start()
-    time.sleep(runtime_seconds)
-    timing = timer.stop()
-
-    return Solution._build(  # type: ignore[attr-defined,no-any-return]
-        component_types=[Vtype.Binary],
-        binary_cols=[[0]],
-        raw_energies=[1.0],
-        timing=timing,
-        counts=[1],
-        sense=Sense.Min,
-        obj_values=[1.0],
-        feasible=[True],
-    )
+    from tests.unit.fixtures.mock_feature_results import SolutionFactory
 
 
 def _create_empty_feature_results() -> FeatureResults:
@@ -50,10 +37,10 @@ class TestRuntimeResult:
 class TestRuntime:
     """Tests for the Runtime metric."""
 
-    def test_captures_runtime(self) -> None:
-        """Test that the metric captures solution runtime."""
+    def test_captures_runtime(self, create_solution: SolutionFactory) -> None:
+        """Test that the metric captures a solution runtime."""
         expected_runtime = 0.1
-        solution = _create_solution(runtime_seconds=expected_runtime)
+        solution = create_solution(obj_values=[1.0], feasible=[True], runtime_seconds=expected_runtime)
         feature_results = _create_empty_feature_results()
 
         metric = Runtime()
@@ -61,13 +48,12 @@ class TestRuntime:
 
         assert isinstance(result, RuntimeResult)
         # Allow some tolerance for timing variations
-        assert result.runtime_seconds >= expected_runtime
-        assert result.runtime_seconds < expected_runtime + 0.05
+        assert result.runtime_seconds == pytest.approx(expected_runtime, abs=0.05)
 
-    def test_different_runtimes(self) -> None:
+    def test_different_runtimes(self, create_solution: SolutionFactory) -> None:
         """Test that different solution runtimes are captured correctly."""
-        solution_fast = _create_solution(runtime_seconds=0.05)
-        solution_slow = _create_solution(runtime_seconds=0.15)
+        solution_fast = create_solution(obj_values=[1.0], feasible=[True], runtime_seconds=0.05)
+        solution_slow = create_solution(obj_values=[1.0], feasible=[True], runtime_seconds=0.15)
         feature_results = _create_empty_feature_results()
 
         metric = Runtime()
@@ -78,21 +64,13 @@ class TestRuntime:
         assert isinstance(result_slow, RuntimeResult)
         assert result_fast.runtime_seconds < result_slow.runtime_seconds
 
-    def test_none_runtime_returns_infinity(self) -> None:
+    def test_none_runtime_returns_infinity(
+        self, mock_solution_config: MagicMock, mock_feature_results: MagicMock
+    ) -> None:
         """Test that a solution with runtime=None returns inf."""
-        solution = Solution._build(  # type: ignore[attr-defined]
-            component_types=[Vtype.Binary],
-            binary_cols=[[0]],
-            raw_energies=[1.0],
-            counts=[1],
-            sense=Sense.Min,
-            obj_values=[1.0],
-            feasible=[True],
-        )
-        feature_results = _create_empty_feature_results()
+        mock_solution_config.runtime = None
 
-        metric = Runtime()
-        result = metric.run(solution, feature_results)
+        result = Runtime().run(mock_solution_config, mock_feature_results)
 
         assert isinstance(result, RuntimeResult)
         assert result.runtime_seconds == float("inf")
