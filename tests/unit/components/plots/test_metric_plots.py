@@ -88,6 +88,7 @@ class TestAverageRuntimePlot:
     @patch("luna_bench.components.plots.metrics_plots.aggregated_plots.sns")
     @patch("luna_bench.components.plots.metrics_plots.aggregated_plots.plt")
     def test_run(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
+        mock_plt.gca.return_value.get_legend_handles_labels.return_value = ([], [])
         plot = AverageRuntimePlot()
         data = MetricsValidationResult(
             metrics={Runtime.registered_id: _runtime_entity(("scip", "m1", 1.5), ("fake", "m1", 0.1))}
@@ -101,6 +102,7 @@ class TestAverageFeasibilityRatioPlot:
     @patch("luna_bench.components.plots.metrics_plots.aggregated_plots.sns")
     @patch("luna_bench.components.plots.metrics_plots.aggregated_plots.plt")
     def test_run(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
+        mock_plt.gca.return_value.get_legend_handles_labels.return_value = ([], [])
         plot = AverageFeasibilityRatioPlot()
         data = MetricsValidationResult(
             metrics={FeasibilityRatio.registered_id: _feasibility_entity(("scip", "m1", 1.0), ("scip", "m2", 0.8))}
@@ -114,6 +116,7 @@ class TestAverageApproximationRatioPlot:
     @patch("luna_bench.components.plots.metrics_plots.aggregated_plots.sns")
     @patch("luna_bench.components.plots.metrics_plots.aggregated_plots.plt")
     def test_run(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
+        mock_plt.gca.return_value.get_legend_handles_labels.return_value = ([], [])
         plot = AverageApproximationRatioPlot()
         data = MetricsValidationResult(
             metrics={ApproximationRatio.registered_id: _approx_entity(("scip", "m1", 1.0), ("scip", "m2", 1.2))}
