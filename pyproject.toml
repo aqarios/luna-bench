@@ -32,3 +32,6 @@ opt-metrics = [
 plot = [
     "matplotlib>=3.10.8",
 ]
+
+[tool.setuptools.packages.find]
+include = ["luna_bench*"]
