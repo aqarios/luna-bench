@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -465,7 +465,7 @@ dev = [
     { name = "pyscipopt", specifier = ">=6.0.1" },
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "ruff", specifier = ">=0.14.11" },
+    { name = "ruff", specifier = ">=0.15.0" },
     { name = "tox", specifier = ">=4.30.3" },
     { name = "types-peewee", specifier = ">=3.19.0" },
     { name = "types-seaborn", specifier = ">=0.13.2.20251221" },
