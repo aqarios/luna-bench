@@ -453,7 +453,7 @@ dev = [
     { name = "pyscipopt", specifier = ">=6.0.1" },
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "ruff", specifier = ">=0.14.11" },
+    { name = "ruff", specifier = ">=0.15.0" },
     { name = "tox", specifier = ">=4.30.3" },
     { name = "types-peewee", specifier = ">=3.19.0" },
 ]
