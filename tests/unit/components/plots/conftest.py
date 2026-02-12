@@ -68,5 +68,5 @@ def mock_fake_metric_result(
         algorithm_name=alg_name,
         status=resolved_status,
         error=error,
-        result=FakeMetricResult(random_number=rand_int),
+        result=FakeMetricResult(random_number=int(rand_int)),
     )
