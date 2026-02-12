@@ -1,29 +1,35 @@
 from .fake_plot import FakeMetricAveragePerSolverPlot, FakePlot
-from .feature_metric_plots import (
+from .feature_metrics_plots.feature_metric_plots import (
     ApproximationRatioVsVarNumberPlot,
     FeasibilityRatioVsVarNumberPlot,
     FeatureVsMetricScatterPlot,
     RuntimeVsVarNumberPlot,
 )
-from .metric_plots import (
+from .feature_plots import FeatureBarChartPlot, VarNumberBarChartPlot
+from .metrics_plots import (
+    AggregatedMetricPlot,
     AverageApproximationRatioPlot,
     AverageFeasibilityRatioPlot,
-    AverageMetricPlot,
     AverageRuntimePlot,
+    MetricPerModelPlot,
     RuntimePerModelPlot,
 )
+from .utils.aggregation_enum import Aggregation
 
 __all__ = [
+    "AggregatedMetricPlot",
+    "Aggregation",
     "ApproximationRatioVsVarNumberPlot",
     "AverageApproximationRatioPlot",
     "AverageFeasibilityRatioPlot",
-    "AverageMetricPlot",
     "AverageRuntimePlot",
     "FakeMetricAveragePerSolverPlot",
     "FakePlot",
     "FeasibilityRatioVsVarNumberPlot",
+    "FeatureBarChartPlot",
     "FeatureVsMetricScatterPlot",
+    "MetricPerModelPlot",
     "RuntimePerModelPlot",
     "RuntimeVsVarNumberPlot",
+    "VarNumberBarChartPlot",
 ]
-

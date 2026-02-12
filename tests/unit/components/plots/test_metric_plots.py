@@ -3,14 +3,14 @@ from unittest.mock import MagicMock, patch
 from luna_bench.components.metrics.approximation_ratio import ApproximationRatio, ApproximationRatioResult
 from luna_bench.components.metrics.feasbility_ratio import FeasibilityRatio, FeasibilityRatioResult
 from luna_bench.components.metrics.runtime import Runtime, RuntimeResult
+from luna_bench.components.plots import RuntimePerModelPlot
 from luna_bench.components.plots.generics.metrics_plot import MetricsValidationResult
-from luna_bench.components.plots.metric_plots import (
+from luna_bench.components.plots.metrics_plots.aggregated_plots import (
     AverageApproximationRatioPlot,
     AverageFeasibilityRatioPlot,
     AverageRuntimePlot,
-    RuntimePerModelPlot,
-    _metric_to_dataframe,
 )
+from luna_bench.components.plots.utils.dataframe_conversion import metric_to_dataframe
 from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.entities.metric_entity import MetricEntity
 from luna_bench.entities.metric_result_entity import MetricResultEntity
@@ -61,7 +61,7 @@ def _approx_entity(*values: tuple[str, str, float]) -> MetricEntity:
 class TestMetricToDataframe:
     def test_basic(self) -> None:
         entity = _runtime_entity(("scip", "m1", 1.5), ("scip", "m2", 2.5))
-        df = _metric_to_dataframe(entity, RuntimeResult, "runtime_seconds")
+        df = metric_to_dataframe(entity, RuntimeResult, "runtime_seconds")
         assert len(df) == 2
         assert list(df.columns) == ["algorithm", "model", "runtime_seconds"]
 
@@ -75,18 +75,18 @@ class TestMetricToDataframe:
             error="err",
             result=None,
         )
-        df = _metric_to_dataframe(entity, RuntimeResult, "runtime_seconds")
+        df = metric_to_dataframe(entity, RuntimeResult, "runtime_seconds")
         assert len(df) == 0
 
     def test_skips_inf_values(self) -> None:
         entity = _approx_entity(("scip", "m1", float("inf")))
-        df = _metric_to_dataframe(entity, ApproximationRatioResult, "approximation_ratio")
+        df = metric_to_dataframe(entity, ApproximationRatioResult, "approximation_ratio")
         assert len(df) == 0
 
 
 class TestAverageRuntimePlot:
-    @patch("luna_bench.components.plots.metric_plots.sns")
-    @patch("luna_bench.components.plots.metric_plots.plt")
+    @patch("luna_bench.components.plots.metrics_plots.aggregated_plots.sns")
+    @patch("luna_bench.components.plots.metrics_plots.aggregated_plots.plt")
     def test_run(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
         plot = AverageRuntimePlot()
         data = MetricsValidationResult(
@@ -98,8 +98,8 @@ class TestAverageRuntimePlot:
 
 
 class TestAverageFeasibilityRatioPlot:
-    @patch("luna_bench.components.plots.metric_plots.sns")
-    @patch("luna_bench.components.plots.metric_plots.plt")
+    @patch("luna_bench.components.plots.metrics_plots.aggregated_plots.sns")
+    @patch("luna_bench.components.plots.metrics_plots.aggregated_plots.plt")
     def test_run(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
         plot = AverageFeasibilityRatioPlot()
         data = MetricsValidationResult(
@@ -111,8 +111,8 @@ class TestAverageFeasibilityRatioPlot:
 
 
 class TestAverageApproximationRatioPlot:
-    @patch("luna_bench.components.plots.metric_plots.sns")
-    @patch("luna_bench.components.plots.metric_plots.plt")
+    @patch("luna_bench.components.plots.metrics_plots.aggregated_plots.sns")
+    @patch("luna_bench.components.plots.metrics_plots.aggregated_plots.plt")
     def test_run(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
         plot = AverageApproximationRatioPlot()
         data = MetricsValidationResult(
@@ -123,9 +123,21 @@ class TestAverageApproximationRatioPlot:
         mock_plt.show.assert_called_once()
 
 
+class TestAverageRuntimePlotEmptyData:
+    @patch("luna_bench.components.plots.metrics_plots.aggregated_plots.sns")
+    @patch("luna_bench.components.plots.metrics_plots.aggregated_plots.plt")
+    def test_run_empty(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
+        p = AverageRuntimePlot()
+        empty = MetricEntity(name="runtime", status=JobStatus.DONE, metric=Runtime(), results={})
+        data = MetricsValidationResult(metrics={Runtime.registered_id: empty})
+        p.run(data)
+        mock_sns.barplot.assert_not_called()
+        mock_plt.show.assert_not_called()
+
+
 class TestRuntimePerModelPlot:
-    @patch("luna_bench.components.plots.metric_plots.sns")
-    @patch("luna_bench.components.plots.metric_plots.plt")
+    @patch("luna_bench.components.plots.metrics_plots.per_model_plots.sns")
+    @patch("luna_bench.components.plots.metrics_plots.per_model_plots.plt")
     def test_run(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
         plot = RuntimePerModelPlot()
         data = MetricsValidationResult(
@@ -140,3 +152,13 @@ class TestRuntimePerModelPlot:
         call_kwargs = mock_sns.barplot.call_args
         assert "hue" in call_kwargs.kwargs
         mock_plt.show.assert_called_once()
+
+    @patch("luna_bench.components.plots.metrics_plots.per_model_plots.sns")
+    @patch("luna_bench.components.plots.metrics_plots.per_model_plots.plt")
+    def test_run_empty(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
+        plot = RuntimePerModelPlot()
+        empty = MetricEntity(name="runtime", status=JobStatus.DONE, metric=Runtime(), results={})
+        data = MetricsValidationResult(metrics={Runtime.registered_id: empty})
+        plot.run(data)
+        mock_sns.barplot.assert_not_called()
+        mock_plt.show.assert_not_called()

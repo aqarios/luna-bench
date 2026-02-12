@@ -8,7 +8,7 @@ from luna_bench.components.plots.generics.features_metrics_plot import (
     GenericFeaturesMetricsPlot,
 )
 from luna_bench.components.plots.generics.metrics_plot import GenericMetricsPlot, MetricsValidationResult
-from luna_bench.components.plots.style import PALETTE
+from luna_bench.components.plots.utils.style import PALETTE
 from luna_bench.helpers.decorators import plot
 
 
