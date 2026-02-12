@@ -1,11 +1,12 @@
 from unittest.mock import MagicMock, patch
 
-from luna_bench.components.metrics.fake_metric import FakeMetric, FakeMetricResult
+from luna_bench.components.metrics.fake_metric import FakeMetric
 from luna_bench.components.plots.fake_plot import FakeMetricAveragePerSolverPlot
 from luna_bench.components.plots.generics.metrics_plot import MetricsValidationResult
 from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.entities.metric_entity import MetricEntity
-from luna_bench.entities.metric_result_entity import MetricResultEntity
+
+from .conftest import mock_fake_metric_result
 
 
 class TestFakeMetricAveragePerSolverPlot:
@@ -20,29 +21,17 @@ class TestFakeMetricAveragePerSolverPlot:
                     status=JobStatus.DONE,
                     metric=FakeMetric(),
                     results={
-                        ("algo_a", "model_1"): MetricResultEntity(
-                            processing_time_ms=10,
+                        ("algo_a", "model_1"): mock_fake_metric_result(
                             model_name="model_1",
-                            algorithm_name="algo_a",
-                            status=JobStatus.DONE,
-                            error=None,
-                            result=FakeMetricResult(random_number=42),
+                            alg_name="algo_a",
                         ),
-                        ("algo_a", "model_2"): MetricResultEntity(
-                            processing_time_ms=10,
+                        ("algo_a", "model_2"): mock_fake_metric_result(
                             model_name="model_2",
-                            algorithm_name="algo_a",
-                            status=JobStatus.DONE,
-                            error=None,
-                            result=FakeMetricResult(random_number=58),
+                            alg_name="algo_a",
                         ),
-                        ("algo_b", "model_1"): MetricResultEntity(
-                            processing_time_ms=10,
+                        ("algo_b", "model_1"): mock_fake_metric_result(
                             model_name="model_1",
-                            algorithm_name="algo_b",
-                            status=JobStatus.DONE,
-                            error=None,
-                            result=FakeMetricResult(random_number=30),
+                            alg_name="algo_b",
                         ),
                     },
                 )
@@ -65,13 +54,10 @@ class TestFakeMetricAveragePerSolverPlot:
                     status=JobStatus.DONE,
                     metric=FakeMetric(),
                     results={
-                        ("algo_a", "model_1"): MetricResultEntity(
-                            processing_time_ms=10,
+                        ("algo_a", "model_1"): mock_fake_metric_result(
                             model_name="model_1",
-                            algorithm_name="algo_a",
-                            status=JobStatus.FAILED,
-                            error="failed",
-                            result=None,
+                            alg_name="algo_a",
+                            status="failed",
                         ),
                     },
                 )

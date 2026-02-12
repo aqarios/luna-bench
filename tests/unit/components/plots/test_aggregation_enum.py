@@ -1,12 +1,12 @@
-from playhouse.sqlite_udf import aggregate
+import pytest
 
 from luna_bench.components.plots.utils.aggregation_enum import Aggregation
-import pytest
 
 
 class TestAggregation:
     @pytest.mark.parametrize(
-        ("aggregation", "estimator", "errorbar"),[
+        ("aggregation", "estimator", "errorbar"),
+        [
             (Aggregation.MEAN_SD, "mean", "sd"),
             (Aggregation.MEAN, "mean", None),
             (Aggregation.MAX, "max", None),
