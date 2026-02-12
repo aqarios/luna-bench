@@ -22,7 +22,7 @@ dev = [
     "pyscipopt>=6.0.1",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
-    "ruff>=0.14.11",
+    "ruff>=0.15.0",
     "tox>=4.30.3",
     "types-peewee>=3.19.0",
 ]
