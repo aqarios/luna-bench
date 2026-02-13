@@ -4,18 +4,18 @@
 
 # Luna-Bench
 
-A framework for benchmarking optimization algorithms across quantum and classical domains. Define your models, plug 
+A framework for benchmarking optimization algorithms across quantum and classical domains. Define your models, plug
 in solvers, and compare results with predefined features and metrics. Add plots to visualize your benchmark results.
 
-> **Alpha Notice:** Luna-Bench is still in alpha. Many things are not final — for example, how metrics and features are 
-> accessed in plots is something we are still actively experimenting with to find the best approach. We highly welcome 
+> **Alpha Notice:** Luna-Bench is still in alpha. Many things are not final — for example, how metrics and features are
+> accessed in plots is something we are still actively experimenting with to find the best approach. We highly welcome
 > any user input and feedback! Feel free to open an issue or start a discussion.
 
 ## Why
 
-Benchmarking optimization algorithms is tedious. You end up writing the same infrastructure over and over: result 
-storage, metric computation, plotting, managing model sets. Luna-Bench handles all of that so you can focus on the 
-algorithms themselves. Features and metrics are tested and reused across benchmarks, which means fewer bugs and more 
+Benchmarking optimization algorithms is tedious. You end up writing the same infrastructure over and over: result
+storage, metric computation, plotting, managing model sets. Luna-Bench handles all of that so you can focus on the
+algorithms themselves. Features and metrics are tested and reused across benchmarks, which means fewer bugs and more
 consistent results.
 
 - Compare quantum and classical solvers by adding algorithms easily from luna_quantum or add your own
