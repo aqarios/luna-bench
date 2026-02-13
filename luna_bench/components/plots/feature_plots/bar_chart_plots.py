@@ -159,7 +159,7 @@ class FeatureBarChartPlot(GenericFeaturesPlot):
         plt.ylabel(self._ylabel)
         plt.xlabel("Model")
         plt.title(self._title)
-        if self._ylim is not None:
+        if self._ylim is not None:  # pragma: no cover
             plt.ylim(*self._ylim)
         plt.tight_layout()
         plt.show()

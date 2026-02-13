@@ -1,14 +1,12 @@
 from unittest.mock import MagicMock, patch
 
-from luna_bench.components.features.var_num_feature import VarNumberFeature, VarNumberFeatureResult
+from luna_bench.components.features.var_num_feature import VarNumberFeatureResult
 from luna_bench.components.plots import VarNumberBarChartPlot
-from luna_bench.components.plots.generics.features_plot import FeaturesValidationResult
 from luna_bench.components.plots.utils.dataframe_conversion import feature_to_dataframe
 from luna_bench.entities.enums.job_status_enum import JobStatus
-from luna_bench.entities.feature_entity import FeatureEntity
 from luna_bench.entities.feature_result_entity import FeatureResultEntity
 
-from .conftest import mock_var_entity
+from .conftest import mock_var_entity, mock_var_validation_result
 
 
 class TestFeatureToDataframe:
@@ -44,9 +42,7 @@ class TestVarNumberBarChartPlot:
     @patch("luna_bench.components.plots.feature_plots.bar_chart_plots.plt")
     def test_run(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
         p = VarNumberBarChartPlot()
-        data = FeaturesValidationResult(
-            features={VarNumberFeature.registered_id: mock_var_entity(("m1", 10), ("m2", 20))},
-        )
+        data = mock_var_validation_result(("m1", 10), ("m2", 20))
         p.run(data)
         mock_sns.barplot.assert_called_once()
         mock_plt.show.assert_called_once()
@@ -55,8 +51,7 @@ class TestVarNumberBarChartPlot:
     @patch("luna_bench.components.plots.feature_plots.bar_chart_plots.plt")
     def test_run_empty_data(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
         p = VarNumberBarChartPlot()
-        entity = FeatureEntity(name="var_num", status=JobStatus.DONE, feature=VarNumberFeature(), results={})
-        data = FeaturesValidationResult(features={VarNumberFeature.registered_id: entity})
+        data = mock_var_validation_result()
         p.run(data)
         mock_sns.barplot.assert_not_called()
         mock_plt.show.assert_not_called()
