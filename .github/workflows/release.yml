@@ -69,7 +69,7 @@ jobs:
             ```
             uv add git+https://github.com/aqarios/luna-bench.git@v${{ steps.bump.outputs.version }}
             ```
-          reviewers: ${{ github.actor }}
+          team-reviewers: aqarios/luna_bench_admin
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
