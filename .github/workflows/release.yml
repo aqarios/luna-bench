@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseType:
+        description: 'Release Type (major: X.0.0, minor: 0.X.0, patch: 0.0.X, rc: 0.0.0rcX)'
+        type: choice
+        default: 'rc'
+        options:
+          - major
+          - minor
+          - patch
+          - rc
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Bump version, build, release and create PR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Bump version
+        id: bump
+        run: |
+          CURRENT=$(grep '^version = ' pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          BASE=$(echo "$CURRENT" | sed 's/rc[0-9]*//')
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE"
+
+          case "${{ inputs.releaseType }}" in
+            major) NEW="$((MAJOR + 1)).0.0" ;;
+            minor) NEW="${MAJOR}.$((MINOR + 1)).0" ;;
+            patch) NEW="${MAJOR}.${MINOR}.$((PATCH + 1))" ;;
+            rc)
+              RC_NUM=1
+              if [[ "$CURRENT" =~ rc([0-9]+)$ ]]; then
+                RC_NUM=$(( ${BASH_REMATCH[1]} + 1 ))
+              fi
+              NEW="${MAJOR}.${MINOR}.${PATCH}rc${RC_NUM}"
+              ;;
+          esac
+
+          echo "New version: $NEW"
+          sed -i "s/^version = \".*\"/version = \"$NEW\"/" pyproject.toml
+          echo "version=$NEW" >> "$GITHUB_OUTPUT"
+
+          if [ "${{ inputs.releaseType }}" = "rc" ]; then
+            echo "branch_name=pre-release" >> "$GITHUB_OUTPUT"
+          else
+            echo "branch_name=release" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create PR with version bump
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: ${{ steps.bump.outputs.branch_name }}
+          commit-message: "chore(update-version): Updated luna_bench to ${{ steps.bump.outputs.version }}"
+          title: "Update luna_bench version (${{ steps.bump.outputs.version }})"
+          body: |
+            Updated luna_bench version to ${{ steps.bump.outputs.version }}.
+
+            GitHub Release `v${{ steps.bump.outputs.version }}` has been created automatically with built wheels.
+
+            Install this version with:
+            ```
+            uv add git+https://github.com/aqarios/luna-bench.git@v${{ steps.bump.outputs.version }}
+            ```
+          reviewers: ${{ github.actor }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Build package
+        run: uv build
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.bump.outputs.version }}
+          target_commitish: ${{ steps.bump.outputs.branch_name }}
+          name: v${{ steps.bump.outputs.version }}
+          files: dist/*
+          generate_release_notes: true
+          prerelease: ${{ inputs.releaseType == 'rc' }}
