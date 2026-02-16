@@ -77,7 +77,6 @@ class TestFeasibilityRatioVsVarNumberPlot:
 
 
 class TestApproximationRatioVsVarNumberPlot:
-
     @patch("luna_bench.components.plots.feature_metrics_plots.feature_metric_plots.sns")
     @patch("luna_bench.components.plots.feature_metrics_plots.feature_metric_plots.plt")
     def test_run(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:  # noqa: ARG002
@@ -99,7 +98,6 @@ class TestApproximationRatioVsVarNumberPlot:
 
 
 class TestScatterPlotEmptyData:
-
     @patch("luna_bench.components.plots.feature_metrics_plots.feature_metric_plots.sns")
     @patch("luna_bench.components.plots.feature_metrics_plots.feature_metric_plots.plt")
     def test_run_empty(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
