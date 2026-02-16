@@ -6,9 +6,9 @@ from luna_bench.entities.enums.job_status_enum import JobStatus
 from .conftest import mock_fake_metric_validation_result
 
 
+@patch("luna_bench.components.plots.fake_plot.sns")
+@patch("luna_bench.components.plots.fake_plot.plt")
 class TestFakeMetricAveragePerSolverPlot:
-    @patch("luna_bench.components.plots.fake_plot.sns")
-    @patch("luna_bench.components.plots.fake_plot.plt")
     def test_run(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
         plot = FakeMetricAveragePerSolverPlot()
         data = mock_fake_metric_validation_result(
@@ -22,8 +22,6 @@ class TestFakeMetricAveragePerSolverPlot:
         mock_sns.barplot.assert_called_once()
         mock_plt.show.assert_called_once()
 
-    @patch("luna_bench.components.plots.fake_plot.sns")
-    @patch("luna_bench.components.plots.fake_plot.plt")
     def test_run_skips_none_results(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
         plot = FakeMetricAveragePerSolverPlot()
         data = mock_fake_metric_validation_result(

@@ -36,10 +36,10 @@ class TestFeatureToDataframe:
         df = feature_to_dataframe(entity, VarNumberFeatureResult, "var_number")
         assert len(df) == 0
 
-
+@patch("luna_bench.components.plots.feature_plots.bar_chart_plots.sns")
+@patch("luna_bench.components.plots.feature_plots.bar_chart_plots.plt")
 class TestVarNumberBarChartPlot:
-    @patch("luna_bench.components.plots.feature_plots.bar_chart_plots.sns")
-    @patch("luna_bench.components.plots.feature_plots.bar_chart_plots.plt")
+
     def test_run(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
         p = VarNumberBarChartPlot()
         data = mock_var_validation_result(("m1", 10), ("m2", 20))
@@ -47,8 +47,7 @@ class TestVarNumberBarChartPlot:
         mock_sns.barplot.assert_called_once()
         mock_plt.show.assert_called_once()
 
-    @patch("luna_bench.components.plots.feature_plots.bar_chart_plots.sns")
-    @patch("luna_bench.components.plots.feature_plots.bar_chart_plots.plt")
+
     def test_run_empty_data(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
         p = VarNumberBarChartPlot()
         data = mock_var_validation_result()

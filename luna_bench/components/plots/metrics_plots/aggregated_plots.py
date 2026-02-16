@@ -209,8 +209,8 @@ AverageApproximationRatioPlot = AggregatedMetricPlot.create(
 )
 AverageFoBRatioPlot = AggregatedMetricPlot.create(
     metric=FractionOfOverallBestSolution,
-    value_field="fraction of overall best",
-    ylabel="Fraction of overall best soltuion",
+    value_field="fraction_of_overall_best",
+    ylabel="Fraction of overall best solution",
     title="Average Fraction of overall best Ratio per Solver (1.0 = optimal)",
     aggregation=Aggregation.MEAN_SD,
     hline=1.0,

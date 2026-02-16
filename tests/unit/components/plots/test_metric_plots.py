@@ -124,10 +124,10 @@ class TestAverageRuntimePlotEmptyData:
         mock_sns.barplot.assert_not_called()
         mock_plt.show.assert_not_called()
 
-
+@patch("luna_bench.components.plots.metrics_plots.per_model_plots.sns")
+@patch("luna_bench.components.plots.metrics_plots.per_model_plots.plt")
 class TestRuntimePerModelPlot:
-    @patch("luna_bench.components.plots.metrics_plots.per_model_plots.sns")
-    @patch("luna_bench.components.plots.metrics_plots.per_model_plots.plt")
+
     def test_run(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
         plot = RuntimePerModelPlot()
         data = MetricsValidationResult(
@@ -149,8 +149,7 @@ class TestRuntimePerModelPlot:
         assert "hue" in call_kwargs.kwargs
         mock_plt.show.assert_called_once()
 
-    @patch("luna_bench.components.plots.metrics_plots.per_model_plots.sns")
-    @patch("luna_bench.components.plots.metrics_plots.per_model_plots.plt")
+
     def test_run_empty(self, mock_plt: MagicMock, mock_sns: MagicMock) -> None:
         plot = RuntimePerModelPlot()
         empty = MetricEntity(name="runtime", status=JobStatus.DONE, metric=Runtime(), results={})
