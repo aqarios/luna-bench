@@ -23,7 +23,9 @@ dev = [
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
     "ruff>=0.14.11",
+    "scipy-stubs>=1.17.0.2",
     "tox>=4.30.3",
+    "types-networkx>=3.6.1.20260210",
     "types-peewee>=3.19.0",
 ]
 opt-metrics = [
@@ -31,4 +33,8 @@ opt-metrics = [
 ]
 plot = [
     "matplotlib>=3.10.8",
+]
+qubo-features = [
+    "networkx>=3.6.1",
+    "scipy>=1.17.0",
 ]
