@@ -30,9 +30,9 @@ class TestGetQubo:
     @pytest.mark.parametrize(
         ("input_list", "exp_list"),
         [
-            ([[1.0, 4.0], [0.0, 3.0]], [[1.0, 2.0], [2.0, 3.0]]), # upper triangular to symmetric
-            ([[1.0, 0.0], [4.0, 3.0]], [[1.0, 2.0], [2.0, 3.0]]), # lower triangular to symmetric
-            ([[1.0, 2.0], [2.0, 3.0]], [[1.0, 2.0], [2.0, 3.0]]), # symmetric stays symmetric
+            ([[1.0, 4.0], [0.0, 3.0]], [[1.0, 2.0], [2.0, 3.0]]),  # upper triangular to symmetric
+            ([[1.0, 0.0], [4.0, 3.0]], [[1.0, 2.0], [2.0, 3.0]]),  # lower triangular to symmetric
+            ([[1.0, 2.0], [2.0, 3.0]], [[1.0, 2.0], [2.0, 3.0]]),  # symmetric stays symmetric
         ],
     )
     def test_returns_qubo_matrix_from_valid_model(
@@ -44,12 +44,7 @@ class TestGetQubo:
         result = get_qubo(luna_model)
         np.testing.assert_array_equal(result, expected_matrix)
 
-    @pytest.mark.parametrize(
-        ("sense", "org_obj", "exp_obj"),
-        [
-            (Sense.Max, -5.0, 5.0),
-            (Sense.Min, 5.0, 5.0)
-        ])
+    @pytest.mark.parametrize(("sense", "org_obj", "exp_obj"), [(Sense.Max, -5.0, 5.0), (Sense.Min, 5.0, 5.0)])
     def test_negates_objective_for_maximization(self, sense: Sense, org_obj: float, exp_obj: float) -> None:
         mock_model = create_mock_qubo_model(sense=sense, objective=org_obj)
 

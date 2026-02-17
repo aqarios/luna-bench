@@ -6,7 +6,6 @@ from numpy.typing import NDArray
 
 from luna_bench.components.features.qubo.spectral_analysis_features import (
     QuboSpectralAnalysisFeature,
-    QuboSpectralAnalysisFeatureResult,
 )
 
 from .run_with_matrix import run_with_matrix
@@ -40,7 +39,6 @@ class TestQuboSpectralAnalysisFeature:
         assert result.std_eigenvector == pytest.approx(0.5391000192, rel=1e-6)
         assert result.minimum_eigenvector == pytest.approx(-0.5414666348, rel=1e-6)
         assert result.maximum_eigenvector == pytest.approx(0.8312507835, rel=1e-6)
-
 
     def test_identity_matrix_eigenvalues(self) -> None:
         identity = np.eye(3)

@@ -53,7 +53,6 @@ class TestQuboSparsityDensityFeature:
         assert result.sparsity == pytest.approx(6 / 9)
         assert result.density == pytest.approx(3 / 9)
 
-
     def test_all_zeros_matrix(self) -> None:
         matrix = np.zeros((3, 3))
         result = run_with_matrix(matrix, feature=self.feature)
