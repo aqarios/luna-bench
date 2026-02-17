@@ -30,7 +30,4 @@ class TestQuboMatrixFeature:
     def test_deterministic_results(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
         result1 = run_with_matrix(sample_qubo_matrix, feature=self.features)
         result2 = run_with_matrix(sample_qubo_matrix, feature=self.features)
-
-        assert result1.mean == result2.mean
-        assert result1.variance == result2.variance
-        assert result1.std == result2.std
+        assert result1 == result2

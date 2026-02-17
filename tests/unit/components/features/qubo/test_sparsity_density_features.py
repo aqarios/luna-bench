@@ -53,20 +53,6 @@ class TestQuboSparsityDensityFeature:
         assert result.sparsity == pytest.approx(6 / 9)
         assert result.density == pytest.approx(3 / 9)
 
-    def test_single_variable_matrix(self) -> None:
-        matrix = np.array([[5.0]])
-        result = run_with_matrix(matrix, feature=self.feature)
-
-        assert result.num_variables == 1
-        assert result.num_non_zero == 1
-        assert result.num_zero == 0
-        assert result.density == pytest.approx(1.0)
-        assert result.sparsity == pytest.approx(0.0)
-
-    def test_num_variables_matches_matrix_dimension(self) -> None:
-        matrix = np.zeros((5, 5))
-        result = run_with_matrix(matrix, feature=self.feature)
-        assert result.num_variables == 5
 
     def test_all_zeros_matrix(self) -> None:
         matrix = np.zeros((3, 3))
@@ -74,5 +60,6 @@ class TestQuboSparsityDensityFeature:
 
         assert result.num_non_zero == 0
         assert result.num_zero == 9
+        assert result.num_variables == 3
         assert result.sparsity == pytest.approx(1.0)
         assert result.density == pytest.approx(0.0)

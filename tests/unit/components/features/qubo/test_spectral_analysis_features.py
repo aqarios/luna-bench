@@ -17,10 +17,6 @@ class TestQuboSpectralAnalysisFeature:
 
     feature = QuboSpectralAnalysisFeature()
 
-    def test_returns_correct_result_type(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
-        result = run_with_matrix(sample_qubo_matrix, feature=self.feature)
-        assert isinstance(result, QuboSpectralAnalysisFeatureResult)
-
     def test_eigenvalue_stats(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
         result = run_with_matrix(sample_qubo_matrix, feature=self.feature)
 
@@ -31,6 +27,10 @@ class TestQuboSpectralAnalysisFeature:
         assert result.q90_eigenvalue == pytest.approx(4.6605551275, rel=1e-6)
         assert result.minimum_eigenvalue == pytest.approx(-0.3027756377, rel=1e-6)
         assert result.maximum_eigenvalue == pytest.approx(5.0)
+        assert result.dominant_eigenvalue == pytest.approx(5.0)
+        assert result.dominant_eigenvector == pytest.approx(0.8312507835, rel=1e-6)
+        assert result.condition_number == pytest.approx(16.5138781887, rel=1e-6)
+        assert result.vc_eigenvalue == pytest.approx(0.8291561976, rel=1e-6)
 
     def test_eigenvector_stats(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
         result = run_with_matrix(sample_qubo_matrix, feature=self.feature)
@@ -41,21 +41,6 @@ class TestQuboSpectralAnalysisFeature:
         assert result.minimum_eigenvector == pytest.approx(-0.5414666348, rel=1e-6)
         assert result.maximum_eigenvector == pytest.approx(0.8312507835, rel=1e-6)
 
-    def test_dominant_eigenvalue(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
-        result = run_with_matrix(sample_qubo_matrix, feature=self.feature)
-        assert result.dominant_eigenvalue == pytest.approx(5.0)
-
-    def test_dominant_eigenvector(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
-        result = run_with_matrix(sample_qubo_matrix, feature=self.feature)
-        assert result.dominant_eigenvector == pytest.approx(0.8312507835, rel=1e-6)
-
-    def test_condition_number(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
-        result = run_with_matrix(sample_qubo_matrix, feature=self.feature)
-        assert result.condition_number == pytest.approx(16.5138781887, rel=1e-6)
-
-    def test_vc_eigenvalue(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
-        result = run_with_matrix(sample_qubo_matrix, feature=self.feature)
-        assert result.vc_eigenvalue == pytest.approx(0.8291561976, rel=1e-6)
 
     def test_identity_matrix_eigenvalues(self) -> None:
         identity = np.eye(3)
@@ -71,7 +56,4 @@ class TestQuboSpectralAnalysisFeature:
     def test_deterministic_results(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
         result1 = run_with_matrix(sample_qubo_matrix, feature=self.feature)
         result2 = run_with_matrix(sample_qubo_matrix, feature=self.feature)
-
-        assert result1.mean_eigenvalue == result2.mean_eigenvalue
-        assert result1.condition_number == result2.condition_number
-        assert result1.dominant_eigenvalue == result2.dominant_eigenvalue
+        assert result1 == result2

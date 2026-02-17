@@ -65,14 +65,14 @@ class TestQuboGraphFeature:
     def test_graph_with_bridge(self) -> None:
         """Test bridge/articulation detection on a chain graph 0--1--2.
 
-        Matrix: [[0,1,0],[1,0,1],[0,1,0]]
+        Matrix: [[0,1,0],[0,0,1],[0,0,0]]
         Graph: 3 nodes, 2 edges, no self-loops. Linear chain topology.
         """
         matrix = np.array(
             [
                 [0.0, 1.0, 0.0],
-                [1.0, 0.0, 1.0],
-                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+                [0.0, 0.0, 0.0],
             ]
         )
         result = run_with_matrix(matrix, feature=self.feature)
