@@ -15,13 +15,28 @@ if TYPE_CHECKING:
 
 
 class QuboSparsityDensityFeatureResult(ArbitraryDataDomain):
-    """Result container for sparsity and density QUBO features."""
+    """Result container for sparsity and density QUBO features.
+
+    Attributes
+    ----------
+    sparsity
+        Fraction of zero entries: ``num_zero / total_entries``.
+    density
+        Fraction of non-zero entries: ``num_non_zero / total_entries``.
+        Complement of sparsity (``sparsity + density = 1``).
+    num_zero
+        Count of zero entries in the matrix.
+    num_non_zero
+        Count of non-zero entries in the matrix.
+    num_variables
+        Number of QUBO variables (matrix dimension / number of rows).
+    """
 
     sparsity: float
     density: float
     num_zero: int
     num_non_zero: int
-    num_variables: float
+    num_variables: int
 
 
 @feature

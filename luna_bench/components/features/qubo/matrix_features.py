@@ -16,7 +16,38 @@ from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
 
 
 class QuboMatrixFeatureResult(ArbitraryDataDomain):
-    """Result container for matrix statistical QUBO features."""
+    """Result container for matrix statistical QUBO features.
+
+    Attributes
+    ----------
+    mean
+        Mean of all matrix entries.
+    median
+        Median of all matrix entries.
+    variance
+        Variance of all matrix entries.
+    minium
+        Minimum matrix entry.
+    maximum
+        Maximum matrix entry.
+    std
+        Standard deviation of all matrix entries.
+    skewness
+        Asymmetry of the value distribution. Positive means a longer right
+        tail (many small values, few large); negative means the opposite.
+        Zero indicates a symmetric distribution.
+    kurtosis
+        Tailedness of the value distribution (excess kurtosis, so a normal
+        distribution has kurtosis 0). Positive values indicate heavier tails
+        and more outliers; negative values indicate lighter tails.
+    q10
+        10th percentile of all matrix entries.
+    q90
+        90th percentile of all matrix entries.
+    vc
+        Coefficient of variation (std / mean). Measures relative dispersion;
+        higher values indicate more spread relative to the mean.
+    """
 
     mean: float
     median: float

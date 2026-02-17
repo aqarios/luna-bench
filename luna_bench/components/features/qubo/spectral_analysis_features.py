@@ -16,7 +16,54 @@ if TYPE_CHECKING:
 
 
 class QuboSpectralAnalysisFeatureResult(ArbitraryDataDomain):
-    """Result container for spectral analysis QUBO features."""
+    """Result container for spectral analysis QUBO features.
+
+    Eigenvalues and eigenvectors are obtained via ``numpy.linalg.eigh``
+    (symmetric matrix decomposition).
+
+    Attributes
+    ----------
+    mean_eigenvalue
+        Mean of all eigenvalues (equals the matrix trace divided by n).
+    median_eigenvalue
+        Median eigenvalue.
+    std_eigenvalue
+        Standard deviation of the eigenvalues.
+    vc_eigenvalue
+        Coefficient of variation (std / mean) of the eigenvalues.
+    q90_eigenvalue
+        90th percentile of the eigenvalues.
+    q10_eigenvalue
+        10th percentile of the eigenvalues.
+    minimum_eigenvalue
+        Smallest eigenvalue.
+    maximum_eigenvalue
+        Largest eigenvalue.
+    dominant_eigenvalue
+        Largest eigenvalue by absolute value. Indicates the strongest
+        mode of the QUBO interaction structure.
+    mean_eigenvector
+        Mean over all eigenvector components.
+    median_eigenvector
+        Median over all eigenvector components.
+    std_eigenvector
+        Standard deviation over all eigenvector components.
+    vc_eigenvector
+        Coefficient of variation (std / mean) of all eigenvector components.
+    q90_eigenvector
+        90th percentile over all eigenvector components.
+    q10_eigenvector
+        10th percentile over all eigenvector components.
+    minimum_eigenvector
+        Smallest eigenvector component.
+    maximum_eigenvector
+        Largest eigenvector component.
+    dominant_eigenvector
+        Largest eigenvector component by absolute value.
+    condition_number
+        Ratio of largest to smallest singular value. High values indicate
+        the QUBO is ill-conditioned and numerically sensitive.
+    """
 
     # Eigenvalue
     mean_eigenvalue: float

@@ -1,7 +1,5 @@
 """Tests for QuboSpectralAnalysisFeature."""
 
-from unittest.mock import MagicMock, patch
-
 import numpy as np
 import pytest
 from numpy.typing import NDArray
@@ -10,72 +8,59 @@ from luna_bench.components.features.qubo.spectral_analysis_features import (
     QuboSpectralAnalysisFeature,
     QuboSpectralAnalysisFeatureResult,
 )
-from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
+
+from .run_with_matrix import run_with_matrix
 
 
 class TestQuboSpectralAnalysisFeature:
     """Tests for the QuboSpectralAnalysisFeature extractor."""
 
-    @staticmethod
-    def _run_with_matrix(matrix: NDArray[np.float64]) -> QuboSpectralAnalysisFeatureResult:
-        mock_model = MagicMock()
-        with patch(
-            "luna_bench.components.features.qubo.spectral_analysis_features.get_qubo",
-            return_value=matrix,
-        ):
-            return QuboSpectralAnalysisFeature().run(mock_model)
+    feature = QuboSpectralAnalysisFeature()
 
     def test_returns_correct_result_type(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
-        result = self._run_with_matrix(sample_qubo_matrix)
+        result = run_with_matrix(sample_qubo_matrix, feature=self.feature)
         assert isinstance(result, QuboSpectralAnalysisFeatureResult)
 
-    def test_eigenvalue_stats_match_manual_computation(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
-        eigenvalues, _ = np.linalg.eigh(sample_qubo_matrix)
-        result = self._run_with_matrix(sample_qubo_matrix)
+    def test_eigenvalue_stats(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
+        result = run_with_matrix(sample_qubo_matrix, feature=self.feature)
 
-        assert result.mean_eigenvalue == pytest.approx(NumpyStatsHelper.mean(eigenvalues))
-        assert result.median_eigenvalue == pytest.approx(NumpyStatsHelper.median(eigenvalues))
-        assert result.std_eigenvalue == pytest.approx(NumpyStatsHelper.std(eigenvalues))
-        assert result.q10_eigenvalue == pytest.approx(NumpyStatsHelper.q10(eigenvalues))
-        assert result.q90_eigenvalue == pytest.approx(NumpyStatsHelper.q90(eigenvalues))
-        assert result.minimum_eigenvalue == pytest.approx(NumpyStatsHelper.min(eigenvalues))
-        assert result.maximum_eigenvalue == pytest.approx(NumpyStatsHelper.max(eigenvalues))
+        assert result.mean_eigenvalue == pytest.approx(2.6666666667, rel=1e-6)
+        assert result.median_eigenvalue == pytest.approx(3.3027756377, rel=1e-6)
+        assert result.std_eigenvalue == pytest.approx(2.2110831936, rel=1e-6)
+        assert result.q10_eigenvalue == pytest.approx(0.4183346174, rel=1e-6)
+        assert result.q90_eigenvalue == pytest.approx(4.6605551275, rel=1e-6)
+        assert result.minimum_eigenvalue == pytest.approx(-0.3027756377, rel=1e-6)
+        assert result.maximum_eigenvalue == pytest.approx(5.0)
 
-    def test_eigenvector_stats_match_manual_computation(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
-        _, eigenvectors = np.linalg.eigh(sample_qubo_matrix)
-        result = self._run_with_matrix(sample_qubo_matrix)
+    def test_eigenvector_stats(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
+        result = run_with_matrix(sample_qubo_matrix, feature=self.feature)
 
-        assert result.mean_eigenvector == pytest.approx(NumpyStatsHelper.mean(eigenvectors))
-        assert result.median_eigenvector == pytest.approx(NumpyStatsHelper.median(eigenvectors))
-        assert result.std_eigenvector == pytest.approx(NumpyStatsHelper.std(eigenvectors))
-        assert result.minimum_eigenvector == pytest.approx(NumpyStatsHelper.min(eigenvectors))
-        assert result.maximum_eigenvector == pytest.approx(NumpyStatsHelper.max(eigenvectors))
+        assert result.mean_eigenvector == pytest.approx(0.2066506777, rel=1e-6)
+        assert result.median_eigenvector == pytest.approx(0.3333333333, rel=1e-6)
+        assert result.std_eigenvector == pytest.approx(0.5391000192, rel=1e-6)
+        assert result.minimum_eigenvector == pytest.approx(-0.5414666348, rel=1e-6)
+        assert result.maximum_eigenvector == pytest.approx(0.8312507835, rel=1e-6)
 
-    def test_dominant_eigenvalue_is_max_absolute(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
-        eigenvalues, _ = np.linalg.eigh(sample_qubo_matrix)
-        result = self._run_with_matrix(sample_qubo_matrix)
+    def test_dominant_eigenvalue(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
+        result = run_with_matrix(sample_qubo_matrix, feature=self.feature)
+        assert result.dominant_eigenvalue == pytest.approx(5.0)
 
-        expected_dominant = np.max(np.abs(eigenvalues))
-        assert result.dominant_eigenvalue == pytest.approx(expected_dominant)
-
-    def test_dominant_eigenvector_is_max_absolute(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
-        _, eigenvectors = np.linalg.eigh(sample_qubo_matrix)
-        result = self._run_with_matrix(sample_qubo_matrix)
-
-        expected_dominant = np.max(np.abs(eigenvectors))
-        assert result.dominant_eigenvector == pytest.approx(expected_dominant)
+    def test_dominant_eigenvector(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
+        result = run_with_matrix(sample_qubo_matrix, feature=self.feature)
+        assert result.dominant_eigenvector == pytest.approx(0.8312507835, rel=1e-6)
 
     def test_condition_number(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
-        result = self._run_with_matrix(sample_qubo_matrix)
+        result = run_with_matrix(sample_qubo_matrix, feature=self.feature)
+        assert result.condition_number == pytest.approx(16.5138781887, rel=1e-6)
 
-        expected_cond = np.linalg.cond(sample_qubo_matrix)
-        assert result.condition_number == pytest.approx(expected_cond)
+    def test_vc_eigenvalue(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
+        result = run_with_matrix(sample_qubo_matrix, feature=self.feature)
+        assert result.vc_eigenvalue == pytest.approx(0.8291561976, rel=1e-6)
 
     def test_identity_matrix_eigenvalues(self) -> None:
         identity = np.eye(3)
-        result = self._run_with_matrix(identity)
+        result = run_with_matrix(identity, feature=self.feature)
 
-        # All eigenvalues of identity matrix are 1
         assert result.mean_eigenvalue == pytest.approx(1.0)
         assert result.minimum_eigenvalue == pytest.approx(1.0)
         assert result.maximum_eigenvalue == pytest.approx(1.0)
@@ -83,15 +68,9 @@ class TestQuboSpectralAnalysisFeature:
         assert result.std_eigenvalue == pytest.approx(0.0)
         assert result.condition_number == pytest.approx(1.0)
 
-    def test_vc_eigenvalue(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
-        eigenvalues, _ = np.linalg.eigh(sample_qubo_matrix)
-        result = self._run_with_matrix(sample_qubo_matrix)
-
-        assert result.vc_eigenvalue == pytest.approx(NumpyStatsHelper.vc(eigenvalues))
-
     def test_deterministic_results(self, sample_qubo_matrix: NDArray[np.float64]) -> None:
-        result1 = self._run_with_matrix(sample_qubo_matrix)
-        result2 = self._run_with_matrix(sample_qubo_matrix)
+        result1 = run_with_matrix(sample_qubo_matrix, feature=self.feature)
+        result2 = run_with_matrix(sample_qubo_matrix, feature=self.feature)
 
         assert result1.mean_eigenvalue == result2.mean_eigenvalue
         assert result1.condition_number == result2.condition_number

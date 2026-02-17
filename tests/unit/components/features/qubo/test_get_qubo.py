@@ -4,110 +4,94 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-from luna_quantum import Sense
-from luna_quantum.errors import ModelNotQuadraticError, ModelNotUnconstrainedError, ModelVtypeError
+from luna_quantum import Bounds, Model, Sense, Variable, Vtype
+from luna_quantum.translator import QuboTranslator
 
 from luna_bench.components.features.qubo.get_qubo import get_qubo
+
+
+def create_mock_qubo_model(sense: Sense, objective: float) -> MagicMock:
+    mock_model = MagicMock()
+    mock_model.sense = sense
+    mock_model.objective = objective
+    return mock_model
+
+
+def creat_mock_translator(matrix_list: list[list[float]]) -> MagicMock:
+    matrix = np.array(matrix_list)
+    mock_translator = MagicMock()
+    mock_translator.matrix = matrix
+    return mock_translator
 
 
 class TestGetQubo:
     """Tests for the get_qubo helper function."""
 
-    def test_returns_qubo_matrix_from_valid_model(self) -> None:
-        expected_matrix = np.array([[1.0, 2.0], [2.0, 3.0]])
-
-        mock_model = MagicMock()
-        mock_model.sense = Sense.Min
-
-        mock_translator = MagicMock()
-        mock_translator.matrix = expected_matrix
-
-        with patch("luna_bench.components.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
-            mock_translator_cls.from_aq.return_value = mock_translator
-            result = get_qubo(mock_model)
-
+    @pytest.mark.parametrize(
+        ("input_list", "exp_list"),
+        [
+            ([[1.0, 4.0], [0.0, 3.0]], [[1.0, 2.0], [2.0, 3.0]]),
+            ([[1.0, 0.0], [4.0, 3.0]], [[1.0, 2.0], [2.0, 3.0]]),
+            ([[1.0, 2.0], [2.0, 3.0]], [[1.0, 2.0], [2.0, 3.0]]),
+        ],
+    )
+    def test_returns_qubo_matrix_from_valid_model(
+        self, input_list: list[list[float]], exp_list: list[list[float]]
+    ) -> None:
+        input_matrix = np.array(input_list)
+        expected_matrix = np.array(exp_list)
+        luna_model = QuboTranslator.to_aq(input_matrix)
+        result = get_qubo(luna_model)
         np.testing.assert_array_equal(result, expected_matrix)
 
-    def test_clones_model_before_processing(self) -> None:
-        mock_model = MagicMock()
-        mock_model.sense = Sense.Min
-
-        mock_translator = MagicMock()
-        mock_translator.matrix = np.array([[1.0]])
-
-        with patch("luna_bench.components.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
-            mock_translator_cls.from_aq.return_value = mock_translator
-            get_qubo(mock_model)
-
-        mock_model.deep_clone.assert_called_once()
-
-    def test_negates_objective_for_maximization(self) -> None:
-        mock_model = MagicMock()
-        mock_model.sense = Sense.Max
-        mock_model.objective = 5.0
+    @pytest.mark.parametrize(("sense", "org_obj", "exp_obj"), [(Sense.Max, -5.0, 5.0), (Sense.Min, 5.0, 5.0)])
+    def test_negates_objective_for_maximization(self, sense: Sense, org_obj: float, exp_obj: float) -> None:
+        mock_model = create_mock_qubo_model(sense=sense, objective=org_obj)
 
         cloned_model = mock_model.deep_clone.return_value
-        cloned_model.objective = 5.0
+        cloned_model.objective = org_obj
 
-        mock_translator = MagicMock()
-        mock_translator.matrix = np.array([[1.0]])
-
-        with patch("luna_bench.components.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
-            mock_translator_cls.from_aq.return_value = mock_translator
-            get_qubo(mock_model)
-
-        assert cloned_model.objective == -5.0
-
-    def test_does_not_negate_objective_for_minimization(self) -> None:
-        mock_model = MagicMock()
-        mock_model.sense = Sense.Min
-        mock_model.objective = 5.0
-
-        cloned_model = mock_model.deep_clone.return_value
-        cloned_model.objective = 5.0
-
-        mock_translator = MagicMock()
-        mock_translator.matrix = np.array([[1.0]])
+        mock_translator = creat_mock_translator([[1.0]])
 
         with patch("luna_bench.components.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
             mock_translator_cls.from_aq.return_value = mock_translator
             get_qubo(mock_model)
 
-        assert cloned_model.objective == 5.0
+        assert cloned_model.objective == exp_obj
 
     def test_raises_runtime_error_for_unconstrained_model(self) -> None:
-        mock_model = MagicMock()
-        mock_model.sense = Sense.Min
+        model = Model("constrained")
+        with model.environment:
+            x = Variable("x", vtype=Vtype.Binary)
+        model.objective = 1 * x
+        model.constraints += x <= 1
 
-        with patch("luna_bench.components.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
-            mock_translator_cls.from_aq.side_effect = ModelNotUnconstrainedError()
-
-            with pytest.raises(RuntimeError, match="not unconstrained"):
-                get_qubo(mock_model)
+        with pytest.raises(RuntimeError, match="not unconstrained"):
+            get_qubo(model)
 
     def test_raises_runtime_error_for_non_quadratic_model(self) -> None:
-        mock_model = MagicMock()
-        mock_model.sense = Sense.Min
+        model = Model("cubic")
+        with model.environment:
+            x = Variable("x", vtype=Vtype.Binary)
+            y = Variable("y", vtype=Vtype.Binary)
+            z = Variable("z", vtype=Vtype.Binary)
+        model.objective = x * y * z
 
-        with patch("luna_bench.components.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
-            mock_translator_cls.from_aq.side_effect = ModelNotQuadraticError()
-
-            with pytest.raises(RuntimeError, match="not quadratic"):
-                get_qubo(mock_model)
+        with pytest.raises(RuntimeError, match="not quadratic"):
+            get_qubo(model)
 
     def test_raises_runtime_error_for_invalid_vtype(self) -> None:
-        mock_model = MagicMock()
-        mock_model.sense = Sense.Min
+        model = Model("integer_vars")
+        with model.environment:
+            x = Variable("x", vtype=Vtype.Integer, bounds=Bounds(0, 5))
+            y = Variable("y", vtype=Vtype.Integer, bounds=Bounds(0, 5))
+        model.objective = x + y
 
-        with patch("luna_bench.components.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
-            mock_translator_cls.from_aq.side_effect = ModelVtypeError()
-
-            with pytest.raises(RuntimeError, match="different vtypes"):
-                get_qubo(mock_model)
+        with pytest.raises(RuntimeError, match="different vtypes"):
+            get_qubo(model)
 
     def test_raises_runtime_error_for_unknown_exception(self) -> None:
-        mock_model = MagicMock()
-        mock_model.sense = Sense.Min
+        mock_model = create_mock_qubo_model(Sense.Min, 0.0)
 
         with patch("luna_bench.components.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
             mock_translator_cls.from_aq.side_effect = ValueError("something unexpected")
@@ -116,8 +100,7 @@ class TestGetQubo:
                 get_qubo(mock_model)
 
     def test_preserves_original_exception_as_cause(self) -> None:
-        mock_model = MagicMock()
-        mock_model.sense = Sense.Min
+        mock_model = create_mock_qubo_model(Sense.Min, 0.0)
         original_error = ValueError("original")
 
         with patch("luna_bench.components.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
@@ -129,12 +112,10 @@ class TestGetQubo:
             assert exc_info.value.__cause__ is original_error
 
     def test_passes_cloned_model_to_translator(self) -> None:
-        mock_model = MagicMock()
-        mock_model.sense = Sense.Min
+        mock_model = create_mock_qubo_model(Sense.Min, 0.0)
         cloned_model = mock_model.deep_clone.return_value
 
-        mock_translator = MagicMock()
-        mock_translator.matrix = np.array([[1.0]])
+        mock_translator = creat_mock_translator([[1.0]])
 
         with patch("luna_bench.components.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
             mock_translator_cls.from_aq.return_value = mock_translator
