@@ -11,6 +11,7 @@ dependencies = [
     "luna-quantum>=1.1.3rc1",
     "matplotlib>=3.10.8",
     "peewee>=3.19.0",
+    "pip-licenses>=5.5.1",
     "pydantic-settings>=2.11.0",
     "returns[compatible-mypy]>=0.26.0",
     "rich>=14.1.0",
@@ -22,7 +23,7 @@ dev = [
     "pyscipopt>=6.0.1",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
-    "ruff>=0.14.11",
+    "ruff>=0.15.0",
     "tox>=4.30.3",
     "types-peewee>=3.19.0",
 ]
@@ -32,3 +33,6 @@ opt-metrics = [
 plot = [
     "matplotlib>=3.10.8",
 ]
+
+[tool.setuptools.packages.find]
+include = ["luna_bench*"]
