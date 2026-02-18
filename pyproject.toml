@@ -8,6 +8,7 @@ requires-python = ">=3.13"
 dependencies = [
     "dependency-injector>=4.48.2",
     "huey>=2.6.0",
+    "ipykernel>=7.2.0",
     "luna-quantum>=1.1.3rc1",
     "matplotlib>=3.10.8",
     "peewee>=3.19.0",
@@ -19,6 +20,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "mypy>=1.17.1",
+    "networkx>=3.6.1",
     "pyscipopt>=6.0.1",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",

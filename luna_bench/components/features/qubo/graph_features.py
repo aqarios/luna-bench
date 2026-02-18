@@ -43,8 +43,11 @@ class QuboGraphFeatureResult(ArbitraryDataDomain):
         contributions are scaled by the geometric mean of the involved edge
         weights.
     num_connected_components : int
-        Number of connected components in the graph. A fully connected QUBO
-        yields 1; a diagonal (no off-diagonal entries) yields one per variable.
+        Number of connected components in the QUBO interaction graph.
+        A fully connected QUBO has 1 component (lower bound), meaning the
+        graph cannot be decomposed further. A purely diagonal QUBO (no
+        off-diagonal entries) has n = num_nodes independent components
+        (upper bound) as each node is a component. Range: [1, num_nodes of graph].
     average_path_length : float
         Mean shortest-path length computed on the largest connected component.
     density : float
