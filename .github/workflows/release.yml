@@ -12,6 +12,10 @@ on:
           - minor
           - patch
           - rc
+          - alpha
+          - beta
+          - post
+          - dev
 
 permissions:
   contents: write
@@ -24,35 +28,22 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+
       - name: Bump version
         id: bump
         run: |
-          CURRENT=$(grep '^version = ' pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
-          BASE=$(echo "$CURRENT" | sed 's/rc[0-9]*//')
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE"
+          uv version --bump ${{ inputs.releaseType }}
+          echo "version=$(uv version)" >> "$GITHUB_OUTPUT"
 
           case "${{ inputs.releaseType }}" in
-            major) NEW="$((MAJOR + 1)).0.0" ;;
-            minor) NEW="${MAJOR}.$((MINOR + 1)).0" ;;
-            patch) NEW="${MAJOR}.${MINOR}.$((PATCH + 1))" ;;
-            rc)
-              RC_NUM=1
-              if [[ "$CURRENT" =~ rc([0-9]+)$ ]]; then
-                RC_NUM=$(( ${BASH_REMATCH[1]} + 1 ))
-              fi
-              NEW="${MAJOR}.${MINOR}.${PATCH}rc${RC_NUM}"
-              ;;
+            major|minor|patch|post) echo "branch_name=release" >> "$GITHUB_OUTPUT" ;;
+            *) echo "branch_name=pre-release" >> "$GITHUB_OUTPUT" ;;
           esac
-
-          echo "New version: $NEW"
-          sed -i "s/^version = \".*\"/version = \"$NEW\"/" pyproject.toml
-          echo "version=$NEW" >> "$GITHUB_OUTPUT"
-
-          if [ "${{ inputs.releaseType }}" = "rc" ]; then
-            echo "branch_name=pre-release" >> "$GITHUB_OUTPUT"
-          else
-            echo "branch_name=release" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Create PR with version bump
         uses: peter-evans/create-pull-request@v7
@@ -71,12 +62,6 @@ jobs:
             ```
           team-reviewers: aqarios/luna_bench_admin
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          version: "latest"
-          enable-cache: true
-
       - name: Build package
         run: uv build
 
@@ -88,4 +73,4 @@ jobs:
           name: v${{ steps.bump.outputs.version }}
           files: dist/*
           generate_release_notes: true
-          prerelease: ${{ inputs.releaseType == 'rc' }}
+          prerelease: ${{ contains(fromJSON('["rc","alpha","beta","dev"]'), inputs.releaseType) }}
