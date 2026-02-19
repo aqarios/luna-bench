@@ -33,32 +33,30 @@ jobs:
         with:
           version: "latest"
           enable-cache: true
+      - name: Set Version
+        run: uv version --bump ${{ github.event.inputs.releaseType }}
 
-      - name: Bump version
-        id: bump
+      - name: Get package version
+        id: package-version
         run: |
-          uv version --bump ${{ inputs.releaseType }}
-          echo "version=$(uv version)" >> "$GITHUB_OUTPUT"
-
-          case "${{ inputs.releaseType }}" in
-            major|minor|patch|post) echo "branch_name=release" >> "$GITHUB_OUTPUT" ;;
-            *) echo "branch_name=pre-release" >> "$GITHUB_OUTPUT" ;;
-          esac
+          VERSION=$(uv version | awk -F'[ @]' '{print $NF}')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "branch_name=release/v$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Create PR with version bump
         uses: peter-evans/create-pull-request@v7
         with:
-          branch: ${{ steps.bump.outputs.branch_name }}
-          commit-message: "chore(update-version): Updated luna_bench to ${{ steps.bump.outputs.version }}"
-          title: "Update luna_bench version (${{ steps.bump.outputs.version }})"
+          branch: ${{ steps.package-version.outputs.branch_name }}
+          commit-message: "chore(update-version): Updated luna_bench to ${{ steps.package-version.outputs.version }}"
+          title: "Update luna_bench version (${{ steps.package-version.outputs.version }})"
           body: |
-            Updated luna_bench version to ${{ steps.bump.outputs.version }}.
+            Updated luna_bench version to ${{ steps.package-version.outputs.version }}.
 
-            GitHub Release `v${{ steps.bump.outputs.version }}` has been created automatically with built wheels.
+            GitHub Release `v${{ steps.package-version.outputs.version }}` has been created automatically with built wheels.
 
             Install this version with:
             ```
-            uv add git+https://github.com/aqarios/luna-bench.git@v${{ steps.bump.outputs.version }}
+            uv add git+https://github.com/aqarios/luna-bench.git@v${{ steps.package-version.outputs.version }}
             ```
           team-reviewers: aqarios/luna_bench_admin
 
@@ -68,9 +66,9 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.bump.outputs.version }}
-          target_commitish: ${{ steps.bump.outputs.branch_name }}
-          name: v${{ steps.bump.outputs.version }}
+          tag_name: v${{ steps.package-version.outputs.version }}
+          target_commitish: ${{ steps.package-version.outputs.branch_name }}
+          name: v${{ steps.package-version.outputs.version }}
           files: dist/*
           generate_release_notes: true
           prerelease: ${{ contains(fromJSON('["rc","alpha","beta","dev"]'), inputs.releaseType) }}
