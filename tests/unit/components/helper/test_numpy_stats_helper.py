@@ -49,3 +49,92 @@ class TestNumpyStatsHelper:
         result = NumpyStatsHelper.sqrt_normalized(data)
         expected = np.sqrt(data)
         np.testing.assert_array_equal(result, expected)
+
+    # --- min ---
+
+    def test_min_returns_minimum_value(self) -> None:
+        data = np.array([3.0, 1.0, 4.0, 1.5, 9.0])
+        assert NumpyStatsHelper.min(data) == pytest.approx(1.0)
+
+    def test_min_with_negative_values(self) -> None:
+        data = np.array([2.0, -5.0, 3.0])
+        assert NumpyStatsHelper.min(data) == pytest.approx(-5.0)
+
+    def test_min_single_element(self) -> None:
+        data = np.array([7.0])
+        assert NumpyStatsHelper.min(data) == pytest.approx(7.0)
+
+    def test_min_2d_array(self) -> None:
+        data = np.array([[3.0, 1.0], [4.0, 0.5]])
+        assert NumpyStatsHelper.min(data) == pytest.approx(0.5)
+
+    # --- max ---
+
+    def test_max_returns_maximum_value(self) -> None:
+        data = np.array([3.0, 1.0, 4.0, 1.5, 9.0])
+        assert NumpyStatsHelper.max(data) == pytest.approx(9.0)
+
+    def test_max_with_negative_values(self) -> None:
+        data = np.array([-2.0, -5.0, -3.0])
+        assert NumpyStatsHelper.max(data) == pytest.approx(-2.0)
+
+    def test_max_single_element(self) -> None:
+        data = np.array([7.0])
+        assert NumpyStatsHelper.max(data) == pytest.approx(7.0)
+
+    def test_max_2d_array(self) -> None:
+        data = np.array([[3.0, 1.0], [4.0, 0.5]])
+        assert NumpyStatsHelper.max(data) == pytest.approx(4.0)
+
+    def test_min_less_than_or_equal_max(self) -> None:
+        data = np.array([5.0, 2.0, 8.0, 1.0])
+        assert NumpyStatsHelper.min(data) <= NumpyStatsHelper.max(data)
+
+    # --- skew ---
+
+    def test_skew_symmetric_distribution(self) -> None:
+        data = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        assert NumpyStatsHelper.skew(data) == pytest.approx(0.0)
+
+    def test_skew_right_skewed(self) -> None:
+        data = np.array([1.0, 1.0, 1.0, 1.0, 10.0])
+        assert NumpyStatsHelper.skew(data) > 0
+
+    def test_skew_left_skewed(self) -> None:
+        data = np.array([10.0, 10.0, 10.0, 10.0, 1.0])
+        assert NumpyStatsHelper.skew(data) < 0
+
+    def test_skew_empty_returns_zero(self) -> None:
+        data = np.array([])
+        assert NumpyStatsHelper.skew(data) == 0.0
+
+    def test_skew_matches_scipy(self) -> None:
+        from scipy.stats import skew as scipy_skew
+
+        data = np.array([2.0, 3.0, 5.0, 7.0, 11.0, 13.0])
+        assert NumpyStatsHelper.skew(data) == pytest.approx(float(scipy_skew(data)))
+
+    # --- kurtosis ---
+
+    def test_kurtosis_normal_like_distribution(self) -> None:
+        rng = np.random.default_rng(42)
+        data = rng.normal(0, 1, 10000)
+        assert NumpyStatsHelper.kurtosis(data) == pytest.approx(0.0, abs=0.1)
+
+    def test_kurtosis_uniform_is_negative(self) -> None:
+        data = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        assert NumpyStatsHelper.kurtosis(data) < 0
+
+    def test_kurtosis_heavy_tails_is_positive(self) -> None:
+        data = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 100.0])
+        assert NumpyStatsHelper.kurtosis(data) > 0
+
+    def test_kurtosis_empty_returns_zero(self) -> None:
+        data = np.array([])
+        assert NumpyStatsHelper.kurtosis(data) == 0.0
+
+    def test_kurtosis_matches_scipy(self) -> None:
+        from scipy.stats import kurtosis as scipy_kurtosis
+
+        data = np.array([2.0, 3.0, 5.0, 7.0, 11.0, 13.0])
+        assert NumpyStatsHelper.kurtosis(data) == pytest.approx(float(scipy_kurtosis(data)))
