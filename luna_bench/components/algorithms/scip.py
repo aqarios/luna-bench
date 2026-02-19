@@ -37,7 +37,7 @@ class ScipAlgorithm(BaseAlgorithmSync):
     Parameters
     ----------
     max_runtime: int | None
-        Defines the maximum runtime for the SCIP solver in seconds.
+        Defines the maximum runtime for the SCIP solver in seconds, defaults to 1 hour.
     quiet_output: bool
         Defines the verbosity of the SCIP solver output.
     _logger: Logger
@@ -48,7 +48,7 @@ class ScipAlgorithm(BaseAlgorithmSync):
     InfeasibleModelError: If the model has no feasible solution.
     """
 
-    max_runtime: int | None = None
+    max_runtime: int | None = 60 * 60
     quiet_output: bool = True
 
     _logger: ClassVar[Logger] = Logging.get_logger(__name__)
