@@ -1,4 +1,4 @@
 from .dataframe_conversion import metric_to_dataframe
-from .style import PALETTE
+from .style import AQARIOS, AQUA, MOON, PALETTE, ROCKET_FIRE, SAND, SKY, STAR, SUCCESS
 
-__all__ = ["PALETTE", "metric_to_dataframe"]
+__all__ = ["AQARIOS", "AQUA", "MOON", "PALETTE", "ROCKET_FIRE", "SAND", "SKY", "STAR", "SUCCESS", "metric_to_dataframe"]

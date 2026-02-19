@@ -40,25 +40,6 @@ class AggregatedMetricPlot(GenericMetricsPlot):
     Subclasses declare the metric to plot via ClassVar attributes and
     register themselves with the ``@plot`` decorator.
 
-    Attributes
-    ----------
-    _metric_id : ClassVar[str]
-        Registered id of the metric to plot.
-    _result_cls : ClassVar[type[BaseModel]]
-        Pydantic model used to parse individual metric results.
-    _value_field : ClassVar[str]
-        Field name on *_result_cls* that holds the numeric value.
-    _ylabel : ClassVar[str]
-        Label for the y-axis.
-    _title : ClassVar[str]
-        Plot title.
-    _ylim : ClassVar[tuple[float, float] | None]
-        Optional fixed y-axis limits.
-    _hline : ClassVar[float | None]
-        Optional horizontal reference line.
-    _hline_label : ClassVar[str | None]
-        Legend label for the reference line.
-
     Examples
     --------
     >>> AverageMyMetricPlot = AggregatedMetricPlot.create(

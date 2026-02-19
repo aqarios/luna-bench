@@ -37,6 +37,8 @@ class FeatureBarChartPlot(GenericFeaturesPlot):
     For simple features (flat result with scalar fields), set *value_field*
     to the attribute name.
 
+    Notes
+    -----
     For MIP features that use ``EnumFeatureResult`` with key-based access,
     provide a *value_accessor* callable that extracts the numeric value from
     the parsed result object.
@@ -88,7 +90,7 @@ class FeatureBarChartPlot(GenericFeaturesPlot):
         aggregation: Aggregation = Aggregation.MEAN_SD,
         ylim: tuple[float, float] | None = None,
     ) -> type[FeatureBarChartPlot]:
-        """Create and register a ``FeatureBarChartPlot`` subclass for *feature*.
+        """Create and register a ``FeatureBarChartPlot`` subclass for ``Features``.
 
         Parameters
         ----------

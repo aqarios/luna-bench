@@ -1,3 +1,12 @@
 """Luna colour palette and shared plot styling."""
 
-PALETTE = ["#4773ff", "#79ae90", "#ecc15d", "#14b8a6", "#a855f7", "#FF6B6B"]
+AQUA = "#102240"
+AQARIOS = "#4773FF"
+SKY = "#20252B"
+SAND = "#F1EDE5"
+MOON = "#A6A6A6"
+SUCCESS = "#79AE90"
+ROCKET_FIRE = "#D84141"
+STAR = "#ECC35B"
+
+PALETTE = [AQARIOS, SUCCESS, STAR, ROCKET_FIRE, MOON, AQUA]
