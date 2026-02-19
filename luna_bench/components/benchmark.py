@@ -229,6 +229,39 @@ class Benchmark(BenchmarkEntity):
         return Benchmark.model_validate(result.unwrap(), from_attributes=True)
 
     @staticmethod
+    def open(name: str) -> Benchmark:
+        """
+        Load a benchmark if it exists, otherwise create a new one.
+
+        Parameters
+        ----------
+        name: str
+            The name of the benchmark.
+
+        Returns
+        -------
+        Benchmark
+            The loaded or newly created Benchmark object.
+
+        """
+        benchmark_load = Benchmark.__load_uc()
+        result: Result[
+            BenchmarkEntity, DataNotExistError | UnknownLunaBenchError | UnknownIdError | ValidationError
+        ] = benchmark_load(name)
+
+        if is_successful(result):
+            return Benchmark.model_validate(result.unwrap(), from_attributes=True)
+
+        if not isinstance(result.failure(), DataNotExistError):
+            error = result.failure()
+            Benchmark._logger.error(f"Failed to open benchmark: {error}")
+            if isinstance(error, UnknownLunaBenchError):
+                raise error.error()
+            raise error
+
+        return Benchmark.create(name)
+
+    @staticmethod
     def import_from_file(file_path: str) -> Benchmark:  # noqa: D102 # Not yet implemented
         raise NotImplementedError  # pragma: no cover
 
