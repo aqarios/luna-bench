@@ -60,19 +60,19 @@ _mapper_container.wire(
 )
 
 # Import components AFTER wiring to ensure decorators have access to injected registries
-from luna_bench.components import Benchmark, ModelSet, ModelMetadata
-import luna_bench.components.algorithms as Algorithm  # noqa: E402
-import luna_bench.components.features as Feature  # noqa: E402
-import luna_bench.components.metrics as Metric  # noqa: E402
-import luna_bench.components.plots as Plot  # noqa: E402
+import luna_bench.components.algorithms as Algorithm  # noqa: E402, N812
+import luna_bench.components.features as Feature  # noqa: E402, N812
+import luna_bench.components.metrics as Metric  # noqa: E402, N812
+import luna_bench.components.plots as Plot  # noqa: E402, N812
+from luna_bench.components import Benchmark, ModelMetadata, ModelSet  # noqa: E402
 
 __all__ = (
-    "Benchmark",
-    "ModelSet",
-    "ModelMetadata",
     "Algorithm",
+    "Benchmark",
     "Feature",
     "Metric",
+    "ModelMetadata",
+    "ModelSet",
     "Plot",
 )
 
