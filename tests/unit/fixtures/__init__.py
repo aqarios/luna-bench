@@ -13,6 +13,7 @@ from .mock_mip_models import (
     zero_coefficient_model,
 )
 from .mock_model import hard_model, infeasible_model, model, regular_model
+from .mock_qubo_models import diagonal_qubo_matrix, fully_connected_qubo_matrix, sample_qubo_matrix
 from .mock_solution import solution
 from .mock_usecase import usecase
 
@@ -21,8 +22,10 @@ __all__ = [
     "configured_dao",
     "create_solution",
     "dense_model",
+    "diagonal_qubo_matrix",
     "empty_model",
     "empty_transaction",
+    "fully_connected_qubo_matrix",
     "hard_model",
     "infeasible_model",
     "mapper",
@@ -32,6 +35,7 @@ __all__ = [
     "model",
     "quadratic_model",
     "regular_model",
+    "sample_qubo_matrix",
     "setup_benchmark",
     "simple_linear_model",
     "solution",

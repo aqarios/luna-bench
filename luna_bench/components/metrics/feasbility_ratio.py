@@ -65,5 +65,4 @@ class FeasibilityRatio(BaseMetric):
         """
         if len(solution.samples) == 0:
             return FeasibilityRatioResult(feasibility_ratio=0.0)
-
         return FeasibilityRatioResult(feasibility_ratio=solution.feasibility_ratio())

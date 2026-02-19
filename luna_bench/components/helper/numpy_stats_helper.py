@@ -1,5 +1,7 @@
 import numpy as np
 from numpy._typing import NDArray
+from scipy.stats import kurtosis as scipy_kurtosis
+from scipy.stats import skew as scipy_skew
 
 
 class NumpyStatsHelper:
@@ -63,3 +65,27 @@ class NumpyStatsHelper:
         if len(data) == 0:
             return 0
         return np.percentile(data, 90).item()
+
+    @staticmethod
+    def skew(data: NDArray[np.float64]) -> float:
+        """Calculate the skewness of the array, returning 0 if empty."""
+        if len(data) == 0:
+            return 0.0
+        return float(scipy_skew(data))
+
+    @staticmethod
+    def kurtosis(data: NDArray[np.float64]) -> float:
+        """Calculate the excess kurtosis of the array, returning 0 if empty."""
+        if len(data) == 0:
+            return 0.0
+        return float(scipy_kurtosis(data))
+
+    @staticmethod
+    def min(data: NDArray[np.float64]) -> float:
+        """Calculate the minimum value of the array."""
+        return np.min(data)
+
+    @staticmethod
+    def max(data: NDArray[np.float64]) -> float:
+        """Calculate the maximum value of the array."""
+        return np.max(data)

@@ -196,3 +196,6 @@ cython_debug/
 # helpers config
 .idea
 .local
+
+# GitHub Wiki (separate git repo)
+.wiki/
