@@ -10,6 +10,8 @@ from pyscipopt import Model as PyScipModel
 from luna_bench.base_components import BaseAlgorithmSync
 from luna_bench.helpers import algorithm
 
+SCIP_QUAD_VAR_DUMMY = "quadobjvar"
+
 
 class InfeasibleModelError(Exception):
     """
@@ -107,11 +109,16 @@ class ScipAlgorithm(BaseAlgorithmSync):
         if scip_model.getStatus() == "infeasible":
             raise InfeasibleModelError
 
-        self._logger.info(f"Completed SCIP optimization for model {model.name} in {timing.total_seconds:.2f}s")
+        self._logger.info(f"Completed SCIP optimization for model {model.name} in {timing.total_seconds:.2f}s.")
 
         # Extract solution values from SCIP model
+        model_var_names = {v.name for v in model.variables()}
         solution_dict: dict[str, float] = {}
         for var in scip_model.getVars():
+            if var.name == SCIP_QUAD_VAR_DUMMY:
+                continue  # SCIP adds this internally to linearise quadratic objectives
+            if var.name not in model_var_names:
+                raise ValueError(f"SCIP returned unknown variable '{var.name}' not present in model")  # noqa: TRY003
             solution_dict[var.name] = scip_model.getVal(var)
 
         return Solution.from_dict(
