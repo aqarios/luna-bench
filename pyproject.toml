@@ -1,10 +1,25 @@
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "luna-bench"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.0.1"
+description = "Benchmarking framework for classical, hybrid and quantum optimization algorithms"
 readme = "README.md"
+license = "Apache-2.0"
 requires-python = ">=3.13"
-
+authors = [
+    { name = "Aqarios GmbH", email = "support@aqarios.com" },
+]
+keywords = [
+  "aqarios",
+  "luna",
+  "quantum computing",
+  "quantum optimization",
+  "optimization",
+  "benchmarking",
+]
 dependencies = [
     "dependency-injector>=4.48.2",
     "huey>=2.6.0",
@@ -16,6 +31,10 @@ dependencies = [
     "returns[compatible-mypy]>=0.26.0",
     "rich>=14.1.0",
 ]
+
+[project.urls]
+Homepage = "https://aqarios.com"
+Documentation = "https://docs.aqarios.com"
 
 [dependency-groups]
 dev = [
