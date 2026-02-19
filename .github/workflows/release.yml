@@ -1,0 +1,180 @@
+name: release
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type (stable cannot be combined with prerelease, use "none" for prerelease-only updates)'
+        type: choice
+        required: true
+        default: 'stable'
+        options:
+          - stable
+          - major
+          - minor
+          - patch
+          - post
+          - none
+      prerelease:
+        description: 'Prerelease type (only valid with major/minor/patch, not with stable)'
+        type: choice
+        required: false
+        default: 'none'
+        options:
+          - none
+          - rc
+          - beta
+          - alpha
+          - dev
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  # Cancels runs when new commit on main is pushed.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  #################################################################
+  ######################## Semgrep Checks #########################
+  #################################################################
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v5
+      - name: "Install UV"
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+          activate-environment: false
+          enable-cache: true
+      - name: "Run Semgrep"
+        run: |
+          uv run \
+            --no-project \
+            --with semgrep \
+            semgrep ci --config auto
+
+  #################################################################
+  ########################### Build ###############################
+  #################################################################
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref }}
+      - name: "Install UV"
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+          activate-environment: false
+          enable-cache: true
+      - name: "Set Version"
+        run: |
+          if [[ "$RELEASE_TYPE" == "none" ]]; then
+            # Prerelease-only update
+            if [[ "$PRERELEASE" != "none" ]]; then
+              uv version --bump $PRERELEASE
+            else
+              echo "Error: When release_type is 'none', a prerelease type must be specified"
+              exit 1
+            fi
+          elif [[ "$PRERELEASE" != "none" ]]; then
+            # Release type with prerelease
+            uv version --bump $RELEASE_TYPE --bump $PRERELEASE
+          else
+            # Release type only
+            uv version --bump $RELEASE_TYPE
+          fi
+        env:
+          RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          PRERELEASE: ${{ github.event.inputs.prerelease }}
+      - name: "Build"
+        run: uv build
+      - name: Upload Wheel to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: luna-bench-wheel
+          path: dist/*.whl
+          if-no-files-found: error
+
+  #################################################################
+  ####################### Make Release ############################
+  #################################################################
+  approve-release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref }}
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+      - name: "Install UV"
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+          activate-environment: false
+          enable-cache: true
+      - name: "Set Version"
+        run: |
+          if [[ "$RELEASE_TYPE" == "none" ]]; then
+            # Prerelease-only update
+            if [[ "$PRERELEASE" != "none" ]]; then
+              uv version --bump $PRERELEASE
+            else
+              echo "Error: When release_type is 'none', a prerelease type must be specified"
+              exit 1
+            fi
+          elif [[ "$PRERELEASE" != "none" ]]; then
+            # Release type with prerelease
+            uv version --bump $RELEASE_TYPE --bump $PRERELEASE
+          else
+            # Release type only
+            uv version --bump $RELEASE_TYPE
+          fi
+        env:
+          RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          PRERELEASE: ${{ github.event.inputs.prerelease }}
+
+      - name: Get package version
+        id: package-version
+        run: |
+          VERSION=$(uv version | awk -F'[ @]' '{print $NF}')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "branch_name=release/v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create PR with version bump
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: ${{ steps.package-version.outputs.branch_name }}
+          commit-message: "chore(update-version): Updated luna_bench to ${{ steps.package-version.outputs.version }}"
+          title: "Update luna_bench version (${{ steps.package-version.outputs.version }})"
+          body: |
+            Updated luna_bench version to ${{ steps.package-version.outputs.version }}.
+
+            GitHub Release `v${{ steps.package-version.outputs.version }}` has been created automatically with built wheels.
+
+            Install this version with:
+            ```
+            uv add git+https://github.com/aqarios/luna-bench.git@v${{ steps.package-version.outputs.version }}
+            ```
+          team-reviewers: aqarios/luna_bench_admin
+
+      - name: Build package
+        run: uv build
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.package-version.outputs.version }}
+          target_commitish: ${{ steps.package-version.outputs.branch_name }}
+          name: v${{ steps.package-version.outputs.version }}
+          files: dist/*
+          generate_release_notes: true
+          prerelease: ${{ contains(fromJSON('["rc","alpha","beta","dev"]'), inputs.prerelease) }}
