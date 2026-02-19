@@ -1,40 +1,146 @@
-name: Release
-
+name: release
 on:
   workflow_dispatch:
     inputs:
-      releaseType:
-        description: 'Release Type (major: X.0.0, minor: 0.X.0, patch: 0.0.X, rc: 0.0.0rcX)'
+      release_type:
+        description: 'Release type (stable cannot be combined with prerelease, use "none" for prerelease-only updates)'
         type: choice
-        default: 'rc'
+        required: true
+        default: 'stable'
         options:
+          - stable
           - major
           - minor
           - patch
-          - rc
-          - alpha
-          - beta
           - post
+          - none
+      prerelease:
+        description: 'Prerelease type (only valid with major/minor/patch, not with stable)'
+        type: choice
+        required: false
+        default: 'none'
+        options:
+          - none
+          - rc
+          - beta
+          - alpha
           - dev
 
 permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  # Cancels runs when new commit on main is pushed.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  release:
-    name: Bump version, build, release and create PR
+  #################################################################
+  ######################## Semgrep Checks #########################
+  #################################################################
+  semgrep:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      - name: "Checkout"
+        uses: actions/checkout@v5
+      - name: "Install UV"
+        uses: astral-sh/setup-uv@v7
         with:
-          version: "latest"
+          python-version: "3.13"
+          activate-environment: false
           enable-cache: true
-      - name: Set Version
-        run: uv version --bump ${{ github.event.inputs.releaseType }}
+      - name: "Run Semgrep"
+        run: |
+          uv run \
+            --no-project \
+            --with semgrep \
+            semgrep ci --config auto
+
+  #################################################################
+  ########################### Build ###############################
+  #################################################################
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref }}
+      - name: "Install UV"
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+          activate-environment: false
+          enable-cache: true
+      - name: "Set Version"
+        run: |
+          if [[ "$RELEASE_TYPE" == "none" ]]; then
+            # Prerelease-only update
+            if [[ "$PRERELEASE" != "none" ]]; then
+              uv version --bump $PRERELEASE
+            else
+              echo "Error: When release_type is 'none', a prerelease type must be specified"
+              exit 1
+            fi
+          elif [[ "$PRERELEASE" != "none" ]]; then
+            # Release type with prerelease
+            uv version --bump $RELEASE_TYPE --bump $PRERELEASE
+          else
+            # Release type only
+            uv version --bump $RELEASE_TYPE
+          fi
+        env:
+          RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          PRERELEASE: ${{ github.event.inputs.prerelease }}
+      - name: "Build"
+        run: uv build
+      - name: Upload Wheel to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: luna-bench-wheel
+          path: dist/*.whl
+          if-no-files-found: error
+
+  #################################################################
+  ####################### Make Release ############################
+  #################################################################
+  approve-release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref }}
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+      - name: "Install UV"
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+          activate-environment: false
+          enable-cache: true
+      - name: "Set Version"
+        run: |
+          if [[ "$RELEASE_TYPE" == "none" ]]; then
+            # Prerelease-only update
+            if [[ "$PRERELEASE" != "none" ]]; then
+              uv version --bump $PRERELEASE
+            else
+              echo "Error: When release_type is 'none', a prerelease type must be specified"
+              exit 1
+            fi
+          elif [[ "$PRERELEASE" != "none" ]]; then
+            # Release type with prerelease
+            uv version --bump $RELEASE_TYPE --bump $PRERELEASE
+          else
+            # Release type only
+            uv version --bump $RELEASE_TYPE
+          fi
+        env:
+          RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          PRERELEASE: ${{ github.event.inputs.prerelease }}
 
       - name: Get package version
         id: package-version
@@ -71,4 +177,4 @@ jobs:
           name: v${{ steps.package-version.outputs.version }}
           files: dist/*
           generate_release_notes: true
-          prerelease: ${{ contains(fromJSON('["rc","alpha","beta","dev"]'), inputs.releaseType) }}
+          prerelease: ${{ contains(fromJSON('["rc","alpha","beta","dev"]'), inputs.prerelease) }}
