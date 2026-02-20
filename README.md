@@ -69,17 +69,21 @@ modelset.add(model)
 ### Run a benchmark
 
 ```python
-from luna_bench.components import Benchmark
-from luna_bench.components.algorithms.scip import ScipAlgorithm
-from luna_bench.components.features.optsol_feature import OptSolFeature
-from luna_bench.components.metrics.approximation_ratio import ApproximationRatio
-from luna_bench.components.plots import AverageFeasibilityRatioPlot
+from luna_bench import Benchmark
+from luna_bench.algorithms import ScipAlgorithm
+from luna_bench.features import OptSolFeature
+from luna_bench.metrics import ApproximationRatio
+from luna_bench.plots import AverageFeasibilityRatioPlot
+from luna_quantum.algorithms import FlexQAOA
 
 benchmark = Benchmark.create("my_benchmark")
 benchmark.set_modelset(modelset)
 
 # Add a solver
 benchmark.add_algorithm("scip", ScipAlgorithm(max_runtime=60))
+
+# Add any luna_quantum algorithm directly
+benchmark.add_algorithm("flexqaoa", FlexQAOA())
 
 # Add a feature that computes the optimal solution (used by metrics)
 benchmark.add_feature("optimal_solution", OptSolFeature())
