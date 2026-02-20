@@ -26,7 +26,7 @@ jobs:
           enable-cache: true
 
       - name: "Install the project"
-        run: uv sync --locked --all-extras --all-groups
+        run: uv sync --all-extras --all-groups
 
       - name: "Ruff (Linter)"
         run: uv run ruff check --config ruff.toml
