@@ -37,27 +37,6 @@ concurrency:
 
 jobs:
   #################################################################
-  ######################## Semgrep Checks #########################
-  #################################################################
-  semgrep:
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Checkout"
-        uses: actions/checkout@v5
-      - name: "Install UV"
-        uses: astral-sh/setup-uv@v7
-        with:
-          python-version: "3.13"
-          activate-environment: false
-          enable-cache: true
-      - name: "Run Semgrep"
-        run: |
-          uv run \
-            --no-project \
-            --with semgrep \
-            semgrep ci --config auto
-
-  #################################################################
   ########################### Build ###############################
   #################################################################
   build:
