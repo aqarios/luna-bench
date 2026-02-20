@@ -39,7 +39,7 @@
 | luna-quantum            | 1.1.3           | Apache-2.0                                              |
 | markdown-it-py          | 4.0.0           | MIT License                                             |
 | matplotlib              | 3.10.8          | Python Software Foundation License                      |
-| matplotlib-inline       | 0.2.1           | UNKNOWN                                                 |
+| matplotlib-inline       | 0.2.1           | BSD3                                                    |
 | mdurl                   | 0.1.2           | MIT License                                             |
 | mypy                    | 1.17.1          | MIT License                                             |
 | mypy_extensions         | 1.1.0           | MIT                                                     |
@@ -51,7 +51,7 @@
 | packaging               | 26.0            | Apache-2.0 OR BSD-2-Clause                              |
 | parso                   | 0.8.6           | MIT License                                             |
 | pathspec                | 1.0.4           | Mozilla Public License 2.0 (MPL 2.0)                    |
-| peewee                  | 3.19.0          | UNKNOWN                                                 |
+| peewee                  | 3.19.0          | MIT                                                     |
 | pexpect                 | 4.9.0           | ISC License (ISCL)                                      |
 | pillow                  | 12.1.1          | MIT-CMU                                                 |
 | platformdirs            | 4.9.2           | MIT                                                     |
