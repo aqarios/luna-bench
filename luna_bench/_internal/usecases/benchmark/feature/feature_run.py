@@ -68,6 +68,7 @@ class FeatureRunUcImpl(FeatureRunUc):
             user_result = feature.feature.run(model)
             status = JobStatus.DONE
         except Exception as e:
+            self._logger.error(f"Feature '{feature.name}' failed on model '{model_metadata.name}':", exc_info=True)
             status = JobStatus.FAILED
             exception = str(e)
 

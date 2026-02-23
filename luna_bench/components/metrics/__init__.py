@@ -1,5 +1,6 @@
 from .approximation_ratio import ApproximationRatio, ApproximationRatioResult
 from .best_solution_found import BestSolutionFound, BestSolutionFoundResult
+from .failing_metric import FailingMetric
 from .fake_metric import FakeMetric, FakeMetricResult
 from .feasbility_ratio import FeasibilityRatio, FeasibilityRatioResult
 from .fraction_of_overall_best_solution import (
@@ -14,6 +15,7 @@ __all__ = [
     "ApproximationRatioResult",
     "BestSolutionFound",
     "BestSolutionFoundResult",
+    "FailingMetric",
     "FakeMetric",
     "FakeMetricResult",
     "FeasibilityRatio",
