@@ -46,7 +46,7 @@ class AlgorithmSqlDao(AlgorithmDao):
         algorithm: ArbitraryDataDomain,
     ) -> Result[AlgorithmDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             algorithm_db = AlgorithmTable(
                 name=algorithm_name,
                 status=BenchmarkStatus.CREATED,
@@ -65,7 +65,7 @@ class AlgorithmSqlDao(AlgorithmDao):
     @staticmethod
     def remove(benchmark_name: str, algorithm_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
             algorithm.delete_instance()
             return Success(None)
@@ -83,7 +83,7 @@ class AlgorithmSqlDao(AlgorithmDao):
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         # TODO(Llewellyn): delete results  # noqa: FIX002
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
             algorithm.status = BenchmarkStatus.CREATED
             algorithm.config_data = algorithm_config
@@ -100,7 +100,7 @@ class AlgorithmSqlDao(AlgorithmDao):
         benchmark_name: str, algorithm_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
             algorithm.status = status
             algorithm.save()
@@ -115,7 +115,7 @@ class AlgorithmSqlDao(AlgorithmDao):
         benchmark_name: str, algorithm_name: str
     ) -> Result[AlgorithmDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
             AlgorithmSqlDao.algorithm_to_domain(algorithm)
             return Success(AlgorithmSqlDao.algorithm_to_domain(algorithm))
@@ -131,7 +131,7 @@ class AlgorithmSqlDao(AlgorithmDao):
         try:
             benchmark = BenchmarkTable.get_or_none(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
 
-            model_metadata = ModelMetadataTable.select(ModelMetadataTable.id).where(  # type: ignore[no-untyped-call]
+            model_metadata = ModelMetadataTable.select(ModelMetadataTable.id).where(
                 ModelMetadataTable.id == result.model_id
             )
 
@@ -166,7 +166,7 @@ class AlgorithmSqlDao(AlgorithmDao):
         benchmark_name: str, algorithm_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
             result = AlgorithmResultTable.get(AlgorithmResultTable.algorithm == algorithm)  # type: ignore[no-untyped-call]
             result.delete_instance()

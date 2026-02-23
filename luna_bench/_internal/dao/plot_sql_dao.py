@@ -34,7 +34,7 @@ class PlotSqlDao(PlotDao):
         benchmark_name: str, plot_name: str, registered_id: str, plot_config: ArbitraryDataDomain
     ) -> Result[PlotDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             plot = PlotConfigTable(
                 name=plot_name,
                 status=BenchmarkStatus.CREATED,
@@ -52,7 +52,7 @@ class PlotSqlDao(PlotDao):
     @staticmethod
     def remove(benchmark_name: str, plot_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark: ModelSelect = BenchmarkTable.select(BenchmarkTable.id).where(  # type: ignore[no-untyped-call]
+            benchmark: ModelSelect = BenchmarkTable.select(BenchmarkTable.id).where(
                 BenchmarkTable.name == benchmark_name
             )
             plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
@@ -68,7 +68,7 @@ class PlotSqlDao(PlotDao):
         benchmark_name: str, plot_name: str, registered_id: str, plot_config: ArbitraryDataDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark: ModelSelect = BenchmarkTable.select(BenchmarkTable.id).where(  # type: ignore[no-untyped-call]
+            benchmark: ModelSelect = BenchmarkTable.select(BenchmarkTable.id).where(
                 BenchmarkTable.name == benchmark_name
             )
             plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
@@ -87,7 +87,7 @@ class PlotSqlDao(PlotDao):
         benchmark_name: str, plot_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark: ModelSelect = BenchmarkTable.select(BenchmarkTable.id).where(  # type: ignore[no-untyped-call]
+            benchmark: ModelSelect = BenchmarkTable.select(BenchmarkTable.id).where(
                 BenchmarkTable.name == benchmark_name
             )
             plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
@@ -102,7 +102,7 @@ class PlotSqlDao(PlotDao):
     @staticmethod
     def load(benchmark_name: str, plot_name: str) -> Result[PlotDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark: ModelSelect = BenchmarkTable.select(BenchmarkTable.id).where(  # type: ignore[no-untyped-call]
+            benchmark: ModelSelect = BenchmarkTable.select(BenchmarkTable.id).where(
                 BenchmarkTable.name == benchmark_name
             )
             plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
