@@ -59,6 +59,9 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
         try:
             return Success(algorithm.run(model.unwrap()))
         except Exception as e:
+            HueyAlgorithmRunner._logger.error(
+                f"Algorithm '{algorithm.__class__.__name__}' failed on model '{model_id}': {e}", exc_info=True
+            )
             return Failure(RunAlgorithmRuntimeError(e))
 
     @staticmethod
@@ -85,6 +88,9 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
         try:
             return Success(algorithm.run_async(model.unwrap()))
         except Exception as e:
+            HueyAlgorithmRunner._logger.error(
+                f"Algorithm '{algorithm.__class__.__name__}' failed on model '{model_id}': {e}", exc_info=True
+            )
             return Failure(RunAlgorithmRuntimeError(e))
 
     @staticmethod
