@@ -66,7 +66,7 @@ class BenchmarkSqlDao(BenchmarkDao):
     @staticmethod
     def load_all() -> Result[list[BenchmarkDomain], UnknownLunaBenchError]:
         try:
-            benchmarks = BenchmarkTable.select()  # type: ignore[no-untyped-call]
+            benchmarks = BenchmarkTable.select()
             return Success([BenchmarkSqlDao.benchmark_to_domain(b) for b in benchmarks])
         except Exception as e:  # pragma: no cover
             return Failure(UnknownLunaBenchError(e))

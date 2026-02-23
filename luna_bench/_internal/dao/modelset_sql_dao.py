@@ -112,7 +112,7 @@ class ModelSetSqlDao(ModelSetDao):
     @staticmethod
     def load_all() -> Result[list[ModelSetDomain], UnknownLunaBenchError]:
         try:
-            modelsets = ModelSetTable.select()  # type: ignore[no-untyped-call]
+            modelsets = ModelSetTable.select()
             return Success([ModelSetSqlDao.modelset_to_domain(m) for m in modelsets])
         except Exception as e:  # pragma: no cover
             ModelSetSqlDao._logger.debug(e)
