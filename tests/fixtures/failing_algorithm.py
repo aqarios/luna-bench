@@ -26,7 +26,7 @@ class FailingAlgorithm(BaseAlgorithmSync):
 
     _logger: ClassVar[Logger] = Logging.get_logger(__name__)
 
-    time_to_sleep: float = random.uniform(0, 2.0)  # noqa: S311
+    time_to_sleep: float = random.uniform(0, 2.0)
 
     def run(self, model: Model) -> Solution:
         """Run a failing algorithm, which will raise an error after a random time."""
@@ -45,7 +45,7 @@ class FailingArbitraryErrorAlgorithm(BaseAlgorithmSync):
 
     _logger: ClassVar[Logger] = Logging.get_logger(__name__)
 
-    time_to_sleep: float = random.uniform(0, 0.1)  # noqa: S311
+    time_to_sleep: float = random.uniform(0, 0.1)
 
     def run(self, model: Model) -> Solution:
         """Run a failing algorithm, which will raise an error after a random time."""
