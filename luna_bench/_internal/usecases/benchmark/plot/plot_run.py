@@ -88,7 +88,7 @@ class PlotsRunUcImpl(PlotsRunUc):
             try:
                 plot.plot.run(validation_result.unwrap())
             except Exception as e:
-                self._logger.warning(f"Plot {plot.name} execution failed with error: {e}")
+                self._logger.error(f"Plot '{plot.name}' execution failed:", exc_info=True)
                 if error_handling_mode == UseCaseErrorHandlingMode.FAIL_ON_ERROR:
                     return Failure(UnknownLunaBenchError(e))
 

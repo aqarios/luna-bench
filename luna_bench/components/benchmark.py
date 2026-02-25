@@ -326,9 +326,11 @@ class Benchmark(BenchmarkEntity):
         ta = TypeAdapter(list[Benchmark])
         return ta.validate_python(result.unwrap(), from_attributes=True)
 
-    def reset(self) -> None: ...  # noqa: D102 # Not yet implemented
+    def reset(self) -> None:  # noqa: D102 # Not yet implemented
+        raise NotImplementedError  # pragma: no cover
 
-    def export_to_file(self, file_path: str) -> None: ...  # noqa: D102 # Not yet implemented
+    def export_to_file(self, file_path: str) -> None:  # noqa: D102 # Not yet implemented
+        raise NotImplementedError  # pragma: no cover
 
     def set_modelset(
         self,
