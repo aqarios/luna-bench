@@ -1,7 +1,7 @@
 import pytest
 from luna_quantum import Model
 
-from luna_bench.components.features.failing_feature import FailingFeature
+from tests.fixtures.failing_feature import FailingFeature
 
 
 class TestFailingFeature:

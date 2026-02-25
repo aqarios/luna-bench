@@ -327,10 +327,10 @@ class Benchmark(BenchmarkEntity):
         return ta.validate_python(result.unwrap(), from_attributes=True)
 
     def reset(self) -> None:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def export_to_file(self, file_path: str) -> None:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def set_modelset(
         self,

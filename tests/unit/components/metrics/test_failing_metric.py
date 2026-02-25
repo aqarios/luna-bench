@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from luna_bench.components.metrics.failing_metric import FailingMetric
+from tests.fixtures.failing_metric import FailingMetric
 
 
 class TestFakeMetric:

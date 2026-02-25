@@ -1,7 +1,7 @@
 import pytest
 from luna_quantum import Model
 
-from luna_bench.components.algorithms.failing_algorithm import (
+from tests.fixtures.failing_algorithm import (
     FailingAlgorithm,
     FailingArbitraryErrorAlgorithm,
     _CustomError,
