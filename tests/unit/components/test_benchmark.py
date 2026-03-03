@@ -9,11 +9,14 @@ from luna_bench.components.benchmark import Benchmark
 from luna_bench.components.model_set import ModelSet
 from luna_bench.entities import (
     AlgorithmEntity,
+    AlgorithmResultEntity,
     BenchmarkEntity,
     ErrorHandlingMode,
     FeatureEntity,
+    FeatureResultEntity,
     JobStatus,
     MetricEntity,
+    MetricResultEntity,
     PlotEntity,
 )
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
@@ -24,6 +27,7 @@ from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMis
 from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.types import FeatureResult, MetricResult
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockFeature, MockMetric, MockPlot
 
 
@@ -554,3 +558,244 @@ class TestBenchmark:
         args, _ = mocked_usecases["benchmark_run_plots_uc"].call_args
         assert args[0] == empty_benchmark
         assert args[1].value == ErrorHandlingMode.FAIL_ON_ERROR.value
+
+
+class TestResultsToDataframe:
+    def _make_benchmark(
+        self,
+        features: list[FeatureEntity] | None = None,
+        metrics: list[MetricEntity] | None = None,
+        algorithms: list[AlgorithmEntity] | None = None,
+    ) -> Benchmark:
+        return Benchmark.model_construct(
+            name="test",
+            modelset=None,
+            features=features or [],
+            algorithms=algorithms or [],
+            metrics=metrics or [],
+            plots=[],
+        )
+
+    def test_empty_benchmark_returns_empty_dataframe(self) -> None:
+        benchmark = self._make_benchmark()
+        df = benchmark.results_to_dataframe()
+        assert df.empty
+        assert len(df.columns) == 0
+
+    def test_metrics_only(self) -> None:
+        metric_entity = MetricEntity(
+            name="accuracy",
+            status=JobStatus.DONE,
+            metric=MockMetric(),
+            results={
+                ("algo1", "model1"): MetricResultEntity(
+                    processing_time_ms=100,
+                    model_name="model1",
+                    algorithm_name="algo1",
+                    status=JobStatus.DONE,
+                    error=None,
+                    result=MetricResult.model_construct(score=0.95),  # type: ignore[call-arg]
+                ),
+                ("algo1", "model2"): MetricResultEntity(
+                    processing_time_ms=120,
+                    model_name="model2",
+                    algorithm_name="algo1",
+                    status=JobStatus.DONE,
+                    error=None,
+                    result=MetricResult.model_construct(score=0.87),  # type: ignore[call-arg]
+                ),
+            },
+        )
+        benchmark = self._make_benchmark(metrics=[metric_entity])
+        df = benchmark.results_to_dataframe()
+
+        assert len(df) == 2
+        assert list(df.columns) == ["algorithm", "model", "accuracy/score"]
+        assert df.iloc[0]["algorithm"] == "algo1"
+        assert df.iloc[0]["accuracy/score"] == 0.95
+
+    def test_features_and_metrics(self) -> None:
+        feature_entity = FeatureEntity(
+            name="num_vars",
+            status=JobStatus.DONE,
+            feature=MockFeature(),
+            results={
+                "model1": FeatureResultEntity(
+                    processing_time_ms=10,
+                    model_name="model1",
+                    status=JobStatus.DONE,
+                    error=None,
+                    result=FeatureResult.model_construct(count=42),  # type: ignore[call-arg]
+                ),
+            },
+        )
+        metric_entity = MetricEntity(
+            name="accuracy",
+            status=JobStatus.DONE,
+            metric=MockMetric(),
+            results={
+                ("algo1", "model1"): MetricResultEntity(
+                    processing_time_ms=100,
+                    model_name="model1",
+                    algorithm_name="algo1",
+                    status=JobStatus.DONE,
+                    error=None,
+                    result=MetricResult.model_construct(score=0.95),  # type: ignore[call-arg]
+                ),
+            },
+        )
+        benchmark = self._make_benchmark(features=[feature_entity], metrics=[metric_entity])
+        df = benchmark.results_to_dataframe()
+
+        assert len(df) == 1
+        assert "num_vars/count" in df.columns
+        assert "accuracy/score" in df.columns
+        assert df.iloc[0]["num_vars/count"] == 42
+        assert df.iloc[0]["accuracy/score"] == 0.95
+
+    def test_none_result_is_skipped(self) -> None:
+        metric_entity = MetricEntity(
+            name="accuracy",
+            status=JobStatus.DONE,
+            metric=MockMetric(),
+            results={
+                ("algo1", "model1"): MetricResultEntity(
+                    processing_time_ms=100,
+                    model_name="model1",
+                    algorithm_name="algo1",
+                    status=JobStatus.FAILED,
+                    error="something went wrong",
+                    result=None,
+                ),
+            },
+        )
+        benchmark = self._make_benchmark(metrics=[metric_entity])
+        df = benchmark.results_to_dataframe()
+
+        assert len(df) == 1
+        assert df.iloc[0]["algorithm"] == "algo1"
+        assert "accuracy/score" not in df.columns
+
+    def test_multiple_metrics_same_algorithm_model(self) -> None:
+        metric1 = MetricEntity(
+            name="accuracy",
+            status=JobStatus.DONE,
+            metric=MockMetric(),
+            results={
+                ("algo1", "model1"): MetricResultEntity(
+                    processing_time_ms=100,
+                    model_name="model1",
+                    algorithm_name="algo1",
+                    status=JobStatus.DONE,
+                    error=None,
+                    result=MetricResult.model_construct(score=0.95),  # type: ignore[call-arg]
+                ),
+            },
+        )
+        metric2 = MetricEntity(
+            name="runtime",
+            status=JobStatus.DONE,
+            metric=MockMetric(),
+            results={
+                ("algo1", "model1"): MetricResultEntity(
+                    processing_time_ms=50,
+                    model_name="model1",
+                    algorithm_name="algo1",
+                    status=JobStatus.DONE,
+                    error=None,
+                    result=MetricResult.model_construct(seconds=1.23),  # type: ignore[call-arg]
+                ),
+            },
+        )
+        benchmark = self._make_benchmark(metrics=[metric1, metric2])
+        df = benchmark.results_to_dataframe()
+
+        assert len(df) == 1
+        assert df.iloc[0]["accuracy/score"] == 0.95
+        assert df.iloc[0]["runtime/seconds"] == 1.23
+
+    def test_fallback_to_algorithms_when_no_metrics(self) -> None:
+        feature_entity = FeatureEntity(
+            name="num_vars",
+            status=JobStatus.DONE,
+            feature=MockFeature(),
+            results={
+                "model1": FeatureResultEntity(
+                    processing_time_ms=10,
+                    model_name="model1",
+                    status=JobStatus.DONE,
+                    error=None,
+                    result=FeatureResult.model_construct(count=42),  # type: ignore[call-arg]
+                ),
+            },
+        )
+        algo_entity = AlgorithmEntity(
+            name="algo1",
+            status=JobStatus.DONE,
+            algorithm=MockAlgorithm(),
+            results={
+                "model1": AlgorithmResultEntity(
+                    meta_data=None,
+                    status=JobStatus.DONE,
+                    error=None,
+                    solution=None,
+                    task_id=None,
+                    retrival_data=None,
+                    model_id=1,
+                ),
+            },
+        )
+        benchmark = self._make_benchmark(features=[feature_entity], algorithms=[algo_entity])
+        df = benchmark.results_to_dataframe()
+
+        assert len(df) == 1
+        assert df.iloc[0]["algorithm"] == "algo1"
+        assert df.iloc[0]["model"] == "model1"
+        assert df.iloc[0]["num_vars/count"] == 42
+
+    def test_feature_repeated_across_algorithms(self) -> None:
+        feature_entity = FeatureEntity(
+            name="size",
+            status=JobStatus.DONE,
+            feature=MockFeature(),
+            results={
+                "model1": FeatureResultEntity(
+                    processing_time_ms=5,
+                    model_name="model1",
+                    status=JobStatus.DONE,
+                    error=None,
+                    result=FeatureResult.model_construct(value=10),  # type: ignore[call-arg]
+                ),
+            },
+        )
+        metric_entity = MetricEntity(
+            name="accuracy",
+            status=JobStatus.DONE,
+            metric=MockMetric(),
+            results={
+                ("algo1", "model1"): MetricResultEntity(
+                    processing_time_ms=100,
+                    model_name="model1",
+                    algorithm_name="algo1",
+                    status=JobStatus.DONE,
+                    error=None,
+                    result=MetricResult.model_construct(score=0.9),  # type: ignore[call-arg]
+                ),
+                ("algo2", "model1"): MetricResultEntity(
+                    processing_time_ms=110,
+                    model_name="model1",
+                    algorithm_name="algo2",
+                    status=JobStatus.DONE,
+                    error=None,
+                    result=MetricResult.model_construct(score=0.8),  # type: ignore[call-arg]
+                ),
+            },
+        )
+        benchmark = self._make_benchmark(features=[feature_entity], metrics=[metric_entity])
+        df = benchmark.results_to_dataframe()
+
+        assert len(df) == 2
+        assert df.iloc[0]["size/value"] == 10
+        assert df.iloc[1]["size/value"] == 10
+        assert df.iloc[0]["accuracy/score"] == 0.9
+        assert df.iloc[1]["accuracy/score"] == 0.8

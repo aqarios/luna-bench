@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
+import pandas as pd
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
@@ -788,6 +789,70 @@ class Benchmark(BenchmarkEntity):
         self.run_algorithms()
         self.run_metrics()
         self.run_plots()
+
+    def results_to_dataframe(self) -> pd.DataFrame:
+        """
+        Return all benchmark results as a single DataFrame.
+
+        Produces one row per (algorithm, model) combination. Feature results are included as
+        columns prefixed with the feature name (``feature_name/field``), and metric results as
+        columns prefixed with the metric name (``metric_name/field``). Feature values are
+        repeated across algorithms for the same model since features are model-level.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame with columns ``algorithm``, ``model``, plus one column per
+            result field of each feature and metric.
+
+        """
+        feature_by_model = self._collect_feature_results()
+        _, rows = self._collect_metric_results(feature_by_model)
+
+        if not rows:
+            rows = self._build_rows_from_algorithms(feature_by_model)
+
+        return pd.DataFrame(rows)
+
+    def _collect_feature_results(self) -> dict[str, dict[str, Any]]:
+        feature_by_model: dict[str, dict[str, Any]] = {}
+        for feature_entity in self.features:
+            for model_name, result_entity in feature_entity.results.items():
+                if result_entity.result is None:
+                    continue
+                for field_name, value in result_entity.result.model_dump().items():
+                    feature_by_model.setdefault(model_name, {})[f"{feature_entity.name}/{field_name}"] = value
+        return feature_by_model
+
+    def _collect_metric_results(
+        self, feature_by_model: dict[str, dict[str, Any]]
+    ) -> tuple[dict[tuple[str, str], dict[str, Any]], list[dict[str, Any]]]:
+        rows_by_key: dict[tuple[str, str], dict[str, Any]] = {}
+        rows: list[dict[str, Any]] = []
+
+        for metric_entity in self.metrics:
+            for (algorithm_name, model_name), result_entity in metric_entity.results.items():
+                key = (algorithm_name, model_name)
+                if key not in rows_by_key:
+                    row: dict[str, Any] = {"algorithm": algorithm_name, "model": model_name}
+                    row.update(feature_by_model.get(model_name, {}))
+                    rows_by_key[key] = row
+                    rows.append(row)
+
+                if result_entity.result is not None:
+                    for field_name, value in result_entity.result.model_dump().items():
+                        rows_by_key[key][f"{metric_entity.name}/{field_name}"] = value
+
+        return rows_by_key, rows
+
+    def _build_rows_from_algorithms(self, feature_by_model: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        for algo_entity in self.algorithms:
+            for model_name in algo_entity.results:
+                row: dict[str, Any] = {"algorithm": algo_entity.name, "model": model_name}
+                row.update(feature_by_model.get(model_name, {}))
+                rows.append(row)
+        return rows
 
     def list_model_metrics_classes(self) -> list[None]:  # noqa: D102 # Not yet implemented
         raise NotImplementedError  # pragma: no cover
