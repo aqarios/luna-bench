@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
-    from luna_quantum import Model
+    from luna_model import Model
 
 from luna_bench.components.features.optsol_feature import InfeasibleModelError, OptSolFeature
 

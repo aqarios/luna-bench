@@ -12,7 +12,7 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
-    from luna_quantum import Model
+    from luna_model import Model
     from returns.result import Result
 
 

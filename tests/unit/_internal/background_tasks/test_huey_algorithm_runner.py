@@ -1,7 +1,7 @@
 from typing import Any
 
 import pytest
-from luna_quantum import Model, Solution
+from luna_model import Model, Solution
 from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
@@ -17,16 +17,7 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from tests.utils.luna_model import simple_model
 
 _model: Model = simple_model("a")
-_solution: Solution = Solution._build(  # type: ignore[attr-defined]
-    component_types=[],
-    binary_cols=[],
-    spin_cols=None,
-    int_cols=None,
-    real_cols=None,
-    raw_energies=None,
-    timing=None,
-    counts=[],
-)
+_solution: Solution = Solution([])
 
 
 class SuccessAlgorithmSync(BaseAlgorithmSync):
@@ -95,7 +86,7 @@ class TestHueyAlgorithmRunner:
         if is_successful(result):
             unwrapped_result = result.unwrap()
             unwrapped_exp = exp.unwrap()
-            assert unwrapped_result.__str__() == unwrapped_exp.__str__()
+            assert unwrapped_result.equal_contents(unwrapped_exp)
 
         else:
             assert result.failure().__class__ is exp.failure().__class__

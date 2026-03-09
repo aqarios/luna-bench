@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from luna_quantum import Sense
+from luna_model import Sense
 from pydantic import ValidationError
 
 from luna_bench.components.metrics.fraction_of_overall_best_solution import (
@@ -41,7 +41,7 @@ class TestFractionOfOverallBestSolution:
     @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
     def test_all_optimal_minimization(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test FOB = 1.0 when all samples equal optimal (minimization)."""
-        solution = create_solution(obj_values=[5.0, 5.0, 5.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[5.0, 5.0, 5.0], sense=Sense.MIN)
 
         metric = FractionOfOverallBestSolution()
         result = metric.run(solution, mock_feature_results)
@@ -52,7 +52,7 @@ class TestFractionOfOverallBestSolution:
     @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
     def test_some_optimal_minimization(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test FOB when some samples equal optimal (minimization)."""
-        solution = create_solution(obj_values=[5.0, 10.0, 5.0, 15.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[5.0, 10.0, 5.0, 15.0], sense=Sense.MIN)
 
         result = FractionOfOverallBestSolution().run(solution, mock_feature_results)
 
@@ -62,7 +62,7 @@ class TestFractionOfOverallBestSolution:
     @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
     def test_no_optimal_minimization(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test FOB = 0.0 when no samples equal optimal (minimization)."""
-        solution = create_solution(obj_values=[10.0, 15.0, 20.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[10.0, 15.0, 20.0], sense=Sense.MIN)
 
         result = FractionOfOverallBestSolution().run(solution, mock_feature_results)
 
@@ -72,7 +72,7 @@ class TestFractionOfOverallBestSolution:
     @pytest.mark.parametrize("mock_feature_results", [20.0], indirect=True)
     def test_all_optimal_maximization(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test FOB = 1.0 when all samples equal optimal (maximization)."""
-        solution = create_solution(obj_values=[20.0, 20.0, 20.0], sense=Sense.Max)
+        solution = create_solution(obj_values=[20.0, 20.0, 20.0], sense=Sense.MAX)
 
         result = FractionOfOverallBestSolution().run(solution, mock_feature_results)
 
@@ -82,7 +82,7 @@ class TestFractionOfOverallBestSolution:
     @pytest.mark.parametrize("mock_feature_results", [20.0], indirect=True)
     def test_some_optimal_maximization(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test FOB when some samples equal optimal (maximization)."""
-        solution = create_solution(obj_values=[20.0, 10.0, 20.0, 5.0], sense=Sense.Max)
+        solution = create_solution(obj_values=[20.0, 10.0, 20.0, 5.0], sense=Sense.MAX)
 
         metric = FractionOfOverallBestSolution()
         result = metric.run(solution, mock_feature_results)
@@ -103,7 +103,7 @@ class TestFractionOfOverallBestSolution:
         """Test that a solution without any feasible samples returns 0.0."""
         solution = create_solution(
             obj_values=[5.0, 5.0, 5.0],
-            sense=Sense.Min,
+            sense=Sense.MIN,
             feasible=[False, False, False],
         )
 
@@ -119,7 +119,7 @@ class TestFractionOfOverallBestSolution:
         # 4 samples: 2 feasible optimal, 1 feasible non-optimal, 1 infeasible optimal
         solution = create_solution(
             obj_values=[5.0, 5.0, 10.0, 5.0],
-            sense=Sense.Min,
+            sense=Sense.MIN,
             feasible=[True, True, True, False],
         )
 
@@ -133,7 +133,7 @@ class TestFractionOfOverallBestSolution:
     @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
     def test_custom_tolerance(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test that custom absolute tolerance is respected."""
-        solution = create_solution(obj_values=[5.0001, 5.0002, 10.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[5.0001, 5.0002, 10.0], sense=Sense.MIN)
 
         # With default tolerance (1e-6), values should not match
         metric_default = FractionOfOverallBestSolution()
@@ -148,7 +148,7 @@ class TestFractionOfOverallBestSolution:
     @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
     def test_single_sample_optimal(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test FOB with a single optimal sample."""
-        solution = create_solution(obj_values=[5.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[5.0], sense=Sense.MIN)
 
         metric = FractionOfOverallBestSolution()
         result = metric.run(solution, mock_feature_results)
@@ -159,7 +159,7 @@ class TestFractionOfOverallBestSolution:
     @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
     def test_single_sample_not_optimal(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test FOB with single non-optimal sample."""
-        solution = create_solution(obj_values=[10.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[10.0], sense=Sense.MIN)
 
         metric = FractionOfOverallBestSolution()
         result = metric.run(solution, mock_feature_results)

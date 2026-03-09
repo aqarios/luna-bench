@@ -1,4 +1,4 @@
-from luna_quantum import Model, Variable
+from luna_model import Model, Variable
 
 
 def simple_model(name: str) -> Model:

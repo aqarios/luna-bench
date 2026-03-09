@@ -1,7 +1,7 @@
 import numpy as np
-from luna_quantum import Model, Sense
-from luna_quantum.errors import ModelNotQuadraticError, ModelNotUnconstrainedError, ModelVtypeError
-from luna_quantum.translator import QuboTranslator
+from luna_model import Model, Sense
+from luna_model.errors import ModelNotQuadraticError, ModelNotUnconstrainedError, ModelVtypeError
+from luna_model.translator import QuboTranslator
 from numpy.typing import NDArray
 
 
@@ -29,11 +29,11 @@ def get_qubo(model: Model) -> NDArray[np.float64]:
     """
     reduced_model = model.deep_clone()
     # ensure model is a minimization problem
-    if model.sense == Sense.Max:
+    if model.sense == Sense.MAX:
         reduced_model.objective = -reduced_model.objective
 
     try:
-        qubo_matrix = QuboTranslator.from_aq(reduced_model).matrix
+        qubo_matrix = QuboTranslator.from_lm(reduced_model).matrix
     except Exception as e:
         if isinstance(e, ModelNotUnconstrainedError):
             msg = "Provided model is not unconstrained."

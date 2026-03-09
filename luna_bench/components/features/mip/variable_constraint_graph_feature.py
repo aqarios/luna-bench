@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
-from luna_quantum import Vtype
+from luna_model import Vtype
 from pydantic import BaseModel
 
 from luna_bench.base_components import BaseFeature
@@ -15,7 +15,7 @@ from luna_bench.components.helper.var_scope import VarScope
 from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
-    from luna_quantum import Model
+    from luna_model import Model
     from numpy.typing import NDArray
 
 from luna_bench.components.features.enum_feature_result import EnumFeatureResult
@@ -123,8 +123,8 @@ class VariableConstraintGraphFeatures(BaseFeature):
 
         # Define the variable type configurations
         scope_configs: list[tuple[VarScope, Vtype | list[Vtype] | None]] = [
-            (VarScope.CONTINUOUS, Vtype.Real),
-            (VarScope.NON_CONTINUOUS, [Vtype.Integer, Vtype.Binary]),
+            (VarScope.CONTINUOUS, Vtype.REAL),
+            (VarScope.NON_CONTINUOUS, [Vtype.INTEGER, Vtype.BINARY]),
             (VarScope.ALL, None),
         ]
 

@@ -1,7 +1,8 @@
 from abc import ABC
 from typing import Any
 
-from luna_quantum import Model, Solution, config
+from luna_model import Model, Solution
+from luna_quantum import config
 from luna_quantum.client.schemas.enums.status import StatusEnum
 from luna_quantum.solve import SolveJob
 from luna_quantum.solve.domain.abstract import LunaAlgorithm as LunaQuantumAlgorithm

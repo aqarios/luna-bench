@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from _pytest.fixtures import FixtureRequest
-from luna_quantum import Bounds, Model, Sense, Solution, Timer, Unbounded, Variable, Vtype
+from luna_model import Bounds, Model, Sense, Solution, Timer, Unbounded, Variable, Vtype
 
 from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.components.features.optsol_feature import OptSolFeature, OptSolFeatureResult
@@ -24,7 +24,7 @@ def create_solution() -> SolutionFactory:
 
     def _build_solution(
         obj_values: list[float],
-        sense: Sense = Sense.Min,
+        sense: Sense = Sense.MIN,
         runtime_seconds: float = 0.1,
         feasible: list[bool] | None = None,
         *,
@@ -39,10 +39,10 @@ def create_solution() -> SolutionFactory:
             timing = None
 
         m = Model("MockModel")
-        m.set_sense(sense)
+        m.sense = sense
         with m.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(lower=Unbounded, upper=Unbounded))
-            y = Variable("y", vtype=Vtype.Integer)
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(lower=Unbounded, upper=Unbounded))
+            y = Variable("y", vtype=Vtype.INTEGER)
         m.objective += x
         m.add_constraint(y == 0)
         x_data = [{x: x_val, y: 0} for x_val in obj_values]
@@ -50,11 +50,7 @@ def create_solution() -> SolutionFactory:
         if feasible is not None:
             for i, feas in enumerate(feasible):
                 x_data[i][y] = 0 if feas else 1
-        return Solution.from_dicts(
-            data=x_data,  # type: ignore[arg-type]
-            model=m,
-            timing=timing,  # type: ignore[arg-type]
-        )
+        return Solution.from_dicts(data=x_data, model=m, timing=timing)
 
     return _build_solution
 
@@ -86,7 +82,7 @@ def mock_solution_config(request: FixtureRequest) -> MagicMock:
     """
     sense: Sense
     expectation_value: float | None
-    sense, expectation_value = getattr(request, "param", (Sense.Min, None))
+    sense, expectation_value = getattr(request, "param", (Sense.MIN, None))
 
     solution = MagicMock(spec=["best", "sense", "expectation_value", "samples"])
     solution.sense = sense

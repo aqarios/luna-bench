@@ -1,7 +1,7 @@
 """Tests for model_matrix_extraction module."""
 
 import pytest
-from luna_quantum import Bounds, Model, Unbounded, Variable, Vtype
+from luna_model import Bounds, Model, Unbounded, Variable, Vtype
 
 from luna_bench.components.helper.degree import ConstraintDegree
 from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
@@ -15,7 +15,7 @@ class TestConstraintMatrix:
         model = Model("test")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective += x
         model.constraints += x <= 10
@@ -28,8 +28,8 @@ class TestConstraintMatrix:
         model = Model("quad_with_linear")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective += x + y
         # Quadratic constraint with both linear and quadratic terms: x^2 + 2x + 3y <= 10

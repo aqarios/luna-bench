@@ -4,7 +4,7 @@ Metric implemented from https://arxiv.org/pdf/2405.07624
 """
 
 import numpy as np
-from luna_quantum import Sense, Solution
+from luna_model import Sense, Solution
 from pydantic import Field
 
 from luna_bench.base_components import BaseMetric
@@ -117,14 +117,14 @@ class BestSolutionFound(BaseMetric):
         if len(solution.samples) == 0:
             return BestSolutionFoundResult(best_solution_found=float("inf"))
 
-        # Get the best objective value based on optimization sense
+        # Get the best objective values based on optimization sense
         best = solution.best()
         if best is None:
             return BestSolutionFoundResult(best_solution_found=float("inf"))
-        if best.obj_value is None:
+        if best[0].obj_value is None:
             return BestSolutionFoundResult(best_solution_found=float("inf"))
-        best_sol = best.obj_value
-        if solution.sense == Sense.Min:
+        best_sol = best[0].obj_value
+        if solution.sense == Sense.MIN:
             best_value = float(np.min(best_sol))
             bsf = get_ratio(nominator=best_value, denominator=opt_sol.best_sol, abt_diff=self.abs_tol)
         else:

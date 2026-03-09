@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, PropertyMock
 
 import pytest
-from luna_quantum import Sense, Solution
+from luna_model import Sense, Solution
 from pydantic import ValidationError
 
 from luna_bench.components.metrics.best_solution_found import (
@@ -40,7 +40,7 @@ class TestBestSolutionFound:
         self, create_solution: SolutionFactory, mock_feature_results: MagicMock
     ) -> None:
         """Test BSF = 1.0 when best found equals optimal (minimization)."""
-        solution = create_solution(obj_values=[10.0, 5.0, 15.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[10.0, 5.0, 15.0], sense=Sense.MIN)
         result = BestSolutionFound().run(solution, mock_feature_results)
 
         assert isinstance(result, BestSolutionFoundResult)
@@ -51,7 +51,7 @@ class TestBestSolutionFound:
         self, create_solution: SolutionFactory, mock_feature_results: MagicMock
     ) -> None:
         """Test BSF > 1.0 when best found is worse than optimal (minimization)."""
-        solution = create_solution(obj_values=[10.0, 8.0, 15.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[10.0, 8.0, 15.0], sense=Sense.MIN)
         result = BestSolutionFound().run(solution, mock_feature_results)
 
         assert isinstance(result, BestSolutionFoundResult)
@@ -62,7 +62,7 @@ class TestBestSolutionFound:
         self, create_solution: SolutionFactory, mock_feature_results: MagicMock
     ) -> None:
         """Test BSF = 1.0 when best found equals optimal (maximization)."""
-        solution = create_solution(obj_values=[10.0, 20.0, 15.0], sense=Sense.Max)
+        solution = create_solution(obj_values=[10.0, 20.0, 15.0], sense=Sense.MAX)
         result = BestSolutionFound().run(solution, mock_feature_results)
 
         assert isinstance(result, BestSolutionFoundResult)
@@ -73,7 +73,7 @@ class TestBestSolutionFound:
         self, create_solution: SolutionFactory, mock_feature_results: MagicMock
     ) -> None:
         """Test BSF > 1.0 when best found is worse than optimal (maximization)."""
-        solution = create_solution(obj_values=[10.0, 15.0, 12.0], sense=Sense.Max)
+        solution = create_solution(obj_values=[10.0, 15.0, 12.0], sense=Sense.MAX)
 
         result = BestSolutionFound().run(solution, mock_feature_results)
 
@@ -93,7 +93,7 @@ class TestBestSolutionFound:
         self, create_solution: SolutionFactory, mock_feature_results: MagicMock
     ) -> None:
         """Test that division by zero (optimal = 0) raises ZeroDivisionError."""
-        solution = create_solution(obj_values=[10.0, 5.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[10.0, 5.0], sense=Sense.MIN)
 
         metric = BestSolutionFound()
 
@@ -103,7 +103,7 @@ class TestBestSolutionFound:
     @pytest.mark.parametrize("mock_feature_results", [1e-4], indirect=True)
     def test_custom_tolerance(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test that custom absolute tolerance is respected."""
-        solution = create_solution(obj_values=[10.0, 5.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[10.0, 5.0], sense=Sense.MIN)
 
         # With default tolerance (1e-3), this should raise
         metric_default = BestSolutionFound()
@@ -143,7 +143,7 @@ class TestBestSolutionFound:
 
         solution = MagicMock(spec=Solution)
         solution.samples = [best_sample]
-        solution.best.return_value = best_sample
+        solution.best.return_value = [best_sample]
 
         result = BestSolutionFound().run(solution, mock_feature_results)
 

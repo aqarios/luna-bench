@@ -7,7 +7,7 @@ from luna_bench.errors.incompatible_class_error import IncompatibleClassError
 from luna_bench.helpers.decorators import metric
 
 if TYPE_CHECKING:
-    from luna_quantum import Model, Solution
+    from luna_model import Model, Solution
 
     from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
     from luna_bench.base_components.data_types.feature_results import FeatureResults

@@ -1,4 +1,4 @@
-from luna_quantum import Solution
+from luna_model import Solution
 
 from luna_bench.base_components import BaseMetric
 from luna_bench.base_components.data_types.feature_results import FeatureResults

@@ -8,7 +8,7 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from luna_quantum import Model, Solution, Variable, Vtype
+from luna_model import Model, Solution, Variable, Vtype
 
 from luna_bench.components.algorithms.scip import InfeasibleModelError, ScipAlgorithm
 
@@ -32,8 +32,9 @@ class TestScipAlgorithm:
         # Solution of correct type
         assert isinstance(solution, Solution)
 
-        best_sample = solution.best()
-        assert best_sample is not None
+        best_samples = solution.best()
+        assert best_samples is not None
+        best_sample = best_samples[0]
         assert best_sample.obj_value == 0.0
 
         # Variables are in solution dict
@@ -110,9 +111,9 @@ class TestScipAlgorithm:
         """
         model = Model(name="qubo_3var")
         with model.environment:
-            x0 = Variable("x0", vtype=Vtype.Binary)
-            x1 = Variable("x1", vtype=Vtype.Binary)
-            x2 = Variable("x2", vtype=Vtype.Binary)
+            x0 = Variable("x0", vtype=Vtype.BINARY)
+            x1 = Variable("x1", vtype=Vtype.BINARY)
+            x2 = Variable("x2", vtype=Vtype.BINARY)
 
         model.objective = -5 * x0 - x1 - x2 + 2 * x0 * x1 + 2 * x0 * x2
         algorithm = ScipAlgorithm()
@@ -120,8 +121,9 @@ class TestScipAlgorithm:
 
         assert isinstance(solution, Solution)
 
-        best = solution.best()
-        assert best is not None
+        allbest = solution.best()
+        assert allbest is not None
+        best = allbest[0]
         assert best.obj_value == pytest.approx(-5.0)
 
         sample = best.sample.to_dict()

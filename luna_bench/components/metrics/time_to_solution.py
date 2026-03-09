@@ -4,7 +4,7 @@ Metric implemented from https://arxiv.org/pdf/2405.07624
 """
 
 import numpy as np
-from luna_quantum import Solution
+from luna_model import Solution
 from pydantic import Field
 
 from luna_bench.base_components import BaseMetric

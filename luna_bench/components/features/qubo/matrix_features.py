@@ -9,7 +9,7 @@ from luna_bench.helpers import feature
 from .get_qubo import get_qubo
 
 if TYPE_CHECKING:
-    from luna_quantum import Model
+    from luna_model import Model
 
 
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper

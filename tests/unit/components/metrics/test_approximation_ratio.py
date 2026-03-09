@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from luna_quantum import Sense
+from luna_model import Sense
 from pydantic import ValidationError
 
 from luna_bench.components.metrics.approximation_ratio import (
@@ -30,7 +30,7 @@ class TestApproximationRatio:
         assert isinstance(result, ApproximationRatioResult)
         assert result.approximation_ratio == float("inf")
 
-    @pytest.mark.parametrize("mock_solution_config", [(Sense.Min, 5.0)], indirect=True)
+    @pytest.mark.parametrize("mock_solution_config", [(Sense.MIN, 5.0)], indirect=True)
     def test_optimal_solution_zero_raises_error(
         self, mock_solution_config: MagicMock, mock_feature_results: MagicMock
     ) -> None:
@@ -46,7 +46,7 @@ class TestApproximationRatio:
 
     @pytest.mark.parametrize(
         ("mock_solution_config", "mock_feature_results"),
-        [((Sense.Min, 5.0), 1e-4)],
+        [((Sense.MIN, 5.0), 1e-4)],
         indirect=True,
     )
     def test_optimal_solution_near_zero_raises_error(
@@ -63,7 +63,7 @@ class TestApproximationRatio:
 
     @pytest.mark.parametrize(
         ("mock_solution_config", "mock_feature_results"),
-        [((Sense.Min, 1e-2), 1e-2)],
+        [((Sense.MIN, 1e-2), 1e-2)],
         indirect=True,
     )
     def test_optimal_solution_above_tolerance(
@@ -80,13 +80,13 @@ class TestApproximationRatio:
         ("mock_solution_config", "mock_feature_results", "expected_ratio"),
         [
             # Minimization: AR = expectation_value / optimal # noqa: ERA001
-            ((Sense.Min, 10.0), 10.0, 1.0),  # Perfect: 10/10 = 1.0
-            ((Sense.Min, 20.0), 10.0, 2.0),  # Worse: 20/10 = 2.0
-            ((Sense.Min, 15.0), 10.0, 1.5),  # Worse: 15/10 = 1.5
+            ((Sense.MIN, 10.0), 10.0, 1.0),  # Perfect: 10/10 = 1.0
+            ((Sense.MIN, 20.0), 10.0, 2.0),  # Worse: 20/10 = 2.0
+            ((Sense.MIN, 15.0), 10.0, 1.5),  # Worse: 15/10 = 1.5
             # Maximization: AR = optimal / expectation_value # noqa: ERA001
-            ((Sense.Max, 100.0), 100.0, 1.0),  # Perfect: 100/100 = 1.0
-            ((Sense.Max, 50.0), 100.0, 2.0),  # Worse: 100/50 = 2.0
-            ((Sense.Max, 20.0), 100.0, 5.0),  # Worse: 100/20 = 5.0
+            ((Sense.MAX, 100.0), 100.0, 1.0),  # Perfect: 100/100 = 1.0
+            ((Sense.MAX, 50.0), 100.0, 2.0),  # Worse: 100/50 = 2.0
+            ((Sense.MAX, 20.0), 100.0, 5.0),  # Worse: 100/20 = 5.0
         ],
         indirect=["mock_solution_config", "mock_feature_results"],
     )

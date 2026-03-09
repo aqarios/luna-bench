@@ -4,7 +4,7 @@ from contextlib import AbstractContextManager, nullcontext
 from unittest.mock import Mock, patch
 
 import pytest
-from luna_quantum import Model
+from luna_model import Model
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.usecases.modelset.protocols import ModelFetchUc

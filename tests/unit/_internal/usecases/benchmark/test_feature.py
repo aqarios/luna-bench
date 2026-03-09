@@ -16,7 +16,7 @@ from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetM
 from tests.unit.fixtures.mock_components import MockFeature, MockFeatureFailing, UnregisteredFeature
 
 if TYPE_CHECKING:
-    from luna_quantum import Model
+    from luna_model import Model
     from pydantic import ValidationError
 
     from luna_bench._internal.usecases.usecase_container import UsecaseContainer

@@ -3,7 +3,8 @@ from logging import Logger
 from time import sleep
 from typing import ClassVar
 
-from luna_quantum import Logging, Model, Solution
+from luna_model import Model, Solution
+from luna_quantum import Logging
 
 from luna_bench.base_components import BaseAlgorithmSync
 from luna_bench.helpers import algorithm

@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, ClassVar, cast
 
 import pytest
-from luna_quantum import Model
+from luna_model import Model
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench.base_components.base_feature import BaseFeature

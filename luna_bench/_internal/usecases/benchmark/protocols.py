@@ -1,6 +1,6 @@
 from typing import Any, Protocol
 
-from luna_quantum import Solution
+from luna_model import Solution
 from pydantic import BaseModel, ValidationError
 from returns.maybe import Maybe
 from returns.result import Result

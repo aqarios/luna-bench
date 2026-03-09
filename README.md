@@ -49,7 +49,7 @@ pip install luna-bench
 ### Define your models
 
 ```python
-from luna_quantum import Model, Variable
+from luna_model import Model, Variable
 from luna_bench.components import ModelSet
 
 # Build a simple optimization model
@@ -107,7 +107,7 @@ Subclass `BaseAlgorithmSync` and register it with the `@algorithm` decorator.
 ```python
 from luna_bench.base_components import BaseAlgorithmSync
 from luna_bench.helpers import algorithm
-from luna_quantum import Model, Solution
+from luna_model import Model, Solution
 
 @algorithm()
 class MyAlgorithm(BaseAlgorithmSync):
@@ -125,7 +125,7 @@ Features extract properties from models. They run before algorithms and metrics.
 from luna_bench.base_components import BaseFeature
 from luna_bench.helpers import feature
 from luna_bench.types import FeatureResult
-from luna_quantum import Model
+from luna_model import Model
 
 class MyFeatureResult(FeatureResult):
     num_variables: int
@@ -145,7 +145,7 @@ from luna_bench.base_components import BaseMetric
 from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.helpers import metric
 from luna_bench.types import MetricResult
-from luna_quantum import Solution
+from luna_model import Solution
 
 class MyMetricResult(MetricResult):
     score: float
