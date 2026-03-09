@@ -86,7 +86,7 @@ class TestHueyAlgorithmRunner:
         if is_successful(result):
             unwrapped_result = result.unwrap()
             unwrapped_exp = exp.unwrap()
-            assert unwrapped_result.__str__() == unwrapped_exp.__str__()
+            assert unwrapped_result.equal_contents(unwrapped_exp)
 
         else:
             assert result.failure().__class__ is exp.failure().__class__
