@@ -11,7 +11,7 @@ from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from tests.utils.luna_model import simple_model
 
 if TYPE_CHECKING:
-    from luna_quantum import Model
+    from luna_model import Model
 
     from luna_bench._internal.dao import DaoTransaction
     from luna_bench.errors.unknown_error import UnknownLunaBenchError

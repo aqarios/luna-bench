@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
-from luna_quantum import Comparator
+from luna_model import Comparator
 from pydantic import BaseModel
 
 from luna_bench.base_components import BaseFeature
@@ -12,7 +12,7 @@ from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
 from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
-    from luna_quantum import Model
+    from luna_model import Model
 
 from luna_bench.components.features.enum_feature_result import EnumFeatureResult
 
@@ -124,13 +124,13 @@ class RightHandSideFeatures(BaseFeature):
             ConstraintSense.GEQ: [],
         }
 
-        for c in model.constraints:
+        for _, c in model.constraints:
             match c.comparator:
-                case Comparator.Le:
+                case Comparator.LE:
                     rhs_values[ConstraintSense.LEQ].append(c.rhs)
-                case Comparator.Eq:
+                case Comparator.EQ:
                     rhs_values[ConstraintSense.EQ].append(c.rhs)
-                case Comparator.Ge:
+                case Comparator.GE:
                     rhs_values[ConstraintSense.GEQ].append(c.rhs)
                 case _:
                     raise ComparatorError(constraint_name=c.name)

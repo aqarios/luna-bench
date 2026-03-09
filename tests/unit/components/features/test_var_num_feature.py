@@ -1,4 +1,4 @@
-from luna_quantum import Model
+from luna_model import Model
 
 from luna_bench.components.features.var_num_feature import VarNumberFeature
 

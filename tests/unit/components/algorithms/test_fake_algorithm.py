@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from luna_quantum import Model, Solution
+from luna_model import Model, Solution
 
 from luna_bench.components.algorithms.fake_algorithm import FakeAlgorithm
 

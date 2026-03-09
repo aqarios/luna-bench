@@ -1,4 +1,4 @@
-from luna_quantum import Solution
+from luna_model import Solution
 
 from luna_bench._internal.domain_models import AlgorithmResultDomain
 from luna_bench.entities import JobStatus

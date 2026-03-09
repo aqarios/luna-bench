@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from luna_quantum import Bounds, Model, Unbounded, Variable, Vtype
+from luna_model import Bounds, Model, Unbounded, Variable, Vtype
 
 from luna_bench.components.features.mip.objective_function_features import (
     NormType,
@@ -84,9 +84,9 @@ class TestObjectiveFunctionFeature:
         model = Model("continuous_only")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            z = Variable("z", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            z = Variable("z", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = 3 * x + 5 * y + 2 * z
         model.constraints += x + y + z <= 10
@@ -108,9 +108,9 @@ class TestObjectiveFunctionFeature:
         model = Model("integer_only")
 
         with model.environment:
-            i1 = Variable("i1", vtype=Vtype.Integer, bounds=Bounds(0, 10))
-            i2 = Variable("i2", vtype=Vtype.Integer, bounds=Bounds(0, 10))
-            i3 = Variable("i3", vtype=Vtype.Binary)
+            i1 = Variable("i1", vtype=Vtype.INTEGER, bounds=Bounds(0, 10))
+            i2 = Variable("i2", vtype=Vtype.INTEGER, bounds=Bounds(0, 10))
+            i3 = Variable("i3", vtype=Vtype.BINARY)
 
         model.objective = 4 * i1 + 6 * i2 + 2 * i3
         model.constraints += i1 + i2 <= 5
@@ -134,8 +134,8 @@ class TestObjectiveFunctionFeature:
         model = Model("negative_coefs")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = 3 * x - 5 * y  # Note the negative coefficient
         model.constraints += x + y <= 10
@@ -153,8 +153,8 @@ class TestObjectiveFunctionFeature:
         model = Model("normalized_test")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = 10 * x + 20 * y
         model.constraints += x + y <= 5
@@ -189,8 +189,8 @@ class TestObjectiveFunctionFeature:
         model = Model("zero_coef_test")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = 5 * x + 3 * y
         model.constraints += x <= 10
@@ -206,8 +206,8 @@ class TestObjectiveFunctionFeature:
         model = Model("zero_constraint_coef")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = 2 * x + 3 * y
         model.constraints += x <= 5  # just x is in constraints
@@ -240,9 +240,9 @@ class TestObjectiveFunctionFeature:
         model = Model("std_test")
 
         with model.environment:
-            x1 = Variable("x1", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            x2 = Variable("x2", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            x3 = Variable("x3", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x1 = Variable("x1", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            x2 = Variable("x2", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            x3 = Variable("x3", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         # Coefficients: 2, 4, 6
         model.objective = 2 * x1 + 4 * x2 + 6 * x3
@@ -263,7 +263,7 @@ class TestObjectiveFunctionFeature:
         model = Model("single_var")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = 5 * x
         model.constraints += x <= 10

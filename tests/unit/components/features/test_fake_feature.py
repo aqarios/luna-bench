@@ -1,4 +1,4 @@
-from luna_quantum import Model
+from luna_model import Model
 
 from luna_bench.components.features.fake_feature import FakeFeature
 

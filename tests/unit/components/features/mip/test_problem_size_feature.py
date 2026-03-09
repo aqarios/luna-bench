@@ -3,7 +3,7 @@
 from unittest.mock import MagicMock
 
 import pytest
-from luna_quantum import Bounds, Model, Variable, Vtype, quicksum
+from luna_model import Bounds, Model, Variable, Vtype, quicksum
 
 from luna_bench.components.features.mip.problem_size_feature import (
     ModelBoundsError,
@@ -134,15 +134,15 @@ class TestProblemSizeFeatures:
 
     def test_semi_continuous_semi_integer_variables(self) -> None:
         """Test handling of semi-continuous and semi-integer variables."""
-        from luna_quantum import Vtype
+        from luna_model import Vtype
 
         model = Model("semi_vars")
         with model.environment:
             # Semi-continuous: can be 0 or in [lb, ub]
-            sc = Variable("sc", vtype=Vtype.Real, bounds=Bounds(5, 10))
+            sc = Variable("sc", vtype=Vtype.REAL, bounds=Bounds(5, 10))
 
             # Semi-integer: can be 0 or integer in [lb, ub]
-            si = Variable("si", vtype=Vtype.Integer, bounds=Bounds(3, 8))
+            si = Variable("si", vtype=Vtype.INTEGER, bounds=Bounds(3, 8))
 
         model.objective = sc + si
         model.constraints += sc + si <= 15
@@ -212,13 +212,13 @@ class TestProblemSizeFeatures:
 
     def test_large_model_performance(self) -> None:
         """Test that the extractor handles larger models efficiently."""
-        from luna_quantum import Unbounded, Vtype
+        from luna_model import Unbounded, Vtype
 
         model = Model("large_model")
 
         with model.environment:
             # Create 100 variables
-            variables = [Variable(f"x{i}", vtype=Vtype.Real, bounds=Bounds(0, Unbounded)) for i in range(100)]
+            variables = [Variable(f"x{i}", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded)) for i in range(100)]
 
         model.objective += quicksum(variables)
 
@@ -233,7 +233,7 @@ class TestProblemSizeFeatures:
         assert result.num_constraints == 50
         assert result.var_counts.get(VarTypeKey(var_type=VarType.CONTINUOUS)).count == 100
 
-    @pytest.mark.parametrize("vtype", [Vtype.Integer, Vtype.Real])
+    @pytest.mark.parametrize("vtype", [Vtype.INTEGER, Vtype.REAL])
     def test_none_bounds_raises_model_bounds_error(self, vtype: Vtype) -> None:
         """Test that None bounds raise ModelBoundsError for integer and real variables."""
         magic_model = MagicMock()

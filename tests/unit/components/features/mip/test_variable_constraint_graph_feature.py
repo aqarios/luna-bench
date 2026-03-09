@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from luna_quantum import Bounds, Model, Unbounded, Variable, Vtype
+from luna_model import Bounds, Model, Unbounded, Variable, Vtype
 
 from luna_bench.components.features.mip.variable_constraint_graph_feature import (
     NodeDegreeStatsKey,
@@ -114,9 +114,9 @@ class TestVariableConstraintGraphFeatures:
         model = Model("node_degree_test")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            z = Variable("z", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            z = Variable("z", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y + z
         # x appears in 2 constraints: degree = 2
@@ -142,9 +142,9 @@ class TestVariableConstraintGraphFeatures:
         model = Model("constraint_degree_test")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            z = Variable("z", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            z = Variable("z", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y + z
         # First constraint has 2 variables: degree = 2
@@ -170,8 +170,8 @@ class TestVariableConstraintGraphFeatures:
         model = Model("continuous_only")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y
         model.constraints += x + y <= 10
@@ -196,8 +196,8 @@ class TestVariableConstraintGraphFeatures:
         model = Model("integer_only")
 
         with model.environment:
-            i1 = Variable("i1", vtype=Vtype.Integer, bounds=Bounds(0, 10))
-            i2 = Variable("i2", vtype=Vtype.Binary)
+            i1 = Variable("i1", vtype=Vtype.INTEGER, bounds=Bounds(0, 10))
+            i2 = Variable("i2", vtype=Vtype.BINARY)
 
         model.objective = i1 + i2
         model.constraints += i1 + i2 <= 10
@@ -260,9 +260,9 @@ class TestVariableConstraintGraphFeatures:
         model = Model("uniform_degrees")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            z = Variable("z", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            z = Variable("z", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y + z
         # All variables appear in exactly 2 constraints
@@ -287,9 +287,9 @@ class TestVariableConstraintGraphFeatures:
         model = Model("isolated_var")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            z = Variable("z", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            z = Variable("z", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y + z  # z is isolated
         model.constraints += x + y <= 10
@@ -312,7 +312,7 @@ class TestVariableConstraintGraphFeatures:
         model = Model("single_single")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective += x
         model.constraints += x <= 10
@@ -399,9 +399,9 @@ class TestVariableConstraintGraphFeatures:
 
         with model.environment:
             # 3 variables
-            x1 = Variable("x1", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            x2 = Variable("x2", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            x3 = Variable("x3", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x1 = Variable("x1", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            x2 = Variable("x2", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            x3 = Variable("x3", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x1 + x2 + x3
 
@@ -430,9 +430,9 @@ class TestVariableConstraintGraphFeatures:
 
         with model.environment:
             # Create variables with very different degrees
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            z = Variable("z", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            z = Variable("z", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y + z
 

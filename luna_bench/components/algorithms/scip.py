@@ -3,8 +3,9 @@ from logging import Logger
 from pathlib import Path
 from typing import ClassVar
 
-from luna_quantum import Logging, Model, Solution, Timer
-from luna_quantum.translator import LpTranslator
+from luna_model import Model, Solution, Timer
+from luna_model.translator import LpTranslator
+from luna_quantum import Logging
 from pyscipopt import Model as PyScipModel
 
 from luna_bench.base_components import BaseAlgorithmSync
@@ -93,7 +94,7 @@ class ScipAlgorithm(BaseAlgorithmSync):
             path = Path(tmp.name)
 
         try:
-            LpTranslator.from_aq(
+            LpTranslator.from_lm(
                 model,
                 filepath=path,
             )

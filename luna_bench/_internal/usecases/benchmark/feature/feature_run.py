@@ -2,7 +2,8 @@ import time
 from typing import TYPE_CHECKING
 
 from dependency_injector.wiring import Provide, inject
-from luna_quantum import Logging, Model
+from luna_model import Model
+from luna_quantum import Logging
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 

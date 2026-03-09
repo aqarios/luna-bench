@@ -1,5 +1,5 @@
 import pytest
-from luna_quantum import Model
+from luna_model import Model
 
 from tests.fixtures.failing_algorithm import (
     FailingAlgorithm,

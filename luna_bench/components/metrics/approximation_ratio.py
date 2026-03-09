@@ -1,6 +1,6 @@
 """Approximation Ratio metric for evaluating solution quality against optimal solutions."""
 
-from luna_quantum import Sense, Solution
+from luna_model import Sense, Solution
 from pydantic import Field
 
 from luna_bench.base_components import BaseMetric
@@ -96,7 +96,7 @@ class ApproximationRatio(BaseMetric):
         exp_val = solution.expectation_value()
 
         # Calculate ratio based on optimization sense
-        nom, denom = (exp_val, opt_sol.best_sol) if solution.sense == Sense.Min else (opt_sol.best_sol, exp_val)
+        nom, denom = (exp_val, opt_sol.best_sol) if solution.sense == Sense.MIN else (opt_sol.best_sol, exp_val)
         ar = get_ratio(nominator=nom, denominator=denom, abt_diff=self.abt_diff)
 
         return ApproximationRatioResult(approximation_ratio=ar)

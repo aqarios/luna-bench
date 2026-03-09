@@ -17,7 +17,7 @@ from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissi
 from tests.unit.fixtures.mock_components import MockMetric, MockMetricError, UnregisteredMetric
 
 if TYPE_CHECKING:
-    from luna_quantum import Solution
+    from luna_model import Solution
     from pydantic import ValidationError
 
     from luna_bench._internal.mappers.container import MapperContainer

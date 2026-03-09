@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from luna_quantum import Bounds, Model, Unbounded, Variable, Vtype
+from luna_model import Bounds, Model, Unbounded, Variable, Vtype
 
 from luna_bench.components.features.mip.linear_constraint_matrix import (
     CoefStatsKey,
@@ -105,8 +105,8 @@ class TestLinearConstraintMatrixFeatures:
         model = Model("continuous_only")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y
         model.constraints += 2 * x + 3 * y <= 10
@@ -131,8 +131,8 @@ class TestLinearConstraintMatrixFeatures:
         model = Model("integer_only")
 
         with model.environment:
-            i1 = Variable("i1", vtype=Vtype.Integer, bounds=Bounds(0, 10))
-            i2 = Variable("i2", vtype=Vtype.Binary)
+            i1 = Variable("i1", vtype=Vtype.INTEGER, bounds=Bounds(0, 10))
+            i2 = Variable("i2", vtype=Vtype.BINARY)
 
         model.objective = i1 + i2
         model.constraints += 2 * i1 + i2 <= 10
@@ -182,8 +182,8 @@ class TestLinearConstraintMatrixFeatures:
         model = Model("var_coef_test")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y
         model.constraints += 2 * x + 3 * y <= 10
@@ -200,8 +200,8 @@ class TestLinearConstraintMatrixFeatures:
         model = Model("cons_coef_test")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y
         model.constraints += 2 * x + 3 * y <= 10
@@ -218,8 +218,8 @@ class TestLinearConstraintMatrixFeatures:
         model = Model("normalized_test")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y
         model.constraints += 2 * x + 4 * y <= 10
@@ -236,8 +236,8 @@ class TestLinearConstraintMatrixFeatures:
         model = Model("zero_rhs_test")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y
         model.constraints += x + y == 0
@@ -254,9 +254,9 @@ class TestLinearConstraintMatrixFeatures:
         model = Model("vc_norm_test")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            z = Variable("z", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            z = Variable("z", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y + z
         model.constraints += x + 2 * y + 3 * z <= 12
@@ -282,8 +282,8 @@ class TestLinearConstraintMatrixFeatures:
         model = Model("negative_coef_test")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(Unbounded, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(Unbounded, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(Unbounded, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(Unbounded, Unbounded))
 
         model.objective = x + y
         model.constraints += x - 2 * y <= 10
@@ -333,7 +333,7 @@ class TestLinearConstraintMatrixFeatures:
         model = Model("single_single")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective += x
         model.constraints += 5 * x <= 10
@@ -350,9 +350,9 @@ class TestLinearConstraintMatrixFeatures:
         model = Model("zero_coef_rows")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            z = Variable("z", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            z = Variable("z", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y + z
         # z doesn't appear in any constraint

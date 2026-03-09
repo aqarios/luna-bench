@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
-from luna_quantum import Variable, Vtype
+from luna_model import Variable, Vtype
 from pydantic import BaseModel
 
 from luna_bench.base_components import BaseFeature
@@ -18,7 +18,7 @@ from luna_bench.helpers import feature
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from luna_quantum import Model
+    from luna_model import Model
     from numpy.typing import NDArray
 
 
@@ -119,8 +119,8 @@ class ObjectiveFunctionFeature(BaseFeature):
 
         # Define scope configurations
         scope_configs: list[tuple[VarScope, Vtype | list[Vtype] | None]] = [
-            (VarScope.CONTINUOUS, Vtype.Real),
-            (VarScope.NON_CONTINUOUS, [Vtype.Integer, Vtype.Binary]),
+            (VarScope.CONTINUOUS, Vtype.REAL),
+            (VarScope.NON_CONTINUOUS, [Vtype.INTEGER, Vtype.BINARY]),
             (VarScope.ALL, None),
         ]
 
@@ -209,10 +209,10 @@ class ObjectiveFunctionFeature(BaseFeature):
 
         for var, v in model.objective.linear_items():
             match var.vtype:
-                case Vtype.Binary | Vtype.Integer:
+                case Vtype.BINARY | Vtype.INTEGER:
                     d_coefs_nc[var] = v
                     d_coefs_v[var] = v
-                case Vtype.Real:
+                case Vtype.REAL:
                     d_coefs_c[var] = v
                     d_coefs_v[var] = v
 

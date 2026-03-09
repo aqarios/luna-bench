@@ -1,5 +1,5 @@
 import pytest
-from luna_quantum import Solution, Vtype
+from luna_model import Solution, Vtype
 
 
 @pytest.fixture()
@@ -32,12 +32,9 @@ def solution() -> Solution:
         0,
     ]
 
-    return Solution._build(  # type: ignore[attr-defined,no-any-return]
-        component_types=[Vtype.Binary] * len(row),
-        binary_cols=[[element] for element in row],
-        spin_cols=None,
-        int_cols=None,
-        real_cols=None,
+    return Solution(
+        [{f"x{i}": v for i, v in enumerate(row)}],
+        vtypes=[Vtype.BINARY] * len(row),
         raw_energies=None,
         timing=None,
         counts=[1],

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
-from luna_quantum import Sense, Solution, Timer, Vtype
+from luna_model import Sense, Solution, Timer, Vtype
 from pydantic import ValidationError
 
 from luna_bench.components.metrics.time_to_solution import TimeToSolution, TimeToSolutionResult
@@ -61,7 +61,7 @@ class TestTimeToSolution:
     @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
     def test_all_optimal_solutions(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test TTS when all samples are optimal (p* = 1)."""
-        solution = create_solution(obj_values=[5.0, 5.0, 5.0], sense=Sense.Min, runtime_seconds=0.1)
+        solution = create_solution(obj_values=[5.0, 5.0, 5.0], sense=Sense.MIN, runtime_seconds=0.1)
 
         metric = TimeToSolution()
         result = metric.run(solution, mock_feature_results)
@@ -76,7 +76,7 @@ class TestTimeToSolution:
     @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
     def test_no_optimal_solutions(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test TTS = infinity when no optimal solutions found (p* = 0)."""
-        solution = create_solution(obj_values=[10.0, 15.0, 20.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[10.0, 15.0, 20.0], sense=Sense.MIN)
 
         metric = TimeToSolution()
         result = metric.run(solution, mock_feature_results)
@@ -91,7 +91,7 @@ class TestTimeToSolution:
     def test_some_optimal_solutions(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test TTS calculation when some samples are optimal (0 < p* < 1)."""
         # 2 out of 4 samples are optimal
-        solution = create_solution(obj_values=[5.0, 10.0, 5.0, 15.0], sense=Sense.Min, runtime_seconds=0.1)
+        solution = create_solution(obj_values=[5.0, 10.0, 5.0, 15.0], sense=Sense.MIN, runtime_seconds=0.1)
 
         metric = TimeToSolution()
         result = metric.run(solution, mock_feature_results)
@@ -116,11 +116,11 @@ class TestTimeToSolution:
         time.sleep(0.01)
         timing = timer.stop()
 
-        solution = Solution._build(  # type: ignore[attr-defined]
-            component_types=[Vtype.Binary],
-            binary_cols=[[]],
+        solution = Solution(
+            [],
+            vtypes=[Vtype.BINARY],
             timing=timing,
-            sense=Sense.Min,
+            sense=Sense.MIN,
         )
 
         metric = TimeToSolution()
@@ -136,7 +136,7 @@ class TestTimeToSolution:
     def test_maximization_problem(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test TTS for maximization problems."""
         # 1 out of 3 samples is optimal
-        solution = create_solution(obj_values=[10.0, 20.0, 15.0], sense=Sense.Max)
+        solution = create_solution(obj_values=[10.0, 20.0, 15.0], sense=Sense.MAX)
 
         metric = TimeToSolution()
         result = metric.run(solution, mock_feature_results)
@@ -150,7 +150,7 @@ class TestTimeToSolution:
     @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
     def test_custom_target_probability(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test TTS with custom target probability."""
-        solution = create_solution(obj_values=[5.0, 10.0, 15.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[5.0, 10.0, 15.0], sense=Sense.MIN)
 
         # With 99% target probability (default)
         metric_99 = TimeToSolution(target_probability=0.99)
@@ -165,7 +165,7 @@ class TestTimeToSolution:
     def test_custom_tolerance(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test TTS with custom tolerance for optimal comparison."""
         # Values close to optimal but not exactly equal
-        solution = create_solution(obj_values=[5.0001, 5.0002, 10.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[5.0001, 5.0002, 10.0], sense=Sense.MIN)
 
         # With default tolerance (1e-6), none should match
         metric_strict = TimeToSolution(abs_tol=1e-6)
@@ -181,7 +181,7 @@ class TestTimeToSolution:
     @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
     def test_single_optimal_sample(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test TTS with a single optimal sample."""
-        solution = create_solution(obj_values=[5.0], sense=Sense.Min, runtime_seconds=0.1)
+        solution = create_solution(obj_values=[5.0], sense=Sense.MIN, runtime_seconds=0.1)
 
         metric = TimeToSolution()
         result = metric.run(solution, mock_feature_results)
@@ -195,7 +195,7 @@ class TestTimeToSolution:
     @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
     def test_single_non_optimal_sample(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test TTS with a single non-optimal sample."""
-        solution = create_solution(obj_values=[10.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[10.0], sense=Sense.MIN)
 
         metric = TimeToSolution()
         result = metric.run(solution, mock_feature_results)
@@ -216,11 +216,11 @@ class TestTimeToSolution:
         # Create solution with different counts
         # Values: [5.0, 10.0] with counts [3, 1]
         # Total samples = 4, optimal found = 3
-        from luna_quantum import Model, Variable
+        from luna_model import Model, Variable
 
         m = Model()
         with m.environment:
-            x = Variable("x", vtype=Vtype.Integer)
+            x = Variable("x", vtype=Vtype.INTEGER)
 
         m.objective += 5 * x
 
@@ -245,7 +245,7 @@ class TestTimeToSolution:
         """Test TTS with very low probability of finding optimal."""
         # Only 1 out of 10 samples is optimal
         obj_values = [5.0] + [10.0] * 9
-        solution = create_solution(obj_values=obj_values, sense=Sense.Min, runtime_seconds=0.1)
+        solution = create_solution(obj_values=obj_values, sense=Sense.MIN, runtime_seconds=0.1)
 
         metric = TimeToSolution()
         result = metric.run(solution, mock_feature_results)
@@ -263,7 +263,7 @@ class TestTimeToSolution:
         """Test TTS with high probability of finding optimal (9/10)."""
         # 9 out of 10 samples are optimal
         obj_values = [5.0] * 9 + [10.0]
-        solution = create_solution(obj_values=obj_values, sense=Sense.Max, runtime_seconds=0.1)
+        solution = create_solution(obj_values=obj_values, sense=Sense.MAX, runtime_seconds=0.1)
 
         metric = TimeToSolution()
         result = metric.run(solution, mock_feature_results)
@@ -288,7 +288,7 @@ class TestTimeToSolution:
         # 1 out of 4 samples is optimal -> p* = 0.25
         solution = create_solution(
             obj_values=[5.0, 10.0, 15.0, 20.0],
-            sense=Sense.Min,
+            sense=Sense.MIN,
             runtime_seconds=0.1,
         )
 
@@ -312,7 +312,7 @@ class TestTimeToSolution:
     @pytest.mark.parametrize("mock_feature_results", [-10.0], indirect=True)
     def test_negative_optimal_value(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test TTS with negative optimal value (valid for minimization)."""
-        solution = create_solution(obj_values=[-10.0, -5.0, 0.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[-10.0, -5.0, 0.0], sense=Sense.MIN)
         metric = TimeToSolution()
         result = metric.run(solution, mock_feature_results)
 
@@ -323,7 +323,7 @@ class TestTimeToSolution:
     @pytest.mark.parametrize("mock_feature_results", [0.0], indirect=True)
     def test_zero_optimal_value(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test TTS with zero as optimal value."""
-        solution = create_solution(obj_values=[0.0, 1.0, 2.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[0.0, 1.0, 2.0], sense=Sense.MIN)
 
         metric = TimeToSolution()
         result = metric.run(solution, mock_feature_results)
@@ -337,7 +337,7 @@ class TestTimeToSolution:
         self, create_solution: SolutionFactory, mock_feature_results: MagicMock
     ) -> None:
         """Test TTS with very low target probability (50%)."""
-        solution = create_solution(obj_values=[5.0, 10.0], sense=Sense.Min)
+        solution = create_solution(obj_values=[5.0, 10.0], sense=Sense.MIN)
 
         metric = TimeToSolution(target_probability=0.50)
         result = metric.run(solution, mock_feature_results)
@@ -356,7 +356,7 @@ class TestTimeToSolution:
         mock_feature_results: MagicMock,
     ) -> None:
         """Test that TTS raises ValueError when solution.runtime is None."""
-        solution = create_solution(obj_values=[5.0], sense=Sense.Min, set_runtime=False)
+        solution = create_solution(obj_values=[5.0], sense=Sense.MIN, set_runtime=False)
 
         with pytest.raises(ValueError, match="Solution runtime must not be None"):
             TimeToSolution().run(solution, mock_feature_results)

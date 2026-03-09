@@ -1,4 +1,4 @@
-from luna_quantum import Solution
+from luna_model import Solution
 
 from luna_bench.entities.enums.job_status_enum import JobStatus
 

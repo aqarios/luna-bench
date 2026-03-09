@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from _pytest.fixtures import FixtureRequest
-from luna_quantum import Model, Variable, Vtype, quicksum
+from luna_model import Model, Variable, Vtype, quicksum
 
 from tests.utils.luna_model import simple_model
 
@@ -516,10 +516,10 @@ def hard_model() -> Model:
     # Create variables within model environment
     with model.environment:
         # Create 14 continuous slack variables (x1-x14)
-        slack_vars = [model.add_variable(f"real_{i}", vtype=Vtype.Real, lower=0, upper=1) for i in range(14)]
+        slack_vars = [model.add_variable(f"real_{i}", vtype=Vtype.REAL, lower=0, upper=1) for i in range(14)]
 
         # Create 60 binary variables (x15-x74)
-        binary_vars = [model.add_variable(f"binary_{i}", vtype=Vtype.Binary) for i in range(60)]
+        binary_vars = [model.add_variable(f"binary_{i}", vtype=Vtype.BINARY) for i in range(60)]
 
         # Combine all variables
         all_vars = slack_vars + binary_vars
@@ -544,7 +544,7 @@ def infeasible_model() -> Model:
     """Create a simple infeasible model."""
     model = Model("infeasible_model")
     with model.environment:
-        x = Variable("x", vtype=Vtype.Integer)
+        x = Variable("x", vtype=Vtype.INTEGER)
 
     # Add contradictory constraints
     model.constraints += x >= 10

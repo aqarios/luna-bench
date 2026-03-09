@@ -1,7 +1,7 @@
 """Mock MIP models for testing MIP feature extractors."""
 
 import pytest
-from luna_quantum import Bounds, Model, Unbounded, Variable, Vtype
+from luna_model import Bounds, Model, Unbounded, Variable, Vtype
 
 
 @pytest.fixture()
@@ -18,8 +18,8 @@ def simple_linear_model() -> Model:
     model = Model("simple_linear")
 
     with model.environment:
-        x = Variable("x", vtype=Vtype.Real, bounds=Bounds(lower=0, upper=Unbounded))
-        y = Variable("y", vtype=Vtype.Real, bounds=Bounds(lower=0, upper=Unbounded))
+        x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(lower=0, upper=Unbounded))
+        y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(lower=0, upper=Unbounded))
 
     model.objective = 3 * x + 2 * y
     model.constraints += x + y <= 10
@@ -39,16 +39,16 @@ def mixed_integer_model() -> Model:
 
     with model.environment:
         # Binary variables
-        b1 = Variable("b1", vtype=Vtype.Binary)
-        b2 = Variable("b2", vtype=Vtype.Binary)
+        b1 = Variable("b1", vtype=Vtype.BINARY)
+        b2 = Variable("b2", vtype=Vtype.BINARY)
 
         # Integer variables
-        i1 = Variable("i1", vtype=Vtype.Integer, bounds=Bounds(lower=0, upper=10))
-        i2 = Variable("i2", vtype=Vtype.Integer, bounds=Bounds(lower=Unbounded, upper=Unbounded))
+        i1 = Variable("i1", vtype=Vtype.INTEGER, bounds=Bounds(lower=0, upper=10))
+        i2 = Variable("i2", vtype=Vtype.INTEGER, bounds=Bounds(lower=Unbounded, upper=Unbounded))
 
         # Continuous variables
-        c1 = Variable("c1", vtype=Vtype.Real, bounds=Bounds(lower=0, upper=Unbounded))
-        c2 = Variable("c2", vtype=Vtype.Real, bounds=Bounds(lower=0, upper=100))
+        c1 = Variable("c1", vtype=Vtype.REAL, bounds=Bounds(lower=0, upper=Unbounded))
+        c2 = Variable("c2", vtype=Vtype.REAL, bounds=Bounds(lower=0, upper=100))
 
     model.objective = 5 * b1 + 3 * b2 + 2 * i1 + 4 * i2 + c1 + 6 * c2
     model.constraints += b1 + b2 + i1 <= 15
@@ -69,9 +69,9 @@ def quadratic_model() -> Model:
     model = Model("quadratic")
 
     with model.environment:
-        x = Variable("x", vtype=Vtype.Real, bounds=Bounds(lower=0, upper=Unbounded))
-        y = Variable("y", vtype=Vtype.Real, bounds=Bounds(lower=0, upper=Unbounded))
-        z = Variable("z", vtype=Vtype.Integer, bounds=Bounds(lower=0, upper=10))
+        x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(lower=0, upper=Unbounded))
+        y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(lower=0, upper=Unbounded))
+        z = Variable("z", vtype=Vtype.INTEGER, bounds=Bounds(lower=0, upper=10))
 
     model.objective = x + 2 * y + z
 
@@ -102,7 +102,7 @@ def sparse_model() -> Model:
     model = Model("sparse")
 
     with model.environment:
-        variables = [Variable(f"x{i}", vtype=Vtype.Real, bounds=Bounds(lower=0, upper=Unbounded)) for i in range(10)]
+        variables = [Variable(f"x{i}", vtype=Vtype.REAL, bounds=Bounds(lower=0, upper=Unbounded)) for i in range(10)]
 
     # Sparse objective (only some variables)
     model.objective = 2 * variables[0] + 3 * variables[5] + variables[9]
@@ -125,10 +125,10 @@ def dense_model() -> Model:
     model = Model("dense")
 
     with model.environment:
-        x1 = Variable("x1", vtype=Vtype.Real, bounds=Bounds(lower=0, upper=Unbounded))
-        x2 = Variable("x2", vtype=Vtype.Real, bounds=Bounds(lower=0, upper=Unbounded))
-        x3 = Variable("x3", vtype=Vtype.Integer, bounds=Bounds(lower=0, upper=10))
-        x4 = Variable("x4", vtype=Vtype.Binary)
+        x1 = Variable("x1", vtype=Vtype.REAL, bounds=Bounds(lower=0, upper=Unbounded))
+        x2 = Variable("x2", vtype=Vtype.REAL, bounds=Bounds(lower=0, upper=Unbounded))
+        x3 = Variable("x3", vtype=Vtype.INTEGER, bounds=Bounds(lower=0, upper=10))
+        x4 = Variable("x4", vtype=Vtype.BINARY)
 
     model.objective = x1 + 2 * x2 + 3 * x3 + 4 * x4
 
@@ -148,14 +148,14 @@ def unbounded_variables_model() -> Model:
 
     with model.environment:
         # Unbounded integer variable
-        i1 = Variable("i1", vtype=Vtype.Integer, bounds=Bounds(lower=Unbounded, upper=Unbounded))
-        i2 = Variable("i2", vtype=Vtype.Integer, bounds=Bounds(lower=0, upper=Unbounded))
+        i1 = Variable("i1", vtype=Vtype.INTEGER, bounds=Bounds(lower=Unbounded, upper=Unbounded))
+        i2 = Variable("i2", vtype=Vtype.INTEGER, bounds=Bounds(lower=0, upper=Unbounded))
 
         # Bounded integer variable
-        i3 = Variable("i3", vtype=Vtype.Integer, bounds=Bounds(lower=0, upper=10))
+        i3 = Variable("i3", vtype=Vtype.INTEGER, bounds=Bounds(lower=0, upper=10))
 
         # Continuous variables
-        c1 = Variable("c1", vtype=Vtype.Real, bounds=Bounds(lower=Unbounded, upper=Unbounded))
+        c1 = Variable("c1", vtype=Vtype.REAL, bounds=Bounds(lower=Unbounded, upper=Unbounded))
 
     model.objective = i1 + i2 + i3 + c1
     model.constraints += i1 + i2 <= 10
@@ -170,9 +170,9 @@ def all_constraint_types_model() -> Model:
     model = Model("all_constraints")
 
     with model.environment:
-        x = Variable("x", vtype=Vtype.Real, bounds=Bounds(lower=0, upper=Unbounded))
-        y = Variable("y", vtype=Vtype.Real, bounds=Bounds(lower=0, upper=Unbounded))
-        z = Variable("z", vtype=Vtype.Integer, bounds=Bounds(lower=0, upper=10))
+        x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(lower=0, upper=Unbounded))
+        y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(lower=0, upper=Unbounded))
+        z = Variable("z", vtype=Vtype.INTEGER, bounds=Bounds(lower=0, upper=10))
 
     model.objective = x + y + z
 
@@ -193,9 +193,9 @@ def zero_coefficient_model() -> Model:
     model = Model("zero_coef")
 
     with model.environment:
-        x = Variable("x", vtype=Vtype.Real, bounds=Bounds(lower=0, upper=Unbounded))
-        y = Variable("y", vtype=Vtype.Real, bounds=Bounds(lower=0, upper=Unbounded))
-        z = Variable("z", vtype=Vtype.Integer, bounds=Bounds(lower=0, upper=10))
+        x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(lower=0, upper=Unbounded))
+        y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(lower=0, upper=Unbounded))
+        z = Variable("z", vtype=Vtype.INTEGER, bounds=Bounds(lower=0, upper=10))
 
     # Objective with all variables
     model.objective = x + 2 * y + 3 * z

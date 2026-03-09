@@ -1,7 +1,7 @@
 from typing import Literal, overload
 
 import numpy as np
-from luna_quantum import Constraint, Model, Variable, Vtype
+from luna_model import Constraint, Model, Variable, Vtype
 from numpy.typing import NDArray
 
 from luna_bench.components.helper.degree import ConstraintDegree
@@ -57,13 +57,13 @@ class ModelMatrix:
         # Filter variables by type
         variables: list[Variable]
         if vtype is None:
-            variables = list(model.variables())
+            variables = list(model.environment.variables())
         elif isinstance(vtype, list):
-            variables = [v for v in model.variables() if v.vtype in vtype]
+            variables = [v for v in model.environment.variables() if v.vtype in vtype]
         else:
-            variables = [v for v in model.variables() if v.vtype == vtype]
+            variables = [v for v in model.environment.variables() if v.vtype == vtype]
 
-        constraints = [c for c in model.constraints if c.lhs.degree() == degree]
+        constraints = [c for _, c in model.constraints if c.lhs.degree() == degree]
         variable_order = {var: idx for idx, var in enumerate(variables)}
 
         if degree == ConstraintDegree.LINEAR:
