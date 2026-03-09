@@ -1,5 +1,5 @@
 import pytest
-from luna_quantum import Model
+from luna_model import Model
 
 from luna_bench._internal.dao import DaoTransaction
 from luna_bench.components import ModelSet

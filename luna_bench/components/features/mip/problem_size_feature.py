@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
-from luna_quantum import Model, Unbounded, Vtype
+from luna_model import Model, Unbounded, Vtype
 from pydantic import BaseModel
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
@@ -196,7 +196,7 @@ class ProblemSizeFeatures(BaseFeature):
         num_cons = model.num_constraints
         num_non_zero_linear = np.count_nonzero(ModelMatrix.constraint_matrix(model, ConstraintDegree.LINEAR, None)[0])
         num_non_zero_quad = np.count_nonzero(ModelMatrix.constraint_matrix(model, ConstraintDegree.QUADRATIC, None)[0])
-        num_quad_constr = sum(c.lhs.degree() == ConstraintDegree.QUADRATIC for c in model.constraints)
+        num_quad_constr = sum(c.lhs.degree() == ConstraintDegree.QUADRATIC for _, c in model.constraints)
         variables = list(model.variables())
 
         # Count variables by type
@@ -211,19 +211,19 @@ class ProblemSizeFeatures(BaseFeature):
 
         for var in variables:
             match var.vtype:
-                case Vtype.Binary:
+                case Vtype.BINARY:
                     counts[VarType.BOOLEAN] += 1
-                case Vtype.Integer:
-                    if isinstance(var.bounds.lower, Unbounded) and isinstance(var.bounds.upper, Unbounded):
+                case Vtype.INTEGER:
+                    if var.bounds.lower == Unbounded and var.bounds.upper == Unbounded:
                         counts[VarType.INTEGER] += 1
                         counts[VarType.UNBOUNDED_NON_CONTINUOUS] += 1
-                    elif (isinstance(var.bounds.lower, Unbounded) or isinstance(var.bounds.upper, Unbounded)) or (
+                    elif Unbounded in (var.bounds.lower, var.bounds.upper) or (
                         isinstance(var.bounds.lower, float) or isinstance(var.bounds.upper, float)
                     ):
                         counts[VarType.INTEGER] += 1
                     else:
                         raise ModelBoundsError(model_name=model.name, expected_bounds="[-inf, inf]")
-                case Vtype.Real:
+                case Vtype.REAL:
                     if var.bounds.lower is None or var.bounds.upper is None:
                         raise ModelBoundsError(model_name=model.name, expected_bounds="[-inf, inf]")
                     counts[VarType.CONTINUOUS] += 1
@@ -282,11 +282,9 @@ class ProblemSizeFeatures(BaseFeature):
         # Because luna model defines upper / lowerbound as unbounded and none, typing gives an irrelevant
         # error.
         support_sizes = [
-            v.bounds.upper - v.bounds.lower + 1  # type: ignore[operator]
+            v.bounds.upper - v.bounds.lower + 1
             for v in model.variables()
-            if v.vtype in [Vtype.Binary, Vtype.Integer]
-            and not isinstance(v.bounds.lower, Unbounded)
-            and not isinstance(v.bounds.upper, Unbounded)
+            if v.vtype in [Vtype.BINARY, Vtype.INTEGER] and Unbounded not in (v.bounds.lower, v.bounds.upper)
         ]
 
         return np.array(support_sizes)

@@ -2,7 +2,8 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from luna_quantum import LunaSolve, Model, Solution
+from luna_model import Model, Solution
+from luna_quantum import LunaSolve
 from luna_quantum.client.schemas.enums.status import StatusEnum
 from luna_quantum.solve import SolveJob
 from luna_quantum.solve.interfaces.backend_i import IBackend

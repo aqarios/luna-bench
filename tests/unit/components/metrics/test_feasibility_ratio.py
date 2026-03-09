@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from luna_quantum import Sense
+from luna_model import Sense
 from pydantic import ValidationError
 
 from luna_bench.components.metrics.feasbility_ratio import FeasibilityRatio, FeasibilityRatioResult
@@ -38,13 +38,13 @@ class TestFeasibilityRatio:
     @pytest.mark.parametrize(
         ("obj_values", "feasible", "sense", "expected_ratio"),
         [
-            ([1, 2, 3], [True, True, True], Sense.Min, 1.0),
-            ([1, 2, 3], [False, False, False], Sense.Min, 0.0),
-            ([1, 2, 3, 4], [True, False, True, False], Sense.Min, 0.5),
-            ([1, 2, 3], [True, False, False], Sense.Min, 1 / 3),
-            ([1], [True], Sense.Min, 1.0),
-            ([1], [False], Sense.Min, 0.0),
-            ([1, 2], [True, False], Sense.Max, 0.5),
+            ([1, 2, 3], [True, True, True], Sense.MIN, 1.0),
+            ([1, 2, 3], [False, False, False], Sense.MIN, 0.0),
+            ([1, 2, 3, 4], [True, False, True, False], Sense.MIN, 0.5),
+            ([1, 2, 3], [True, False, False], Sense.MIN, 1 / 3),
+            ([1], [True], Sense.MIN, 1.0),
+            ([1], [False], Sense.MIN, 0.0),
+            ([1, 2], [True, False], Sense.MAX, 0.5),
         ],
     )
     def test_parametrized_feasibility_ratios(

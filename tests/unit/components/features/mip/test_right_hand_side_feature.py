@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
-from luna_quantum import Bounds, Model, Unbounded, Variable, Vtype
+from luna_model import Bounds, Model, Unbounded, Variable, Vtype
 
 from luna_bench.components.features.mip.right_hand_side_feature import (
     ComparatorError,
@@ -66,8 +66,8 @@ class TestRightHandSideFeatures:
         model = Model("only_leq")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y
         model.constraints += x + y <= 10
@@ -93,8 +93,8 @@ class TestRightHandSideFeatures:
         model = Model("only_eq")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y
         model.constraints += x + y == 10
@@ -119,8 +119,8 @@ class TestRightHandSideFeatures:
         model = Model("only_geq")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y
         model.constraints += x + y >= 5
@@ -146,8 +146,8 @@ class TestRightHandSideFeatures:
         model = Model("negative_rhs")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(Unbounded, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(Unbounded, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(Unbounded, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(Unbounded, Unbounded))
 
         model.objective = x + y
         model.constraints += x + y <= -5
@@ -167,8 +167,8 @@ class TestRightHandSideFeatures:
         model = Model("zero_rhs")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y
         model.constraints += x + y <= 0
@@ -188,8 +188,8 @@ class TestRightHandSideFeatures:
         model = Model("mixed_rhs")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(Unbounded, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(Unbounded, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(Unbounded, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(Unbounded, Unbounded))
 
         model.objective = x + y
         model.constraints += x + y <= 10
@@ -212,7 +212,7 @@ class TestRightHandSideFeatures:
         model = Model("single_constraint")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective += x
         model.constraints += x <= 10
@@ -228,8 +228,8 @@ class TestRightHandSideFeatures:
         model = Model("multiple_constraints")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y
         # RHS values: 5, 10, 15
@@ -263,8 +263,8 @@ class TestRightHandSideFeatures:
         model = Model("large_rhs")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y
         model.constraints += x + y <= 1e10
@@ -283,8 +283,8 @@ class TestRightHandSideFeatures:
         model = Model("small_rhs")
 
         with model.environment:
-            x = Variable("x", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
-            y = Variable("y", vtype=Vtype.Real, bounds=Bounds(0, Unbounded))
+            x = Variable("x", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
+            y = Variable("y", vtype=Vtype.REAL, bounds=Bounds(0, Unbounded))
 
         model.objective = x + y
         model.constraints += x + y <= 1e-6
@@ -337,7 +337,7 @@ class TestRightHandSideFeatures:
         mock_constraint = MagicMock()
         mock_constraint.comparator = "INVALID"  # Not Le, Eq, or Ge
         mock_model = MagicMock()
-        mock_model.constraints = [mock_constraint]
+        mock_model.constraints = [("name", mock_constraint)]
 
         extractor = RightHandSideFeatures()
 

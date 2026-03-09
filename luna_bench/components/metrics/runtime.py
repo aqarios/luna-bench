@@ -1,6 +1,6 @@
 """Runtime metric for measuring solution computation time."""
 
-from luna_quantum import Solution, Timing
+from luna_model import Solution, Timing
 from pydantic import Field
 
 from luna_bench.base_components import BaseMetric

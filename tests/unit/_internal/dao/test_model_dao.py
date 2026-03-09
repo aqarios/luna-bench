@@ -10,7 +10,7 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from tests.utils.luna_model import simple_model
 
 if TYPE_CHECKING:
-    from luna_quantum import Model
+    from luna_model import Model
 
     from luna_bench._internal.dao import DaoTransaction
     from luna_bench._internal.domain_models import ModelMetadataDomain

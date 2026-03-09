@@ -1,6 +1,6 @@
 """Feasibility Ratio metric for measuring the proportion of feasible solutions."""
 
-from luna_quantum import Solution
+from luna_model import Solution
 from pydantic import Field
 
 from luna_bench.base_components import BaseMetric

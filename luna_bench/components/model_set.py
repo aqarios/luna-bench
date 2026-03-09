@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from dependency_injector.wiring import Provide, inject
-from luna_quantum import Logging, Model
+from luna_quantum import Logging
 from returns.pipeline import is_successful
 
 from luna_bench._internal.usecases import ModelLoadAllUc
@@ -25,6 +25,7 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 if TYPE_CHECKING:
     from logging import Logger
 
+    from luna_model import Model
     from returns.result import Result
 
 

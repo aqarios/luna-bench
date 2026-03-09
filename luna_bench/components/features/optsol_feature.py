@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from luna_quantum.translator import LpTranslator
+from luna_model.translator import LpTranslator
 from pyscipopt import Model as ScipModel
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
@@ -12,7 +12,7 @@ from luna_bench.base_components import BaseFeature
 from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
-    from luna_quantum import Model
+    from luna_model import Model
 
 
 class InfeasibleModelError(Exception):
@@ -118,7 +118,7 @@ class OptSolFeature(BaseFeature):
             path = Path(tmp.name)
 
         try:
-            LpTranslator.from_aq(
+            LpTranslator.from_lm(
                 model,
                 filepath=path,
             )

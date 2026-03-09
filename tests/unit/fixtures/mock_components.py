@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from luna_quantum import Solution
+from luna_model import Solution
 from pydantic import BaseModel
 from returns.result import Failure, Result, Success
 
@@ -13,7 +13,7 @@ from luna_bench.helpers.decorators import algorithm, feature, metric, plot
 from luna_bench.types import MetricResult
 
 if TYPE_CHECKING:
-    from luna_quantum import Model
+    from luna_model import Model
 
     from luna_bench.base_components.data_types.feature_results import FeatureResults
     from luna_bench.entities.benchmark_entity import BenchmarkEntity
@@ -57,18 +57,7 @@ class MockAsyncAlgorithm(BaseAlgorithmAsync[AsyncReturnData]):
         return AsyncReturnData.model_construct(model_name=model.name)
 
     def fetch_result(self, model: Model, retrieval_data: AsyncReturnData) -> Result[Solution, str]:  # noqa: ARG002
-        return Success(
-            Solution._build(  # type: ignore[attr-defined]
-                component_types=[],
-                binary_cols=[],
-                spin_cols=None,
-                int_cols=None,
-                real_cols=None,
-                raw_energies=None,
-                timing=None,
-                counts=[],
-            )
-        )
+        return Success(Solution([]))
 
 
 class UnregisteredAlgorithm(BaseAlgorithmSync):

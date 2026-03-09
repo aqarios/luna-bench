@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from luna_quantum import Solution
+from luna_model import Solution
 
 from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.components.metrics.fake_metric import FakeMetric, FakeMetricResult

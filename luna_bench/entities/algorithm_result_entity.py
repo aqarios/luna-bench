@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from luna_quantum import Solution
+from luna_model import Solution
 from pydantic import BaseModel, ConfigDict
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
