@@ -38,7 +38,9 @@ from luna_bench.entities import (
     AlgorithmEntity,
     BenchmarkEntity,
     FeatureEntity,
+    FeatureResultEntity,
     MetricEntity,
+    MetricResultEntity,
     PlotEntity,
 )
 from luna_bench.entities.enums import ErrorHandlingMode
@@ -53,6 +55,7 @@ from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetM
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from logging import Logger
 
     from returns.result import Result
@@ -794,10 +797,11 @@ class Benchmark(BenchmarkEntity):
         """
         Return all benchmark results as a single DataFrame.
 
-        Produces one row per (algorithm, model) combination. Feature results are included as
-        columns prefixed with the feature name (``feature_name/field``), and metric results as
-        columns prefixed with the metric name (``metric_name/field``). Feature values are
-        repeated across algorithms for the same model since features are model-level.
+        Builds individual DataFrames for each feature (see ``.features_to_dataframe()``), algorithm
+        (see ``.algorithms_to_dataframe``), and metric entity (see ``.metrics_to_dataframe()``),
+        then merges them. Features merge on ``model``, metrics merge on
+        ``(algorithm, model)``. Feature values are repeated across algorithms for the
+        same model since features are model-level.
 
         Returns
         -------
@@ -806,65 +810,102 @@ class Benchmark(BenchmarkEntity):
             result field of each feature and metric.
 
         """
-        feature_by_model = self._collect_feature_results()
-        _, rows = self._collect_metric_results(feature_by_model)
+        algorithms_df = self.algorithms_to_dataframe()
+        if algorithms_df.empty:
+            msg = "Cannot build results DataFrame: no algorithm results available."
+            raise ValueError(msg)
 
-        if not rows:
-            rows = self._build_rows_from_algorithms(feature_by_model)
+        features_df = self.all_features_to_dataframe()
+        metrics_df = self.all_metrics_to_dataframe()
 
+        return algorithms_df.merge(right=metrics_df, on=["algorithm", "model"], how="left").merge(
+            right=features_df, on="model", how="left"
+        )
+
+    def features_to_dataframe(self, feature_entity: FeatureEntity) -> pd.DataFrame:
+        """Return results for a single feature entity as a DataFrame with one row per model."""
+        return self._resultsentity_to_dataframe(
+            name=feature_entity.name,
+            results=feature_entity.results,
+            key_columns=lambda model_name: {"model": model_name},
+        )
+
+    def all_features_to_dataframe(self) -> pd.DataFrame:
+        """Return all feature results merged into a single DataFrame on ``model``."""
+        result = pd.DataFrame(columns=["model"])
+        for feature_entity in self.features:
+            result = result.merge(
+                self.features_to_dataframe(feature_entity),
+                on="model",
+                how="outer",
+            )
+        return result
+
+    def metrics_to_dataframe(self, metric_entity: MetricEntity) -> pd.DataFrame:
+        """Return results for a single metric entity as a DataFrame with one row per (algorithm, model)."""
+        return self._resultsentity_to_dataframe(
+            name=metric_entity.name,
+            results=metric_entity.results,
+            key_columns=lambda key: {"algorithm": key[0], "model": key[1]},
+        )
+
+    def all_metrics_to_dataframe(self) -> pd.DataFrame:
+        """Return all metric results merged into a single DataFrame on ``(algorithm, model)``."""
+        result = pd.DataFrame(columns=["algorithm", "model"])
+        for metric_entity in self.metrics:
+            result = result.merge(
+                self.metrics_to_dataframe(metric_entity),
+                on=["algorithm", "model"],
+                how="outer",
+            )
+        return result
+
+    def _resultsentity_to_dataframe(
+        self,
+        name: str,
+        results: dict[tuple[str, str], MetricResultEntity] | dict[str, FeatureResultEntity],
+        key_columns: Callable[[Any], dict[str, Any]],
+    ) -> pd.DataFrame:
+        """Flatten result entities into a DataFrame."""
+        rows: list[dict[str, Any]] = []
+        for key, result_entity in results.items():
+            row = key_columns(key)
+            if result_entity.result is not None:
+                for field_name, value in result_entity.result.model_dump().items():
+                    row[f"{name}/{field_name}"] = value
+            rows.append(row)
         return pd.DataFrame(rows)
 
-    def _collect_feature_results(self) -> dict[str, dict[str, Any]]:
-        feature_by_model: dict[str, dict[str, Any]] = {}
-        for feature_entity in self.features:
-            for model_name, result_entity in feature_entity.results.items():
-                if result_entity.result is None:
-                    continue
-                for field_name, value in result_entity.result.model_dump().items():
-                    feature_by_model.setdefault(model_name, {})[f"{feature_entity.name}/{field_name}"] = value
-        return feature_by_model
-
-    def _collect_metric_results(
-        self, feature_by_model: dict[str, dict[str, Any]]
-    ) -> tuple[dict[tuple[str, str], dict[str, Any]], list[dict[str, Any]]]:
-        rows_by_key: dict[tuple[str, str], dict[str, Any]] = {}
-        rows: list[dict[str, Any]] = []
-
-        for metric_entity in self.metrics:
-            for (algorithm_name, model_name), result_entity in metric_entity.results.items():
-                key = (algorithm_name, model_name)
-                if key not in rows_by_key:
-                    row: dict[str, Any] = {"algorithm": algorithm_name, "model": model_name}
-                    row.update(feature_by_model.get(model_name, {}))
-                    rows_by_key[key] = row
-                    rows.append(row)
-
-                if result_entity.result is not None:
-                    for field_name, value in result_entity.result.model_dump().items():
-                        rows_by_key[key][f"{metric_entity.name}/{field_name}"] = value
-
-        return rows_by_key, rows
-
-    def _build_rows_from_algorithms(self, feature_by_model: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    def algorithms_to_dataframe(self) -> pd.DataFrame:
+        """Return all algorithm (algorithm, model) combinations as a DataFrame."""
         rows: list[dict[str, Any]] = []
         for algo_entity in self.algorithms:
-            for model_name in algo_entity.results:
-                row: dict[str, Any] = {"algorithm": algo_entity.name, "model": model_name}
-                row.update(feature_by_model.get(model_name, {}))
+            for model_name, result_entity in algo_entity.results.items():
+                row: dict[str, Any] = {
+                    "algorithm": algo_entity.name,
+                    "model": model_name,
+                    **result_entity.result_dump(exclude={"task_id", "status", "retrival_data", "error", "model_id"}),
+                    "algorithm_config": algo_entity.algorithm.model_dump(),
+                }
+
                 rows.append(row)
-        return rows
+        return pd.DataFrame(rows)
 
-    def list_model_metrics_classes(self) -> list[None]:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError  # pragma: no cover
+    def list_feature_classes(self) -> list[type[BaseFeature]]:
+        """Return the feature classes registered on this benchmark."""
+        return [type(m.feature) for m in self.features]
 
-    def list_metrics_classes(self) -> list[None]:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError  # pragma: no cover
+    def list_metrics_classes(self) -> list[type[BaseMetric]]:
+        """Return the metric classes registered on this benchmark."""
+        return [type(m.metric) for m in self.metrics]
 
-    def list_plots_classes(self) -> list[None]:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError  # pragma: no cover
+    def list_plots_classes(self) -> list[type[BasePlot[Any]]]:
+        """Return the plot classes registered on this benchmark."""
+        return [type(p.plot) for p in self.plots]
 
-    def list_algorithms(self) -> list[None]:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError  # pragma: no cover
+    def list_algorithms(self) -> list[type[BaseAlgorithmSync | BaseAlgorithmAsync[Any]]]:
+        """Return the algorithm classes registered on this benchmark."""
+        return [type(a.algorithm) for a in self.algorithms]
 
     def list_backends(self) -> list[None]:  # noqa: D102 # Not yet implemented
         raise NotImplementedError  # pragma: no cover

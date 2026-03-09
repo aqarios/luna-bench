@@ -1,4 +1,5 @@
 from .mock_database import configured_dao, empty_transaction, setup_benchmark
+from .mock_entities import make_algo_entity, make_feature_entity, make_metric_entity
 from .mock_feature_results import create_solution, mock_feature_results, mock_solution_config
 from .mock_mapper import mapper
 from .mock_mip_models import (
@@ -28,6 +29,9 @@ __all__ = [
     "fully_connected_qubo_matrix",
     "hard_model",
     "infeasible_model",
+    "make_algo_entity",
+    "make_feature_entity",
+    "make_metric_entity",
     "mapper",
     "mixed_integer_model",
     "mock_feature_results",
