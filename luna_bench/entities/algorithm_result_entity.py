@@ -31,5 +31,6 @@ class AlgorithmResultEntity(BaseModel):
         """Dump result fields, using ``serialize`` for the solution."""
         exclude = exclude or set()
         data = self.model_dump(exclude={"solution", *exclude})
-        data["solution"] = self.solution.serialize() if self.solution is not None else None
+        if "solution" not in exclude:
+            data["solution"] = self.solution.serialize() if self.solution is not None else None
         return data

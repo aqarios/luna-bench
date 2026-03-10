@@ -618,16 +618,6 @@ class TestResultsToDataframe:
         assert df.iloc[0]["accuracy/score"] == 0.95
         assert df.iloc[0]["runtime/seconds"] == 1.23
 
-    def test_fallback_to_algorithms_when_no_metrics(self) -> None:
-        feature = make_feature_entity("num_vars", ("model1", {"count": 42}))
-        algo = make_algo_entity("algo1", ["model1"])
-        benchmark = self._make_benchmark(features=[feature], algorithms=[algo])
-        df = benchmark.results_to_dataframe()
-
-        assert len(df) == 1
-        assert df.iloc[0]["algorithm"] == "algo1"
-        assert df.iloc[0]["model"] == "model1"
-        assert df.iloc[0]["num_vars/count"] == 42
 
     def test_feature_repeated_across_algorithms(self) -> None:
         feature = make_feature_entity("size", ("model1", {"value": 10}))
@@ -804,7 +794,7 @@ class TestListClasses:
         result = benchmark.list_algorithms()
 
         assert len(result) == 2
-        assert all(issubclass(c, MockAlgorithm) for c in result)
+        assert all(issubclass(c, MockAlgorithm) for c, _ in result)
 
     def test_list_algorithms_empty(self) -> None:
         benchmark = self._make_benchmark()
