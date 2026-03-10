@@ -867,7 +867,7 @@ class Benchmark(BenchmarkEntity):
 
     def _resultsentity_to_dataframe(
         self,
-        entity: MetricEntity | FeatureEntity,
+        entity: ResultEntityT,
         key_columns: Callable[[Any], dict[str, Any]],
     ) -> pd.DataFrame:
         """Flatten result entities into a DataFrame."""

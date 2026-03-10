@@ -618,7 +618,6 @@ class TestResultsToDataframe:
         assert df.iloc[0]["accuracy/score"] == 0.95
         assert df.iloc[0]["runtime/seconds"] == 1.23
 
-
     def test_feature_repeated_across_algorithms(self) -> None:
         feature = make_feature_entity("size", ("model1", {"value": 10}))
         metric = make_metric_entity(
