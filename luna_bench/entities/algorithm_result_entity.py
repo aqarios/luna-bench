@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from luna_model import Solution
 from pydantic import BaseModel, ConfigDict
 
@@ -24,3 +26,11 @@ class AlgorithmResultEntity(BaseModel):
     model_id: int
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    def result_dump(self, exclude: set[str] | None = None) -> dict[str, Any]:
+        """Dump result fields, using ``serialize`` for the solution."""
+        exclude = exclude or set()
+        data = self.model_dump(exclude={"solution", *exclude})
+        if "solution" not in exclude:
+            data["solution"] = self.solution.serialize() if self.solution is not None else None
+        return data

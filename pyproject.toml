@@ -23,8 +23,8 @@ keywords = [
 dependencies = [
     "dependency-injector>=4.48.2",
     "huey>=2.6.0",
-    "luna-model>=0.5.2",
-    "luna-quantum>=1.1.3rc1",
+    "luna-model>=0.5.3",
+    "luna-quantum>=1.2.0",
     "matplotlib>=3.10.8",
     "peewee>=4.0.0",
     "pip-licenses>=5.5.1",
@@ -57,6 +57,8 @@ dev = [
     "networkx>=3.6.1",
     "scipy>=1.17.0",
 ]
+
+[project.optional-dependencies]
 opt-metrics = [
     "pyscipopt>=6.0.1",
 ]
