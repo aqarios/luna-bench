@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -1346,14 +1346,14 @@ wheels = [
 
 [[package]]
 name = "scipy-stubs"
-version = "1.17.1.1"
+version = "1.17.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "optype", extra = ["numpy"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ec/c1/bf50e1cbf4015d4077835ffebea9a45dba7f5bf1cd781e931baff358cb20/scipy_stubs-1.17.1.1.tar.gz", hash = "sha256:e8f812a6eb298cfa3dd6b79a4af2b00fb4045f2ee28eadcc0eee8882208b5f1a", size = 383682, upload-time = "2026-03-08T21:49:40.976Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c7/ab/43f681ffba42f363b7ed6b767fd215d1e26006578214ff8330586a11bf95/scipy_stubs-1.17.1.2.tar.gz", hash = "sha256:2ecadc8c87a3b61aaf7379d6d6b10f1038a829c53b9efe5b174fb97fc8b52237", size = 388354, upload-time = "2026-03-15T22:33:20.449Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f6/23/15d568084d57cc99ba9f662f06c0fa647348b809df28bef1907aa8149eec/scipy_stubs-1.17.1.1-py3-none-any.whl", hash = "sha256:26576c5ed0f9007a07f4f4582f984c9bfac00ac93c268c6e558ad5ead0312b43", size = 589301, upload-time = "2026-03-08T21:49:38.794Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/0b/ec4fe720c1202d9df729a3e9d9b7e4d2da9f6e7f28bd2877b7d0769f4f75/scipy_stubs-1.17.1.2-py3-none-any.whl", hash = "sha256:f19e8f5273dbe3b7ee6a9554678c3973b9695fa66b91f29206d00830a1536c06", size = 594377, upload-time = "2026-03-15T22:33:18.684Z" },
 ]
 
 [[package]]
