@@ -234,7 +234,9 @@ class Benchmark(BenchmarkEntity):
                     return Benchmark.load(name)
                 case _:
                     Benchmark._logger.error(f"Failed to create benchmark: {error}")
-                    raise RuntimeError(error)
+                    if isinstance(error, UnknownLunaBenchError):
+                        raise error.error()
+                    raise error
 
         return Benchmark.model_validate(result.unwrap(), from_attributes=True)
 
