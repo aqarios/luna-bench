@@ -33,13 +33,12 @@ class TestModelData:
                 Success(ModelSetDomain(id=1, name="Test", models=[])),
                 nullcontext(ModelSet(id=1, name="Test", models=[])),
             ),
-            (Failure(DataNotUniqueError()), pytest.raises(RuntimeError)),
         ],
     )
     def test_create(
         self,
-        return_value: Result[ModelSetDomain, DataNotUniqueError | Exception],
-        exp: AbstractContextManager[ModelSet | RuntimeError],
+        return_value: Result[ModelSetDomain, Exception],
+        exp: AbstractContextManager[ModelSet],
     ) -> None:
         mock: Mock = Mock(spec=ModelSetCreateUc)
         mock.return_value = return_value
@@ -47,6 +46,42 @@ class TestModelData:
             r = ModelSet.create(modelset_name="Test")
             mock.assert_called_with(modelset_name="Test")
 
+            assert e == r
+
+    @pytest.mark.parametrize(
+        ("modelset_name", "load_return_value", "exp"),
+        [
+            (
+                "Test",
+                Success(ModelSetDomain(id=1, name="Test", models=[])),
+                nullcontext(ModelSet(id=1, name="Test", models=[])),
+            ),
+            (
+                "Existing",
+                Success(ModelSetDomain(id=2, name="Existing", models=[])),
+                nullcontext(ModelSet(id=2, name="Existing", models=[])),
+            ),
+        ],
+    )
+    def test_create_when_duplicate(
+        self,
+        modelset_name: str,
+        load_return_value: Result[ModelSetDomain, UnknownLunaBenchError],
+        exp: AbstractContextManager[ModelSet],
+    ) -> None:
+        create_mock: Mock = Mock(spec=ModelSetCreateUc)
+        create_mock.return_value = Failure(DataNotUniqueError())
+
+        load_mock: Mock = Mock(spec=ModelSetLoadUc)
+        load_mock.return_value = load_return_value
+
+        with (
+            exp as e,
+            luna_bench._usecase_container.modelset_create_uc.override(create_mock),
+            luna_bench._usecase_container.modelset_load_uc.override(load_mock),
+        ):
+            r = ModelSet.create(modelset_name=modelset_name)
+            create_mock.assert_called_with(modelset_name=modelset_name)
             assert e == r
 
     @pytest.mark.parametrize(

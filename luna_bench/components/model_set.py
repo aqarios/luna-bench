@@ -127,8 +127,16 @@ class ModelSet(ModelSetEntity):
 
         if not is_successful(result):
             error = result.failure()
-            ModelSet._logger.info(f"Error: {error}")
-            raise RuntimeError(error)
+            match error:
+                case DataNotUniqueError():
+                    ModelSet._logger.warning(
+                        f"Modelset '{modelset_name}' does already exist. "
+                        f'Loading it with `ModelSet.load("{modelset_name}")`.'
+                    )
+                    return ModelSet.load(modelset_name)
+                case _:
+                    ModelSet._logger.info(f"Error: {error}")
+                    raise RuntimeError(error)
 
         return ModelSet.model_validate(result.unwrap(), from_attributes=True)
 
