@@ -68,7 +68,9 @@ class TestLunaAlgorithm:
         class FakeSolveJob:
             id = "job_id"
 
-        # If the workaround is removed, the FlexibleParameterAlgorithm should/could be changed back to FakeLunaAlgorithm
+        # If the workaround, inside the luna_algorithm.py 'run_async' converting algorithms to
+        # FlexibleParameterAlgorithm is removed, the FlexibleParameterAlgorithm should/could be changed
+        # back to FakeLunaAlgorithm
         with patch.object(FlexibleParameterAlgorithm, "run", return_value=FakeSolveJob()):
             result = demo_algorithm.run_async(model=model)
 
@@ -80,7 +82,9 @@ class TestLunaAlgorithm:
         def raise_run(self: FakeLunaAlgorithm, model: Model) -> None:  # noqa: ARG001
             raise RuntimeError("an error")  # noqa: TRY003
 
-        # If the workaround is removed, the FlexibleParameterAlgorithm should/could be changed back to FakeLunaAlgorithm
+        # If the workaround, inside the luna_algorithm.py 'run_async' converting algorithms to
+        # FlexibleParameterAlgorithm is removed, the FlexibleParameterAlgorithm should/could be changed
+        # back to FakeLunaAlgorithm
         with patch.object(FlexibleParameterAlgorithm, "run", raise_run):
             result = demo_algorithm.run_async(model=model)
 
