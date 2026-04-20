@@ -225,10 +225,16 @@ class Benchmark(BenchmarkEntity):
 
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to create benchmark: {error}")
-            if isinstance(error, UnknownLunaBenchError):
-                raise error.error()
-            raise error
+
+            match error:
+                case DataNotUniqueError():
+                    Benchmark._logger.warning(f"Loading existing benchmark ('{name}').")
+                    return Benchmark.load(name)
+                case _:
+                    Benchmark._logger.error(f"Failed to create benchmark: {error}")
+                    if isinstance(error, UnknownLunaBenchError):
+                        raise error.error()
+                    raise error
 
         return Benchmark.model_validate(result.unwrap(), from_attributes=True)
 
@@ -397,6 +403,28 @@ class Benchmark(BenchmarkEntity):
             raise error
         self.modelset = None
 
+    def get_feature(self, name: str) -> FeatureEntity:
+        """
+        Get a feature by its name from a benchmark.
+
+        If the feature is not present, an error will be raised.
+
+        Parameters
+        ----------
+        name: str
+            The name of the feature to be retrieved.
+
+        Raises
+        ------
+        DataNotExistError
+            Raised if its name couldn't retrieve the feature.
+
+        """
+        for feature in self.features:
+            if feature.name == name:
+                return feature
+        raise DataNotExistError
+
     def add_feature(
         self,
         name: str,
@@ -436,10 +464,18 @@ class Benchmark(BenchmarkEntity):
         ] = benchmark_add_feature(self.name, name, feature)
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to add model metric to benchmark: {error}")
-            if isinstance(error, UnknownLunaBenchError):
-                raise error.error()
-            raise error
+
+            match error:
+                case DataNotUniqueError():
+                    Benchmark._logger.warning(f"Loading existing feature ('{name}').")
+                    return self.get_feature(name)
+                case _:
+                    Benchmark._logger.error(f"Failed to add feature to benchmark: {error}")
+
+                    if isinstance(error, UnknownLunaBenchError):
+                        raise error.error()
+                    raise error
+
         unwrapped_result = result.unwrap()
         self.features.append(unwrapped_result)
         return unwrapped_result
@@ -474,6 +510,28 @@ class Benchmark(BenchmarkEntity):
             raise error
 
         self._remove_name_from_list(self.features, feature_name)
+
+    def get_metric(self, name: str) -> MetricEntity:
+        """
+        Get a metric by its name from a benchmark.
+
+        If the metric is not present, an error will be raised.
+
+        Parameters
+        ----------
+        name: str
+            The name of the metric to be retrieved.
+
+        Raises
+        ------
+        DataNotExistError
+            Raised if its name couldn't retrieve the metric.
+
+        """
+        for metric in self.metrics:
+            if metric.name == name:
+                return metric
+        raise DataNotExistError
 
     def add_metric(
         self,
@@ -513,10 +571,17 @@ class Benchmark(BenchmarkEntity):
         ] = benchmark_add_metric_uc(self.name, name, metric)
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to add metric to benchmark: {error}")
-            if isinstance(error, UnknownLunaBenchError):
-                raise error.error()
-            raise error
+
+            match error:
+                case DataNotUniqueError():
+                    Benchmark._logger.warning(f"Loading existing metric ('{name}').")
+                    return self.get_metric(name)
+                case _:
+                    Benchmark._logger.error(f"Failed to add metric to benchmark: {error}")
+                    if isinstance(error, UnknownLunaBenchError):
+                        raise error.error()
+                    raise error
+
         unwrapped_result = result.unwrap()
         self.metrics.append(unwrapped_result)
         return unwrapped_result
@@ -550,6 +615,28 @@ class Benchmark(BenchmarkEntity):
             raise error
 
         self._remove_name_from_list(self.metrics, metric_name)
+
+    def get_algorithm(self, name: str) -> AlgorithmEntity:
+        """
+        Get an algorithm by its name from a benchmark.
+
+        If the algorithm is not present, an error will be raised.
+
+        Parameters
+        ----------
+        name: str
+            The name of the algorithm to be retrieved.
+
+        Raises
+        ------
+        DataNotExistError
+            Raised if its name couldn't retrieve the feature.
+
+        """
+        for algorithm in self.algorithms:
+            if algorithm.name == name:
+                return algorithm
+        raise DataNotExistError
 
     def add_algorithm(
         self,
@@ -593,10 +680,16 @@ class Benchmark(BenchmarkEntity):
 
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to add algorithm to benchmark: {error}")
-            if isinstance(error, UnknownLunaBenchError):
-                raise error.error()
-            raise error
+
+            match error:
+                case DataNotUniqueError():
+                    Benchmark._logger.warning(f"Loading existing Algorithm ('{name}').")
+                    return self.get_algorithm(name)
+                case _:
+                    Benchmark._logger.error(f"Failed to add algorithm to benchmark: {error}")
+                    if isinstance(error, UnknownLunaBenchError):
+                        raise error.error()
+                    raise error
         result_algorithm = result.unwrap()
         self.algorithms.append(result_algorithm)
         return result_algorithm
@@ -630,6 +723,28 @@ class Benchmark(BenchmarkEntity):
             raise error
 
         self._remove_name_from_list(self.algorithms, algorithm_name)
+
+    def get_plot(self, name: str) -> PlotEntity:
+        """
+        Get a plot by its name from a benchmark.
+
+        If the plot is not present, an error will be raised.
+
+        Parameters
+        ----------
+        name: str
+            The name of the algorithm to be retrieved.
+
+        Raises
+        ------
+        DataNotExistError
+            Raised if its name couldn't retrieve the plot.
+
+        """
+        for plot in self.plots:
+            if plot.name == name:
+                return plot
+        raise DataNotExistError
 
     def add_plot(
         self,
@@ -670,10 +785,16 @@ class Benchmark(BenchmarkEntity):
         ] = benchmark_add_plot(self.name, name, plot)
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to add plot to benchmark: {error}")
-            if isinstance(error, UnknownLunaBenchError):
-                raise error.error()
-            raise error
+
+            match error:
+                case DataNotUniqueError():
+                    Benchmark._logger.warning(f"Loading existing plot ('{name}').")
+                    return self.get_plot(name)
+                case _:
+                    Benchmark._logger.error(f"Failed to add plot to benchmark: {error}")
+                    if isinstance(error, UnknownLunaBenchError):
+                        raise error.error()
+                    raise error
         unwrapped_result = result.unwrap()
         self.plots.append(unwrapped_result)
 
