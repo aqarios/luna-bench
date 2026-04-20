@@ -228,9 +228,7 @@ class Benchmark(BenchmarkEntity):
 
             match error:
                 case DataNotUniqueError():
-                    Benchmark._logger.warning(
-                        f"Benchmark '{name}' does already exist. Loading it with `Benchmark.load(\"{name}\")`."
-                    )
+                    Benchmark._logger.warning(f"Loading existing Benchmark ('{name}').")
                     return Benchmark.load(name)
                 case _:
                     Benchmark._logger.error(f"Failed to create benchmark: {error}")
@@ -469,10 +467,7 @@ class Benchmark(BenchmarkEntity):
 
             match error:
                 case DataNotUniqueError():
-                    Benchmark._logger.warning(
-                        f"Feature '{name}' does already exist for this benchmark. "
-                        f'Loading it with `benchmark.get_feature("{name}")`.'
-                    )
+                    Benchmark._logger.warning(f"Loading existing feature ('{name}').")
                     return self.get_feature(name)
                 case _:
                     Benchmark._logger.error(f"Failed to add feature to benchmark: {error}")
@@ -579,10 +574,7 @@ class Benchmark(BenchmarkEntity):
 
             match error:
                 case DataNotUniqueError():
-                    Benchmark._logger.warning(
-                        f"Metric '{name}' does already exist for this benchmark. "
-                        f'Loading it with `benchmark.get_metric("{name}")`.'
-                    )
+                    Benchmark._logger.warning(f"Loading existing Metric ('{name}').")
                     return self.get_metric(name)
                 case _:
                     Benchmark._logger.error(f"Failed to add metric to benchmark: {error}")
@@ -691,10 +683,7 @@ class Benchmark(BenchmarkEntity):
 
             match error:
                 case DataNotUniqueError():
-                    Benchmark._logger.warning(
-                        f"Algorithm '{name}' does already exist for this benchmark. "
-                        f'Loading it with `benchmark.get_algorithm("{name}")`.'
-                    )
+                    Benchmark._logger.warning(f"Loading existing Algorithm ('{name}').")
                     return self.get_algorithm(name)
                 case _:
                     Benchmark._logger.error(f"Failed to add algorithm to benchmark: {error}")
@@ -799,10 +788,7 @@ class Benchmark(BenchmarkEntity):
 
             match error:
                 case DataNotUniqueError():
-                    Benchmark._logger.warning(
-                        f"Plot '{name}' does already exist for this benchmark. "
-                        f'Loading it with `benchmark.get_plot("{name}")`.'
-                    )
+                    Benchmark._logger.warning(f"Loading existing Plot ('{name}').")
                     return self.get_plot(name)
                 case _:
                     Benchmark._logger.error(f"Failed to add plot to benchmark: {error}")
