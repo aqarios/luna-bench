@@ -5,8 +5,8 @@ from dependency_injector.wiring import Provide, inject
 
 from luna_bench._internal.registries.protocols import Registry
 from luna_bench._internal.registries.registry_container import RegistryContainer
+from luna_bench.base_components import BasePlot
 
-from ...base_components import BasePlot
 from .decorator_utilities import DecoratorUtilities
 
 
