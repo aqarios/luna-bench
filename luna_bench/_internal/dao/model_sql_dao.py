@@ -62,7 +62,7 @@ class ModelSqlDao(ModelDao):
         list[ModelMetadataDomain]
             A metadata list of all model objects in the database.
         """
-        data = ModelMetadataTable.select()  # type: ignore[no-untyped-call]
+        data = ModelMetadataTable.select()
         return [ModelSqlDao.model_to_domain(d) for d in data]
 
     @staticmethod
@@ -94,7 +94,7 @@ class ModelSqlDao(ModelDao):
 
             if created:
                 # The Metadata was newly created therefore, we also save the model.
-                ModelTable.create(model_id=metadata, encoded_model=binary)  # type: ignore[no-untyped-call]
+                ModelTable.create(model_id=metadata, encoded_model=binary)
 
             return Success(ModelSqlDao.model_to_domain(metadata))
         except Exception as e:  # pragma: no cover

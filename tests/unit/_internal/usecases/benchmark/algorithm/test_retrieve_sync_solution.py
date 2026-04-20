@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
-from luna_quantum import Solution
+from luna_model import Solution
 from returns.maybe import Maybe, Nothing, Some
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
@@ -21,16 +21,7 @@ from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorith
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from tests.unit.fixtures.mock_database import SetupBenchmark
 
-_solution = Solution._build(  # type: ignore[attr-defined]
-    component_types=[],
-    binary_cols=[],
-    spin_cols=None,
-    int_cols=None,
-    real_cols=None,
-    raw_energies=None,
-    timing=None,
-    counts=[],
-)
+_solution = Solution([])
 
 
 class TestRetrieveSyncSolution:

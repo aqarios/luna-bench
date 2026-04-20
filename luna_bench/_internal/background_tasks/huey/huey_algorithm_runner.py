@@ -2,7 +2,8 @@ from typing import Any
 
 from dependency_injector.wiring import Provide, inject
 from huey.api import logging
-from luna_quantum import Logging, Model, Solution
+from luna_model import Model, Solution
+from luna_quantum import Logging
 from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
@@ -59,6 +60,9 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
         try:
             return Success(algorithm.run(model.unwrap()))
         except Exception as e:
+            HueyAlgorithmRunner._logger.error(
+                f"Algorithm '{algorithm.__class__.__name__}' failed on model '{model_id}':", exc_info=True
+            )
             return Failure(RunAlgorithmRuntimeError(e))
 
     @staticmethod
@@ -85,6 +89,9 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
         try:
             return Success(algorithm.run_async(model.unwrap()))
         except Exception as e:
+            HueyAlgorithmRunner._logger.error(
+                f"Algorithm '{algorithm.__class__.__name__}' failed on model '{model_id}':", exc_info=True
+            )
             return Failure(RunAlgorithmRuntimeError(e))
 
     @staticmethod

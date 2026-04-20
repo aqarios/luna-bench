@@ -3,18 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from tempfile import NamedTemporaryFile, _TemporaryFileWrapper
+from typing import Any
 from unittest.mock import patch
 
 import pytest
-
-if TYPE_CHECKING:
-    from luna_quantum import Model
-
-
-from tempfile import NamedTemporaryFile, _TemporaryFileWrapper
-
-from luna_quantum import Solution
+from luna_model import Model, Solution, Variable, Vtype
 
 from luna_bench.components.algorithms.scip import InfeasibleModelError, ScipAlgorithm
 
@@ -38,9 +32,9 @@ class TestScipAlgorithm:
         # Solution of correct type
         assert isinstance(solution, Solution)
 
-        # Objective value should be 0
-        best_sample = solution.best()
-        assert best_sample is not None
+        best_samples = solution.best()
+        assert best_samples is not None
+        best_sample = best_samples[0]
         assert best_sample.obj_value == 0.0
 
         # Variables are in solution dict
@@ -109,6 +103,37 @@ class TestScipAlgorithm:
         for temp_path in temp_file_paths:  # Check that tempfile was cleaned
             assert not temp_path.exists(), f"Temporary file {temp_path} was not cleaned up"
 
+    def test_qubo_model_with_known_solution(self) -> None:
+        """Test SCIP on a simple 3-variable QUBO.
+
+        Minimize: -5*x0 - x1 - x2 + 2*x0*x1 + 2*x0*x2
+        Unique optimal: x0=1, x1=0, x2=0 → obj = -5
+        """
+        model = Model(name="qubo_3var")
+        with model.environment:
+            x0 = Variable("x0", vtype=Vtype.BINARY)
+            x1 = Variable("x1", vtype=Vtype.BINARY)
+            x2 = Variable("x2", vtype=Vtype.BINARY)
+
+        model.objective = -5 * x0 - x1 - x2 + 2 * x0 * x1 + 2 * x0 * x2
+        algorithm = ScipAlgorithm()
+        solution = algorithm.run(model)
+
+        assert isinstance(solution, Solution)
+
+        allbest = solution.best()
+        assert allbest is not None
+        best = allbest[0]
+        assert best.obj_value == pytest.approx(-5.0)
+
+        sample = best.sample.to_dict()
+        assert sample["x0"] == pytest.approx(1.0)
+        assert sample["x1"] == pytest.approx(0.0)
+        assert sample["x2"] == pytest.approx(0.0)
+
+        assert solution.runtime is not None
+        assert solution.runtime.total_seconds > 0
+
     def test_hard_model_can_be_solved(self, hard_model: Model) -> None:
         """Test that SCIP can handle a more complex model.
 
@@ -122,5 +147,6 @@ class TestScipAlgorithm:
         assert isinstance(solution, Solution)
 
         # Timing object is filled despite pre-exit at max run-time
-        assert solution.runtime is not None
-        assert solution.runtime.total_seconds > 0
+        timing = solution.runtime
+        if timing is not None:
+            assert timing.total_seconds > 0

@@ -2,10 +2,12 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from luna_quantum import LunaSolve, Model, Solution
+from luna_model import Model, Solution
+from luna_quantum import LunaSolve
 from luna_quantum.client.schemas.enums.status import StatusEnum
 from luna_quantum.solve import SolveJob
 from luna_quantum.solve.interfaces.backend_i import IBackend
+from luna_quantum.solve.parameters.algorithms import FlexibleParameterAlgorithm
 from returns.pipeline import is_successful
 
 from luna_bench._internal.wrappers.luna_quantum.algorithms import LunaAlgorithm
@@ -66,7 +68,10 @@ class TestLunaAlgorithm:
         class FakeSolveJob:
             id = "job_id"
 
-        with patch.object(FakeLunaAlgorithm, "run", return_value=FakeSolveJob()):
+        # If the workaround, inside the luna_algorithm.py 'run_async' converting algorithms to
+        # FlexibleParameterAlgorithm is removed, the FlexibleParameterAlgorithm should/could be changed
+        # back to FakeLunaAlgorithm
+        with patch.object(FlexibleParameterAlgorithm, "run", return_value=FakeSolveJob()):
             result = demo_algorithm.run_async(model=model)
 
         assert isinstance(result, LunaData)
@@ -77,7 +82,10 @@ class TestLunaAlgorithm:
         def raise_run(self: FakeLunaAlgorithm, model: Model) -> None:  # noqa: ARG001
             raise RuntimeError("an error")  # noqa: TRY003
 
-        with patch.object(FakeLunaAlgorithm, "run", raise_run):
+        # If the workaround, inside the luna_algorithm.py 'run_async' converting algorithms to
+        # FlexibleParameterAlgorithm is removed, the FlexibleParameterAlgorithm should/could be changed
+        # back to FakeLunaAlgorithm
+        with patch.object(FlexibleParameterAlgorithm, "run", raise_run):
             result = demo_algorithm.run_async(model=model)
 
         assert result.luna_id is None

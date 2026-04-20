@@ -8,7 +8,7 @@ from luna_bench.base_components import BaseFeature
 from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
-    from luna_quantum import Model
+    from luna_model import Model
 
 
 class FakeFeatureResult(ArbitraryDataDomain):

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
+import pandas as pd
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
@@ -52,9 +53,12 @@ from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetM
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from logging import Logger
 
     from returns.result import Result
+
+ResultEntityT = TypeVar("ResultEntityT", MetricEntity, FeatureEntity)
 
 
 class Benchmark(BenchmarkEntity):
@@ -221,12 +225,51 @@ class Benchmark(BenchmarkEntity):
 
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to create benchmark: {error}")
+
+            match error:
+                case DataNotUniqueError():
+                    Benchmark._logger.warning(f"Loading existing benchmark ('{name}').")
+                    return Benchmark.load(name)
+                case _:
+                    Benchmark._logger.error(f"Failed to create benchmark: {error}")
+                    if isinstance(error, UnknownLunaBenchError):
+                        raise error.error()
+                    raise error
+
+        return Benchmark.model_validate(result.unwrap(), from_attributes=True)
+
+    @staticmethod
+    def open(name: str) -> Benchmark:
+        """
+        Load a benchmark if it exists, otherwise create a new one.
+
+        Parameters
+        ----------
+        name: str
+            The name of the benchmark.
+
+        Returns
+        -------
+        Benchmark
+            The loaded or newly created Benchmark object.
+
+        """
+        benchmark_load = Benchmark.__load_uc()
+        result: Result[
+            BenchmarkEntity, DataNotExistError | UnknownLunaBenchError | UnknownIdError | ValidationError
+        ] = benchmark_load(name)
+
+        if is_successful(result):
+            return Benchmark.model_validate(result.unwrap(), from_attributes=True)
+
+        if not isinstance(result.failure(), DataNotExistError):
+            error = result.failure()
+            Benchmark._logger.error(f"Failed to open benchmark: {error}")
             if isinstance(error, UnknownLunaBenchError):
                 raise error.error()
             raise error
 
-        return Benchmark.model_validate(result.unwrap(), from_attributes=True)
+        return Benchmark.create(name)
 
     @staticmethod
     def import_from_file(file_path: str) -> Benchmark:  # noqa: D102 # Not yet implemented
@@ -293,9 +336,11 @@ class Benchmark(BenchmarkEntity):
         ta = TypeAdapter(list[Benchmark])
         return ta.validate_python(result.unwrap(), from_attributes=True)
 
-    def reset(self) -> None: ...  # noqa: D102 # Not yet implemented
+    def reset(self) -> None:  # noqa: D102 # Not yet implemented
+        raise NotImplementedError  # pragma: no cover
 
-    def export_to_file(self, file_path: str) -> None: ...  # noqa: D102 # Not yet implemented
+    def export_to_file(self, file_path: str) -> None:  # noqa: D102 # Not yet implemented
+        raise NotImplementedError  # pragma: no cover
 
     def set_modelset(
         self,
@@ -358,6 +403,28 @@ class Benchmark(BenchmarkEntity):
             raise error
         self.modelset = None
 
+    def get_feature(self, name: str) -> FeatureEntity:
+        """
+        Get a feature by its name from a benchmark.
+
+        If the feature is not present, an error will be raised.
+
+        Parameters
+        ----------
+        name: str
+            The name of the feature to be retrieved.
+
+        Raises
+        ------
+        DataNotExistError
+            Raised if its name couldn't retrieve the feature.
+
+        """
+        for feature in self.features:
+            if feature.name == name:
+                return feature
+        raise DataNotExistError
+
     def add_feature(
         self,
         name: str,
@@ -397,10 +464,18 @@ class Benchmark(BenchmarkEntity):
         ] = benchmark_add_feature(self.name, name, feature)
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to add model metric to benchmark: {error}")
-            if isinstance(error, UnknownLunaBenchError):
-                raise error.error()
-            raise error
+
+            match error:
+                case DataNotUniqueError():
+                    Benchmark._logger.warning(f"Loading existing feature ('{name}').")
+                    return self.get_feature(name)
+                case _:
+                    Benchmark._logger.error(f"Failed to add feature to benchmark: {error}")
+
+                    if isinstance(error, UnknownLunaBenchError):
+                        raise error.error()
+                    raise error
+
         unwrapped_result = result.unwrap()
         self.features.append(unwrapped_result)
         return unwrapped_result
@@ -435,6 +510,28 @@ class Benchmark(BenchmarkEntity):
             raise error
 
         self._remove_name_from_list(self.features, feature_name)
+
+    def get_metric(self, name: str) -> MetricEntity:
+        """
+        Get a metric by its name from a benchmark.
+
+        If the metric is not present, an error will be raised.
+
+        Parameters
+        ----------
+        name: str
+            The name of the metric to be retrieved.
+
+        Raises
+        ------
+        DataNotExistError
+            Raised if its name couldn't retrieve the metric.
+
+        """
+        for metric in self.metrics:
+            if metric.name == name:
+                return metric
+        raise DataNotExistError
 
     def add_metric(
         self,
@@ -474,10 +571,17 @@ class Benchmark(BenchmarkEntity):
         ] = benchmark_add_metric_uc(self.name, name, metric)
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to add metric to benchmark: {error}")
-            if isinstance(error, UnknownLunaBenchError):
-                raise error.error()
-            raise error
+
+            match error:
+                case DataNotUniqueError():
+                    Benchmark._logger.warning(f"Loading existing metric ('{name}').")
+                    return self.get_metric(name)
+                case _:
+                    Benchmark._logger.error(f"Failed to add metric to benchmark: {error}")
+                    if isinstance(error, UnknownLunaBenchError):
+                        raise error.error()
+                    raise error
+
         unwrapped_result = result.unwrap()
         self.metrics.append(unwrapped_result)
         return unwrapped_result
@@ -511,6 +615,28 @@ class Benchmark(BenchmarkEntity):
             raise error
 
         self._remove_name_from_list(self.metrics, metric_name)
+
+    def get_algorithm(self, name: str) -> AlgorithmEntity:
+        """
+        Get an algorithm by its name from a benchmark.
+
+        If the algorithm is not present, an error will be raised.
+
+        Parameters
+        ----------
+        name: str
+            The name of the algorithm to be retrieved.
+
+        Raises
+        ------
+        DataNotExistError
+            Raised if its name couldn't retrieve the feature.
+
+        """
+        for algorithm in self.algorithms:
+            if algorithm.name == name:
+                return algorithm
+        raise DataNotExistError
 
     def add_algorithm(
         self,
@@ -554,10 +680,16 @@ class Benchmark(BenchmarkEntity):
 
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to add algorithm to benchmark: {error}")
-            if isinstance(error, UnknownLunaBenchError):
-                raise error.error()
-            raise error
+
+            match error:
+                case DataNotUniqueError():
+                    Benchmark._logger.warning(f"Loading existing Algorithm ('{name}').")
+                    return self.get_algorithm(name)
+                case _:
+                    Benchmark._logger.error(f"Failed to add algorithm to benchmark: {error}")
+                    if isinstance(error, UnknownLunaBenchError):
+                        raise error.error()
+                    raise error
         result_algorithm = result.unwrap()
         self.algorithms.append(result_algorithm)
         return result_algorithm
@@ -591,6 +723,28 @@ class Benchmark(BenchmarkEntity):
             raise error
 
         self._remove_name_from_list(self.algorithms, algorithm_name)
+
+    def get_plot(self, name: str) -> PlotEntity:
+        """
+        Get a plot by its name from a benchmark.
+
+        If the plot is not present, an error will be raised.
+
+        Parameters
+        ----------
+        name: str
+            The name of the algorithm to be retrieved.
+
+        Raises
+        ------
+        DataNotExistError
+            Raised if its name couldn't retrieve the plot.
+
+        """
+        for plot in self.plots:
+            if plot.name == name:
+                return plot
+        raise DataNotExistError
 
     def add_plot(
         self,
@@ -631,10 +785,16 @@ class Benchmark(BenchmarkEntity):
         ] = benchmark_add_plot(self.name, name, plot)
         if not is_successful(result):
             error = result.failure()
-            Benchmark._logger.error(f"Failed to add plot to benchmark: {error}")
-            if isinstance(error, UnknownLunaBenchError):
-                raise error.error()
-            raise error
+
+            match error:
+                case DataNotUniqueError():
+                    Benchmark._logger.warning(f"Loading existing plot ('{name}').")
+                    return self.get_plot(name)
+                case _:
+                    Benchmark._logger.error(f"Failed to add plot to benchmark: {error}")
+                    if isinstance(error, UnknownLunaBenchError):
+                        raise error.error()
+                    raise error
         unwrapped_result = result.unwrap()
         self.plots.append(unwrapped_result)
 
@@ -754,17 +914,128 @@ class Benchmark(BenchmarkEntity):
         self.run_metrics()
         self.run_plots()
 
-    def list_model_metrics_classes(self) -> list[None]:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError  # pragma: no cover
+    def results_to_dataframe(self, *, inlcude_solution: bool = False) -> pd.DataFrame:
+        """
+        Return all benchmark results as a single DataFrame.
 
-    def list_metrics_classes(self) -> list[None]:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError  # pragma: no cover
+        Builds individual DataFrames for each feature (see ``.features_to_dataframe()``), algorithm
+        (see ``.algorithms_to_dataframe``), and metric entity (see ``.metrics_to_dataframe()``),
+        then merges them. Features merge on ``model``, metrics merge on
+        ``(algorithm, model)``. Feature values are repeated across algorithms for the
+        same model since features are model-level.
 
-    def list_plots_classes(self) -> list[None]:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError  # pragma: no cover
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame with columns ``algorithm``, ``model``, plus one column per
+            result field of each feature and metric.
 
-    def list_algorithms(self) -> list[None]:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError  # pragma: no cover
+        """
+        if len(self.algorithms) == 0:
+            msg = "Cannot build results DataFrame: no algorithm results available."
+            raise ValueError(msg)
+        exclude_cols = set() if inlcude_solution else {"solution"}
+        algorithms_df = self.algorithms_to_dataframe(exclude=exclude_cols)
+
+        features_df = self.all_features_to_dataframe()
+        metrics_df = self.all_metrics_to_dataframe()
+
+        return algorithms_df.merge(right=metrics_df, on=["algorithm", "model"], how="left").merge(
+            right=features_df, on="model", how="left"
+        )
+
+    def _merge_result_entity(
+        self,
+        result_entities: list[ResultEntityT],
+        on: list[str],
+        entity_to_metric: Callable[[ResultEntityT], pd.DataFrame],
+    ) -> pd.DataFrame:
+        """Return all entity results merged into a single DataFrame on `defined on.."""
+        result = pd.DataFrame(columns=on)
+        for entity in result_entities:
+            result = result.merge(
+                entity_to_metric(entity),
+                on=on,
+                how="outer",
+            )
+        return result
+
+    def features_to_dataframe(self, feature_entity: FeatureEntity) -> pd.DataFrame:
+        """Return results for a single feature entity as a DataFrame with one row per model."""
+        return self._resultsentity_to_dataframe(
+            entity=feature_entity,
+            key_columns=lambda model_name: {"model": model_name},
+        )
+
+    def all_features_to_dataframe(self) -> pd.DataFrame:
+        """Return all feature results merged into a single DataFrame on ``model``."""
+        return self._merge_result_entity(
+            result_entities=self.features, on=["model"], entity_to_metric=self.features_to_dataframe
+        )
+
+    def metrics_to_dataframe(self, metric_entity: MetricEntity) -> pd.DataFrame:
+        """Return results for a single metric entity as a DataFrame with one row per (algorithm, model)."""
+        return self._resultsentity_to_dataframe(
+            entity=metric_entity,
+            key_columns=lambda key: {"algorithm": key[0], "model": key[1]},
+        )
+
+    def all_metrics_to_dataframe(self) -> pd.DataFrame:
+        """Return all metric results merged into a single DataFrame on ``(algorithm, model)``."""
+        return self._merge_result_entity(
+            result_entities=self.metrics, on=["algorithm", "model"], entity_to_metric=self.metrics_to_dataframe
+        )
+
+    def _resultsentity_to_dataframe(
+        self,
+        entity: ResultEntityT,
+        key_columns: Callable[[Any], dict[str, Any]],
+    ) -> pd.DataFrame:
+        """Flatten result entities into a DataFrame."""
+        rows: list[dict[str, Any]] = []
+        for key, result_entity in entity.results.items():
+            row = key_columns(key)
+            if result_entity.result is not None:
+                for field_name, value in result_entity.result.model_dump().items():
+                    row[f"{entity.name}/{field_name}"] = value
+            rows.append(row)
+        return pd.DataFrame(rows)
+
+    def algorithms_to_dataframe(self, exclude: set[str] | None = None) -> pd.DataFrame:
+        """Return all algorithm (algorithm, model) combinations as a DataFrame."""
+        if exclude is None:
+            exclude = set()
+        rows: list[dict[str, Any]] = []
+        for algo_entity in self.algorithms:
+            for model_name, result_entity in algo_entity.results.items():
+                row: dict[str, Any] = {
+                    "algorithm": algo_entity.name,
+                    "model": model_name,
+                    **result_entity.result_dump(
+                        exclude={"task_id", "status", "retrival_data", "error", "model_id", *exclude}
+                    ),
+                    "algorithm_config": algo_entity.algorithm.model_dump(),
+                }
+                rows.append(row)
+        return pd.DataFrame(rows)
+
+    def list_feature_classes(self) -> list[type[BaseFeature]]:
+        """Return the feature classes registered on this benchmark."""
+        return [type(m.feature) for m in self.features]
+
+    def list_metrics_classes(self) -> list[type[BaseMetric]]:
+        """Return the metric classes registered on this benchmark."""
+        return [type(m.metric) for m in self.metrics]
+
+    def list_plots_classes(self) -> list[type[BasePlot[Any]]]:
+        """Return the plot classes registered on this benchmark."""
+        return [type(p.plot) for p in self.plots]
+
+    def list_algorithms(
+        self,
+    ) -> list[tuple[type[BaseAlgorithmSync | BaseAlgorithmAsync[Any]], dict[str, Any]]]:
+        """Return the algorithm classes registered on this benchmark."""
+        return [(type(a.algorithm), a.algorithm.model_dump()) for a in self.algorithms]
 
     def list_backends(self) -> list[None]:  # noqa: D102 # Not yet implemented
         raise NotImplementedError  # pragma: no cover

@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from luna_bench.base_components.meta_classes.registered_class_meta import RegisteredClassMeta
 
 if TYPE_CHECKING:
-    from luna_quantum import Model, Solution
+    from luna_model import Model, Solution
     from returns.result import Result
 
 T_co = TypeVar("T_co", bound=BaseModel, covariant=True)

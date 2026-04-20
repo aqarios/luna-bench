@@ -1,22 +1,17 @@
 from typing import ClassVar
 
 import pytest
-from luna_quantum import Model
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench.base_components import BaseFeature
 from luna_bench.components.plots.generics.features_plot import FeaturesValidationResult, GenericFeaturesPlot
 from luna_bench.entities.benchmark_entity import BenchmarkEntity
-from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.entities.feature_entity import FeatureEntity
-from luna_bench.entities.feature_result_entity import FeatureResultEntity
 from luna_bench.errors.run_errors.plots_errors.features_missing_error import FeaturesMissingError
 from luna_bench.errors.run_errors.plots_errors.metrics_missing_error import MetricsMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
-from luna_bench.helpers.decorators import feature
-from tests.unit.fixtures.mock_components import MockFeature
+from tests.unit.components.plots.conftest import mock_feature_entity
+from tests.unit.fixtures.mock_components import MockFeature, MockFeatureFailing
 
 
 class _FakePlot(GenericFeaturesPlot):
@@ -24,12 +19,6 @@ class _FakePlot(GenericFeaturesPlot):
 
     def run(self, data: FeaturesValidationResult) -> None:
         pass
-
-
-@feature(feature_id="mock_feature_new")
-class MockFeatureNew(BaseFeature):
-    def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
-        return ArbitraryDataDomain.model_construct(solution="xD")  # type: ignore[call-arg] # Fake data
 
 
 class TestGenericFeaturesPlot:
@@ -67,48 +56,18 @@ class TestGenericFeaturesPlot:
         [
             (
                 (
-                    (
-                        "existing",
-                        MockFeature(),
-                    ),
-                    (
-                        "existing2",
-                        MockFeatureNew(),
-                    ),
+                    mock_feature_entity("existing_name", MockFeature(), ""),
+                    mock_feature_entity("existing2_name", MockFeatureFailing(), ""),
                 ),
                 {
                     MockFeature.registered_id,
-                    "mock_feature_new",
+                    MockFeatureFailing.registered_id,
                 },
                 Success(
                     {
-                        MockFeature.registered_id: FeatureEntity(
-                            name="existing_name",
-                            status=JobStatus.CREATED,
-                            feature=MockFeature(),
-                            results={
-                                "": FeatureResultEntity.model_construct(
-                                    processing_time_ms=0,
-                                    model_name="test",
-                                    status=JobStatus.CREATED,
-                                    error=None,
-                                    result=None,
-                                )
-                            },
-                        ),
-                        "mock_feature_new": FeatureEntity(
-                            name="existing2_name",
-                            status=JobStatus.CREATED,
-                            feature=MockFeatureNew(),
-                            results={
-                                "": FeatureResultEntity.model_construct(
-                                    processing_time_ms=0,
-                                    model_name="test",
-                                    status=JobStatus.CREATED,
-                                    error=None,
-                                    result=None,
-                                )
-                            },
+                        MockFeature.registered_id: mock_feature_entity("existing_name", MockFeature(), ""),
+                        MockFeatureFailing.registered_id: mock_feature_entity(
+                            "existing2_name", MockFeatureFailing(), ""
                         ),
                     }
                 ),
@@ -122,31 +81,14 @@ class TestGenericFeaturesPlot:
     )
     def test_prepare_features(
         self,
-        features: tuple[tuple[str, BaseFeature]],
+        features: tuple[FeatureEntity, ...],
         plot_features: set[str],
         exp: Result[dict[str, FeatureEntity], MetricsMissingError | UnknownLunaBenchError],
     ) -> None:
         fake_plot = _FakePlot()
         _FakePlot.features_ids = plot_features
-        feature_to_prepares = [
-            FeatureEntity(
-                name=f"{feature[0]}_name",
-                status=JobStatus.CREATED,
-                feature=feature[1],
-                results={
-                    "": FeatureResultEntity.model_construct(
-                        processing_time_ms=0,
-                        model_name="test",
-                        status=JobStatus.CREATED,
-                        error=None,
-                        result=None,
-                    )
-                },
-            )
-            for feature in features
-        ]
 
-        result = fake_plot._prepare_features(features=feature_to_prepares)
+        result = fake_plot._prepare_features(features=list(features))
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
         else:
@@ -169,22 +111,7 @@ class TestGenericFeaturesPlot:
 
         assert isinstance(result.failure(), FeaturesMissingError)
 
-        benchmark.features = [
-            FeatureEntity(
-                name="existing",
-                status=JobStatus.CREATED,
-                feature=MockFeature(),
-                results={
-                    "": FeatureResultEntity.model_construct(
-                        processing_time_ms=0,
-                        model_name="test",
-                        status=JobStatus.CREATED,
-                        error=None,
-                        result=None,
-                    )
-                },
-            )
-        ]
+        benchmark.features = [mock_feature_entity("existing", MockFeature(), "")]
         result = fake_plot.validate_plot(benchmark)
 
         assert result.unwrap() == FeaturesValidationResult(features={MockFeature.registered_id: benchmark.features[0]})

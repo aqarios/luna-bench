@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from dependency_injector.wiring import Provide, inject
-from luna_quantum import Logging, Model
+from luna_quantum import Logging
 from returns.pipeline import is_successful
 
 from luna_bench._internal.usecases import ModelLoadAllUc
@@ -25,6 +25,7 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 if TYPE_CHECKING:
     from logging import Logger
 
+    from luna_model import Model
     from returns.result import Result
 
 
@@ -126,8 +127,16 @@ class ModelSet(ModelSetEntity):
 
         if not is_successful(result):
             error = result.failure()
-            ModelSet._logger.info(f"Error: {error}")
-            raise RuntimeError(error)
+            match error:
+                case DataNotUniqueError():
+                    ModelSet._logger.warning(
+                        f"Modelset '{modelset_name}' does already exist. "
+                        f'Loading it with `ModelSet.load("{modelset_name}")`.'
+                    )
+                    return ModelSet.load(modelset_name)
+                case _:
+                    ModelSet._logger.info(f"Error: {error}")
+                    raise RuntimeError(error)
 
         return ModelSet.model_validate(result.unwrap(), from_attributes=True)
 

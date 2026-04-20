@@ -2,7 +2,8 @@ import time
 from typing import TYPE_CHECKING
 
 from dependency_injector.wiring import Provide, inject
-from luna_quantum import Logging, Model
+from luna_model import Model
+from luna_quantum import Logging
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -68,6 +69,7 @@ class FeatureRunUcImpl(FeatureRunUc):
             user_result = feature.feature.run(model)
             status = JobStatus.DONE
         except Exception as e:
+            self._logger.error(f"Feature '{feature.name}' failed on model '{model_metadata.name}':", exc_info=True)
             status = JobStatus.FAILED
             exception = str(e)
 

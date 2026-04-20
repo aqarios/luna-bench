@@ -83,6 +83,10 @@ class MetricRunUcImpl(MetricRunUc):
             user_result = metric.metric.run(algorithm_result.solution, feature_results)
             status = JobStatus.DONE
         except Exception as e:
+            self._logger.error(
+                f"Metric '{metric.name}' failed on model '{model_name}' for algorithm '{algorithm_name}':",
+                exc_info=True,
+            )
             status = JobStatus.FAILED
             exception = str(e)
 

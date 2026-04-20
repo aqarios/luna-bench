@@ -1,7 +1,8 @@
 from abc import ABC
 from typing import Any
 
-from luna_quantum import Model, Solution, config
+from luna_model import Model, Solution
+from luna_quantum import config
 from luna_quantum.client.schemas.enums.status import StatusEnum
 from luna_quantum.solve import SolveJob
 from luna_quantum.solve.domain.abstract import LunaAlgorithm as LunaQuantumAlgorithm
@@ -55,7 +56,19 @@ class LunaAlgorithm(BaseAlgorithmAsync[LunaData], LunaQuantumAlgorithm[IBackend]
 
     def run_async(self, model: Model) -> LunaData:
         try:
-            solve_job: SolveJob = self.run(model)
+            ### WORKAROUND ####
+            from luna_quantum.algorithms import FlexibleParameterAlgorithm  # noqa: PLC0415 # import here so we know
+            # its only for the workaround
+
+            algo_dict = self.model_dump()
+            algo_dict.pop("backend")
+            algo_dict["algorithm_name"] = self.algorithm_name
+            luna_algorithm = FlexibleParameterAlgorithm.model_construct(**algo_dict)
+            # solve_job: SolveJob = self.run(model) <- This is the original code removed in this workaround.
+
+            solve_job: SolveJob = luna_algorithm.run(model)
+            ### End of the workaround ###
+
             return LunaData(luna_id=solve_job.id)
         except Exception as e:
             error_message = e.__str__()

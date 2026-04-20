@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import ClassVar
 
-from luna_quantum import Model, Solution
+from luna_model import Model, Solution
 from pydantic import BaseModel
 
 from luna_bench.base_components.meta_classes.registered_class_meta import RegisteredClassMeta

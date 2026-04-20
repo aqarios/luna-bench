@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from luna_quantum.translator import LpTranslator
+from luna_model.translator import LpTranslator
 from pyscipopt import Model as ScipModel
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
@@ -12,7 +12,7 @@ from luna_bench.base_components import BaseFeature
 from luna_bench.helpers import feature
 
 if TYPE_CHECKING:
-    from luna_quantum import Model
+    from luna_model import Model
 
 
 class InfeasibleModelError(Exception):
@@ -39,6 +39,7 @@ class OptSolFeatureResult(ArbitraryDataDomain):
 
     best_sol: float
     pre_terminated: bool
+    runtime: float
 
 
 @feature
@@ -111,28 +112,32 @@ class OptSolFeature(BaseFeature):
         """
         scip_model = ScipModel()
         if self.max_runtime is not None:
-            scip_model.setParam("limits/time", self.max_runtime)  # type: ignore[no-untyped-call]
+            scip_model.setParam("limits/time", self.max_runtime)
 
         with tempfile.NamedTemporaryFile(suffix=".lp", delete=False) as tmp:
             path = Path(tmp.name)
 
         try:
-            LpTranslator.from_aq(
+            LpTranslator.from_lm(
                 model,
                 filepath=path,
             )
-            scip_model.readProblem(path)  # type: ignore[no-untyped-call]
+            scip_model.readProblem(path)
         finally:
             if path.exists():
                 path.unlink()
 
-        scip_model.optimize()  # type: ignore[no-untyped-call]
-        if scip_model.getStatus() == "infeasible":  # type: ignore[no-untyped-call]
+        scip_model.optimize()
+        if scip_model.getStatus() == "infeasible":
             raise InfeasibleModelError
 
         # translate model to
         pre_terminated = False
-        if scip_model.getStatus() == "timelimit":  # type: ignore[no-untyped-call]
+        if scip_model.getStatus() == "timelimit":
             pre_terminated = True
 
-        return OptSolFeatureResult(best_sol=scip_model.getObjVal(), pre_terminated=pre_terminated)  # type: ignore[no-untyped-call]
+        return OptSolFeatureResult(
+            best_sol=scip_model.getObjVal(),
+            pre_terminated=pre_terminated,
+            runtime=scip_model.getSolvingTime(),
+        )

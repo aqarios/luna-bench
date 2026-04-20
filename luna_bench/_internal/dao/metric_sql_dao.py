@@ -39,7 +39,7 @@ class MetricSqlDao(MetricDao):
         benchmark_name: str, metric_name: str, registered_id: str, metric_config: ArbitraryDataDomain
     ) -> Result[MetricDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricTable(
                 name=metric_name,
                 status=BenchmarkStatus.CREATED,
@@ -57,7 +57,7 @@ class MetricSqlDao(MetricDao):
     @staticmethod
     def remove(benchmark_name: str, metric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
             metric.delete_instance()
             return Success(None)
@@ -71,7 +71,7 @@ class MetricSqlDao(MetricDao):
         benchmark_name: str, metric_name: str, registered_id: str, metric_config: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
             metric.status = BenchmarkStatus.CREATED
             metric.config_data = metric_config
@@ -88,7 +88,7 @@ class MetricSqlDao(MetricDao):
         benchmark_name: str, metric_name: str, status: BenchmarkStatus
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
             metric.status = status
             metric.save()
@@ -103,8 +103,8 @@ class MetricSqlDao(MetricDao):
         benchmark_name: str, metric_name: str, result: MetricResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
-            model_metadata = ModelMetadataTable.select(ModelMetadataTable.id).where(  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
+            model_metadata = ModelMetadataTable.select(ModelMetadataTable.id).where(
                 ModelMetadataTable.name == result.model_name
             )
 
@@ -135,7 +135,7 @@ class MetricSqlDao(MetricDao):
     @staticmethod
     def remove_result(benchmark_name: str, metric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
             result = MetricResultTable.get(MetricResultTable.metric == metric)  # type: ignore[no-untyped-call]
             result.delete_instance()
@@ -150,7 +150,7 @@ class MetricSqlDao(MetricDao):
     @staticmethod
     def load(benchmark_name: str, metric_name: str) -> Result[MetricDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
 
             return Success(MetricSqlDao.metric_to_domain(metric))
@@ -175,7 +175,7 @@ class MetricSqlDao(MetricDao):
 
         return MetricDomain(
             name=cast("str", metric.name),
-            status=JobStatus(metric.status),
+            status=JobStatus(cast("str", metric.status)),
             results=result_data,
             config_data=RegisteredDataDomain(
                 registered_id=cast("str", metric.registered_id),

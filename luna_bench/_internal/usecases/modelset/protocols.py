@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from luna_quantum import Model
+from luna_model import Model
 from returns.result import Result
 
 from luna_bench.entities import ModelMetadataEntity, ModelSetEntity
