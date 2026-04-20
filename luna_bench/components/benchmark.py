@@ -228,7 +228,7 @@ class Benchmark(BenchmarkEntity):
 
             match error:
                 case DataNotUniqueError():
-                    Benchmark._logger.warning(f"Loading existing Benchmark ('{name}').")
+                    Benchmark._logger.warning(f"Loading existing benchmark ('{name}').")
                     return Benchmark.load(name)
                 case _:
                     Benchmark._logger.error(f"Failed to create benchmark: {error}")
@@ -574,7 +574,7 @@ class Benchmark(BenchmarkEntity):
 
             match error:
                 case DataNotUniqueError():
-                    Benchmark._logger.warning(f"Loading existing Metric ('{name}').")
+                    Benchmark._logger.warning(f"Loading existing metric ('{name}').")
                     return self.get_metric(name)
                 case _:
                     Benchmark._logger.error(f"Failed to add metric to benchmark: {error}")
@@ -788,7 +788,7 @@ class Benchmark(BenchmarkEntity):
 
             match error:
                 case DataNotUniqueError():
-                    Benchmark._logger.warning(f"Loading existing Plot ('{name}').")
+                    Benchmark._logger.warning(f"Loading existing plot ('{name}').")
                     return self.get_plot(name)
                 case _:
                     Benchmark._logger.error(f"Failed to add plot to benchmark: {error}")
