@@ -43,21 +43,58 @@ def metric[T: BaseMetric](
     metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
 ) -> Callable[[type[T]], type[T]] | type[T]:
     """
-    Register a class as a metric.
+    Register a class or function as a metric.
 
-    The class which should be registered must be a subclass of the ``BaseMetric`` protocol.
+    The decorated class must be a subclass of the ``BaseMetric`` protocol, or a decorated
+    function will be automatically wrapped as a ``BaseMetric`` subclass.
 
     Parameters
     ----------
-    _cls: type[T], optional
-    metric_id: str | None, optional
-        Set a custom ID for the metric. If not provided, the ID will be generated automatically.
-        It's recommended to not set this parameter.
-    metric_registry: Registry[BaseMetric], injected
+    _cls : type[T], optional
+        The class to be decorated. If None, returns a decorator function.
+    metric_id : str | None, optional
+        Set a custom ID for the metric. If not provided, the ID will be generated automatically
+        from the module and class/function name. It's recommended to not set this parameter.
+    required_features : type[BaseFeature] | list[type[BaseFeature]] | tuple[type[BaseFeature], ...] | None, optional
+        Features that this metric depends on. Can be a single feature class or a list/tuple of
+        feature classes. Default is None.
+    metric_registry : Registry[BaseMetric], injected
+        The registry where the metric will be registered. Injected by dependency container.
 
     Returns
     -------
     Callable[[type[T]], type[T]] | type[T]
+        Either the decorated class/function or a decorator function.
+
+    Examples
+    --------
+    Decorate a class as a metric:
+
+    >>> from luna_bench.base_components import BaseMetric, BaseFeature
+    >>> from luna_model import Solution
+    >>> from luna_bench.base_components.data_types.feature_results import FeatureResults
+    >>> from luna_bench.types import MetricResult
+    >>>
+    >>> @metric
+    ... class MyMetric(BaseMetric):
+    ...     def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:
+    ...         # Calculate and return metric result
+    ...         return MetricResult(result=0.95)
+
+    Decorate a function as a metric:
+
+    >>> @metric
+    ... def accuracy_metric(solution: Solution, feature_results: FeatureResults) -> float:
+    ...     # Calculate accuracy
+    ...     return 0.95
+
+    Make a metric dependent on a feature:
+
+    >>>
+    >>> @metric(required_features=MyFeature)
+    ... def feature_dependent_metric(solution: Solution, feature_results: FeatureResults) -> float:
+    ...     my_feature_data = feature_results["MyFeature"]
+    ...     return 0.92
 
     """
 

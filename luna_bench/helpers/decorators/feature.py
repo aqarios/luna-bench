@@ -40,19 +40,52 @@ def feature[T: BaseFeature](
     feature_registry: Registry[BaseFeature] = Provide[RegistryContainer.feature_registry],
 ) -> Callable[[type[T]], type[T]] | type[T]:
     """
-    Register a class or a function as a feature.
+    Register a class or function as a feature.
+
+    The decorated class must be a subclass of the ``BaseFeature`` protocol, or a decorated
+    function will be automatically wrapped as a ``BaseFeature`` subclass.
 
     Parameters
     ----------
-    _obj: type[Any] | Callable[[BaseFeature, Model], Any], optional
-    feature_id: str | None, optional
-        Set a custom ID for the feature. If not provided, the ID will be generated automatically.
-        It's recommended to not set this parameter.
-    feature_registry: Registry[BaseFeature], injected
+    _cls : type[T], optional
+        The class to be decorated. If None, returns a decorator function.
+    feature_id : str | None, optional
+        Set a custom ID for the feature. If not provided, the ID will be generated automatically
+        from the module and class/function name. It's recommended to not set this parameter.
+    feature_registry : Registry[BaseFeature], injected
+        The registry where the feature will be registered. Injected by dependency container.
 
     Returns
     -------
-    Any
+    Callable[[type[T]], type[T]] | type[T]
+        Either the decorated class/function or a decorator function.
+
+    Examples
+    --------
+    Decorate a class as a feature:
+
+    >>> from luna_bench.base_components import BaseFeature
+    >>> from luna_model import Model
+    >>> from pydantic import BaseModel
+    >>>
+    >>> @feature
+    ... class MyFeature(BaseFeature):
+    ...     def run(self, model: Model) -> BaseModel:
+    ...         # Extract and return feature data
+    ...         return {"feature_value": 42}
+
+    Decorate a function as a feature:
+
+    >>> @feature
+    ... def image_dimensions(model: Model) -> dict:
+    ...     # Extract image dimensions from model
+    ...     return {"width": 640, "height": 480}
+
+    Use a custom feature ID:
+
+    >>> @feature(feature_id="custom.image_dimensions")
+    ... def image_dims(model: Model) -> dict:
+    ...     return {"width": 640, "height": 480}
 
     """
 
