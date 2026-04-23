@@ -1,12 +1,22 @@
+from typing import TYPE_CHECKING
+
 from luna_quantum import Logging
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
+from luna_bench._internal.usecases.benchmark.helper import FeatureResultBuilder, MetricResultBuilder
 from luna_bench._internal.usecases.benchmark.protocols import PlotsRunUc
+from luna_bench.base_components.data_types.benchmark_results import BenchmarkResults
+from luna_bench.entities import PlotEntity
 from luna_bench.entities.benchmark_entity import BenchmarkEntity
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
+from luna_bench.errors.run_errors.run_plot_missing_error import RunPlotMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+
+if TYPE_CHECKING:
+    from luna_bench.base_components.data_types.feature_results import FeatureResults
+    from luna_bench.base_components.data_types.metric_results import MetricResults
+    from luna_bench.types import AlgorithmName, ModelName
 
 
 class PlotsRunUcImpl(PlotsRunUc):
@@ -40,10 +50,13 @@ class PlotsRunUcImpl(PlotsRunUc):
     ) -> None:
         self._logger = Logging.get_logger(__name__)
 
+    def _run(self) -> Result[None, PlotRunError | UnknownLunaBenchError]:
+        pass
+
     def __call__(
         self,
         benchmark: BenchmarkEntity,
-        error_handling_mode: UseCaseErrorHandlingMode = UseCaseErrorHandlingMode.FAIL_ON_ERROR,
+        plot: PlotEntity | None = None,
     ) -> Result[None, PlotRunError | UnknownLunaBenchError]:
         """
         Execute all plots defined in the benchmark.
@@ -77,19 +90,39 @@ class PlotsRunUcImpl(PlotsRunUc):
         - Validation is performed before execution for each plot
         - Plot execution order follows the order defined in the benchmark
         """
-        for plot in benchmark.plots:
-            validation_result = plot.plot.validate_plot(benchmark)
-            if not is_successful(validation_result):
-                if error_handling_mode == UseCaseErrorHandlingMode.FAIL_ON_ERROR:
-                    return Failure(validation_result.failure())
-                self._logger.warning(f"Plot {plot.name} validation failed with error: {validation_result.failure()}")
-                continue
+        plots: list[PlotEntity]
+        if plot is not None:
+            # Check if the feature is part of the benchmark
+            if plot not in benchmark.plots:
+                return Failure(RunPlotMissingError(plot.name, benchmark.name))
+            plots = [plot]
+        else:
+            plots = benchmark.plots
 
-            try:
-                plot.plot.run(validation_result.unwrap())
-            except Exception as e:
-                self._logger.error(f"Plot '{plot.name}' execution failed:", exc_info=True)
-                if error_handling_mode == UseCaseErrorHandlingMode.FAIL_ON_ERROR:
-                    return Failure(UnknownLunaBenchError(e))
+        for p in plots:
+            features: dict[ModelName, FeatureResults] = {}
+            metrics: dict[ModelName, dict[AlgorithmName, MetricResults]] = {}
+
+            for m in benchmark.modelset.models:
+                if p.plot.required_features:
+                    f = FeatureResultBuilder(benchmark).results(m.name, p.plot.required_features)
+                    if not is_successful(f):
+                        return Failure(f.failure())
+                    features[m.name] = f.unwrap()
+
+                if p.plot.required_metrics:
+                    metrics[m.name] = {}
+                    for a in benchmark.algorithms:
+                        me = MetricResultBuilder(benchmark).results(m.name, a.name, p.plot.required_metrics)
+                        if not is_successful(me):
+                            return Failure(me.failure())
+
+                        metrics[m.name][a.name] = me.unwrap()
+
+            benchmark_result: BenchmarkResults = BenchmarkResults(
+                features=features,
+                metrics=metrics,
+            )
+            p.plot.run(benchmark_result)
 
         return Success(None)

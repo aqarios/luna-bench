@@ -1,5 +1,3 @@
-from typing import Any
-
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
 from pydantic import BaseModel
@@ -21,7 +19,7 @@ class RegistryInfo:
             RegistryContainer.algorithm_async_registry
         ],
         metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
-        plot_registry: Registry[BasePlot[Any]] = Provide[RegistryContainer.plot_registry],
+        plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
     ) -> None:
         """
         Print information about the registered features, algorithms, metrics, and plots.
@@ -130,7 +128,7 @@ class RegistryInfo:
     @inject
     @staticmethod
     def log_registered_plots(
-        plot_registry: Registry[BasePlot[Any]] = Provide[RegistryContainer.plot_registry],
+        plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
     ) -> list[str]:
         """
         Retrieve the plot registry.

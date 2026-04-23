@@ -94,7 +94,7 @@ class FeatureRunUc(Protocol):
 
 class PlotAddUc(Protocol):
     def __call__(
-        self, benchmark_name: str, name: str, plot: BasePlot[Any]
+        self, benchmark_name: str, name: str, plot: BasePlot
     ) -> Result[
         PlotEntity,
         DataNotUniqueError

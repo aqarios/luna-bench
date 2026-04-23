@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from luna_bench.base_components import BaseFeature
 from luna_bench.entities.feature_result_entity import FeatureResultEntity
-from luna_bench.types import FeatureName
+from luna_bench.types import FeatureName, ModelName
 
 from .enums import JobStatus
 
@@ -17,4 +17,4 @@ class FeatureEntity(BaseModel):
 
     feature: BaseFeature
 
-    results: dict[FeatureName, FeatureResultEntity]  # key is the model name
+    results: dict[ModelName, FeatureResultEntity]  # key is the model name

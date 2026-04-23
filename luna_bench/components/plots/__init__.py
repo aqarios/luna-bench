@@ -1,35 +1,32 @@
-from .fake_plot import FakeMetricAveragePerSolverPlot, FakePlot
-from .feature_metrics_plots.feature_metric_plots import (
+"""Built-in plots for benchmarking visualizations."""
+
+from luna_bench.components.plots.analysis import (
     ApproximationRatioVsVarNumberPlot,
     FeasibilityRatioVsVarNumberPlot,
-    FeatureVsMetricScatterPlot,
     RuntimeVsVarNumberPlot,
 )
-from .feature_plots import FeatureBarChartPlot, VarNumberBarChartPlot
-from .metrics_plots import (
-    AggregatedMetricPlot,
+from luna_bench.components.plots.performance import (
     AverageApproximationRatioPlot,
+    AverageBestSolutionFoundRatioPlot,
     AverageFeasibilityRatioPlot,
+    AverageFoBRatioPlot,
     AverageRuntimePlot,
-    MetricPerModelPlot,
     RuntimePerModelPlot,
 )
-from .utils.aggregation_enum import Aggregation
+from luna_bench.components.plots.properties import VarNumberBarChartPlot
 
 __all__ = [
-    "AggregatedMetricPlot",
-    "Aggregation",
     "ApproximationRatioVsVarNumberPlot",
     "AverageApproximationRatioPlot",
+    "AverageBestSolutionFoundRatioPlot",
     "AverageFeasibilityRatioPlot",
+    "AverageFoBRatioPlot",
+    # Performance plots
     "AverageRuntimePlot",
-    "FakeMetricAveragePerSolverPlot",
-    "FakePlot",
     "FeasibilityRatioVsVarNumberPlot",
-    "FeatureBarChartPlot",
-    "FeatureVsMetricScatterPlot",
-    "MetricPerModelPlot",
     "RuntimePerModelPlot",
+    # Analysis plots
     "RuntimeVsVarNumberPlot",
+    # Property plots
     "VarNumberBarChartPlot",
 ]

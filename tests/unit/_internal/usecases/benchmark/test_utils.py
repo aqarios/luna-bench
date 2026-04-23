@@ -164,7 +164,7 @@ class TestUtils:
         feature_registry = ArbitraryDataRegistry[BaseFeature]("feature")
         algorithm_sync_registry = ArbitraryDataRegistry[BaseAlgorithmSync]("algorithm_sync")
         algorithm_async_registry = ArbitraryDataRegistry[BaseAlgorithmAsync[Any]]("algorithm_async")
-        plot_registry = ArbitraryDataRegistry[BasePlot[Any]]("plot")
+        plot_registry = ArbitraryDataRegistry[BasePlot]("plot")
 
         feature_registry.register("feature", MockFeature)
         metric_registry.register("metric", MockMetric)

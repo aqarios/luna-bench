@@ -40,12 +40,7 @@ _bg_task_container.wire(
     ]
 )
 
-_usecase_container.wire(
-    modules=[
-        "luna_bench.components",
-        "luna_bench.components.plots",
-    ]
-)
+_usecase_container.wire(modules=["luna_bench.components", "luna_bench.components.plots"])
 
 _dao_container.wire(
     modules=[

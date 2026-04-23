@@ -9,7 +9,6 @@ from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from returns.pipeline import is_successful
 
-from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
 from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmAddUc,
     AlgorithmRemoveUc,
@@ -901,7 +900,7 @@ class Benchmark(BenchmarkEntity):
         execution continues with remaining plots.
         """
         benchmark_run_plots = self.__run_plots_uc()
-        result = benchmark_run_plots(self, UseCaseErrorHandlingMode(error_handling_mode.value))
+        result = benchmark_run_plots(self)
         if not is_successful(result):
             error = result.failure()
             Benchmark._logger.error(f"Failed to run plots for the benchmark {self.name} with error: {error}")
@@ -975,10 +974,15 @@ class Benchmark(BenchmarkEntity):
 
     def metrics_to_dataframe(self, metric_entity: MetricEntity) -> pd.DataFrame:
         """Return results for a single metric entity as a DataFrame with one row per (algorithm, model)."""
-        return self._resultsentity_to_dataframe(
-            entity=metric_entity,
-            key_columns=lambda key: {"algorithm": key[0], "model": key[1]},
-        )
+        rows: list[dict[str, Any]] = []
+        for model_name, algo_results in metric_entity.results.items():
+            for algorithm_name, result_entity in algo_results.items():
+                row = {"algorithm": algorithm_name, "model": model_name}
+                if result_entity.result is not None:
+                    for field_name, value in result_entity.result.model_dump().items():
+                        row[f"{metric_entity.name}/{field_name}"] = value
+                rows.append(row)
+        return pd.DataFrame(rows)
 
     def all_metrics_to_dataframe(self) -> pd.DataFrame:
         """Return all metric results merged into a single DataFrame on ``(algorithm, model)``."""
@@ -1045,6 +1049,6 @@ class Benchmark(BenchmarkEntity):
         for i, obj in enumerate(obj_list):
             if getattr(obj, "name", None) == name:
                 del obj_list[i]
-                # since we use name as a unique identifier,
+                # SINCE we use name as a unique identifier,
                 # we can break after the first match (only one name per list allowed).
                 return

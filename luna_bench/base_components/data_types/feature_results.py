@@ -1,14 +1,12 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
-from typing import overload
 
 from pydantic import BaseModel, ConfigDict
 
-from luna_bench.base_components.base_feature import BaseFeature
 from luna_bench.errors.components.features.feature_result_unknown_name_error import FeatureResulUnknownNameError
 from luna_bench.errors.components.features.feature_result_wrong_class_error import FeatureResultWrongClassError
-from luna_bench.types import FeatureName, FeatureResult
-
-_NUM_KEYS = 2
+from luna_bench.types import FeatureClass, FeatureComputed, FeatureName, FeatureResult
 
 
 class FeatureResults(BaseModel):
@@ -16,22 +14,26 @@ class FeatureResults(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    allowed: list[type[BaseFeature]]
+    allowed: list[FeatureClass]  # TODO MAYBE REMOVE IT we kind of already check it when creating this container
 
-    data: Mapping[type[BaseFeature], Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]]
+    data: Mapping[FeatureClass, Mapping[FeatureName, FeatureComputed]]
 
-    def get_all(self, feature_cls: type[BaseFeature]) -> Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]:
+    def get_all(self, feature_cls: FeatureClass) -> Mapping[FeatureName, FeatureResult]:
+        """Get all results for a class."""
+        return {name: result[0] for name, result in self.get_all_with_config(feature_cls=feature_cls).items()}
+
+    def get_all_with_config(self, feature_cls: FeatureClass) -> Mapping[FeatureName, FeatureComputed]:
         """
         Get all results for a given feature class.
 
         Parameters
         ----------
-        feature_cls : type[BaseFeature]
+        feature_cls : FeatureClass
             The feature class to retrieve results for.
 
         Returns
         -------
-        Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]
+        Mapping[FeatureName, FeatureComputed]
             A mapping of feature names to their corresponding results and configurations.
 
         Raises
@@ -43,20 +45,45 @@ class FeatureResults(BaseModel):
             raise FeatureResultWrongClassError(feature_cls, self.allowed)
         return self.data.get(feature_cls, {})
 
-    def get(self, feature_cls: type[BaseFeature], feature_name: FeatureName) -> tuple[FeatureResult, BaseFeature]:
+    def get(self, feature_cls: FeatureClass, feature_name: FeatureName) -> FeatureResult:
         """
         Get a single result for a given feature class and name.
 
         Parameters
         ----------
-        feature_cls : type[BaseFeature]
+        feature_cls : FeatureClass
             The feature class to retrieve the result for.
         feature_name : FeatureName
             The name of the feature to retrieve the result for.
 
         Returns
         -------
-        tuple[FeatureResult, BaseFeature]
+        FeatureResult
+            The result for the specified feature (without configuration).
+
+        Raises
+        ------
+        FeatureResultWrongClassError
+            If the provided feature class is not allowed.
+        FeatureResulUnknownNameError
+            If the provided feature name is not found for the given class.
+        """
+        return self.get_with_config(feature_cls=feature_cls, feature_name=feature_name)[0]
+
+    def get_with_config(self, feature_cls: FeatureClass, feature_name: FeatureName) -> FeatureComputed:
+        """
+        Get a single result for a given feature class and name.
+
+        Parameters
+        ----------
+        feature_cls : FeatureClass
+            The feature class to retrieve the result for.
+        feature_name : FeatureName
+            The name of the feature to retrieve the result for.
+
+        Returns
+        -------
+        FeatureComputed
             The result and configuration for the specified feature.
 
         Raises
@@ -76,53 +103,44 @@ class FeatureResults(BaseModel):
 
         return self.data[feature_cls][feature_name]
 
-    def first(self, feature_cls: type[BaseFeature]) -> tuple[FeatureResult, BaseFeature]:
+    def first(self, feature_cls: FeatureClass) -> FeatureResult:
         """
         Retrieve the first result for a given feature class.
 
         Parameters
         ----------
-        feature_cls: type[BaseFeature]
+        feature_cls: FeatureClass
             The class for which the first result should be retrieved.
 
         Returns
         -------
-        tuple[FeatureResult, BaseFeature]
-            A tuple containing the first feature result and its configuration for the given class.
+        FeatureResult
+            The first feature result for the given class (without configuration).
 
+        Raises
+        ------
+        FeatureResultWrongClassError
+            If the provided feature class is not allowed.
         """
-        return next(iter(self.get_all(feature_cls).values()))
+        return self.first_with_config(feature_cls=feature_cls)[0]
 
-    @overload
-    def __getitem__(self, key: tuple[type[BaseFeature], FeatureName]) -> tuple[FeatureResult, BaseFeature]: ...
-
-    @overload
-    def __getitem__(self, key: type[BaseFeature]) -> Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]: ...
-
-    def __getitem__(
-        self, key: tuple[type[BaseFeature], FeatureName] | type[BaseFeature]
-    ) -> tuple[FeatureResult, BaseFeature] | Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]:
+    def first_with_config(self, feature_cls: FeatureClass) -> FeatureComputed:
         """
-        Retrieve feature result by class and name, or all results for a class.
-
-        If the key is a tuple, the results for the given class and feature name will be returned.
-        If the key is only a class, all results for this class will be returned.
+        Retrieve the first result with its configuration for a given feature class.
 
         Parameters
         ----------
-        key: tuple[type[BaseFeature], FeatureName] | type[BaseFeature]
-            The key used to retrieve the results. The feature class and the feature name or only the class.
+        feature_cls: FeatureClass
+            The class for which the first result should be retrieved.
 
-        Results
+        Returns
         -------
-        tuple[FeatureResult, BaseFeature] | Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]
-            The result contains a tuple of the feature result and its configuration. If the key is a class,
-            a mapping of feature names to results will be returned. If the key is a tuple of class and feature name,
-            only the result will be returned.
+        FeatureComputed
+            A tuple containing the first feature result and its configuration for the given class.
+
+        Raises
+        ------
+        FeatureResultWrongClassError
+            If the provided feature class is not allowed.
         """
-        if isinstance(key, tuple) and len(key) == _NUM_KEYS:
-            cls, feature_name = key
-            return self.get(cls, feature_name=feature_name)
-        if isinstance(key, type):
-            return self.get_all(key)
-        return {}
+        return next(iter(self.get_all_with_config(feature_cls).values()))

@@ -1,14 +1,9 @@
 from collections.abc import Callable
 from typing import Any
 
-import numpy as np
-
 from luna_bench.base_components.base_feature import BaseFeature
 from luna_bench.base_components.base_metric import BaseMetric
 from luna_bench.components.features.var_num_feature import VarNumberFeature, VarNumberFeatureResult
-from luna_bench.components.metrics.fake_metric import FakeMetric, FakeMetricResult
-from luna_bench.components.plots.generics.features_plot import FeaturesValidationResult
-from luna_bench.components.plots.generics.metrics_plot import MetricsValidationResult
 from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.entities.feature_entity import FeatureEntity
 from luna_bench.entities.feature_result_entity import FeatureResultEntity
@@ -25,9 +20,11 @@ def mock_metric_entity(
     status: JobStatus = JobStatus.DONE,
     error: str | None = None,
 ) -> MetricEntity:
-    results = {}
+    results: dict[str, dict[str, MetricResultEntity]] = {}
     for algo, model, val in values:
-        results[(algo, model)] = MetricResultEntity(
+        if model not in results:
+            results[model] = {}
+        results[model][algo] = MetricResultEntity(
             processing_time_ms=10,
             model_name=model,
             algorithm_name=algo,
@@ -67,31 +64,4 @@ def mock_var_entity(*values: tuple[str, int]) -> FeatureEntity:
         status=JobStatus.DONE,
         result_factory=lambda m: FeatureResult(**VarNumberFeatureResult(var_number=var_nums[m]).model_dump()),
         processing_time=10,
-    )
-
-
-def mock_var_validation_result(*values: tuple[str, int]) -> FeaturesValidationResult:
-    return FeaturesValidationResult(
-        features={VarNumberFeature.registered_id: mock_var_entity(*values)},
-    )
-
-
-def mock_fake_metric_validation_result(
-    *values: tuple[str, str],
-    random_number: float | None = None,
-    status: JobStatus = JobStatus.DONE,
-    error: str | None = None,
-) -> MetricsValidationResult:
-    rand_int = int(np.random.default_rng().integers(low=0, high=100) if random_number is None else random_number)
-    return MetricsValidationResult(
-        metrics={
-            FakeMetric.registered_id: mock_metric_entity(
-                *((algo, model, rand_int) for algo, model in values),
-                name="fake",
-                metric=FakeMetric(),
-                result_factory=lambda v: FakeMetricResult(random_number=int(v)),
-                status=status,
-                error=error,
-            )
-        }
     )

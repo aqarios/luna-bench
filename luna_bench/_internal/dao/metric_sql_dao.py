@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from returns.result import Result
 
     from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
+    from luna_bench.types import AlgorithmName, ModelName
 
 
 class MetricSqlDao(MetricDao):
@@ -161,15 +162,17 @@ class MetricSqlDao(MetricDao):
 
     @staticmethod
     def metric_to_domain(metric: MetricTable) -> MetricDomain:
-        result_data: dict[tuple[str, str], MetricResultDomain] = {
-            (m.algorithm.name, m.model_metadata.name): MetricResultDomain.model_construct(
-                processing_time_ms=m.processing_time_ms,
-                model_name=m.model_metadata.name,
-                algorithm_name=m.algorithm.name,
-                result=m.result_data,
-                status=JobStatus(m.status),
-                error=m.error,
-            )
+        result_data: dict[ModelName, dict[AlgorithmName, MetricResultDomain]] = {
+            m.model_metadata.name: {
+                m.algorithm.name: MetricResultDomain.model_construct(
+                    processing_time_ms=m.processing_time_ms,
+                    model_name=m.model_metadata.name,
+                    algorithm_name=m.algorithm.name,
+                    result=m.result_data,
+                    status=JobStatus(m.status),
+                    error=m.error,
+                )
+            }
             for m in list(metric.results)
         }
 

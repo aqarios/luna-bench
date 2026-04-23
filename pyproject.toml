@@ -13,17 +13,17 @@ authors = [
     { name = "Aqarios GmbH", email = "support@aqarios.com" },
 ]
 keywords = [
-  "aqarios",
-  "luna",
-  "quantum computing",
-  "quantum optimization",
-  "optimization",
-  "benchmarking",
+    "aqarios",
+    "luna",
+    "quantum computing",
+    "quantum optimization",
+    "optimization",
+    "benchmarking",
 ]
 dependencies = [
     "dependency-injector>=4.48.2",
     "huey>=2.6.0",
-    "luna-model>=0.5.3",
+    "luna-model>=0.6.0",
     "luna-quantum>=1.2.0",
     "matplotlib>=3.10.8",
     "peewee>=4.0.0",
@@ -71,5 +71,5 @@ qubo-features = [
     "scipy>=1.17.0",
 ]
 
-[tool.setuptools.packages.find]
-include = ["luna_bench*"]
+[tool.setuptools]
+packages = ["luna_bench"]
