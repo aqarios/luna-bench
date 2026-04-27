@@ -4,11 +4,11 @@ from typing import ClassVar
 from luna_model import Model
 from pydantic import BaseModel
 
+from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench.base_components.meta_classes.registered_class_meta import RegisteredClassMeta
-from luna_bench.types import FeatureResult
 
 
-class BaseFeature[TFeatureResult: FeatureResult = FeatureResult](
+class BaseFeature[TFeatureResult: ArbitraryDataDomain = ArbitraryDataDomain](
     BaseModel,
     ABC,
     metaclass=RegisteredClassMeta,

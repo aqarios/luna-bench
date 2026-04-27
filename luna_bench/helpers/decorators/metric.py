@@ -1,6 +1,6 @@
 import functools
 from collections.abc import Callable
-from typing import Any, overload
+from typing import Any, cast, overload
 
 from dependency_injector.wiring import Provide, inject
 from luna_model import Solution
@@ -15,7 +15,7 @@ from .decorator_utilities import DecoratorUtilities
 
 
 @overload
-def metric[T: BaseMetric](
+def metric[T: BaseMetric[Any]](
     _cls: type[T],
     *,
     metric_id: str | None = None,
@@ -23,12 +23,12 @@ def metric[T: BaseMetric](
     | list[type[BaseFeature[Any]]]
     | tuple[type[BaseFeature[Any]], ...]
     | None = None,
-    metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
+    metric_registry: Registry[BaseMetric[Any]] = Provide[RegistryContainer.metric_registry],
 ) -> type[T]: ...
 
 
 @overload
-def metric[T: BaseMetric](
+def metric[T: BaseMetric[Any]](
     _cls: None = None,
     *,
     metric_id: str | None = None,
@@ -36,12 +36,12 @@ def metric[T: BaseMetric](
     | list[type[BaseFeature[Any]]]
     | tuple[type[BaseFeature[Any]], ...]
     | None = None,
-    metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
+    metric_registry: Registry[BaseMetric[Any]] = Provide[RegistryContainer.metric_registry],
 ) -> Callable[[type[T]], type[T]]: ...
 
 
 @inject
-def metric[T: BaseMetric](
+def metric[T: BaseMetric[Any]](
     _cls: type[T] | None = None,
     *,
     metric_id: str | None = None,
@@ -49,7 +49,7 @@ def metric[T: BaseMetric](
     | list[type[BaseFeature[Any]]]
     | tuple[type[BaseFeature[Any]], ...]
     | None = None,
-    metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
+    metric_registry: Registry[BaseMetric[Any]] = Provide[RegistryContainer.metric_registry],
 ) -> Callable[[type[T]], type[T]] | type[T]:
     """
     Register a class or function as a metric.
@@ -107,14 +107,14 @@ def metric[T: BaseMetric](
 
     """
 
-    def _metric_class[T: BaseMetric](cls: type[T], pid: str | None = None) -> type[T]:
+    def _metric_class[U: BaseMetric[Any]](cls: type[U], pid: str | None = None) -> type[U]:
         if pid is None:
             pid = metric_id or f"{cls.__module__}.{cls.__qualname__}"
         cls.required_features = DecoratorUtilities.convert_to_list(required_features)
         DecoratorUtilities.register_class(cls, base=BaseMetric, registered_class_id=pid, registry=metric_registry)
         return cls
 
-    def _metric_function(func: Callable[[Solution, FeatureResults], MetricResult]) -> type[BaseMetric]:
+    def _metric_function(func: Callable[[Solution, FeatureResults], MetricResult]) -> type[BaseMetric[Any]]:
         # Validate the function signature
         DecoratorUtilities.validate_signature(
             func,
@@ -127,7 +127,7 @@ def metric[T: BaseMetric](
         class_name = func.__name__
 
         @functools.wraps(func)
-        def run(self: BaseMetric, solution: Solution, feature_results: FeatureResults) -> MetricResult:
+        def run(self: BaseMetric[Any], solution: Solution, feature_results: FeatureResults) -> MetricResult:
             _ = self
             result = func(solution, feature_results)
             if not isinstance(result, MetricResult):
@@ -152,7 +152,7 @@ def metric[T: BaseMetric](
     def _do_register(obj: type[T] | Callable[[Solution, FeatureResults], MetricResult]) -> type[T]:
         if isinstance(obj, type):
             return _metric_class(obj)
-        return _metric_function(obj)
+        return cast("type[T]", _metric_function(obj))
 
     if _cls is not None:
         return _do_register(_cls)

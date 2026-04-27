@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 class MockFeature(BaseFeature):
-    def run(self, model: "Model") -> FeatureResult:
+    def run(self, model: "Model") -> "FeatureResult":
         raise NotImplementedError
 
 
