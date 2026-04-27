@@ -40,7 +40,7 @@ class QuboSparsityDensityFeatureResult(ArbitraryDataDomain):
 
 
 @feature
-class QuboSparsityDensityFeature(BaseFeature):
+class QuboSparsityDensityFeature(BaseFeature[QuboSparsityDensityFeatureResult]):
     """Extract sparsity and density features from QUBO models.
 
     Compute structural features describing the fill pattern of the QUBO matrix.

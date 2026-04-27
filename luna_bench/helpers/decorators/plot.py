@@ -1,5 +1,6 @@
 import functools
 from collections.abc import Callable
+from typing import Any
 
 from dependency_injector.wiring import Provide, inject
 
@@ -16,8 +17,14 @@ def plot(
     _cls: type[BasePlot] | None = None,
     *,
     plot_id: str | None = None,
-    required_features: type[BaseFeature] | list[type[BaseFeature]] | tuple[type[BaseFeature], ...] | None = None,
-    required_metrics: type[BaseMetric] | list[type[BaseMetric]] | tuple[type[BaseMetric], ...] | None = None,
+    required_features: type[BaseFeature[Any]]
+    | list[type[BaseFeature[Any]]]
+    | tuple[type[BaseFeature[Any]], ...]
+    | None = None,
+    required_metrics: type[BaseMetric[Any]]
+    | list[type[BaseMetric[Any]]]
+    | tuple[type[BaseMetric[Any]], ...]
+    | None = None,
     plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
 ) -> Callable[[type[BasePlot]], type[BasePlot]] | type[BasePlot]:
     """

@@ -166,7 +166,7 @@ class ProblemSizeFeaturesResult(ArbitraryDataDomain):
 
 
 @feature
-class ProblemSizeFeatures(BaseFeature):
+class ProblemSizeFeatures(BaseFeature[ProblemSizeFeaturesResult]):
     """
     Feature extractor for problem size-related characteristics.
 

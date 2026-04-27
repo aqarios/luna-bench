@@ -19,7 +19,7 @@ class FakeFeatureResult(ArbitraryDataDomain):
 
 
 @feature
-class FakeFeature(BaseFeature):
+class FakeFeature(BaseFeature[FakeFeatureResult]):
     """Fake feature class."""
 
     def run(self, model: Model) -> FakeFeatureResult:

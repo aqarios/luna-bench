@@ -17,7 +17,7 @@ class VarNumberFeatureResult(ArbitraryDataDomain):
 
 
 @feature
-class VarNumberFeature(BaseFeature):
+class VarNumberFeature(BaseFeature[VarNumberFeatureResult]):
     """Fake feature class."""
 
     def run(self, model: Model) -> VarNumberFeatureResult:

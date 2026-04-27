@@ -22,7 +22,7 @@ class RuntimeResult(MetricResult):
 
 
 @metric
-class Runtime(BaseMetric):
+class Runtime(BaseMetric[RuntimeResult]):
     """Metric that captures the total runtime of a solution computation.
 
     This metric provides a simple way to track and compare the computational

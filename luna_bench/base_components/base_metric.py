@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from luna_bench.base_components.data_types.feature_results import FeatureResults
 
 
-class BaseMetric(BaseModel, ABC, metaclass=MetricClassMeta):
+class BaseMetric[TMetricResult: MetricResult = MetricResult](BaseModel, ABC, metaclass=MetricClassMeta):
     """
     Base class for all metrics.
 
@@ -26,7 +26,7 @@ class BaseMetric(BaseModel, ABC, metaclass=MetricClassMeta):
     required_features: ClassVar[list[FeatureClass]]
 
     @abstractmethod
-    def run(self, solution: Solution, feature_results: "FeatureResults") -> MetricResult:
+    def run(self, solution: Solution, feature_results: "FeatureResults") -> TMetricResult:
         """
         Compute the metric value for a given solution.
 

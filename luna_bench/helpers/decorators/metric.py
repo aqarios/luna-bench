@@ -1,6 +1,6 @@
 import functools
 from collections.abc import Callable
-from typing import overload
+from typing import Any, overload
 
 from dependency_injector.wiring import Provide, inject
 from luna_model import Solution
@@ -19,7 +19,10 @@ def metric[T: BaseMetric](
     _cls: type[T],
     *,
     metric_id: str | None = None,
-    required_features: type[BaseFeature] | list[type[BaseFeature]] | tuple[type[BaseFeature], ...] | None = None,
+    required_features: type[BaseFeature[Any]]
+    | list[type[BaseFeature[Any]]]
+    | tuple[type[BaseFeature[Any]], ...]
+    | None = None,
     metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
 ) -> type[T]: ...
 
@@ -29,7 +32,10 @@ def metric[T: BaseMetric](
     _cls: None = None,
     *,
     metric_id: str | None = None,
-    required_features: type[BaseFeature] | list[type[BaseFeature]] | tuple[type[BaseFeature], ...] | None = None,
+    required_features: type[BaseFeature[Any]]
+    | list[type[BaseFeature[Any]]]
+    | tuple[type[BaseFeature[Any]], ...]
+    | None = None,
     metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
 ) -> Callable[[type[T]], type[T]]: ...
 
@@ -39,7 +45,10 @@ def metric[T: BaseMetric](
     _cls: type[T] | None = None,
     *,
     metric_id: str | None = None,
-    required_features: type[BaseFeature] | list[type[BaseFeature]] | tuple[type[BaseFeature], ...] | None = None,
+    required_features: type[BaseFeature[Any]]
+    | list[type[BaseFeature[Any]]]
+    | tuple[type[BaseFeature[Any]], ...]
+    | None = None,
     metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
 ) -> Callable[[type[T]], type[T]] | type[T]:
     """

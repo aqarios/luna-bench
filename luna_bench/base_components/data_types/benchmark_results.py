@@ -28,9 +28,9 @@ class BenchmarkResults(BaseModel):
             for algorithm_name, metric_results in metrics.items():
                 yield model_name, algorithm_name, metric_results
 
-    def get_all_metrics_of_type(
-        self, metric_cls: MetricClass
-    ) -> Generator[tuple[ModelName, AlgorithmName, MetricResult]]:
+    def get_all_metrics_of_type[TMetricResult: MetricResult](
+        self, metric_cls: MetricClass[TMetricResult]
+    ) -> Generator[tuple[ModelName, AlgorithmName, TMetricResult]]:
         """Yield all metric results matching a specific metric class.
 
         Parameters

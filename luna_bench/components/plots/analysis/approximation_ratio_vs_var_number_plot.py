@@ -30,7 +30,7 @@ class ApproximationRatioVsVarNumberPlot(ScatterPlot):
             {
                 "algorithm": algorithm_name,
                 "model": model_name,
-                "var_number": benchmark_results.features[model_name].first(VarNumberFeature).runtime_seconds,
+                "var_number": benchmark_results.features[model_name].first(VarNumberFeature).var_number,
                 "approximation_ratio": metric_result.approximation_ratio,
             }
             for model_name, algorithm_name, metric_result in benchmark_results.get_all_metrics_of_type(

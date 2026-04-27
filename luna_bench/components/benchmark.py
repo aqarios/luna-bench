@@ -747,7 +747,7 @@ class Benchmark(BenchmarkEntity):
     def add_plot(
         self,
         name: str,
-        plot: BasePlot[Any],
+        plot: BasePlot,
     ) -> PlotEntity:
         """
         Add a plot to the benchmark with a given name.
@@ -1022,7 +1022,7 @@ class Benchmark(BenchmarkEntity):
         """Return the metric classes registered on this benchmark."""
         return [type(m.metric) for m in self.metrics]
 
-    def list_plots_classes(self) -> list[type[BasePlot[Any]]]:
+    def list_plots_classes(self) -> list[type[BasePlot]]:
         """Return the plot classes registered on this benchmark."""
         return [type(p.plot) for p in self.plots]
 

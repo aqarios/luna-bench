@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import TYPE_CHECKING, cast
 
 from pydantic import BaseModel, ConfigDict
 
 from luna_bench.errors.components.features.feature_result_unknown_name_error import FeatureResulUnknownNameError
 from luna_bench.errors.components.features.feature_result_wrong_class_error import FeatureResultWrongClassError
 from luna_bench.types import FeatureClass, FeatureComputed, FeatureName, FeatureResult
+
+if TYPE_CHECKING:
+    from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
+    from luna_bench.base_components import BaseFeature
 
 
 class FeatureResults(BaseModel):
@@ -18,11 +23,18 @@ class FeatureResults(BaseModel):
 
     data: Mapping[FeatureClass, Mapping[FeatureName, FeatureComputed]]
 
-    def get_all(self, feature_cls: FeatureClass) -> Mapping[FeatureName, FeatureResult]:
+    def get_all[TFeatureResult: ArbitraryDataDomain](
+        self, feature_cls: FeatureClass[TFeatureResult]
+    ) -> Mapping[FeatureName, TFeatureResult]:
         """Get all results for a class."""
-        return {name: result[0] for name, result in self.get_all_with_config(feature_cls=feature_cls).items()}
+        return cast(
+            "Mapping[FeatureName, TFeatureResult]",
+            {name: result[0] for name, result in self.get_all_with_config(feature_cls=feature_cls).items()},
+        )
 
-    def get_all_with_config(self, feature_cls: FeatureClass) -> Mapping[FeatureName, FeatureComputed]:
+    def get_all_with_config[TFeatureResult: FeatureResult](
+        self, feature_cls: FeatureClass[TFeatureResult]
+    ) -> Mapping[FeatureName, tuple[TFeatureResult, BaseFeature[TFeatureResult]]]:
         """
         Get all results for a given feature class.
 
@@ -43,9 +55,14 @@ class FeatureResults(BaseModel):
         """
         if feature_cls not in self.allowed:
             raise FeatureResultWrongClassError(feature_cls, self.allowed)
-        return self.data.get(feature_cls, {})
+        return cast(
+            "Mapping[FeatureName, tuple[TFeatureResult, BaseFeature[TFeatureResult]]]",
+            self.data.get(feature_cls, {}),
+        )
 
-    def get(self, feature_cls: FeatureClass, feature_name: FeatureName) -> FeatureResult:
+    def get[TFeatureResult: FeatureResult](
+        self, feature_cls: FeatureClass[TFeatureResult], feature_name: FeatureName
+    ) -> TFeatureResult:
         """
         Get a single result for a given feature class and name.
 
@@ -70,7 +87,9 @@ class FeatureResults(BaseModel):
         """
         return self.get_with_config(feature_cls=feature_cls, feature_name=feature_name)[0]
 
-    def get_with_config(self, feature_cls: FeatureClass, feature_name: FeatureName) -> FeatureComputed:
+    def get_with_config[TFeatureResult: FeatureResult](
+        self, feature_cls: FeatureClass[TFeatureResult], feature_name: FeatureName
+    ) -> tuple[TFeatureResult, BaseFeature[TFeatureResult]]:
         """
         Get a single result for a given feature class and name.
 
@@ -101,9 +120,12 @@ class FeatureResults(BaseModel):
                 feature_class=feature_cls, feature_name=feature_name, known_names=list(self.data[feature_cls].keys())
             )
 
-        return self.data[feature_cls][feature_name]
+        return cast(
+            "tuple[TFeatureResult, BaseFeature[TFeatureResult]]",
+            self.data[feature_cls][feature_name],
+        )
 
-    def first(self, feature_cls: FeatureClass) -> FeatureResult:
+    def first[TFeatureResult: FeatureResult](self, feature_cls: FeatureClass[TFeatureResult]) -> TFeatureResult:
         """
         Retrieve the first result for a given feature class.
 
@@ -124,7 +146,9 @@ class FeatureResults(BaseModel):
         """
         return self.first_with_config(feature_cls=feature_cls)[0]
 
-    def first_with_config(self, feature_cls: FeatureClass) -> FeatureComputed:
+    def first_with_config[TFeatureResult: FeatureResult](
+        self, feature_cls: FeatureClass[TFeatureResult]
+    ) -> tuple[TFeatureResult, BaseFeature[TFeatureResult]]:
         """
         Retrieve the first result with its configuration for a given feature class.
 

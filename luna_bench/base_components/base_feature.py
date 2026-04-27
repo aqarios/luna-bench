@@ -4,11 +4,15 @@ from typing import ClassVar
 from luna_model import Model
 from pydantic import BaseModel
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench.base_components.meta_classes.registered_class_meta import RegisteredClassMeta
+from luna_bench.types import FeatureResult
 
 
-class BaseFeature(BaseModel, ABC, metaclass=RegisteredClassMeta):
+class BaseFeature[TFeatureResult: FeatureResult = FeatureResult](
+    BaseModel,
+    ABC,
+    metaclass=RegisteredClassMeta,
+):
     """
     Base class for all features.
 
@@ -21,7 +25,7 @@ class BaseFeature(BaseModel, ABC, metaclass=RegisteredClassMeta):
     registered_id: ClassVar[str]
 
     @abstractmethod
-    def run(self, model: Model) -> ArbitraryDataDomain:
+    def run(self, model: Model) -> TFeatureResult:
         """
         Compute the feature value for a given model.
 
@@ -32,6 +36,6 @@ class BaseFeature(BaseModel, ABC, metaclass=RegisteredClassMeta):
 
         Returns
         -------
-        ArbitraryDataDomain
+        TFeatureResult
             The result of the computed feature.
         """

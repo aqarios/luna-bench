@@ -9,7 +9,7 @@ from pydantic import Field
 
 from luna_bench.base_components import BaseMetric
 from luna_bench.base_components.data_types.feature_results import FeatureResults
-from luna_bench.components.features.optsol_feature import OptSolFeature, OptSolFeatureResult
+from luna_bench.components.features.optsol_feature import OptSolFeature
 from luna_bench.helpers import metric
 from luna_bench.types import MetricResult
 
@@ -33,7 +33,7 @@ class FractionOfOverallBestSolutionResult(MetricResult):
 
 
 @metric(required_features=OptSolFeature)
-class FractionOfOverallBestSolution(BaseMetric):
+class FractionOfOverallBestSolution(BaseMetric[FractionOfOverallBestSolutionResult]):
     r"""Metric that calculates the Fraction of Overall Best Solution (FOB).
 
     This metric evaluates how often a solver finds the overall best solution.
@@ -101,8 +101,7 @@ class FractionOfOverallBestSolution(BaseMetric):
             return FractionOfOverallBestSolutionResult(fraction_of_overall_best_solution=0.0)
 
         # Get the optimal solution from features
-        opt_sol: OptSolFeatureResult
-        (opt_sol, _) = feature_results.first(feature_cls=OptSolFeature)  # type: ignore[assignment]
+        opt_sol = feature_results.first(feature_cls=OptSolFeature)
         optimum = opt_sol.best_sol
         filtered_sol = solution.filter_feasible().filter(
             lambda s: s.obj_value is not None and bool(np.isclose(s.obj_value, optimum, atol=self.abs_tol))

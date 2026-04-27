@@ -63,7 +63,7 @@ class QuboMatrixFeatureResult(ArbitraryDataDomain):
 
 
 @feature
-class QuboMatrixFeature(BaseFeature):
+class QuboMatrixFeature(BaseFeature[QuboMatrixFeatureResult]):
     """Extract statistical matrix features from QUBO models.
 
     Compute descriptive statistics over all entries of the QUBO matrix.

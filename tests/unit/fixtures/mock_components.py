@@ -81,17 +81,17 @@ class MockPlotWithError(BasePlot):
 
 
 @metric(metric_id="mock_metric")
-class MockMetric(BaseMetric):
+class MockMetric(BaseMetric[MetricResult]):
     def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:  # noqa: ARG002
         return MetricResult()
 
 
 @metric
-class MockMetricError(BaseMetric):
+class MockMetricError(BaseMetric[MetricResult]):
     def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:
         raise NotImplementedError
 
 
-class UnregisteredMetric(BaseMetric):
+class UnregisteredMetric(BaseMetric[MetricResult]):
     def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:  # noqa: ARG002
         return MetricResult()

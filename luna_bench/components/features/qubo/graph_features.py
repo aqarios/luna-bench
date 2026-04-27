@@ -72,7 +72,7 @@ class QuboGraphFeatureResult(ArbitraryDataDomain):
 
 
 @feature
-class QuboGraphFeature(BaseFeature):
+class QuboGraphFeature(BaseFeature[QuboGraphFeatureResult]):
     """Extract graph-based features from QUBO models.
 
     Compute graph-theoretic features from the QUBO matrix by constructing a

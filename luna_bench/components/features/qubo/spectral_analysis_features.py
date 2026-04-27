@@ -90,7 +90,7 @@ class QuboSpectralAnalysisFeatureResult(ArbitraryDataDomain):
 
 
 @feature
-class QuboSpectralAnalysisFeature(BaseFeature):
+class QuboSpectralAnalysisFeature(BaseFeature[QuboSpectralAnalysisFeatureResult]):
     """Extract spectral analysis features from QUBO models.
 
     Decompose the QUBO matrix with ``numpy.linalg.eigh`` and compute

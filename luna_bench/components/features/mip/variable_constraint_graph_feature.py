@@ -93,7 +93,7 @@ class VariableConstraintGraphFeaturesResult(EnumFeatureResult[NodeDegreeStatsKey
 
 
 @feature
-class VariableConstraintGraphFeatures(BaseFeature):
+class VariableConstraintGraphFeatures(BaseFeature[VariableConstraintGraphFeaturesResult]):
     """
     Feature extractor for variable-constraint graph properties.
 

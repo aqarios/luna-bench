@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import TYPE_CHECKING, cast
 
 from pydantic import BaseModel, ConfigDict
 
 from luna_bench.errors.components.metrics.metric_result_unknown_name_error import MetricResulUnknownNameError
 from luna_bench.errors.components.metrics.metric_result_wrong_class_error import MetricResultWrongClassError
 from luna_bench.types import MetricClass, MetricComputed, MetricName, MetricResult
+
+if TYPE_CHECKING:
+    from luna_bench.base_components import BaseMetric
 
 
 class MetricResults(BaseModel):
@@ -18,7 +22,9 @@ class MetricResults(BaseModel):
 
     data: Mapping[MetricClass, Mapping[MetricName, MetricComputed]]
 
-    def get_all_with_config(self, metric_cls: MetricClass) -> Mapping[MetricName, MetricComputed]:
+    def get_all_with_config[TMetricResult: MetricResult](
+        self, metric_cls: MetricClass[TMetricResult]
+    ) -> Mapping[MetricName, tuple[TMetricResult, BaseMetric[TMetricResult]]]:
         """
         Get all results for a given metric class with their configurations.
 
@@ -39,9 +45,14 @@ class MetricResults(BaseModel):
         """
         if metric_cls not in self.allowed:
             raise MetricResultWrongClassError(metric_cls, self.allowed)
-        return self.data.get(metric_cls, {})
+        return cast(
+            "Mapping[MetricName, tuple[TMetricResult, BaseMetric[TMetricResult]]]",
+            self.data.get(metric_cls, {}),
+        )
 
-    def get_all(self, metric_cls: MetricClass) -> Mapping[MetricName, MetricResult]:
+    def get_all[TMetricResult: MetricResult](
+        self, metric_cls: MetricClass[TMetricResult]
+    ) -> Mapping[MetricName, TMetricResult]:
         """
         Get all results for a given metric class.
 
@@ -60,9 +71,14 @@ class MetricResults(BaseModel):
         MetricResultWrongClassError
             If the provided metric class is not allowed in this MetricResults instance.
         """
-        return {name: result[0] for name, result in self.get_all_with_config(metric_cls).items()}
+        return cast(
+            "Mapping[MetricName, TMetricResult]",
+            {name: result[0] for name, result in self.get_all_with_config(metric_cls).items()},
+        )
 
-    def get(self, metric_cls: MetricClass, metric_name: MetricName) -> MetricResult:
+    def get[TMetricResult: MetricResult](
+        self, metric_cls: MetricClass[TMetricResult], metric_name: MetricName
+    ) -> TMetricResult:
         """
         Get a single result for a given metric class and name.
 
@@ -87,7 +103,9 @@ class MetricResults(BaseModel):
         """
         return self.get_with_config(metric_cls=metric_cls, metric_name=metric_name)[0]
 
-    def get_with_config(self, metric_cls: MetricClass, metric_name: MetricName) -> MetricComputed:
+    def get_with_config[TMetricResult: MetricResult](
+        self, metric_cls: MetricClass[TMetricResult], metric_name: MetricName
+    ) -> tuple[TMetricResult, BaseMetric[TMetricResult]]:
         """
         Get a single result with its configuration for a given metric class and name.
 
@@ -117,9 +135,12 @@ class MetricResults(BaseModel):
                 metric_class=metric_cls, metric_name=metric_name, known_names=list(self.data[metric_cls].keys())
             )
 
-        return self.data[metric_cls][metric_name]
+        return cast(
+            "tuple[TMetricResult, BaseMetric[TMetricResult]]",
+            self.data[metric_cls][metric_name],
+        )
 
-    def first(self, metric_cls: MetricClass) -> MetricResult:
+    def first[TMetricResult: MetricResult](self, metric_cls: MetricClass[TMetricResult]) -> TMetricResult:
         """
         Retrieve the first result for a given metric class.
 
@@ -140,7 +161,9 @@ class MetricResults(BaseModel):
         """
         return self.first_with_config(metric_cls=metric_cls)[0]
 
-    def first_with_config(self, metric_cls: MetricClass) -> MetricComputed:
+    def first_with_config[TMetricResult: MetricResult](
+        self, metric_cls: MetricClass[TMetricResult]
+    ) -> tuple[TMetricResult, BaseMetric[TMetricResult]]:
         """
         Retrieve the first result with its configuration for a given metric class.
 
