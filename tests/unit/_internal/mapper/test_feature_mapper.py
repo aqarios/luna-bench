@@ -59,7 +59,7 @@ class TestFeatureMapper:
                         model_name="model",
                         status=JobStatus.CREATED,
                         error=None,
-                        result=FeatureResult.model_construct(something="xD"),
+                        result=ArbitraryDataDomain.model_construct(something="xD"),  # type: ignore[call-arg] # Fake data
                     )
                 },
                 {
@@ -68,7 +68,7 @@ class TestFeatureMapper:
                         model_name="model",
                         status=JobStatus.CREATED,
                         error=None,
-                        result=FeatureResult.model_construct(something="xD"),
+                        result=FeatureResult.model_construct(something="xD"),  # type: ignore[call-arg] # Fake data
                     )
                 },
             ),

@@ -66,7 +66,7 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
             return Failure(RunAlgorithmRuntimeError(e))
 
     @staticmethod
-    @HueyBackgroundTaskClient.huey.task()  # type: ignore[misc] # Huey doesn't support type hints
+    @HueyBackgroundTaskClient.huey.task()  # type: ignore[untyped-decorator] # Huey doesn't support type hints
     def _run_sync_huey_task(
         algorithm: BaseAlgorithmSync,
         model_id: int,
@@ -95,7 +95,7 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
             return Failure(RunAlgorithmRuntimeError(e))
 
     @staticmethod
-    @HueyBackgroundTaskClient.huey.task()  # type: ignore[misc] # Huey doesn't support type hints
+    @HueyBackgroundTaskClient.huey.task()  # type: ignore[untyped-decorator] # Huey doesn't support type hints
     def _run_async_huey_task[T: BaseModel](
         algorithm: BaseAlgorithmAsync[T],
         model_id: int,
