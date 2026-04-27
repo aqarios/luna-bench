@@ -30,6 +30,4 @@ class FakeAlgorithm(BaseAlgorithmSync):
         sleep(self.time_to_sleep)
         self._logger.info(f"Done with fake algorithm for model {model.name} after {self.time_to_sleep} seconds")
 
-        return Solution.from_dict(
-            data=dict.fromkeys(model.variables(), self.time_to_sleep), env=model.environment, timing=timer.stop()
-        )
+        return Solution.from_dict(data=dict.fromkeys(model.variables(), 1), env=model.environment, timing=timer.stop())
