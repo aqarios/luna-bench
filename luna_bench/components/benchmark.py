@@ -40,7 +40,6 @@ from luna_bench.entities import (
     MetricEntity,
     PlotEntity,
 )
-from luna_bench.entities.enums import ErrorHandlingMode
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -866,7 +865,6 @@ class Benchmark(BenchmarkEntity):
 
     def run_plots(
         self,
-        error_handling_mode: ErrorHandlingMode = ErrorHandlingMode.FAIL_ON_ERROR,
     ) -> None:
         """
         Execute all plots registered in the benchmark.
@@ -876,13 +874,6 @@ class Benchmark(BenchmarkEntity):
         validated before execution to ensure required data (metrics, features, etc.)
         is available. Plot execution is sequential and follows the order defined
         in the benchmark configuration.
-
-        Parameters
-        ----------
-        error_handling_mode : ErrorHandlingMode
-            Determines behavior when plot validation or execution fails.
-            - FAIL_ON_ERROR: Stop at the first error and raise RuntimeError
-            - CONTINUE_ON_ERROR: Log warnings and continue with remaining plots
 
         Raises
         ------

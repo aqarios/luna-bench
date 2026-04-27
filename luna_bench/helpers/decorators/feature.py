@@ -38,7 +38,7 @@ def feature[T: BaseFeature](
     *,
     feature_id: str | None = None,
     feature_registry: Registry[BaseFeature] = Provide[RegistryContainer.feature_registry],
-) -> Callable[[type[T]], type[T]] | type[T]:
+) -> Callable[[type[T]], type[T] | Any] | type[T]:
     """
     Register a class or function as a feature.
 
@@ -126,7 +126,7 @@ def feature[T: BaseFeature](
         pid = feature_id or f"{func.__module__}.{class_name}"
         return _feature_class(dynamic_class, pid)
 
-    def _do_register(obj: Any) -> Any:
+    def _do_register(obj: type[T] | Callable[[BaseFeature, Model], Any]) -> type[T]:
         if isinstance(obj, type):
             return _feature_class(obj)
         return _feature_function(obj)

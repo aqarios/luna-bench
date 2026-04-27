@@ -18,7 +18,7 @@ class FakeAlgorithm(BaseAlgorithmSync):
     This algorithm is used in the development process. After that it will be deleted.
     """
 
-    time_to_sleep: float = random.uniform(0, 2.0)  # noqa: S311
+    time_to_sleep: float = random.uniform(0, 0.5)  # noqa: S311
 
     _logger: ClassVar[Logger] = Logging.get_logger(__name__)
 
@@ -30,6 +30,4 @@ class FakeAlgorithm(BaseAlgorithmSync):
         sleep(self.time_to_sleep)
         self._logger.info(f"Done with fake algorithm for model {model.name} after {self.time_to_sleep} seconds")
 
-        return Solution.from_dict(
-            data=dict.fromkeys(model.variables(), self.time_to_sleep), env=model.environment, timing=timer.stop()
-        )
+        return Solution.from_dict(data=dict.fromkeys(model.variables(), 1), env=model.environment, timing=timer.stop())

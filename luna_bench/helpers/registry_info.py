@@ -8,6 +8,8 @@ from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, Ba
 
 
 class RegistryInfo:
+    """Provides utility functions to log and retrieve information from the registries."""
+
     _logger = Logging.get_logger(__name__)
 
     @inject

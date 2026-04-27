@@ -201,7 +201,7 @@ class PlotsRunUc(Protocol):
     def __call__(
         self,
         benchmark: BenchmarkEntity,
-        error_handling_mode: UseCaseErrorHandlingMode = UseCaseErrorHandlingMode.FAIL_ON_ERROR,
+        plot: PlotEntity | None = None,
     ) -> Result[None, PlotRunError | UnknownLunaBenchError]: ...
 
 

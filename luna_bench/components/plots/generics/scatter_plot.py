@@ -1,6 +1,8 @@
 from abc import ABC
-from typing import Any
+from logging import Logger
+from typing import Any, ClassVar
 
+from luna_quantum import Logging
 from matplotlib import pyplot as plt
 from pandas import DataFrame
 from seaborn import scatterplot
@@ -10,9 +12,13 @@ from luna_bench.components.plots.utils import AqariosColours
 
 
 class ScatterPlot(SeabornPlot, ABC):
+    """Base helper for generating seaborn scatter plots."""
+
+    logger: ClassVar[Logger] = Logging.get_logger(__name__)
+
     def create(
         self,
-        rows: dict[str, Any],
+        rows: list[dict[str, Any]],
         xlabel: str,
         ylabel: str,
         title: str,
@@ -23,9 +29,33 @@ class ScatterPlot(SeabornPlot, ABC):
         hline_label: str | None = None,
         hcolor: str = AqariosColours.SUCCESS,
     ) -> None:
+        """Create a scatter plot from row-oriented data.
 
+        Parameters
+        ----------
+        rows : dict[str, Any]
+            Row-oriented mapping used to construct the plotting DataFrame.
+        xlabel : str
+            Label for the x-axis.
+        ylabel : str
+            Label for the y-axis.
+        title : str
+            Plot title.
+        hue : str
+            Column used to color points by group.
+        x : str, optional
+            Column name mapped to the x-axis, by default ``"x"``.
+        y : str, optional
+            Column name mapped to the y-axis, by default ``"y"``.
+        hline : float | None, optional
+            Optional horizontal reference line value, by default ``None``.
+        hline_label : str | None, optional
+            Legend label for the horizontal reference line, by default ``None``.
+        hcolor : str, optional
+            Color of the horizontal reference line, by default ``AqariosColours.SUCCESS``.
+        """
         if not rows:
-            self.logger.warning(f"{self.__name__}: no data to plot")
+            self.logger.warning(f"{self.__class__}: no data to plot")
             return
 
         df = DataFrame(rows)

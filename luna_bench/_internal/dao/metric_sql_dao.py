@@ -162,19 +162,18 @@ class MetricSqlDao(MetricDao):
 
     @staticmethod
     def metric_to_domain(metric: MetricTable) -> MetricDomain:
-        result_data: dict[ModelName, dict[AlgorithmName, MetricResultDomain]] = {
-            m.model_metadata.name: {
-                m.algorithm.name: MetricResultDomain.model_construct(
-                    processing_time_ms=m.processing_time_ms,
-                    model_name=m.model_metadata.name,
-                    algorithm_name=m.algorithm.name,
-                    result=m.result_data,
-                    status=JobStatus(m.status),
-                    error=m.error,
-                )
-            }
-            for m in list(metric.results)
-        }
+        result_data: dict[ModelName, dict[AlgorithmName, MetricResultDomain]] = {}
+        for m in list(metric.results):
+            if m.model_metadata.name not in result_data:
+                result_data[m.model_metadata.name] = {}
+            result_data[m.model_metadata.name][m.algorithm.name] = MetricResultDomain.model_construct(
+                processing_time_ms=m.processing_time_ms,
+                model_name=m.model_metadata.name,
+                algorithm_name=m.algorithm.name,
+                result=m.result_data,
+                status=JobStatus(m.status),
+                error=m.error,
+            )
 
         return MetricDomain(
             name=cast("str", metric.name),

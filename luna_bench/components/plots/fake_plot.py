@@ -10,7 +10,13 @@ from luna_bench.helpers.decorators import plot
 
 @plot(required_metrics=FakeMetric)
 def FakePlot(benchmark_results: BenchmarkResults) -> None:
+    """Plot aggregated ``FakeMetric`` random values for each algorithm-model pair.
 
+    Parameters
+    ----------
+    benchmark_results : BenchmarkResults
+        Benchmark outputs containing metric results used to build the plot.
+    """
     rows = []
     for model_name, algorithm_name, metrics_result in benchmark_results.get_all_metrics():
         for metric_name, metric_result in metrics_result.get_all(FakeMetric).items():

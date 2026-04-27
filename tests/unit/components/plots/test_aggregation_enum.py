@@ -1,4 +1,5 @@
 import pytest
+
 from luna_bench.components.plots.utils.aggregation_enum import Aggregation
 
 

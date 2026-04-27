@@ -75,7 +75,7 @@ class UnregisteredPlot(BasePlot):
 
 
 @plot
-class MockPlotWithValidationError(BasePlot):
+class MockPlotWithError(BasePlot):
     def run(self, benchmark_results: BenchmarkResults) -> None:
         raise NotImplementedError
 

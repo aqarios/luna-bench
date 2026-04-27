@@ -19,6 +19,13 @@ class AverageRuntimePlot(BarPlot):
     """
 
     def run(self, benchmark_results: BenchmarkResults) -> None:
+        """Generate plot output from benchmark results.
+
+        Parameters
+        ----------
+        benchmark_results : BenchmarkResults
+            Aggregated benchmark data consumed by the plot implementation.
+        """
         rows = [
             {
                 "algorithm": algorithm_name,

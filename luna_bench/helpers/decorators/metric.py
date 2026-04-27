@@ -1,6 +1,6 @@
 import functools
 from collections.abc import Callable
-from typing import Any, overload
+from typing import overload
 
 from dependency_injector.wiring import Provide, inject
 from luna_model import Solution
@@ -101,11 +101,11 @@ def metric[T: BaseMetric](
     def _metric_class[T: BaseMetric](cls: type[T], pid: str | None = None) -> type[T]:
         if pid is None:
             pid = metric_id or f"{cls.__module__}.{cls.__qualname__}"
-        cls.required_features = DecoratorUtilities._convert_to_list(required_features)
+        cls.required_features = DecoratorUtilities.convert_to_list(required_features)
         DecoratorUtilities.register_class(cls, base=BaseMetric, registered_class_id=pid, registry=metric_registry)
         return cls
 
-    def _metric_function(func: Callable[[BaseMetric, Solution, FeatureResults], MetricResult]) -> type[BaseMetric]:
+    def _metric_function(func: Callable[[Solution, FeatureResults], MetricResult]) -> type[BaseMetric]:
         # Validate the function signature
         DecoratorUtilities.validate_signature(
             func,
@@ -118,11 +118,12 @@ def metric[T: BaseMetric](
         class_name = func.__name__
 
         @functools.wraps(func)
-        def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:
+        def run(self: BaseMetric, solution: Solution, feature_results: FeatureResults) -> MetricResult:
+            _ = self
             result = func(solution, feature_results)
             if not isinstance(result, MetricResult):
-                return MetricResult.model_construct(result=result)  # type: ignore[call-arg]
-            return result  # type: ignore[return-value]
+                return MetricResult.model_construct(result=result)
+            return result
 
         # Create the dynamic class
         dynamic_class = type(
@@ -139,7 +140,7 @@ def metric[T: BaseMetric](
 
         return _metric_class(dynamic_class, pid=pid)
 
-    def _do_register(obj: Any) -> Any:
+    def _do_register(obj: type[T] | Callable[[Solution, FeatureResults], MetricResult]) -> type[T]:
         if isinstance(obj, type):
             return _metric_class(obj)
         return _metric_function(obj)

@@ -137,6 +137,7 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
 
         @functools.wraps(func)
         def run(self: BaseAlgorithmSync, model: Model) -> Solution:
+            _ = self
             result = func(model)
             if not isinstance(result, Solution):
                 raise TypeError(f"Algorithm function must return a Solution, got {type(result)}")
@@ -155,7 +156,7 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
 
         return _do_register_class(dynamic_class)
 
-    def _do_register(obj: Any) -> Any:
+    def _do_register(obj: T | type[T]) -> T:
         if isinstance(obj, type):
             return _do_register_class(obj)
         return _algorithm_function(obj)

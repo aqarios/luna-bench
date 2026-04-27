@@ -91,7 +91,9 @@ class MetricResultBuilder:
             if key not in self._lookup_map:
                 return Failure(RunMetricMissingError(metric_cls.__name__, self.benchmark.name))
             data = self._lookup_map[key]
-            m_dict[data[2]] = (data[0], data[1])  # TODO make this a bit cleaner
+
+            # Keys here are from the _build_lookup_map function '(metric_type, algo_name, model_name)'
+            m_dict[data[2]] = (data[0], data[1])
 
         return Success(
             MetricResults.model_construct(

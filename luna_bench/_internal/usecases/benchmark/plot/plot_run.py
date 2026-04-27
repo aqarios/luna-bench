@@ -50,9 +50,6 @@ class PlotsRunUcImpl(PlotsRunUc):
     ) -> None:
         self._logger = Logging.get_logger(__name__)
 
-    def _run(self) -> Result[None, PlotRunError | UnknownLunaBenchError]:
-        pass
-
     def __call__(
         self,
         benchmark: BenchmarkEntity,
@@ -123,6 +120,9 @@ class PlotsRunUcImpl(PlotsRunUc):
                 features=features,
                 metrics=metrics,
             )
-            p.plot.run(benchmark_result)
+            try:
+                p.plot.run(benchmark_result)
+            except Exception as e:
+                self._logger.warning(f"Error running plot {p.name}: {e}")
 
         return Success(None)

@@ -11,7 +11,6 @@ from luna_bench.components.model_set import ModelSet
 from luna_bench.entities import (
     AlgorithmEntity,
     BenchmarkEntity,
-    ErrorHandlingMode,
     FeatureEntity,
     JobStatus,
     MetricEntity,
@@ -411,21 +410,8 @@ class TestBenchmark:
         mock.return_value = Success(None)
         empty_benchmark.run_plots()
 
-        # default is FAIL_ON_ERROR = 0
         args, _ = mock.call_args
         assert args[0] == empty_benchmark
-        assert args[1].value == ErrorHandlingMode.FAIL_ON_ERROR.value
-
-    def test_run_plots_continue_on_error(
-        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
-    ) -> None:
-        mock = mocked_usecases["benchmark_run_plots_uc"]
-        mock.return_value = Success(None)
-        empty_benchmark.run_plots(ErrorHandlingMode.CONTINUE_ON_ERROR)
-
-        args, _ = mock.call_args
-        assert args[0] == empty_benchmark
-        assert args[1].value == ErrorHandlingMode.CONTINUE_ON_ERROR.value
 
     def test_run_plots_failure(self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark) -> None:
         error = UnknownLunaBenchError(exception=RuntimeError("another error"))
@@ -450,7 +436,6 @@ class TestBenchmark:
         # for plots it's called with default mode
         args, _ = mocked_usecases["benchmark_run_plots_uc"].call_args
         assert args[0] == empty_benchmark
-        assert args[1].value == ErrorHandlingMode.FAIL_ON_ERROR.value
 
     def test_open_existing_benchmark(self, mocked_usecases: dict[str, MagicMock]) -> None:
         mock_load = mocked_usecases["benchmark_load_uc"]

@@ -22,4 +22,11 @@ class BasePlot(BaseModel, ABC, metaclass=RegisteredClassMeta):
     required_metrics: ClassVar[list[MetricClass]]
 
     @abstractmethod
-    def run(self, benchmark_results: BenchmarkResults) -> None: ...
+    def run(self, benchmark_results: BenchmarkResults) -> None:
+        """Generate plot output from benchmark results.
+
+        Parameters
+        ----------
+        benchmark_results : BenchmarkResults
+            Aggregated benchmark data consumed by the plot implementation.
+        """
