@@ -4,10 +4,10 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.registries.arbitrary_data_registry import ArbitraryDataRegistry
 from luna_bench.base_components import BaseFeature
 from luna_bench.helpers.decorators.feature import feature
+from luna_bench.types import FeatureResult
 
 if TYPE_CHECKING:
     from luna_model import Model
@@ -54,7 +54,7 @@ class TestFeatureFunction:
         # Instantiate and run
         # We use type: ignore because Mypy is confused by the dynamic class
         feature_inst = another_test_feature()
-        assert feature_inst.run(cast("Model", None)) == ArbitraryDataDomain.model_construct(result=123)
+        assert feature_inst.run(cast("Model", None)) == FeatureResult.model_construct(result=123)  # type: ignore[call-arg]
 
     def test_feature_function_with_id(self, registry: Registry[BaseFeature]) -> None:
         """Test that feature_function works with a custom ID."""

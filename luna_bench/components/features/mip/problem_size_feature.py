@@ -7,13 +7,13 @@ import numpy as np
 from luna_model import Model, Unbounded, Vtype
 from pydantic import BaseModel
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench.base_components import BaseFeature
 from luna_bench.components.features.enum_feature_result import EnumFeatureResult
 from luna_bench.components.helper.degree import ConstraintDegree
 from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
 from luna_bench.helpers import feature
+from luna_bench.types import FeatureResult
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -124,7 +124,7 @@ class SupportSizeStats(BaseModel):
     q10: float
 
 
-class ProblemSizeFeaturesResult(ArbitraryDataDomain):
+class ProblemSizeFeaturesResult(FeatureResult):
     """
     Result container for problem size feature calculations.
 

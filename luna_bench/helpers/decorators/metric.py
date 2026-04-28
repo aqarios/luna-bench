@@ -1,6 +1,6 @@
 import functools
 from collections.abc import Callable
-from typing import Any, cast, overload
+from typing import Any, overload
 
 from dependency_injector.wiring import Provide, inject
 from luna_model import Solution
@@ -49,7 +49,7 @@ def metric[T: BaseMetric[Any]](
     | list[type[BaseFeature[Any]]]
     | tuple[type[BaseFeature[Any]], ...]
     | None = None,
-    metric_registry: Registry[BaseMetric[Any]] = Provide[RegistryContainer.metric_registry],
+    metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
 ) -> Callable[[type[T]], type[T]] | type[T]:
     """
     Register a class or function as a metric.
@@ -107,14 +107,16 @@ def metric[T: BaseMetric[Any]](
 
     """
 
-    def _metric_class[U: BaseMetric[Any]](cls: type[U], pid: str | None = None) -> type[U]:
+    def _metric_class(cls: type[T], pid: str | None = None) -> type[T]:
         if pid is None:
             pid = metric_id or f"{cls.__module__}.{cls.__qualname__}"
         cls.required_features = DecoratorUtilities.convert_to_list(required_features)
         DecoratorUtilities.register_class(cls, base=BaseMetric, registered_class_id=pid, registry=metric_registry)
         return cls
 
-    def _metric_function(func: Callable[[Solution, FeatureResults], MetricResult]) -> type[BaseMetric[Any]]:
+    def _metric_function[RETURN_TYPE: MetricResult](
+        func: Callable[[Solution, FeatureResults], RETURN_TYPE],
+    ) -> type[T]:
         # Validate the function signature
         DecoratorUtilities.validate_signature(
             func,
@@ -127,7 +129,7 @@ def metric[T: BaseMetric[Any]](
         class_name = func.__name__
 
         @functools.wraps(func)
-        def run(self: BaseMetric[Any], solution: Solution, feature_results: FeatureResults) -> MetricResult:
+        def run(self: BaseMetric[RETURN_TYPE], solution: Solution, feature_results: FeatureResults) -> RETURN_TYPE:
             _ = self
             result = func(solution, feature_results)
             if not isinstance(result, MetricResult):
@@ -146,13 +148,12 @@ def metric[T: BaseMetric[Any]](
         )
 
         pid = metric_id or f"{func.__module__}.{class_name}"
-
         return _metric_class(dynamic_class, pid=pid)
 
-    def _do_register(obj: type[T] | Callable[[Solution, FeatureResults], MetricResult]) -> type[T]:
+    def _do_register(obj: type[T] | Callable[[Solution, FeatureResults], Any]) -> type[T]:
         if isinstance(obj, type):
             return _metric_class(obj)
-        return cast("type[T]", _metric_function(obj))
+        return _metric_function(obj)
 
     if _cls is not None:
         return _do_register(_cls)

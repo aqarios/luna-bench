@@ -3,15 +3,15 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench.base_components import BaseFeature
 from luna_bench.helpers import feature
+from luna_bench.types import FeatureResult
 
 if TYPE_CHECKING:
     from luna_model import Model
 
 
-class FakeFeatureResult(ArbitraryDataDomain):
+class FakeFeatureResult(FeatureResult):
     """Fake feature result class."""
 
     random_number: int

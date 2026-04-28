@@ -20,9 +20,10 @@ class BarPlot(SeabornPlot, ABC):
 
     color: str = AqariosColours.AQARIOS
 
-    def create(
+    def create(  # noqa: PLR0913 # There are no good alternatives to just have all parameters listed here.
         self,
-        rows: dict[str, Any],
+        *,
+        rows: list[dict[str, Any]],
         xlabel: str,
         ylabel: str,
         title: str,

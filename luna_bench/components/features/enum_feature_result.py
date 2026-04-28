@@ -2,13 +2,13 @@ from typing import NamedTuple, TypeVar
 
 from pydantic import Field
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
+from luna_bench.types import FeatureResult
 
 T = TypeVar("T")
 N = TypeVar("N", bound=NamedTuple)
 
 
-class EnumFeatureResult[N, T](ArbitraryDataDomain):
+class EnumFeatureResult[N, T](FeatureResult):
     """
     Base class for feature results that store stats keyed by a NamedTuple.
 

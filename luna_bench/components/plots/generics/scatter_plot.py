@@ -16,8 +16,9 @@ class ScatterPlot(SeabornPlot, ABC):
 
     logger: ClassVar[Logger] = Logging.get_logger(__name__)
 
-    def create(
+    def create(  # noqa: PLR0913 # There are no good alternatives to just have all parameters listed here.
         self,
+        *,
         rows: list[dict[str, Any]],
         xlabel: str,
         ylabel: str,

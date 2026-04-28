@@ -9,7 +9,7 @@ from luna_bench.helpers.decorators import plot
 
 
 @plot(required_metrics=FakeMetric)
-def FakePlot(benchmark_results: BenchmarkResults) -> None:
+def FakePlot(benchmark_results: BenchmarkResults) -> None:  # noqa: N802# Using a function instead of a class to show to users how to create a plot with functions.
     """Plot aggregated ``FakeMetric`` random values for each algorithm-model pair.
 
     Parameters

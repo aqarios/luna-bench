@@ -27,6 +27,7 @@ from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorith
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
 from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
+from luna_bench.errors.run_errors.run_plot_missing_error import RunPlotMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
@@ -202,7 +203,10 @@ class PlotsRunUc(Protocol):
         self,
         benchmark: BenchmarkEntity,
         plot: PlotEntity | None = None,
-    ) -> Result[None, PlotRunError | UnknownLunaBenchError]: ...
+    ) -> Result[
+        None,
+        RunFeatureMissingError | RunPlotMissingError | PlotRunError | UnknownLunaBenchError | RunMetricMissingError,
+    ]: ...
 
 
 class BackgroundRunAlgorithmAsyncUc(Protocol):

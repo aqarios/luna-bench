@@ -1,15 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import ClassVar
 
 from luna_model import Model
-from pydantic import BaseModel
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench.base_components.meta_classes.registered_class_meta import RegisteredClassMeta
+from luna_bench.base_components.registerable_component import RegisterableComponent
+from luna_bench.types import FeatureResult
 
 
-class BaseFeature[TFeatureResult: ArbitraryDataDomain = ArbitraryDataDomain](
-    BaseModel,
+class BaseFeature[TFeatureResult: FeatureResult = FeatureResult](
+    RegisterableComponent,
     ABC,
     metaclass=RegisteredClassMeta,
 ):
@@ -21,8 +20,6 @@ class BaseFeature[TFeatureResult: ArbitraryDataDomain = ArbitraryDataDomain](
 
     A Feature must always be registered with the `@feature` decorator before it can be used in a benchmark.
     """
-
-    registered_id: ClassVar[str]
 
     @abstractmethod
     def run(self, model: Model) -> TFeatureResult:

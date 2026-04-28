@@ -12,11 +12,10 @@ class MetricResult(ArbitraryData):
 
 
 if TYPE_CHECKING:
-    from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
     from luna_bench.base_components.base_feature import BaseFeature
     from luna_bench.base_components.base_metric import BaseMetric
 
-    type FeatureClass[TFeatureResult: ArbitraryDataDomain = ArbitraryDataDomain] = type["BaseFeature[TFeatureResult]"]
+    type FeatureClass[TFeatureResult: FeatureResult = FeatureResult] = type["BaseFeature[TFeatureResult]"]
     type MetricClass[TMetricResult: MetricResult = MetricResult] = type["BaseMetric[TMetricResult]"]
 else:
     BaseFeature = None

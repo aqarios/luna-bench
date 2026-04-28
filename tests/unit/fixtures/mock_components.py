@@ -6,10 +6,9 @@ from luna_model import Solution
 from pydantic import BaseModel
 from returns.result import Result, Success
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
 from luna_bench.helpers.decorators import algorithm, feature, metric, plot
-from luna_bench.types import MetricResult
+from luna_bench.types import FeatureResult, MetricResult
 
 if TYPE_CHECKING:
     from luna_model import Model
@@ -20,18 +19,18 @@ if TYPE_CHECKING:
 
 @feature(feature_id="mock_feature")
 class MockFeature(BaseFeature):
-    def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
-        return ArbitraryDataDomain.model_construct(solution="xD")  # type: ignore[call-arg] # Fake data
+    def run(self, model: Model) -> FeatureResult:  # noqa: ARG002
+        return FeatureResult.model_construct(solution="xD")  # type: ignore[call-arg] # Fake data
 
 
 @feature
 class MockFeatureFailing(BaseFeature):
-    def run(self, model: Model) -> ArbitraryDataDomain:  # noqa: ARG002
+    def run(self, model: Model) -> FeatureResult:  # noqa: ARG002
         raise ValueError("Model failed.")  # noqa: TRY003 # Just simulating a random error
 
 
 class UnregisteredFeature(BaseFeature):
-    def run(self, model: Model) -> ArbitraryDataDomain:
+    def run(self, model: Model) -> FeatureResult:
         raise NotImplementedError
 
 

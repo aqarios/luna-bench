@@ -1,6 +1,6 @@
 import functools
 from collections.abc import Callable
-from typing import Any
+from typing import Any, overload
 
 from dependency_injector.wiring import Provide, inject
 
@@ -12,9 +12,9 @@ from luna_bench.base_components.data_types.benchmark_results import BenchmarkRes
 from .decorator_utilities import DecoratorUtilities
 
 
-@inject
+@overload
 def plot(
-    _cls: type[BasePlot] | None = None,
+    _cls: type[BasePlot],
     *,
     plot_id: str | None = None,
     required_features: type[BaseFeature[Any]]
@@ -26,7 +26,57 @@ def plot(
     | tuple[type[BaseMetric[Any]], ...]
     | None = None,
     plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
-) -> Callable[[type[BasePlot]], type[BasePlot]] | type[BasePlot]:
+) -> type[BasePlot]: ...
+
+
+@overload
+def plot(
+    _cls: Callable[[BenchmarkResults], None],
+    *,
+    plot_id: str | None = None,
+    required_features: type[BaseFeature[Any]]
+    | list[type[BaseFeature[Any]]]
+    | tuple[type[BaseFeature[Any]], ...]
+    | None = None,
+    required_metrics: type[BaseMetric[Any]]
+    | list[type[BaseMetric[Any]]]
+    | tuple[type[BaseMetric[Any]], ...]
+    | None = None,
+    plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
+) -> type[BasePlot]: ...
+
+
+@overload
+def plot(
+    *,
+    plot_id: str | None = None,
+    required_features: type[BaseFeature[Any]]
+    | list[type[BaseFeature[Any]]]
+    | tuple[type[BaseFeature[Any]], ...]
+    | None = None,
+    required_metrics: type[BaseMetric[Any]]
+    | list[type[BaseMetric[Any]]]
+    | tuple[type[BaseMetric[Any]], ...]
+    | None = None,
+    plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
+) -> Callable[[type[BasePlot] | Callable[[BenchmarkResults], None]], type[BasePlot]]: ...
+
+
+@inject
+def plot(
+    _cls: type[BasePlot] | Callable[[BenchmarkResults], None] | None = None,
+    *,
+    plot_id: str | None = None,
+    required_features: type[BaseFeature[Any]]
+    | list[type[BaseFeature[Any]]]
+    | tuple[type[BaseFeature[Any]], ...]
+    | None = None,
+    required_metrics: type[BaseMetric[Any]]
+    | list[type[BaseMetric[Any]]]
+    | tuple[type[BaseMetric[Any]], ...]
+    | None = None,
+    plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
+) -> Callable[[type[BasePlot] | Callable[[BenchmarkResults], None]], type[BasePlot]] | type[BasePlot]:
     """
     Register a class or function as a plot.
 

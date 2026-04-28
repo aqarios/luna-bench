@@ -7,10 +7,9 @@ from pydantic import BaseModel, ConfigDict
 
 from luna_bench.errors.components.features.feature_result_unknown_name_error import FeatureResulUnknownNameError
 from luna_bench.errors.components.features.feature_result_wrong_class_error import FeatureResultWrongClassError
-from luna_bench.types import FeatureClass, FeatureComputed, FeatureName
+from luna_bench.types import FeatureClass, FeatureComputed, FeatureName, FeatureResult
 
 if TYPE_CHECKING:
-    from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
     from luna_bench.base_components import BaseFeature
 
 
@@ -19,11 +18,13 @@ class FeatureResults(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    allowed: list[FeatureClass]  # TODO MAYBE REMOVE IT we kind of already check it when creating this container
+    allowed: list[
+        FeatureClass
+    ]  # TODO(@Llewellyn): MAYBE REMOVE IT we kind of already check it when creating this container  # noqa: FIX002
 
     data: Mapping[FeatureClass, Mapping[FeatureName, FeatureComputed]]
 
-    def get_all[TFeatureResult: ArbitraryDataDomain](
+    def get_all[TFeatureResult: FeatureResult](
         self, feature_cls: FeatureClass[TFeatureResult]
     ) -> Mapping[FeatureName, TFeatureResult]:
         """Get all results for a class."""
@@ -32,7 +33,7 @@ class FeatureResults(BaseModel):
             {name: result[0] for name, result in self.get_all_with_config(feature_cls=feature_cls).items()},
         )
 
-    def get_all_with_config[TFeatureResult: ArbitraryDataDomain](
+    def get_all_with_config[TFeatureResult: FeatureResult](
         self, feature_cls: FeatureClass[TFeatureResult]
     ) -> Mapping[FeatureName, tuple[TFeatureResult, BaseFeature[TFeatureResult]]]:
         """
@@ -60,7 +61,7 @@ class FeatureResults(BaseModel):
             self.data.get(feature_cls, {}),
         )
 
-    def get[TFeatureResult: ArbitraryDataDomain](
+    def get[TFeatureResult: FeatureResult](
         self, feature_cls: FeatureClass[TFeatureResult], feature_name: FeatureName
     ) -> TFeatureResult:
         """
@@ -87,7 +88,7 @@ class FeatureResults(BaseModel):
         """
         return self.get_with_config(feature_cls=feature_cls, feature_name=feature_name)[0]
 
-    def get_with_config[TFeatureResult: ArbitraryDataDomain](
+    def get_with_config[TFeatureResult: FeatureResult](
         self, feature_cls: FeatureClass[TFeatureResult], feature_name: FeatureName
     ) -> tuple[TFeatureResult, BaseFeature[TFeatureResult]]:
         """
@@ -125,7 +126,7 @@ class FeatureResults(BaseModel):
             self.data[feature_cls][feature_name],
         )
 
-    def first[TFeatureResult: ArbitraryDataDomain](self, feature_cls: FeatureClass[TFeatureResult]) -> TFeatureResult:
+    def first[TFeatureResult: FeatureResult](self, feature_cls: FeatureClass[TFeatureResult]) -> TFeatureResult:
         """
         Retrieve the first result for a given feature class.
 
@@ -146,7 +147,7 @@ class FeatureResults(BaseModel):
         """
         return self.first_with_config(feature_cls=feature_cls)[0]
 
-    def first_with_config[TFeatureResult: ArbitraryDataDomain](
+    def first_with_config[TFeatureResult: FeatureResult](
         self, feature_cls: FeatureClass[TFeatureResult]
     ) -> tuple[TFeatureResult, BaseFeature[TFeatureResult]]:
         """

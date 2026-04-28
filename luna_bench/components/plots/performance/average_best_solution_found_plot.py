@@ -30,7 +30,7 @@ class AverageBestSolutionFoundRatioPlot(BarPlot):
             {
                 "algorithm": algorithm_name,
                 "model": model_name,
-                "best_solution_found": metric_result.best_solution_found,
+                "best_solution_found": metric_result.fraction_of_overall_best_solution,
             }
             for model_name, algorithm_name, metric_result in benchmark_results.get_all_metrics_of_type(
                 FractionOfOverallBestSolution
