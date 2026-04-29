@@ -8,6 +8,7 @@ from luna_model import Model, Solution
 from luna_bench._internal.registries.protocols import Registry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
+from luna_bench.errors.decorators.invalid_return_type_error import InvalidReturnTypeError
 from luna_bench.errors.incompatible_class_error import IncompatibleClassError
 
 from .decorator_utilities import DecoratorUtilities
@@ -121,10 +122,10 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
                 cls, base=BaseAlgorithmSync, registered_class_id=pid, registry=algorithm_sync_registry
             )
         else:
-            raise IncompatibleClassError(BaseAlgorithmAsync | BaseAlgorithmSync)
+            raise IncompatibleClassError((BaseAlgorithmAsync, BaseAlgorithmSync))
         return cls
 
-    def _algorithm_function(func: Callable[[Model], Solution]) -> type[BaseAlgorithmSync]:
+    def _algorithm_function(func: Callable[[Model], Solution]) -> type[T]:
         # Validate the function signature
         DecoratorUtilities.validate_signature(
             func,
@@ -140,7 +141,7 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
             _ = self
             result = func(model)
             if not isinstance(result, Solution):
-                raise TypeError(f"Algorithm function must return a Solution, got {type(result)}")
+                raise InvalidReturnTypeError(func.__name__, Solution, type(result))
             return result
 
         # Create the dynamic class
@@ -156,7 +157,7 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
 
         return _do_register_class(dynamic_class)
 
-    def _do_register(obj: T | type[T]) -> T:
+    def _do_register(obj: type[T] | Callable[[Model], Solution]) -> type[T]:
         if isinstance(obj, type):
             return _do_register_class(obj)
         return _algorithm_function(obj)

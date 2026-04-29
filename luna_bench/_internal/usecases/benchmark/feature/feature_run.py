@@ -24,7 +24,7 @@ from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetM
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
-    from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
+    from luna_bench.types import FeatureResult
 
 
 class FeatureRunUcImpl(FeatureRunUc):
@@ -59,7 +59,7 @@ class FeatureRunUcImpl(FeatureRunUc):
             self._logger.info(f"Feature {feature.name} for model {model_metadata.name} already exists and is done.")
             return Success(result)
 
-        user_result: ArbitraryDataDomain | None = None
+        user_result: FeatureResult | None = None
         exception: str | None = None
         status: JobStatus
 

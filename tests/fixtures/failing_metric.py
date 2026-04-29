@@ -13,7 +13,7 @@ class FakeMetricResult(MetricResult):
 
 
 @metric
-class FailingMetric(BaseMetric):
+class FailingMetric(BaseMetric[MetricResult]):
     """Failing metric class."""
 
     def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:  # noqa: ARG002

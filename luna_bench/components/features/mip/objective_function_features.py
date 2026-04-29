@@ -85,7 +85,7 @@ class ObjectiveFunctionFeatureResult(EnumFeatureResult[ObjCoefStatsKey, ObjCoefS
 
 
 @feature
-class ObjectiveFunctionFeature(BaseFeature):
+class ObjectiveFunctionFeature(BaseFeature[ObjectiveFunctionFeatureResult]):
     """
     Feature extractor for objective function coefficient statistics.
 

@@ -30,7 +30,7 @@ class AverageFoBRatioPlot(BarPlot):
             {
                 "algorithm": algorithm_name,
                 "model": model_name,
-                "fraction_of_overall_best": metric_result.fraction_of_overall_best,
+                "fraction_of_overall_best": metric_result.fraction_of_overall_best_solution,
             }
             for model_name, algorithm_name, metric_result in benchmark_results.get_all_metrics_of_type(
                 FractionOfOverallBestSolution

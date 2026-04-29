@@ -91,7 +91,7 @@ class RightHandSideFeaturesResult(EnumFeatureResult[RhsStatsKey, RhsStats]):
 
 
 @feature
-class RightHandSideFeatures(BaseFeature):
+class RightHandSideFeatures(BaseFeature[RightHandSideFeaturesResult]):
     """
     Feature extractor for right-hand side values of constraints.
 

@@ -5,7 +5,6 @@ import numpy as np
 from numpy.typing import NDArray
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench.base_components import BaseFeature
 from luna_bench.components.features.qubo.graph_features import (
     QuboGraphFeature,
     QuboGraphFeatureResult,
@@ -40,7 +39,15 @@ def run_with_matrix(
 ) -> QuboSpectralAnalysisFeatureResult: ...
 
 
-def run_with_matrix(matrix: NDArray[np.float64], feature: BaseFeature) -> ArbitraryDataDomain:
+def run_with_matrix(
+    matrix: NDArray[np.float64],
+    feature: QuboGraphFeature | QuboMatrixFeature | QuboSparsityDensityFeature | QuboSpectralAnalysisFeature,
+) -> (
+    QuboGraphFeatureResult
+    | QuboMatrixFeatureResult
+    | QuboSparsityDensityFeatureResult
+    | QuboSpectralAnalysisFeatureResult
+):
     """Run a QUBO feature extractor with a mocked model and QUBO matrix.
 
     Parameters

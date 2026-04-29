@@ -747,7 +747,7 @@ class Benchmark(BenchmarkEntity):
     def add_plot(
         self,
         name: str,
-        plot: BasePlot[Any],
+        plot: BasePlot,
     ) -> PlotEntity:
         """
         Add a plot to the benchmark with a given name.
@@ -952,10 +952,14 @@ class Benchmark(BenchmarkEntity):
 
     def features_to_dataframe(self, feature_entity: FeatureEntity) -> pd.DataFrame:
         """Return results for a single feature entity as a DataFrame with one row per model."""
-        return self._resultsentity_to_dataframe(
-            entity=feature_entity,
-            key_columns=lambda model_name: {"model": model_name},
-        )
+        rows: list[dict[str, Any]] = []
+        for model_name, result_entity in feature_entity.results.items():
+            row = {"model": model_name}
+            if result_entity.result is not None:
+                for field_name, value in result_entity.result.model_dump().items():
+                    row[f"{feature_entity.name}/{field_name}"] = value
+            rows.append(row)
+        return pd.DataFrame(rows)
 
     def all_features_to_dataframe(self) -> pd.DataFrame:
         """Return all feature results merged into a single DataFrame on ``model``."""
@@ -980,21 +984,6 @@ class Benchmark(BenchmarkEntity):
         return self._merge_result_entity(
             result_entities=self.metrics, on=["algorithm", "model"], entity_to_metric=self.metrics_to_dataframe
         )
-
-    def _resultsentity_to_dataframe(
-        self,
-        entity: ResultEntityT,
-        key_columns: Callable[[Any], dict[str, Any]],
-    ) -> pd.DataFrame:
-        """Flatten result entities into a DataFrame."""
-        rows: list[dict[str, Any]] = []
-        for key, result_entity in entity.results.items():
-            row = key_columns(key)
-            if result_entity.result is not None:
-                for field_name, value in result_entity.result.model_dump().items():
-                    row[f"{entity.name}/{field_name}"] = value
-            rows.append(row)
-        return pd.DataFrame(rows)
 
     def algorithms_to_dataframe(self, exclude: set[str] | None = None) -> pd.DataFrame:
         """Return all algorithm (algorithm, model) combinations as a DataFrame."""
@@ -1022,7 +1011,7 @@ class Benchmark(BenchmarkEntity):
         """Return the metric classes registered on this benchmark."""
         return [type(m.metric) for m in self.metrics]
 
-    def list_plots_classes(self) -> list[type[BasePlot[Any]]]:
+    def list_plots_classes(self) -> list[type[BasePlot]]:
         """Return the plot classes registered on this benchmark."""
         return [type(p.plot) for p in self.plots]
 

@@ -6,16 +6,16 @@ from dependency_injector.wiring import Provide, inject
 from luna_model import Model
 from pydantic import BaseModel
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.registries.protocols import Registry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench.base_components import BaseFeature
+from luna_bench.types import FeatureResult
 
 from .decorator_utilities import DecoratorUtilities
 
 
 @overload
-def feature[T: BaseFeature](
+def feature[T: BaseFeature[Any]](
     _cls: type[T],
     *,
     feature_id: str | None = None,
@@ -24,21 +24,38 @@ def feature[T: BaseFeature](
 
 
 @overload
-def feature[T: BaseFeature](
+def feature[T: BaseFeature[Any]](
+    _cls: Callable[[Model], FeatureResult | BaseModel | object],
+    *,
+    feature_id: str | None = None,
+    feature_registry: Registry[BaseFeature] = Provide[RegistryContainer.feature_registry],
+) -> type[BaseFeature[FeatureResult]]: ...
+
+
+@overload
+def feature[T: BaseFeature[Any]](
     _cls: None = None,
     *,
     feature_id: str | None = None,
     feature_registry: Registry[BaseFeature] = Provide[RegistryContainer.feature_registry],
-) -> Callable[[type[T]], type[T]]: ...
+) -> Callable[
+    [type[T] | Callable[[Model], FeatureResult | BaseModel | object]], type[BaseFeature[FeatureResult]] | type[T]
+]: ...
 
 
 @inject
-def feature[T: BaseFeature](
-    _cls: type[T] | None = None,
+def feature[T: BaseFeature[Any]](
+    _cls: type[T] | Callable[[Model], FeatureResult | BaseModel | object] | None = None,
     *,
     feature_id: str | None = None,
     feature_registry: Registry[BaseFeature] = Provide[RegistryContainer.feature_registry],
-) -> Callable[[type[T]], type[T] | Any] | type[T]:
+) -> (
+    Callable[
+        [type[T] | Callable[[Model], FeatureResult | BaseModel | object]], type[BaseFeature[FeatureResult]] | type[T]
+    ]
+    | type[BaseFeature[FeatureResult]]
+    | type[T]
+):
     """
     Register a class or function as a feature.
 
@@ -89,13 +106,15 @@ def feature[T: BaseFeature](
 
     """
 
-    def _feature_class[T: BaseFeature](cls: type[T], pid: str | None = None) -> type[T]:
+    def _feature_class(cls: type[T], pid: str | None = None) -> type[T]:
         if pid is None:
             pid = feature_id or f"{cls.__module__}.{cls.__qualname__}"
         DecoratorUtilities.register_class(cls, base=BaseFeature, registered_class_id=pid, registry=feature_registry)
         return cls
 
-    def _feature_function(func: Callable[[BaseFeature, Model], Any]) -> type[BaseFeature]:
+    def _feature_function[RETURN_TYPE: FeatureResult](
+        func: Callable[[Model], RETURN_TYPE | BaseModel | object],
+    ) -> type[BaseFeature[FeatureResult]]:
         class_name = func.__name__
 
         DecoratorUtilities.validate_signature(
@@ -106,10 +125,11 @@ def feature[T: BaseFeature](
         )
 
         @functools.wraps(func)
-        def run(self: BaseFeature, model: Model) -> ArbitraryDataDomain:
+        def run(self: BaseFeature[RETURN_TYPE], model: Model) -> RETURN_TYPE:
+            _ = self
             result = func(model)
-            if not isinstance(result, BaseModel):
-                return ArbitraryDataDomain.model_construct(result=result)  # type: ignore[call-arg]
+            if not isinstance(result, FeatureResult):
+                return FeatureResult.model_construct(result=result)  # type: ignore[call-arg, return-value]
             return result  # type: ignore[return-value]
 
         # Create the dynamic class
@@ -126,7 +146,9 @@ def feature[T: BaseFeature](
         pid = feature_id or f"{func.__module__}.{class_name}"
         return _feature_class(dynamic_class, pid)
 
-    def _do_register(obj: type[T] | Callable[[BaseFeature, Model], Any]) -> type[T]:
+    def _do_register(
+        obj: type[T] | Callable[[Model], FeatureResult | BaseModel | object],
+    ) -> type[BaseFeature[FeatureResult]] | type[T]:
         if isinstance(obj, type):
             return _feature_class(obj)
         return _feature_function(obj)

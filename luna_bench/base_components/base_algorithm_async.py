@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 from pydantic import BaseModel
 
 from luna_bench.base_components.meta_classes.registered_class_meta import RegisteredClassMeta
+from luna_bench.base_components.registerable_component import RegisterableComponent
 
 if TYPE_CHECKING:
     from luna_model import Model, Solution
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
 T_co = TypeVar("T_co", bound=BaseModel, covariant=True)
 
 
-class BaseAlgorithmAsync[T_co](ABC, BaseModel, metaclass=RegisteredClassMeta):
+class BaseAlgorithmAsync[T_co](ABC, RegisterableComponent, metaclass=RegisteredClassMeta):
     """
     Base class for all asynchronous algorithms.
 
@@ -23,8 +24,6 @@ class BaseAlgorithmAsync[T_co](ABC, BaseModel, metaclass=RegisteredClassMeta):
     cloud will execute that algorithm while luna bench can do other stuff. At a later point in time, luna bench will
     fetch the result from the luna cloud.
     """
-
-    registered_id: ClassVar[str]
 
     @property
     @abstractmethod

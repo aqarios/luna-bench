@@ -1,6 +1,6 @@
 import functools
 from collections.abc import Callable
-from typing import overload
+from typing import Any, overload
 
 from dependency_injector.wiring import Provide, inject
 from luna_model import Solution
@@ -15,31 +15,40 @@ from .decorator_utilities import DecoratorUtilities
 
 
 @overload
-def metric[T: BaseMetric](
+def metric[T: BaseMetric[Any]](
     _cls: type[T],
     *,
     metric_id: str | None = None,
-    required_features: type[BaseFeature] | list[type[BaseFeature]] | tuple[type[BaseFeature], ...] | None = None,
-    metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
+    required_features: type[BaseFeature[Any]]
+    | list[type[BaseFeature[Any]]]
+    | tuple[type[BaseFeature[Any]], ...]
+    | None = None,
+    metric_registry: Registry[BaseMetric[Any]] = Provide[RegistryContainer.metric_registry],
 ) -> type[T]: ...
 
 
 @overload
-def metric[T: BaseMetric](
+def metric[T: BaseMetric[Any]](
     _cls: None = None,
     *,
     metric_id: str | None = None,
-    required_features: type[BaseFeature] | list[type[BaseFeature]] | tuple[type[BaseFeature], ...] | None = None,
-    metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
+    required_features: type[BaseFeature[Any]]
+    | list[type[BaseFeature[Any]]]
+    | tuple[type[BaseFeature[Any]], ...]
+    | None = None,
+    metric_registry: Registry[BaseMetric[Any]] = Provide[RegistryContainer.metric_registry],
 ) -> Callable[[type[T]], type[T]]: ...
 
 
 @inject
-def metric[T: BaseMetric](
+def metric[T: BaseMetric[Any]](
     _cls: type[T] | None = None,
     *,
     metric_id: str | None = None,
-    required_features: type[BaseFeature] | list[type[BaseFeature]] | tuple[type[BaseFeature], ...] | None = None,
+    required_features: type[BaseFeature[Any]]
+    | list[type[BaseFeature[Any]]]
+    | tuple[type[BaseFeature[Any]], ...]
+    | None = None,
     metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
 ) -> Callable[[type[T]], type[T]] | type[T]:
     """
@@ -98,14 +107,16 @@ def metric[T: BaseMetric](
 
     """
 
-    def _metric_class[T: BaseMetric](cls: type[T], pid: str | None = None) -> type[T]:
+    def _metric_class(cls: type[T], pid: str | None = None) -> type[T]:
         if pid is None:
             pid = metric_id or f"{cls.__module__}.{cls.__qualname__}"
         cls.required_features = DecoratorUtilities.convert_to_list(required_features)
         DecoratorUtilities.register_class(cls, base=BaseMetric, registered_class_id=pid, registry=metric_registry)
         return cls
 
-    def _metric_function(func: Callable[[Solution, FeatureResults], MetricResult]) -> type[BaseMetric]:
+    def _metric_function[RETURN_TYPE: MetricResult](
+        func: Callable[[Solution, FeatureResults], RETURN_TYPE],
+    ) -> type[T]:
         # Validate the function signature
         DecoratorUtilities.validate_signature(
             func,
@@ -118,7 +129,7 @@ def metric[T: BaseMetric](
         class_name = func.__name__
 
         @functools.wraps(func)
-        def run(self: BaseMetric, solution: Solution, feature_results: FeatureResults) -> MetricResult:
+        def run(self: BaseMetric[RETURN_TYPE], solution: Solution, feature_results: FeatureResults) -> RETURN_TYPE:
             _ = self
             result = func(solution, feature_results)
             if not isinstance(result, MetricResult):
@@ -137,10 +148,9 @@ def metric[T: BaseMetric](
         )
 
         pid = metric_id or f"{func.__module__}.{class_name}"
-
         return _metric_class(dynamic_class, pid=pid)
 
-    def _do_register(obj: type[T] | Callable[[Solution, FeatureResults], MetricResult]) -> type[T]:
+    def _do_register(obj: type[T] | Callable[[Solution, FeatureResults], Any]) -> type[T]:
         if isinstance(obj, type):
             return _metric_class(obj)
         return _metric_function(obj)

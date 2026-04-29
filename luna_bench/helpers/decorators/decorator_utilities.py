@@ -5,6 +5,9 @@ from typing import Any, get_type_hints
 from luna_quantum import Logging
 
 from luna_bench._internal.registries.protocols import Registry
+from luna_bench.base_components.registerable_component import RegisterableComponent
+from luna_bench.errors.decorators.invalid_parameter_type_error import InvalidParameterTypeError
+from luna_bench.errors.decorators.invalid_signature_error import InvalidSignatureError
 from luna_bench.errors.incompatible_class_error import IncompatibleClassError
 
 
@@ -15,7 +18,7 @@ class DecoratorUtilities:
 
     @staticmethod
     def register_class(
-        register_class: type[Any],
+        register_class: type[RegisterableComponent],
         *,
         base: type | tuple[type, ...],
         registered_class_id: str | None,
@@ -44,6 +47,7 @@ class DecoratorUtilities:
         pid = registered_class_id or f"{register_class.__module__}.{register_class.__qualname__}"
 
         register_class.registered_id = pid  # We define it here internally.
+        # Adding type hint for the registered_id attribute
         registry.register(pid, register_class)
 
     @staticmethod
@@ -67,7 +71,7 @@ class DecoratorUtilities:
         return [value]
 
     @staticmethod
-    def validate_signature(func: Callable, parameter_map: dict[str, Any]) -> None:
+    def validate_signature(func: Callable[..., Any], parameter_map: dict[str, Any]) -> None:
         """Validate that a function has the required parameters and type hints.
 
         Parameters
@@ -80,9 +84,9 @@ class DecoratorUtilities:
 
         Raises
         ------
-        ValueError
+        InvalidSignatureError
             If required parameters are missing or have incorrect names.
-        TypeError
+        InvalidParameterTypeError
             If parameter types do not match expected types when type hints are available.
         """
         sig = inspect.signature(func)
@@ -90,7 +94,7 @@ class DecoratorUtilities:
         expected_params = list(parameter_map.keys())
 
         if func_params != expected_params:
-            raise ValueError(f"Function '{func.__name__}' must have parameters {expected_params}, got {func_params}")
+            raise InvalidSignatureError(func.__name__, expected_params, func_params)
 
         type_namespace = {t.__name__: t for t in parameter_map.values()}
         try:
@@ -102,7 +106,4 @@ class DecoratorUtilities:
         for param_name, expected_type in parameter_map.items():
             hint_type = type_hints.get(param_name)
             if hint_type is not None and hint_type != expected_type:
-                raise TypeError(
-                    f"Parameter '{param_name}' in '{func.__name__}' must be of type "
-                    f"{expected_type.__name__}, got {hint_type.__name__}"
-                )
+                raise InvalidParameterTypeError(param_name, func.__name__, expected_type.__name__, hint_type.__name__)

@@ -16,10 +16,10 @@ class FakeMetricResult(MetricResult):
 
 
 @metric
-class FakeMetric(BaseMetric):
+class FakeMetric(BaseMetric[FakeMetricResult]):
     """Fake metric class."""
 
-    def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:  # noqa: ARG002
+    def run(self, solution: Solution, feature_results: FeatureResults) -> FakeMetricResult:  # noqa: ARG002
         """Fake metric which will return a random number."""
         sleep(0.1)
         return FakeMetricResult(

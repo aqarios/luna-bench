@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, ClassVar
 import pytest
 from luna_model import Model
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench.base_components.base_feature import BaseFeature
 from luna_bench.base_components.data_types.feature_results import FeatureResults
 from luna_bench.errors.components.features.feature_result_unknown_name_error import FeatureResulUnknownNameError
@@ -17,15 +16,15 @@ if TYPE_CHECKING:
 class MockFeature(BaseFeature):
     registered_id: ClassVar[str] = "mock_feature"
 
-    def run(self, _model: Model) -> ArbitraryDataDomain:
-        return ArbitraryDataDomain()
+    def run(self, _model: Model) -> FeatureResult:
+        return FeatureResult()
 
 
 class MockFeature2(BaseFeature):
     registered_id: ClassVar[str] = "mock_feature_2"
 
-    def run(self, _model: Model) -> ArbitraryDataDomain:
-        return ArbitraryDataDomain()
+    def run(self, _model: Model) -> FeatureResult:
+        return FeatureResult()
 
 
 class TestFeatureResults:

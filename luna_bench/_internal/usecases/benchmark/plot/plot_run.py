@@ -9,7 +9,10 @@ from luna_bench._internal.usecases.benchmark.protocols import PlotsRunUc
 from luna_bench.base_components.data_types.benchmark_results import BenchmarkResults
 from luna_bench.entities import PlotEntity
 from luna_bench.entities.benchmark_entity import BenchmarkEntity
+from luna_bench.errors.run_errors.plots_errors.plot_exectuion_error import PlotExecutionError
 from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
+from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
+from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
 from luna_bench.errors.run_errors.run_plot_missing_error import RunPlotMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -50,11 +53,50 @@ class PlotsRunUcImpl(PlotsRunUc):
     ) -> None:
         self._logger = Logging.get_logger(__name__)
 
+    def _run_plot(
+        self, plot_entity: PlotEntity, benchmark: BenchmarkEntity
+    ) -> Result[None, RunFeatureMissingError | RunMetricMissingError | PlotExecutionError]:
+        features: dict[ModelName, FeatureResults] = {}
+        metrics: dict[ModelName, dict[AlgorithmName, MetricResults]] = {}
+        if benchmark.modelset is None:
+            self._logger.warning(f"Modelset is missing for benchmark '{benchmark.name}'")
+            return Success(None)
+
+        for m in benchmark.modelset.models:
+            if plot_entity.plot.required_features:
+                f = FeatureResultBuilder(benchmark).results(m.name, plot_entity.plot.required_features)
+                if not is_successful(f):
+                    return Failure(f.failure())
+                features[m.name] = f.unwrap()
+
+            if plot_entity.plot.required_metrics:
+                metrics[m.name] = {}
+                for a in benchmark.algorithms:
+                    me = MetricResultBuilder(benchmark).results(m.name, a.name, plot_entity.plot.required_metrics)
+                    if not is_successful(me):
+                        return Failure(me.failure())
+
+                    metrics[m.name][a.name] = me.unwrap()
+
+        benchmark_result: BenchmarkResults = BenchmarkResults(
+            features=features,
+            metrics=metrics,
+        )
+        try:
+            plot_entity.plot.run(benchmark_result)
+        except Exception as e:
+            self._logger.warning(f"Error running plot {plot_entity.name}: {e}")
+            return Failure(PlotExecutionError(plot_entity.name, benchmark.name, e))
+        return Success(None)
+
     def __call__(
         self,
         benchmark: BenchmarkEntity,
         plot: PlotEntity | None = None,
-    ) -> Result[None, PlotRunError | UnknownLunaBenchError]:
+    ) -> Result[
+        None,
+        RunFeatureMissingError | RunPlotMissingError | PlotRunError | UnknownLunaBenchError | RunMetricMissingError,
+    ]:
         """
         Execute all plots defined in the benchmark.
 
@@ -97,32 +139,8 @@ class PlotsRunUcImpl(PlotsRunUc):
             plots = benchmark.plots
 
         for p in plots:
-            features: dict[ModelName, FeatureResults] = {}
-            metrics: dict[ModelName, dict[AlgorithmName, MetricResults]] = {}
-
-            for m in benchmark.modelset.models:
-                if p.plot.required_features:
-                    f = FeatureResultBuilder(benchmark).results(m.name, p.plot.required_features)
-                    if not is_successful(f):
-                        return Failure(f.failure())
-                    features[m.name] = f.unwrap()
-
-                if p.plot.required_metrics:
-                    metrics[m.name] = {}
-                    for a in benchmark.algorithms:
-                        me = MetricResultBuilder(benchmark).results(m.name, a.name, p.plot.required_metrics)
-                        if not is_successful(me):
-                            return Failure(me.failure())
-
-                        metrics[m.name][a.name] = me.unwrap()
-
-            benchmark_result: BenchmarkResults = BenchmarkResults(
-                features=features,
-                metrics=metrics,
-            )
-            try:
-                p.plot.run(benchmark_result)
-            except Exception as e:
-                self._logger.warning(f"Error running plot {p.name}: {e}")
+            r = self._run_plot(p, benchmark)
+            if not is_successful(r):
+                self._logger.warning(f"Error running plot {p.name}: {r.failure()}")
 
         return Success(None)

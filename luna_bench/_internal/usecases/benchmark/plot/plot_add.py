@@ -1,5 +1,3 @@
-from typing import Any
-
 from dependency_injector.wiring import Provide, inject
 from pydantic import ValidationError
 from returns.pipeline import is_successful
@@ -65,7 +63,7 @@ class PlotAddUcImpl(PlotAddUc):
             if not is_successful(result):
                 return Failure(result.failure())
 
-            config: Result[BasePlot[Any], UnknownIdError | ValidationError] = self._registry.from_domain_to_user_model(
+            config: Result[BasePlot, UnknownIdError | ValidationError] = self._registry.from_domain_to_user_model(
                 result.unwrap().config_data
             )
 

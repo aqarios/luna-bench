@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pytest
 from returns.pipeline import is_successful
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from tests.unit.fixtures.mock_database import SetupBenchmark
 
 
-def _empty_plot(name: str, plot: BasePlot[Any]) -> PlotEntity:
+def _empty_plot(name: str, plot: BasePlot) -> PlotEntity:
     return PlotEntity(
         name=name,
         status=JobStatus.CREATED,
@@ -46,7 +46,7 @@ class TestPlot:
         usecase: UsecaseContainer,
         benchmark_name: str,
         plot_name: str,
-        plot: BasePlot[Any],
+        plot: BasePlot,
         exp: Result[
             PlotEntity,
             DataNotUniqueError
@@ -115,7 +115,7 @@ class TestPlot:
         self,
         setup_benchmark: SetupBenchmark,
         usecase: UsecaseContainer,
-        plot: BasePlot[Any],
+        plot: BasePlot,
         exp: Result[
             PlotEntity,
             DataNotUniqueError

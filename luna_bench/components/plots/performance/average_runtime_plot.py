@@ -40,5 +40,6 @@ class AverageRuntimePlot(BarPlot):
             x="algorithm",
             y="runtime_seconds",
             title="Average Runtime per Solver",
+            xlabel="Algorithm",
             ylabel="Runtime (s)",
         )

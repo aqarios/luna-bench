@@ -9,17 +9,16 @@ from luna_bench.helpers.decorators import metric
 if TYPE_CHECKING:
     from luna_model import Model, Solution
 
-    from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
     from luna_bench.base_components.data_types.feature_results import FeatureResults
-    from luna_bench.types import MetricResult
+    from luna_bench.types import FeatureResult, MetricResult
 
 
 class MockFeature(BaseFeature):
-    def run(self, model: "Model") -> "ArbitraryDataDomain":
+    def run(self, model: "Model") -> "FeatureResult":
         raise NotImplementedError
 
 
-class MockMetric(BaseMetric):
+class MockMetric(BaseMetric["MetricResult"]):
     def run(
         self,
         solution: "Solution",
