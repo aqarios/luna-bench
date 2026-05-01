@@ -566,7 +566,7 @@ requires-dist = [
     { name = "pip-licenses", specifier = ">=5.5.1" },
     { name = "pydantic-settings", specifier = ">=2.11.0" },
     { name = "pyscipopt", marker = "extra == 'opt-metrics'", specifier = ">=6.0.1" },
-    { name = "returns", extras = ["compatible-mypy"], specifier = ">=0.26.0" },
+    { name = "returns", extras = ["compatible-mypy"], specifier = ">=0.27.0" },
     { name = "rich", specifier = ">=14.1.0" },
     { name = "scipy", marker = "extra == 'qubo-features'", specifier = ">=1.17.0" },
     { name = "seaborn", marker = "extra == 'plot'", specifier = ">=0.13.0" },
