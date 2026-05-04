@@ -3,7 +3,7 @@ from typing import cast
 import pytest
 from luna_model import Model, Solution
 from pydantic import BaseModel
-from returns.result import Result
+from returns.result import Result, Success
 
 from luna_bench._internal.registries import Registry
 from luna_bench._internal.registries.arbitrary_data_registry import ArbitraryDataRegistry
@@ -30,7 +30,6 @@ class TestAlgorithmSyncDecorator:
         self,
         algorithm_id: str | None,
     ) -> None:
-
         @algorithm(algorithm_id=algorithm_id)
         class TestAlgorithm(BaseAlgorithmSync):
             def run(self, model: Model) -> Solution:
@@ -41,7 +40,6 @@ class TestAlgorithmSyncDecorator:
         assert issubclass(TestAlgorithm, BaseAlgorithmSync)
 
     def test_algorithm_preserves_function_metadata(self) -> None:
-
         @algorithm
         def documented_algorithm(model: Model) -> Solution:
             """Run, this is the algorithm documentation."""
@@ -53,7 +51,6 @@ class TestAlgorithmSyncDecorator:
         assert documented_algorithm.__name__ == "documented_algorithm"
 
     def test_algorithm_sync_function_registration(self) -> None:
-
         @algorithm
         def sync_func_algo(model: Model) -> Solution:
             _ = model
@@ -64,7 +61,6 @@ class TestAlgorithmSyncDecorator:
         assert issubclass(sync_func_algo, BaseAlgorithmSync)
 
     def test_algorithm_sync_function_execution(self) -> None:
-
         from luna_model import Solution
 
         @algorithm
@@ -77,8 +73,7 @@ class TestAlgorithmSyncDecorator:
         assert isinstance(result, Solution)
 
     def test_algorithm_sync_function_invalid_return_type(self) -> None:
-
-        @algorithm
+        @algorithm  # type: ignore[arg-type]
         def invalid_algo(model: Model) -> str:
             _ = model
             return "not_a_solution"
@@ -89,19 +84,15 @@ class TestAlgorithmSyncDecorator:
             algo_inst.run(cast("Model", {}))
 
     def test_algorithm_incompatible_class(self) -> None:
-
         with pytest.raises(IncompatibleClassError):
 
             @algorithm
-            class NotAnAlgorithm:
+            class NotAnAlgorithm:  # type: ignore[type-var]
                 pass
-
-        NotAnAlgorithm()
 
 
 class TestAlgorithmAsyncDecorator:
     def test_algorithm_async_class_registration(self) -> None:
-
         class AsyncState(BaseModel):
             job_id: str
 
@@ -117,7 +108,7 @@ class TestAlgorithmAsyncDecorator:
 
             def fetch_result(self, model: Model, retrieval_data: AsyncState) -> Result[Solution, str]:
                 _ = model
-                return cast("Solution", {"job_id": retrieval_data.job_id})
+                return Success(cast("Solution", {"job_id": retrieval_data.job_id}))
 
         assert isinstance(AsyncTestAlgorithm, type)
         assert issubclass(AsyncTestAlgorithm, BaseAlgorithmAsync)
@@ -133,7 +124,6 @@ class TestAlgorithmAsyncDecorator:
         self,
         algorithm_id: str | None,
     ) -> None:
-
         class CustomAsyncState(BaseModel):
             data: str
 
@@ -147,10 +137,10 @@ class TestAlgorithmAsyncDecorator:
                 _ = model
                 return CustomAsyncState(data="test")
 
-            def fetch_result(self, model: Model, retrieval_data: CustomAsyncState) -> Solution:
+            def fetch_result(self, model: Model, retrieval_data: CustomAsyncState) -> Result[Solution, str]:
                 _ = model
                 _ = retrieval_data
-                return cast("Solution", {})
+                return Success(cast("Solution", {}))
 
         assert isinstance(CustomAsync, type)
         assert issubclass(CustomAsync, BaseAlgorithmAsync)

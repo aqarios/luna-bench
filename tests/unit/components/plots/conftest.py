@@ -37,7 +37,7 @@ def mock_metric_entity(
 
 def mock_feature_entity(
     name: str,
-    feature: BaseFeature,
+    feature: BaseFeature[Any],
     *model_names: str,
     status: JobStatus = JobStatus.CREATED,
     result_factory: Callable[[str], FeatureResult | None] | None = None,

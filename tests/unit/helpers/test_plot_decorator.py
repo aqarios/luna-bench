@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
@@ -46,7 +46,6 @@ class TestPlotDecorator:
         plot_id: str | None,
         expected_in_registry: str,
     ) -> None:
-
         @plot(plot_id=plot_id, plot_registry=plot_registry)
         class TestPlot(BasePlot):
             def run(self, benchmark_results: BenchmarkResults) -> None:
@@ -57,7 +56,6 @@ class TestPlotDecorator:
         assert any(expected_in_registry in r_id for r_id in plot_registry.ids())
 
     def test_plot_function_registration(self, plot_registry: Registry[BasePlot]) -> None:
-
         @plot(plot_registry=plot_registry)
         def my_test_plot(benchmark_results: BenchmarkResults) -> None:
             _ = benchmark_results
@@ -67,7 +65,6 @@ class TestPlotDecorator:
         assert any("my_test_plot" in r_id for r_id in plot_registry.ids())
 
     def test_plot_function_execution(self) -> None:
-
         @plot
         def executable_plot(benchmark_results: BenchmarkResults) -> None:
             _ = benchmark_results
@@ -77,12 +74,12 @@ class TestPlotDecorator:
         assert result is None
 
     def test_plot_preserves_function_metadata(self) -> None:
-
         @plot
         def documented_plot(benchmark_results: BenchmarkResults) -> None:
+            """Run this."""
             _ = benchmark_results
 
-        assert documented_plot.__doc__ == "This is the plot documentation."
+        assert documented_plot.__doc__ == "Run this."
         assert documented_plot.__name__ == "documented_plot"
 
     @pytest.mark.parametrize(
@@ -98,10 +95,9 @@ class TestPlotDecorator:
     def test_plot_required_features(
         self,
         plot_registry: Registry[BasePlot],
-        required_features: Any,
+        required_features: None | type[BaseFeature] | list[type[BaseFeature]],
         expected_features: list[type[BaseFeature]],
     ) -> None:
-
         @plot(required_features=required_features, plot_registry=plot_registry)
         class FeaturedPlot(BasePlot):
             def run(self, benchmark_results: BenchmarkResults) -> None:
@@ -122,10 +118,9 @@ class TestPlotDecorator:
     def test_plot_required_metrics(
         self,
         plot_registry: Registry[BasePlot],
-        required_metrics: Any,
+        required_metrics: None | type[BaseMetric] | list[type[BaseMetric]],
         expected_metrics: list[type[BaseMetric]],
     ) -> None:
-
         @plot(required_metrics=required_metrics, plot_registry=plot_registry)
         class MetricPlot(BasePlot):
             def run(self, benchmark_results: BenchmarkResults) -> None:
@@ -148,7 +143,6 @@ class TestPlotDecorator:
         required_features: list[type[BaseFeature]],
         required_metrics: list[type[BaseMetric]],
     ) -> None:
-
         @plot(
             required_features=required_features,
             required_metrics=required_metrics,

@@ -23,21 +23,33 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
 
 
 @overload
+def algorithm(
+    _cls: Callable[[Model], Solution],
+    *,
+    algorithm_id: str | None = None,
+) -> type[BaseAlgorithmSync]: ...
+
+
+@overload
 def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
     _cls: None = None,
     *,
     algorithm_id: str | None = None,
-) -> Callable[[type[T]], type[T]]: ...
+) -> Callable[[type[T] | Callable[[Model], Solution]], type[T] | type[BaseAlgorithmSync]]: ...
 
 
 @inject
 def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
-    _cls: type[T] | None = None,
+    _cls: type[T] | Callable[[Model], Solution] | None = None,
     *,
     algorithm_id: str | None = None,
     algorithm_sync_registry: Registry[BaseAlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
     algorithm_async_registry: Registry[BaseAlgorithmAsync[Any]] = Provide[RegistryContainer.algorithm_async_registry],
-) -> Callable[[type[T]], type[T]] | type[T]:
+) -> (
+    Callable[[type[T] | Callable[[Model], Solution]], type[T] | type[BaseAlgorithmSync]]
+    | type[T]
+    | type[BaseAlgorithmSync]
+):
     """
     Register a class or function as an algorithm.
 
@@ -111,7 +123,7 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
 
     """
 
-    def _do_register_class(cls: type[T]) -> type[T]:
+    def _do_register_class[U: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](cls: type[U]) -> type[U]:
         pid = algorithm_id or f"{cls.__module__}.{cls.__qualname__}"
         if issubclass(cls, BaseAlgorithmAsync):
             DecoratorUtilities.register_class(
@@ -125,7 +137,7 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
             raise IncompatibleClassError((BaseAlgorithmAsync, BaseAlgorithmSync))
         return cls
 
-    def _algorithm_function(func: Callable[[Model], Solution]) -> type[T]:
+    def _algorithm_function(func: Callable[[Model], Solution]) -> type[BaseAlgorithmSync]:
         # Validate the function signature
         DecoratorUtilities.validate_signature(
             func,
@@ -157,7 +169,9 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
 
         return _do_register_class(dynamic_class)
 
-    def _do_register(obj: type[T] | Callable[[Model], Solution]) -> type[T]:
+    def _do_register(
+        obj: type[T] | Callable[[Model], Solution],
+    ) -> type[T] | type[BaseAlgorithmSync]:
         if isinstance(obj, type):
             return _do_register_class(obj)
         return _algorithm_function(obj)

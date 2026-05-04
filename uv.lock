@@ -36,11 +36,11 @@ wheels = [
 
 [[package]]
 name = "cachetools"
-version = "7.0.6"
+version = "7.1.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/76/7b/1755ed2c6bfabd1d98b37ae73152f8dcf94aa40fee119d163c19ed484704/cachetools-7.0.6.tar.gz", hash = "sha256:e5d524d36d65703a87243a26ff08ad84f73352adbeafb1cde81e207b456aaf24", size = 37526, upload-time = "2026-04-20T19:02:23.289Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/e2/85f227594656000ff4d8adadae91a21f536d4a84c6c716a86bd6685874be/cachetools-7.1.1.tar.gz", hash = "sha256:27bdf856d68fd3c71c26c01b5edc312124ed427524d1ddb31aa2b7746fe20d4b", size = 40202, upload-time = "2026-05-03T20:00:29.391Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fe/c4/cf76242a5da1410917107ff14551764aa405a5fd10cd10cf9a5ca8fa77f4/cachetools-7.0.6-py3-none-any.whl", hash = "sha256:4e94956cfdd3086f12042cdd29318f5ced3893014f7d0d059bf3ead3f85b7f8b", size = 13976, upload-time = "2026-04-20T19:02:21.187Z" },
+    { url = "https://files.pythonhosted.org/packages/bf/0f/f897abe4ea0a8c408ae65c8c83bffab4936ad65d6032d4fb4cd35bbdc3ee/cachetools-7.1.1-py3-none-any.whl", hash = "sha256:0335cd7a0952d2b22327441fb0628139e234c565559eeb91a8a4ac7551c5353d", size = 16775, upload-time = "2026-05-03T20:00:27.857Z" },
 ]
 
 [[package]]
@@ -1471,7 +1471,7 @@ wheels = [
 
 [[package]]
 name = "tox"
-version = "4.53.0"
+version = "4.53.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cachetools" },
@@ -1485,9 +1485,9 @@ dependencies = [
     { name = "tomli-w" },
     { name = "virtualenv" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/04/01/d87a00063fa670ce4c48a9706b615a95ddf2c9ef5558d43af6071f166fd4/tox-4.53.0.tar.gz", hash = "sha256:62c780e42f87d34ee60f2ea20342156253794fdcbd6885fd797d98ee05009f22", size = 274048, upload-time = "2026-04-14T13:44:13.782Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a0/d7/a8e0f889eb6872740e2f013a93a8f9c6c23c3f02fe0911bbd91673615636/tox-4.53.1.tar.gz", hash = "sha256:7be9805ed4a34242510c7acc9a7e3a01a35942e08f31f8bd69067c3a37130afc", size = 276809, upload-time = "2026-05-02T08:34:41.655Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/16/03/02e2a03f3756cfb66e7e1bac41b06953f12cec75ddb961d56695d4d43dc4/tox-4.53.0-py3-none-any.whl", hash = "sha256:cc4e716d18c4889aa179d785175c438fa60c35deef20ce689ec288d8fb656096", size = 212164, upload-time = "2026-04-14T13:44:11.997Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/a7/5719188f4ace9445b0fb139290e2abce14cc19e6a5bd616e72dad085ebe8/tox-4.53.1-py3-none-any.whl", hash = "sha256:4a9948607e976a337c22d64a1b4fafd486125e82f00ab6ce32fa6cacc23f48b1", size = 213827, upload-time = "2026-05-02T08:34:39.786Z" },
 ]
 
 [[package]]
@@ -1504,11 +1504,11 @@ wheels = [
 
 [[package]]
 name = "types-peewee"
-version = "4.0.1.20260426"
+version = "4.0.1.20260503"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/15/19/e6fcd504483b86f44dbacb40aaecad4ea6ce0d21b98e2448d4754fc3acd2/types_peewee-4.0.1.20260426.tar.gz", hash = "sha256:2b3076f78f5cc4a06a950b2f83917d316d977700c86e0c4392914c60e5c0ed3b", size = 22209, upload-time = "2026-04-26T04:49:38.149Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/76/18/9469362833f790f61d8a00c699db4e013edde7b784792e405d62cd603b70/types_peewee-4.0.1.20260503.tar.gz", hash = "sha256:c0107ed6d4db9b05ec913f572e5706e67ef0adabbc7c2f82ac9fe140e39b161b", size = 22255, upload-time = "2026-05-03T05:20:01.483Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/63/11/27ebe54f97fbb325151322ad9bbc939499c28992c7afb320d5bc61868081/types_peewee-4.0.1.20260426-py3-none-any.whl", hash = "sha256:9acff9b1dc7f6fdccccf5586415dcc268e063172a291b7ab80cd0f21515806f5", size = 20119, upload-time = "2026-04-26T04:49:37.252Z" },
+    { url = "https://files.pythonhosted.org/packages/60/4e/a37ce7e5e34d0725b2611154b7bdef1c7788400bb38a951736e2907410f5/types_peewee-4.0.1.20260503-py3-none-any.whl", hash = "sha256:c271d97a98fa8eeeda61c693e964ec3249d2137c7390da2aa5e88a43408c597c", size = 20126, upload-time = "2026-05-03T05:20:00.357Z" },
 ]
 
 [[package]]
@@ -1572,9 +1572,9 @@ wheels = [
 
 [[package]]
 name = "wcwidth"
-version = "0.6.0"
+version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/35/a2/8e3becb46433538a38726c948d3399905a4c7cabd0df578ede5dc51f0ec2/wcwidth-0.6.0.tar.gz", hash = "sha256:cdc4e4262d6ef9a1a57e018384cbeb1208d8abbc64176027e2c2455c81313159", size = 159684, upload-time = "2026-02-06T19:19:40.919Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2c/ee/afaf0f85a9a18fe47a67f1e4422ed6cf1fe642f0ae0a2f81166231303c52/wcwidth-0.7.0.tar.gz", hash = "sha256:90e3a7ea092341c44b99562e75d09e4d5160fe7a3974c6fb842a101a95e7eed0", size = 182132, upload-time = "2026-05-02T16:04:12.653Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/5a/199c59e0a824a3db2b89c5d2dade7ab5f9624dbf6448dc291b46d5ec94d3/wcwidth-0.6.0-py3-none-any.whl", hash = "sha256:1a3a1e510b553315f8e146c54764f4fb6264ffad731b3d78088cdb1478ffbdad", size = 94189, upload-time = "2026-02-06T19:19:39.646Z" },
+    { url = "https://files.pythonhosted.org/packages/41/52/e465037f5375f43533d1a80b6923955201596a99142ed524d77b571a1418/wcwidth-0.7.0-py3-none-any.whl", hash = "sha256:5d69154c429a82910e241c738cd0e2976fac8a2dd47a1a805f4afed1c0f136f2", size = 110825, upload-time = "2026-05-02T16:04:11.033Z" },
 ]

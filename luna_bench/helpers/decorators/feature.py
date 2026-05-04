@@ -125,12 +125,12 @@ def feature[T: BaseFeature[Any]](
         )
 
         @functools.wraps(func)
-        def run(self: BaseFeature[RETURN_TYPE], model: Model) -> RETURN_TYPE:
+        def run(self: BaseFeature[FeatureResult], model: Model) -> FeatureResult:
             _ = self
             result = func(model)
             if not isinstance(result, FeatureResult):
-                return FeatureResult.model_construct(result=result)  # type: ignore[call-arg, return-value]
-            return result  # type: ignore[return-value]
+                return FeatureResult.model_construct(result=result)  # type: ignore[call-arg]
+            return result
 
         # Create the dynamic class
         dynamic_class = type(

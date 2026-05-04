@@ -34,19 +34,17 @@ class TestFeatureDecorator:
         feature_id: str | None,
         expected_in_registry: str,
     ) -> None:
-
         @feature(feature_id=feature_id, feature_registry=registry)
         class TestFeature(BaseFeature):
             def run(self, model: Model) -> FeatureResult:
                 _ = model
-                return FeatureResult.model_construct(result=42)
+                return FeatureResult.model_construct(result=42)  # type: ignore[call-arg]
 
         assert isinstance(TestFeature, type)
         assert issubclass(TestFeature, BaseFeature)
         assert any(expected_in_registry in r_id for r_id in registry.ids())
 
     def test_feature_function_registration(self, registry: Registry[BaseFeature]) -> None:
-
         @feature(feature_registry=registry)
         def my_test_feature(model: Model) -> int:
             _ = model
@@ -57,7 +55,6 @@ class TestFeatureDecorator:
         assert any("my_test_feature" in r_id for r_id in registry.ids())
 
     def test_feature_function_execution(self) -> None:
-
         @feature
         def another_test_feature(model: Model) -> int:
             _ = model
@@ -65,7 +62,7 @@ class TestFeatureDecorator:
 
         feature_inst = another_test_feature()
         result = feature_inst.run(cast("Model", None))
-        assert result.result == 123
+        assert result.result == 123  # type: ignore[attr-defined]
 
     def test_feature_function_with_custom_id(self, registry: Registry[BaseFeature]) -> None:
         @feature(feature_id="custom_id", feature_registry=registry)
@@ -86,21 +83,19 @@ class TestFeatureDecorator:
     )
     def test_feature_function_return_types(
         self,
-        return_value: Any,
-        expected_result: Any,
+        return_value: int | dict[str, Any] | str,
+        expected_result: int | dict[str, Any] | str,
     ) -> None:
-
         @feature
-        def typed_feature(model: Model) -> Any:
+        def typed_feature(model: Model) -> int | dict[str, Any] | str:
             _ = model
             return return_value
 
         feature_inst = typed_feature()
         result = feature_inst.run(cast("Model", None))
-        assert result.result == expected_result
+        assert result.result == expected_result  # type: ignore[attr-defined]
 
     def test_feature_preserves_function_metadata(self) -> None:
-
         @feature
         def documented_feature(model: Model) -> int:
             """Run, this is the feature documentation."""
@@ -111,12 +106,11 @@ class TestFeatureDecorator:
         assert documented_feature.__name__ == "documented_feature"
 
     def test_feature_returns_feature_result_directly(self) -> None:
-
         @feature
         def feature_returning_result(model: Model) -> FeatureResult:
             _ = model
-            return FeatureResult.model_construct(result=99)
+            return FeatureResult.model_construct(result=99)  # type: ignore[call-arg]
 
         feature_inst = feature_returning_result()
         result = feature_inst.run(cast("Model", None))
-        assert result.result == 99
+        assert result.result == 99  # type: ignore[attr-defined]

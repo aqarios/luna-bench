@@ -1,5 +1,6 @@
 import pytest
 
+from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.feature_result_domain import FeatureResultDomain
 from luna_bench._internal.mappers.feature_mapper import FeatureMapper
 from luna_bench.entities.enums.job_status_enum import JobStatus
@@ -17,14 +18,14 @@ class TestFeatureMapper:
                     model_name="model",
                     status=JobStatus.CREATED,
                     error=None,
-                    result=FeatureResult.model_construct(something="xD"),  # type: ignore[call-arg] # Fake data
+                    result=ArbitraryDataDomain.model_construct(something="xD"),  # type: ignore[call-arg]
                 ),
                 FeatureResultEntity.model_construct(
                     processing_time_ms=1,
                     model_name="model",
                     status=JobStatus.CREATED,
                     error=None,
-                    result=FeatureResult.model_construct(something="xD"),  # type: ignore[call-arg] # Fake data
+                    result=FeatureResult.model_construct(something="xD"),  # type: ignore[call-arg]
                 ),
             ),
             (
@@ -58,7 +59,7 @@ class TestFeatureMapper:
                         model_name="model",
                         status=JobStatus.CREATED,
                         error=None,
-                        result=FeatureResult.model_construct(something="xD"),  # type: ignore[call-arg]
+                        result=ArbitraryDataDomain.model_construct(something="xD"),  # type: ignore[call-arg]
                     )
                 },
                 {

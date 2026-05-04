@@ -9,6 +9,7 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models import RegisteredDataDomain
+from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.feature_result_domain import FeatureResultDomain
 from luna_bench._internal.domain_models.model_metadata_domain import ModelMetadataDomain
 from luna_bench._internal.mappers import FeatureMapper
@@ -81,7 +82,7 @@ class FeatureRunUcImpl(FeatureRunUc):
         result_domain = FeatureResultDomain.model_construct(
             processing_time_ms=delta_time,
             model_name=model_metadata.name,
-            result=user_result,
+            result=ArbitraryDataDomain.model_construct(**user_result.model_dump()) if user_result else None,
             status=status,
             error=exception,
         )

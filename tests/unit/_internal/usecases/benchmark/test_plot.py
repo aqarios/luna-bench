@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench.base_components import BasePlot
-from luna_bench.entities import PlotEntity
+from luna_bench.entities import BenchmarkEntity, PlotEntity
 from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
@@ -127,9 +127,9 @@ class TestPlot:
         ],
     ) -> None:
 
-        setup_benchmark.benchmark.plots = [_empty_plot("test", plot)]
+        cast("Any", setup_benchmark.benchmark).plots = [_empty_plot("test", plot)]
 
-        result = usecase.benchmark_run_plots_uc()(setup_benchmark.benchmark)
+        result = usecase.benchmark_run_plots_uc()(cast("BenchmarkEntity", setup_benchmark.benchmark))
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
