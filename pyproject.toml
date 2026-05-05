@@ -29,7 +29,7 @@ dependencies = [
     "peewee>=4.0.0",
     "pip-licenses>=5.5.1",
     "pydantic-settings>=2.11.0",
-    "returns[compatible-mypy]>=0.26.0",
+    "returns[compatible-mypy]>=0.27.0",
     "rich>=14.1.0",
 ]
 

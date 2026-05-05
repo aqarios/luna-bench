@@ -566,7 +566,7 @@ requires-dist = [
     { name = "pip-licenses", specifier = ">=5.5.1" },
     { name = "pydantic-settings", specifier = ">=2.11.0" },
     { name = "pyscipopt", marker = "extra == 'opt-metrics'", specifier = ">=6.0.1" },
-    { name = "returns", extras = ["compatible-mypy"], specifier = ">=0.26.0" },
+    { name = "returns", extras = ["compatible-mypy"], specifier = ">=0.27.0" },
     { name = "rich", specifier = ">=14.1.0" },
     { name = "scipy", marker = "extra == 'qubo-features'", specifier = ">=1.17.0" },
     { name = "seaborn", marker = "extra == 'plot'", specifier = ">=0.13.0" },
@@ -632,7 +632,7 @@ scip = [
 
 [[package]]
 name = "luna-quantum"
-version = "1.2.0"
+version = "1.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -644,7 +644,7 @@ dependencies = [
     { name = "rich" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e8/e6/ac67d7ea0babcecf93cc4b46316e263dd24cd4ae087ed2e8728e8fa4c3a7/luna_quantum-1.2.0-py3-none-any.whl", hash = "sha256:44683178d04d7998d3ad515f2663db3af14a7bf8192d5e4263ca17b8c2f490e9", size = 350874, upload-time = "2026-03-04T13:24:46.778Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/d3/937b0c47d8eeb7a78c2f02c8d56c36a748abc4917fd30d5f441727dd3b43/luna_quantum-1.2.1-py3-none-any.whl", hash = "sha256:bd56415e9d7b97d45e3b27ef793fac83fd42686ca6399b2ff2386d1daf1f04ec", size = 351887, upload-time = "2026-05-05T08:23:03.928Z" },
 ]
 
 [[package]]
@@ -1557,7 +1557,7 @@ wheels = [
 
 [[package]]
 name = "virtualenv"
-version = "21.3.0"
+version = "21.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "distlib" },
@@ -1565,9 +1565,9 @@ dependencies = [
     { name = "platformdirs" },
     { name = "python-discovery" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3f/8b/6331f7a7fe70131c301106ec1e7cf23e2501bf7d4ca3636805801ca191bb/virtualenv-21.3.0.tar.gz", hash = "sha256:733750db978ec95c2d8eb4feadaa57091002bce404cb39ba69899cf7bd28944e", size = 7614069, upload-time = "2026-04-27T17:05:58.927Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ec/0d/915c02c94d207b85580eb09bffab54438a709e7288524094fe781da526c2/virtualenv-21.3.1.tar.gz", hash = "sha256:c2305bc1fddeec40699b8370d13f8d431b0701f00ce895061ce493aeded4426b", size = 7613791, upload-time = "2026-05-05T01:34:31.402Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4b/eb/03bfb1299d4c4510329e470f13f9a4ce793df7fcb5a2fd3510f911066f61/virtualenv-21.3.0-py3-none-any.whl", hash = "sha256:4d28ee41f6d9ec8f1f00cd472b9ffbcedda1b3d3b9a575b5c94a2d004fd51bd7", size = 7594690, upload-time = "2026-04-27T17:05:55.468Z" },
+    { url = "https://files.pythonhosted.org/packages/b1/4f/f71e641e504111a5a74e3a20bc52d01bd86788b22699dd3fee1c63253cf6/virtualenv-21.3.1-py3-none-any.whl", hash = "sha256:d1a71cf58f2f9228fff23a1f6ec15d39785c6b32e03658d104974247145edd35", size = 7594539, upload-time = "2026-05-05T01:34:28.98Z" },
 ]
 
 [[package]]

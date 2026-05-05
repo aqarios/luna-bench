@@ -1,6 +1,7 @@
 """Approximation Ratio metric for evaluating solution quality against optimal solutions."""
 
 from luna_model import Sense, Solution
+from luna_model.solution import ValueSource
 from pydantic import Field
 
 from luna_bench.base_components import BaseMetric
@@ -61,6 +62,7 @@ class ApproximationRatio(BaseMetric[ApproximationRatioResult]):
     """
 
     abt_diff: float = 1e-3
+    value_source: ValueSource = ValueSource.OBJ
 
     def run(self, solution: Solution, feature_results: FeatureResults) -> ApproximationRatioResult:
         """Calculate the approximation ratio for the given solution.
@@ -92,7 +94,7 @@ class ApproximationRatio(BaseMetric[ApproximationRatioResult]):
         if len(solution.samples) == 0:
             return ApproximationRatioResult(approximation_ratio=float("inf"))
 
-        exp_val = solution.expectation_value()
+        exp_val = solution.expectation_value(value_toggle=self.value_source)
 
         # Calculate ratio based on optimization sense
         nom, denom = (exp_val, opt_sol.best_sol) if solution.sense == Sense.MIN else (opt_sol.best_sol, exp_val)
