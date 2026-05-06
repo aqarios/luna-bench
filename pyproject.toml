@@ -44,6 +44,7 @@ dev = [
     "pyscipopt>=6.0.1",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
+    "pytest-env >=1.6.0",
     "ruff>=0.15.0",
     "scipy-stubs>=1.17.0.2",
     "tox>=4.30.3",
