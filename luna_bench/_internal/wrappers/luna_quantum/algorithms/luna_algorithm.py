@@ -41,9 +41,10 @@ class LunaAlgorithm(BaseAlgorithmAsync[LunaData], LunaQuantumAlgorithm[IBackend]
         data: dict[str, Any] = handler(self)
 
         if self.backend is not None:
-            backend_data = dict(
-                self.backend
-            )  # One has to avoid `model_dump` of pydantic here. Its to bypass custom serializer like in CudaqCpu
+            # Pydantic serializers may modify the output of the `self.backend.model_dump()` method.
+            # Therfore, we use dict() to bypass any custom serializers.
+            backend_data = dict(self.backend)
+
             backend_class_name = self.backend.__class__.__name__
 
             data["backend"] = {}
