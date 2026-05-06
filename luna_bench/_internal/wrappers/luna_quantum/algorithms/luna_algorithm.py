@@ -41,7 +41,9 @@ class LunaAlgorithm(BaseAlgorithmAsync[LunaData], LunaQuantumAlgorithm[IBackend]
         data: dict[str, Any] = handler(self)
 
         if self.backend is not None:
-            backend_data = self.backend.model_dump()
+            backend_data = dict(
+                self.backend
+            )  # One has to avoid `model_dump` of pydantic here. Its to bypass custom serializer like in CudaqCpu
             backend_class_name = self.backend.__class__.__name__
 
             data["backend"] = {}
@@ -56,18 +58,11 @@ class LunaAlgorithm(BaseAlgorithmAsync[LunaData], LunaQuantumAlgorithm[IBackend]
 
     def run_async(self, model: Model) -> LunaData:
         try:
-            ### WORKAROUND ####
-            from luna_quantum.algorithms import FlexibleParameterAlgorithm  # noqa: PLC0415 # import here so we know
-            # its only for the workaround
-
             algo_dict = self.model_dump()
-            algo_dict.pop("backend")
-            algo_dict["algorithm_name"] = self.algorithm_name
-            luna_algorithm = FlexibleParameterAlgorithm.model_construct(**algo_dict)
-            # solve_job: SolveJob = self.run(model) <- This is the original code removed in this workaround.
 
-            solve_job: SolveJob = luna_algorithm.run(model)
-            ### End of the workaround ###
+            backend = self.backend_validator(algo_dict.pop("backend")) if algo_dict.get("backend") else None
+
+            solve_job: SolveJob = self.run(model, backend=backend)
 
             return LunaData(luna_id=solve_job.id)
         except Exception as e:
