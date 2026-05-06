@@ -107,7 +107,7 @@ class TestLunaAlgorithm:
         ("status", "expected"),
         [
             (StatusEnum.REQUESTED, "The solve job has not completed yet."),
-            (StatusEnum.CREATED, "The solve job has not completed yet."),
+            (StatusEnum.QUEUED, "The solve job has not completed yet."),
             (StatusEnum.IN_PROGRESS, "The solve job has not completed yet."),
             (StatusEnum.DONE, "Job reported DONE but no solution was returned."),
             (StatusEnum.FAILED, "Solve job failed, but there was no error message."),

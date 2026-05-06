@@ -68,7 +68,7 @@ class DaoContainer(containers.DeclarativeContainer):
         ModelSetTable.models.get_through_model(),  # type: ignore[no-untyped-call]
     )
 
-    database = providers.Callable(setup_db_proxy, connection_string=config.DB_CONNECTION_STRING, tables=tables)
+    database = providers.Callable(setup_db_proxy, connection_string=config.LB_DB_CONNECTION_STRING, tables=tables)
 
     transaction: Provider[DaoTransaction] = providers.ThreadSafeSingleton(
         PeeweeTransaction,

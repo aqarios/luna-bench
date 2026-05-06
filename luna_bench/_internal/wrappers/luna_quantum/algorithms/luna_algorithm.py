@@ -90,7 +90,7 @@ class LunaAlgorithm(BaseAlgorithmAsync[LunaData], LunaQuantumAlgorithm[IBackend]
 
         error_message: str
         match solve_job.status:
-            case StatusEnum.REQUESTED | StatusEnum.CREATED | StatusEnum.IN_PROGRESS:
+            case StatusEnum.REQUESTED | StatusEnum.QUEUED | StatusEnum.IN_PROGRESS:
                 error_message = "The solve job has not completed yet."
             case StatusEnum.DONE:
                 error_message = "Job reported DONE but no solution was returned."
