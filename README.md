@@ -39,13 +39,6 @@ pip install luna-bench
 
 ## Quick Start
 
-> **macOS Note:** Due to a known macOS issue with multiprocessing, you need to set the start method before other imports:
->
-> ```python
-> import multiprocessing
-> multiprocessing.set_start_method("fork")
-> ```
-
 ### Define your models
 
 ```python
@@ -109,6 +102,7 @@ from luna_bench.base_components import BaseAlgorithmSync
 from luna_bench.helpers import algorithm
 from luna_model import Model, Solution
 
+
 @algorithm()
 class MyAlgorithm(BaseAlgorithmSync):
     max_iterations: int = 1000
@@ -117,6 +111,7 @@ class MyAlgorithm(BaseAlgorithmSync):
         # Your solver logic here
         ...
 ```
+
 ### Write your own feature
 
 Features extract properties from models. They run before algorithms and metrics.
@@ -127,8 +122,10 @@ from luna_bench.helpers import feature
 from luna_bench.types import FeatureResult
 from luna_model import Model
 
+
 class MyFeatureResult(FeatureResult):
     num_variables: int
+
 
 @feature
 class MyFeature(BaseFeature):
@@ -147,8 +144,10 @@ from luna_bench.helpers import metric
 from luna_bench.types import MetricResult
 from luna_model import Solution
 
+
 class MyMetricResult(MetricResult):
     score: float
+
 
 @metric()
 class MyMetric(BaseMetric):
