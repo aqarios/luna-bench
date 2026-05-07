@@ -20,7 +20,7 @@ def configured_dao() -> DaoTransaction:
     sc = DaoContainer()
 
     cnf = Config()
-    cnf.DB_CONNECTION_STRING = ":memory:"
+    cnf.LB_DB_CONNECTION_STRING = ":memory:"
 
     sc.config.from_pydantic(cnf)
     sc.reset_singletons()

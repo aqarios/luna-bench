@@ -118,6 +118,6 @@ class AlgorithmRetrieveSyncSolutionsUcImpl(AlgorithmRetrieveSyncSolutionsUc):
             else:
                 to_retrieve.append((a, r))
             if to_retrieve:
-                sleep(config.ALGORITHM_INTERNAL_BACKOFF_TIME)
+                sleep(config.LB_ALGORITHM_INTERNAL_BACKOFF_TIME)
 
         return Success(None)
