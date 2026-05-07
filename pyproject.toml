@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "luna-bench"
-version = "0.0.1a2"
+version = "0.0.1a3"
 description = "Benchmarking framework for classical, hybrid and quantum optimization algorithms"
 readme = "README.md"
 license = "Apache-2.0"
@@ -22,10 +22,9 @@ keywords = [
 ]
 dependencies = [
     "dependency-injector>=4.48.2",
-    "huey>=2.6.0",
+    "huey>=3.0.0",
     "luna-model>=0.6.0",
-    "luna-quantum>=1.2.0",
-    "matplotlib>=3.10.8",
+    "luna-quantum>=1.2.1",
     "peewee>=4.0.0",
     "pip-licenses>=5.5.1",
     "pydantic-settings>=2.11.0",
@@ -45,6 +44,7 @@ dev = [
     "pyscipopt>=6.0.1",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
+    "pytest-env >=1.6.0",
     "ruff>=0.15.0",
     "scipy-stubs>=1.17.0.2",
     "tox>=4.30.3",
