@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "luna-bench"
-version = "0.0.1a2"
+version = "0.0.1a3"
 description = "Benchmarking framework for classical, hybrid and quantum optimization algorithms"
 readme = "README.md"
 license = "Apache-2.0"
