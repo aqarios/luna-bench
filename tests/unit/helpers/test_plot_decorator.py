@@ -83,74 +83,66 @@ class TestPlotDecorator:
         assert documented_plot.__name__ == "documented_plot"
 
     @pytest.mark.parametrize(
-        ("required_features", "expected_features"),
+        ("required_components", "expected_features", "expected_metrics"),
         [
-            (None, []),
-            (MockPlotFeature, [MockPlotFeature]),
-            ([MockPlotFeature], [MockPlotFeature]),
-            ((MockPlotFeature,), [MockPlotFeature]),
+            (None, [], []),
+            (MockPlotFeature, [MockPlotFeature], []),
+            (MockPlotMetric, [], [MockPlotMetric]),
+            ([MockPlotFeature], [MockPlotFeature], []),
+            ((MockPlotMetric,), [], [MockPlotMetric]),
         ],
-        ids=["no_features", "single_feature", "list_features", "tuple_features"],
+        ids=["none", "single_feature", "single_metric", "list_feature", "tuple_metric"],
     )
-    def test_plot_required_features(
+    def test_plot_required_components(
         self,
         plot_registry: Registry[BasePlot],
-        required_features: None | type[BaseFeature] | list[type[BaseFeature]],
+        required_components: type[BaseFeature | BaseMetric]
+        | None
+        | list[type[BaseFeature | BaseMetric]]
+        | tuple[type[BaseFeature | BaseMetric], ...],
         expected_features: list[type[BaseFeature]],
-    ) -> None:
-        @plot(required_features=required_features, plot_registry=plot_registry)
-        class FeaturedPlot(BasePlot):
-            def run(self, benchmark_results: BenchmarkResults) -> None:
-                _ = benchmark_results
-
-        assert FeaturedPlot.required_features == expected_features
-
-    @pytest.mark.parametrize(
-        ("required_metrics", "expected_metrics"),
-        [
-            (None, []),
-            (MockPlotMetric, [MockPlotMetric]),
-            ([MockPlotMetric], [MockPlotMetric]),
-            ((MockPlotMetric,), [MockPlotMetric]),
-        ],
-        ids=["no_metrics", "single_metric", "list_metrics", "tuple_metrics"],
-    )
-    def test_plot_required_metrics(
-        self,
-        plot_registry: Registry[BasePlot],
-        required_metrics: None | type[BaseMetric] | list[type[BaseMetric]],
         expected_metrics: list[type[BaseMetric]],
     ) -> None:
-        @plot(required_metrics=required_metrics, plot_registry=plot_registry)
-        class MetricPlot(BasePlot):
+        @plot(required_components, plot_registry=plot_registry)
+        class TestComponentPlot(BasePlot):
             def run(self, benchmark_results: BenchmarkResults) -> None:
                 _ = benchmark_results
 
-        assert MetricPlot.required_metrics == expected_metrics
+        assert TestComponentPlot.required_features == expected_features
+        assert TestComponentPlot.required_metrics == expected_metrics
 
-    @pytest.mark.parametrize(
-        ("required_features", "required_metrics"),
-        [
-            (MockPlotFeature, MockPlotMetric),
-            ([MockPlotFeature], [MockPlotMetric]),
-            ((MockPlotFeature,), (MockPlotMetric,)),
-        ],
-        ids=["single_each", "list_each", "tuple_each"],
-    )
-    def test_plot_combined_dependencies(
+    def test_plot_required_components_mixed(
         self,
         plot_registry: Registry[BasePlot],
-        required_features: list[type[BaseFeature]],
-        required_metrics: list[type[BaseMetric]],
     ) -> None:
-        @plot(
-            required_features=required_features,
-            required_metrics=required_metrics,
-            plot_registry=plot_registry,
-        )
-        class ComplexPlot(BasePlot):
+        @plot(required_components=[MockPlotFeature, MockPlotMetric], plot_registry=plot_registry)
+        class MixedPlot(BasePlot):
             def run(self, benchmark_results: BenchmarkResults) -> None:
                 _ = benchmark_results
 
-        assert len(ComplexPlot.required_features) > 0
-        assert len(ComplexPlot.required_metrics) > 0
+        assert MixedPlot.required_features == [MockPlotFeature]
+        assert MixedPlot.required_metrics == [MockPlotMetric]
+
+    def test_plot_required_components_single(
+        self,
+        plot_registry: Registry[BasePlot],
+    ) -> None:
+        @plot(required_components=MockPlotMetric, plot_registry=plot_registry)
+        class SingleMetricPlot(BasePlot):
+            def run(self, benchmark_results: BenchmarkResults) -> None:
+                _ = benchmark_results
+
+        assert SingleMetricPlot.required_features == []
+        assert SingleMetricPlot.required_metrics == [MockPlotMetric]
+
+    def test_plot_list_as_first_positional_arg(
+        self,
+        plot_registry: Registry[BasePlot],
+    ) -> None:
+        @plot([MockPlotFeature, MockPlotMetric], plot_registry=plot_registry)
+        class ListArgPlot(BasePlot):
+            def run(self, benchmark_results: BenchmarkResults) -> None:
+                _ = benchmark_results
+
+        assert ListArgPlot.required_features == [MockPlotFeature]
+        assert ListArgPlot.required_metrics == [MockPlotMetric]

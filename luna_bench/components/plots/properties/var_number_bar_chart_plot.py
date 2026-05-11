@@ -8,7 +8,7 @@ from luna_bench.components.plots.generics.bar_plot import BarPlot
 from luna_bench.helpers.decorators import plot
 
 
-@plot(required_features=VarNumberFeature)
+@plot(VarNumberFeature)
 class VarNumberBarChartPlot(BarPlot):
     """Bar chart showing the number of variables per model.
 

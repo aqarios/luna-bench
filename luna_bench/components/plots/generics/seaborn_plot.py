@@ -15,7 +15,7 @@ class SeabornPlot(BasePlot, ABC):
 
     def setup_figure(self) -> None:
         """Create a matplotlib figure."""
-        plt.figure(width=self.width, height=self.height, dpi=self.dpi)
+        plt.figure(figsize=(self.width, self.height), dpi=self.dpi)
 
     def finalize_plot(
         self,

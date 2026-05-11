@@ -36,7 +36,7 @@ class TimeToSolutionResult(MetricResult):
     num_samples: int = Field(ge=0, description="The total number of samples in the solution.")
 
 
-@metric(required_features=OptSolFeature)
+@metric(OptSolFeature)
 class TimeToSolution(BaseMetric[TimeToSolutionResult]):
     r"""Metric that calculates the Time-to-Solution (TTS) for finding optimal solutions.
 

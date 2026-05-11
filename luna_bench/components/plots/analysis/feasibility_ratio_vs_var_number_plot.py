@@ -9,7 +9,7 @@ from luna_bench.components.plots.generics.scatter_plot import ScatterPlot
 from luna_bench.helpers.decorators import plot
 
 
-@plot(required_features=VarNumberFeature, required_metrics=FeasibilityRatio)
+@plot([VarNumberFeature, FeasibilityRatio])
 class FeasibilityRatioVsVarNumberPlot(ScatterPlot):
     """Scatter plot showing feasibility ratio vs number of variables per model/algorithm.
 
@@ -32,8 +32,8 @@ class FeasibilityRatioVsVarNumberPlot(ScatterPlot):
             {
                 "algorithm": algorithm_name,
                 "model": model_name,
-                "var_number": benchmark_results.features[model_name].first(VarNumberFeature).var_number,
-                "feasibility_ratio": metric_result.feasibility_ratio,
+                "x": benchmark_results.features[model_name].first(VarNumberFeature).var_number,
+                "y": metric_result.feasibility_ratio,
             }
             for model_name, algorithm_name, metric_result in benchmark_results.get_all_metrics_of_type(FeasibilityRatio)
         ]

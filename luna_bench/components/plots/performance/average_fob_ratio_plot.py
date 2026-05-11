@@ -8,7 +8,7 @@ from luna_bench.components.plots.generics.bar_plot import BarPlot
 from luna_bench.helpers.decorators import plot
 
 
-@plot(required_metrics=FractionOfOverallBestSolution)
+@plot(FractionOfOverallBestSolution)
 class AverageFoBRatioPlot(BarPlot):
     """Bar chart showing average fraction of overall best per algorithm.
 

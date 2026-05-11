@@ -5,6 +5,8 @@ from typing import Any, get_type_hints
 from luna_quantum import Logging
 
 from luna_bench._internal.registries.protocols import Registry
+from luna_bench.base_components.base_feature import BaseFeature
+from luna_bench.base_components.base_metric import BaseMetric
 from luna_bench.base_components.registerable_component import RegisterableComponent
 from luna_bench.errors.decorators.invalid_parameter_type_error import InvalidParameterTypeError
 from luna_bench.errors.decorators.invalid_signature_error import InvalidSignatureError
@@ -107,3 +109,37 @@ class DecoratorUtilities:
             hint_type = type_hints.get(param_name)
             if hint_type is not None and hint_type != expected_type:
                 raise InvalidParameterTypeError(param_name, func.__name__, expected_type.__name__, hint_type.__name__)
+
+    @staticmethod
+    def split_components(
+        components: type[BaseFeature[Any]] | type[BaseMetric[Any]] | list[Any] | tuple[Any, ...] | None,
+    ) -> tuple[list[type[BaseFeature[Any]]], list[type[BaseMetric[Any]]]]:
+        """Split a mixed collection of components into separate feature and metric lists.
+
+        Parameters
+        ----------
+        components : type[BaseFeature] | type[BaseMetric] | list | tuple | None
+            A single component, list, or tuple of feature/metric types, or None.
+
+        Returns
+        -------
+        tuple[list[type[BaseFeature[Any]]], list[type[BaseMetric[Any]]]]
+            A tuple of (features, metrics) lists.
+
+        Raises
+        ------
+        TypeError
+            If any item is not a ``BaseFeature`` or ``BaseMetric`` subclass.
+        """
+        items = DecoratorUtilities.convert_to_list(components)
+        features: list[type[BaseFeature[Any]]] = []
+        metrics: list[type[BaseMetric[Any]]] = []
+        for item in items:
+            if isinstance(item, type) and issubclass(item, BaseMetric):
+                metrics.append(item)
+            elif isinstance(item, type) and issubclass(item, BaseFeature):
+                features.append(item)
+            else:
+                msg = f"required_components must contain only BaseFeature or BaseMetric subclasses, got {item!r}"
+                raise TypeError(msg)
+        return features, metrics

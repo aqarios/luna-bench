@@ -7,7 +7,7 @@ from luna_bench.components.plots.generics.scatter_plot import ScatterPlot
 from luna_bench.helpers.decorators import plot
 
 
-@plot(required_features=VarNumberFeature, required_metrics=ApproximationRatio)
+@plot([VarNumberFeature, ApproximationRatio])
 class ApproximationRatioVsVarNumberPlot(ScatterPlot):
     """Scatter plot showing an approximation ratio vs. number of variables per model/algorithm.
 
@@ -30,8 +30,8 @@ class ApproximationRatioVsVarNumberPlot(ScatterPlot):
             {
                 "algorithm": algorithm_name,
                 "model": model_name,
-                "var_number": benchmark_results.features[model_name].first(VarNumberFeature).var_number,
-                "approximation_ratio": metric_result.approximation_ratio,
+                "x": benchmark_results.features[model_name].first(VarNumberFeature).var_number,
+                "y": metric_result.approximation_ratio,
             }
             for model_name, algorithm_name, metric_result in benchmark_results.get_all_metrics_of_type(
                 ApproximationRatio

@@ -30,7 +30,7 @@ class BestSolutionFoundResult(MetricResult):
     best_solution_found: float = Field(ge=1.0, description="The calculated best solution found ratio.")
 
 
-@metric(required_features=OptSolFeature)
+@metric(OptSolFeature)
 class BestSolutionFound(BaseMetric[BestSolutionFoundResult]):
     r"""Metric that calculates the Best Solution Found (BSF) ratio against the optimal.
 

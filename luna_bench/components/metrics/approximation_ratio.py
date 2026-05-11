@@ -26,7 +26,7 @@ class ApproximationRatioResult(MetricResult):
     approximation_ratio: float = Field(ge=1.0, description="The calculated approximation ratio.")
 
 
-@metric(required_features=OptSolFeature)
+@metric(OptSolFeature)
 class ApproximationRatio(BaseMetric[ApproximationRatioResult]):
     """Metric that calculates the approximation ratio of a solution against the optimal.
 

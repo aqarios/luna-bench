@@ -8,7 +8,7 @@ from luna_bench.components.plots.generics.bar_plot import BarPlot
 from luna_bench.helpers.decorators import plot
 
 
-@plot(required_metrics=Runtime)
+@plot(Runtime)
 class RuntimePerModelPlot(BarPlot):
     """Bar chart showing runtime per model grouped by algorithm.
 

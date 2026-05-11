@@ -8,7 +8,7 @@ from luna_bench.components.plots.generics.bar_plot import BarPlot
 from luna_bench.helpers.decorators import plot
 
 
-@plot(required_metrics=ApproximationRatio)
+@plot(ApproximationRatio)
 class AverageApproximationRatioPlot(BarPlot):
     """Bar chart showing average approximation ratio per algorithm.
 

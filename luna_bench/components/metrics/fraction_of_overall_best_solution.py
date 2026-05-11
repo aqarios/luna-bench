@@ -32,7 +32,7 @@ class FractionOfOverallBestSolutionResult(MetricResult):
     )
 
 
-@metric(required_features=OptSolFeature)
+@metric(OptSolFeature)
 class FractionOfOverallBestSolution(BaseMetric[FractionOfOverallBestSolutionResult]):
     r"""Metric that calculates the Fraction of Overall Best Solution (FOB).
 

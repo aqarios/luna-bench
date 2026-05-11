@@ -1,6 +1,6 @@
 import functools
 from collections.abc import Callable
-from typing import Any, overload
+from typing import Any, cast, overload
 
 from dependency_injector.wiring import Provide, inject
 
@@ -11,103 +11,172 @@ from luna_bench.base_components.data_types.benchmark_results import BenchmarkRes
 
 from .decorator_utilities import DecoratorUtilities
 
+_REQUIRED_TYPES = BaseFeature[Any] | BaseMetric[Any]
+
+
+def _resolve_components(
+    required_components: type[_REQUIRED_TYPES] | list[type[_REQUIRED_TYPES]] | tuple[type[_REQUIRED_TYPES], ...] | None,
+) -> tuple[list[type[BaseFeature[Any]]], list[type[BaseMetric[Any]]]]:
+    if required_components is not None:
+        return DecoratorUtilities.split_components(required_components)
+    return [], []
+
 
 @overload
 def plot(
-    _cls: type[BasePlot],
+    required_components: type[BasePlot],
     *,
     plot_id: str | None = None,
-    required_features: type[BaseFeature[Any]]
-    | list[type[BaseFeature[Any]]]
-    | tuple[type[BaseFeature[Any]], ...]
-    | None = None,
-    required_metrics: type[BaseMetric[Any]]
-    | list[type[BaseMetric[Any]]]
-    | tuple[type[BaseMetric[Any]], ...]
-    | None = None,
     plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
 ) -> type[BasePlot]: ...
 
 
 @overload
 def plot(
-    _cls: Callable[[BenchmarkResults], None],
+    required_components: Callable[[BenchmarkResults], None],
     *,
     plot_id: str | None = None,
-    required_features: type[BaseFeature[Any]]
-    | list[type[BaseFeature[Any]]]
-    | tuple[type[BaseFeature[Any]], ...]
-    | None = None,
-    required_metrics: type[BaseMetric[Any]]
-    | list[type[BaseMetric[Any]]]
-    | tuple[type[BaseMetric[Any]], ...]
-    | None = None,
     plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
 ) -> type[BasePlot]: ...
 
 
 @overload
 def plot(
+    required_components: type[_REQUIRED_TYPES],
     *,
     plot_id: str | None = None,
-    required_features: type[BaseFeature[Any]]
-    | list[type[BaseFeature[Any]]]
-    | tuple[type[BaseFeature[Any]], ...]
-    | None = None,
-    required_metrics: type[BaseMetric[Any]]
-    | list[type[BaseMetric[Any]]]
-    | tuple[type[BaseMetric[Any]], ...]
-    | None = None,
+    plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
+) -> Callable[[type[BasePlot] | Callable[[BenchmarkResults], None]], type[BasePlot]]: ...
+
+
+@overload
+def plot(
+    required_components: list[type[_REQUIRED_TYPES]] | tuple[type[_REQUIRED_TYPES], ...],
+    *,
+    plot_id: str | None = None,
+    plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
+) -> Callable[[type[BasePlot] | Callable[[BenchmarkResults], None]], type[BasePlot]]: ...
+
+
+@overload
+def plot(
+    required_components: None = None,
+    *,
+    plot_id: str | None = None,
     plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
 ) -> Callable[[type[BasePlot] | Callable[[BenchmarkResults], None]], type[BasePlot]]: ...
 
 
 @inject
 def plot(
-    _cls: type[BasePlot] | Callable[[BenchmarkResults], None] | None = None,
+    required_components: type[BasePlot]
+    | Callable[[BenchmarkResults], None]
+    | list[type[_REQUIRED_TYPES]]
+    | tuple[type[_REQUIRED_TYPES], ...]
+    | type[_REQUIRED_TYPES]
+    | None = None,
     *,
     plot_id: str | None = None,
-    required_features: type[BaseFeature[Any]]
-    | list[type[BaseFeature[Any]]]
-    | tuple[type[BaseFeature[Any]], ...]
-    | None = None,
-    required_metrics: type[BaseMetric[Any]]
-    | list[type[BaseMetric[Any]]]
-    | tuple[type[BaseMetric[Any]], ...]
-    | None = None,
     plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
 ) -> Callable[[type[BasePlot] | Callable[[BenchmarkResults], None]], type[BasePlot]] | type[BasePlot]:
     """
-    Register a class or function as a plot.
+    Register a class or function as a plot component.
 
-    The decorated class must be a subclass of the ``BasePlot`` protocol. When decorating a function,
-    it must take a data parameter and return None.
+    This decorator registers visualization components that consume benchmark results. You can
+    register a class inheriting from ``BasePlot`` or wrap a function that handles the plotting
+    logic. Plots can declare dependencies on specific metrics or features they need to function.
 
     Parameters
     ----------
-    _cls : type[BasePlot[Any]] | Callable, optional
-        The class or function to be decorated. If None, returns a decorator function.
-    metrics_ids : tuple[str] | None, optional
-        Tuple of metric IDs that this plot depends on. Default is None.
-    features_ids : tuple[str] | None, optional
-        Tuple of feature IDs that this plot depends on. Default is None.
-    plot_id : str | None, optional
-        Set a custom ID for the plot. If not provided, the ID will be generated automatically
-        from the module and class/function name. It's recommended to not set this parameter.
-    plot_registry : Registry[BasePlot[Any]], injected
-        The registry where the plot will be registered. Injected by a dependency container.
+    required_components: type[BasePlot] | Callable | type[BaseFeature] | type[BaseMetric] | list | tuple | None
+        The plot to register or its dependencies. Can be:
+
+        - A class inheriting from ``BasePlot`` (bare ``@plot``)
+        - A function taking benchmark_results and returning None
+        - A single ``BaseMetric`` or ``BaseFeature`` type (becomes a dependency)
+        - A list or tuple of ``BaseMetric`` and/or ``BaseFeature`` types (dependencies)
+
+        When dependencies are passed, the decorator returns a decorator function that
+        expects a plot class or function as its argument.
+
+    plot_id: str, optional
+        Custom identifier for this plot in the registry. If omitted, an ID is
+        auto-generated from the module and class/function name.
+    plot_registry: Registry[BasePlot]
+        The registry where this plot will be stored. Injected by the container. You do not need to set it.
 
     Returns
     -------
-    Callable[[type[BasePlot[Any]]], type[BasePlot[Any]]] | type[BasePlot[Any]]
-        Either the decorated class/function or a decorator function.
+    type[BasePlot] | Callable
+        The registered plot class, or a decorator if dependencies were specified.
+
+    Notes
+    -----
+    When decorating a function, it will be wrapped in a ``BasePlot`` subclass automatically.
+    The function receives the full ``BenchmarkResults`` object and is responsible for
+    extracting the data it needs to render the plot.
+
+    Examples
+    --------
+    Basic plot from a class:
+
+    >>> from luna_bench.base_components import BasePlot
+    >>> from luna_bench.base_components.data_types.benchmark_results import BenchmarkResults
+    >>>
+    >>> @plot
+    ... class MyPlot(BasePlot):
+    ...     def run(self, benchmark_results: BenchmarkResults) -> None:
+    ...         # Plot or visualization the data
+
+    Basic plot from a function:
+
+    >>> @plot
+    ... def quick_plot(benchmark_results: BenchmarkResults) -> None:
+    ...      # Plot or visualization the data
+
+    Plot that depends on a specific metric:
+
+    >>> from luna_bench.components.metrics.runtime import Runtime
+    >>>
+    >>> @plot(Runtime)
+    ... class RuntimeVisualization(BasePlot):
+    ...     def run(self, benchmark_results: BenchmarkResults) -> None:
+    ...         # Plot or visualization the data
+
+    Plot that depends on multiple metrics:
+
+    >>> @plot([Runtime, Feasibility])
+    ... class ComparisonPlot(BasePlot):
+    ...     def run(self, benchmark_results: BenchmarkResults) -> None:
+    ...         # Render side-by-side comparison
+
     """
+    # Determine whether the first argument is the decorator target or a component list/single component
+    is_component = isinstance(required_components, (list, tuple)) or (
+        isinstance(required_components, type) and issubclass(required_components, (BaseFeature, BaseMetric))
+    )
+
+    target: type[BasePlot] | Callable[[BenchmarkResults], None] | None = (
+        None
+        if is_component
+        else cast("type[BasePlot] | Callable[[BenchmarkResults], None] | None", required_components)
+    )
+    components: type[_REQUIRED_TYPES] | list[type[_REQUIRED_TYPES]] | tuple[type[_REQUIRED_TYPES], ...] | None = (
+        cast(
+            "type[_REQUIRED_TYPES] | list[type[_REQUIRED_TYPES]] | tuple[type[_REQUIRED_TYPES], ...] | None",
+            required_components,
+        )
+        if is_component
+        else None
+    )
+
+    resolved_features, resolved_metrics = _resolve_components(components)
 
     def _do_register_class(cls: type[BasePlot]) -> type[BasePlot]:
         pid = plot_id or f"{cls.__module__}.{cls.__qualname__}"
 
-        cls.required_features = DecoratorUtilities.convert_to_list(required_features)
-        cls.required_metrics = DecoratorUtilities.convert_to_list(required_metrics)
+        cls.required_features = resolved_features
+        cls.required_metrics = resolved_metrics
 
         DecoratorUtilities.register_class(cls, base=BasePlot, registered_class_id=pid, registry=plot_registry)
 
@@ -139,7 +208,7 @@ def plot(
             return _do_register_class(obj)
         return _plot_function(obj)
 
-    if _cls is not None:
-        return _do_register(_cls)
+    if target is not None:
+        return _do_register(target)
 
     return _do_register

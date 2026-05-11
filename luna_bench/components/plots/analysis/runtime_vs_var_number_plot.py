@@ -13,7 +13,7 @@ from luna_bench.components.plots.generics.scatter_plot import ScatterPlot
 from luna_bench.helpers.decorators import plot
 
 
-@plot(required_features=VarNumberFeature, required_metrics=Runtime)
+@plot([VarNumberFeature, Runtime])
 class RuntimeVsVarNumberPlot(ScatterPlot):
     """Scatter plot showing runtime vs number of variables per model/algorithm.
 
