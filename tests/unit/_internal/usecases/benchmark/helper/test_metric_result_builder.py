@@ -65,7 +65,6 @@ class TestMetricResultBuilder:
         result = builder.results("model_1", "algo_1", [MockMetric])
 
         assert is_successful(result)
-        assert result.unwrap().allowed == [MockMetric]
 
     def test_results_missing_model(self) -> None:
         metric = make_metric_entity("metric_a", ("algo_1", "model_1", {"value": 1}))
@@ -127,7 +126,6 @@ class TestMetricResultBuilder:
         r2 = builder.results("model_1", "algo_1", [MockMetric]).unwrap()
 
         assert r1 is not r2
-        assert r1.allowed == r2.allowed
 
     @pytest.mark.parametrize(
         ("models", "algorithms", "query_model", "query_algo", "should_succeed"),

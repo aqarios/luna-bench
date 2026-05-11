@@ -98,6 +98,5 @@ class MetricResultBuilder:
         return Success(
             MetricResults.model_construct(
                 data=metric_data,
-                allowed=required_metrics,
             )
         )

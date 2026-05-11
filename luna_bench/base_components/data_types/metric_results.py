@@ -18,8 +18,6 @@ class MetricResults(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    allowed: list[MetricClass]
-
     data: Mapping[MetricClass, Mapping[MetricName, MetricComputed]]
 
     def get_all_with_config[TMetricResult: MetricResult](
@@ -43,8 +41,8 @@ class MetricResults(BaseModel):
         MetricResultWrongClassError
             If the provided metric class is not allowed in this MetricResults instance.
         """
-        if metric_cls not in self.allowed:
-            raise MetricResultWrongClassError(metric_cls, self.allowed)
+        if metric_cls not in self.data:
+            raise MetricResultWrongClassError(metric_cls, list(self.data.keys()))
         return cast(
             "Mapping[MetricName, tuple[TMetricResult, BaseMetric[TMetricResult]]]",
             self.data.get(metric_cls, {}),
@@ -128,8 +126,8 @@ class MetricResults(BaseModel):
         MetricResulUnknownNameError
             If the provided metric name is not found for the given class.
         """
-        if metric_cls not in self.allowed:
-            raise MetricResultWrongClassError(metric_cls, self.allowed)
+        if metric_cls not in self.data:
+            raise MetricResultWrongClassError(metric_cls, list(self.data.keys()))
         if metric_name not in self.data[metric_cls]:
             raise MetricResulUnknownNameError(
                 metric_class=metric_cls, metric_name=metric_name, known_names=list(self.data[metric_cls].keys())

@@ -90,6 +90,5 @@ class FeatureResultBuilder:
         return Success(
             FeatureResults.model_construct(
                 data=feature_data,
-                allowed=required_features.copy(),
             )
         )

@@ -61,7 +61,6 @@ class TestFeatureResultBuilder:
         result = builder.results("model_1", [MockFeature])
 
         assert is_successful(result)
-        assert result.unwrap().allowed == [MockFeature]
 
     def test_results_missing_model(self) -> None:
         feat = make_feature_entity("feat_a", ("model_1", {}))
@@ -106,7 +105,6 @@ class TestFeatureResultBuilder:
         r2 = builder.results("model_1", [MockFeature]).unwrap()
 
         assert r1 is not r2
-        assert r1.allowed == r2.allowed
 
     @pytest.mark.parametrize(
         ("models", "query", "should_succeed"),

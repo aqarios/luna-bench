@@ -18,10 +18,6 @@ class FeatureResults(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    allowed: list[
-        FeatureClass
-    ]  # TODO(@Llewellyn): MAYBE REMOVE IT we kind of already check it when creating this container  # noqa: FIX002
-
     data: Mapping[FeatureClass, Mapping[FeatureName, FeatureComputed]]
 
     def get_all[TFeatureResult: FeatureResult](
@@ -54,8 +50,8 @@ class FeatureResults(BaseModel):
         FeatureResultWrongClassError
             If the provided feature class is not allowed in this FeatureResults instance.
         """
-        if feature_cls not in self.allowed:
-            raise FeatureResultWrongClassError(feature_cls, self.allowed)
+        if feature_cls not in self.data:
+            raise FeatureResultWrongClassError(feature_cls, list(self.data.keys()))
         return cast(
             "Mapping[FeatureName, tuple[TFeatureResult, BaseFeature[TFeatureResult]]]",
             self.data.get(feature_cls, {}),
@@ -114,8 +110,8 @@ class FeatureResults(BaseModel):
             If the provided feature name is not found for the given class.
 
         """
-        if feature_cls not in self.allowed:
-            raise FeatureResultWrongClassError(feature_cls, self.allowed)
+        if feature_cls not in self.data:
+            raise FeatureResultWrongClassError(feature_cls, list(self.data.keys()))
         if feature_name not in self.data[feature_cls]:
             raise FeatureResulUnknownNameError(
                 feature_class=feature_cls, feature_name=feature_name, known_names=list(self.data[feature_cls].keys())

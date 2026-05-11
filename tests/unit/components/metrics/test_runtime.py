@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 def _create_empty_feature_results() -> FeatureResults:
     """Create empty FeatureResults (Runtime doesn't need features)."""
-    return FeatureResults(allowed=[], data={})
+    return FeatureResults(data={})
 
 
 class TestRuntimeResult:

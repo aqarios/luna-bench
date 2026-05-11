@@ -913,8 +913,8 @@ class Benchmark(BenchmarkEntity):
                     Benchmark._logger.info(f"Adding feature {f.registered_id} to benchmark {self.name}")
                     self.add_feature(f.registered_id, f())
                     required_features.add(f.registered_id)
-        for m in self.metrics:
-            for f in m.metric.required_features:
+        for metric in self.metrics:
+            for f in metric.metric.required_features:
                 if f.registered_id not in required_features:
                     Benchmark._logger.info(f"Adding feature {f.registered_id} to benchmark {self.name}")
                     self.add_feature(f.registered_id, f())

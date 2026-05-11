@@ -34,8 +34,7 @@ class TestFeatureResults:
         data: Mapping[FeatureClass, Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
             MockFeature: {"feat1": (fr, f1)}
         }
-        results = FeatureResults.model_construct(allowed=[MockFeature], data=data)
-        assert results.allowed == [MockFeature]
+        results = FeatureResults.model_construct(data=data)
         assert results.data == data
 
     def test_get_all_success(self) -> None:
@@ -44,16 +43,16 @@ class TestFeatureResults:
         data: Mapping[FeatureClass, Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
             MockFeature: {"feat1": (fr, f1)}
         }
-        results = FeatureResults.model_construct(allowed=[MockFeature], data=data)
+        results = FeatureResults.model_construct(data=data)
         assert results.get_all(MockFeature) == {"feat1": fr}
         assert results.get_all_with_config(MockFeature) == {"feat1": (fr, f1)}
 
     def test_get_all_empty(self) -> None:
-        results = FeatureResults.model_construct(allowed=[MockFeature], data={})
+        results = FeatureResults.model_construct(data={MockFeature: {}})
         assert results.get_all(MockFeature) == {}
 
     def test_get_all_wrong_class(self) -> None:
-        results = FeatureResults.model_construct(allowed=[MockFeature], data={})
+        results = FeatureResults.model_construct(data={})
         with pytest.raises(FeatureResultWrongClassError):
             results.get_all(MockFeature2)
 
@@ -63,12 +62,12 @@ class TestFeatureResults:
         data: Mapping[FeatureClass, Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
             MockFeature: {"feat1": (fr, f1)}
         }
-        results = FeatureResults.model_construct(allowed=[MockFeature], data=data)
+        results = FeatureResults.model_construct(data=data)
         assert results.get(MockFeature, "feat1") == fr
         assert results.get_with_config(MockFeature, "feat1") == (fr, f1)
 
     def test_get_wrong_class(self) -> None:
-        results = FeatureResults.model_construct(allowed=[MockFeature], data={})
+        results = FeatureResults.model_construct(data={})
         with pytest.raises(FeatureResultWrongClassError):
             results.get(MockFeature2, "feat1")
 
@@ -78,7 +77,7 @@ class TestFeatureResults:
         data: Mapping[FeatureClass, Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
             MockFeature: {"feat1": (fr, f1)}
         }
-        results = FeatureResults.model_construct(allowed=[MockFeature], data=data)
+        results = FeatureResults.model_construct(data=data)
         with pytest.raises(FeatureResulUnknownNameError):
             results.get(MockFeature, "feat2")
 
@@ -88,6 +87,6 @@ class TestFeatureResults:
         data: Mapping[FeatureClass, Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
             MockFeature: {"feat1": (fr, f1)}
         }
-        results = FeatureResults.model_construct(allowed=[MockFeature], data=data)
+        results = FeatureResults.model_construct(data=data)
         assert results.first(MockFeature) == fr
         assert results.first_with_config(MockFeature) == (fr, f1)
