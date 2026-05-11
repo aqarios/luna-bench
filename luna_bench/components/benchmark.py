@@ -49,6 +49,7 @@ from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMis
 from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.types import FeatureClass, MetricClass
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -897,8 +898,37 @@ class Benchmark(BenchmarkEntity):
             Benchmark._logger.error(f"Failed to run plots for the benchmark {self.name} with error: {error}")
             raise RuntimeError(error)
 
+    def add_dependencies(self) -> None:
+        """Add any required dependencies for the benchmark execution."""
+        required_features: set[FeatureClass] = set()
+        required_metrics: set[MetricClass] = set()
+
+        for f in self.features:
+            required_features.add(type(f.feature))
+        for m in self.metrics:
+            required_metrics.add(type(m.metric))
+
+        for p in self.plots:
+            for m in p.plot.required_metrics:
+                if m not in self.metrics:
+                    Benchmark._logger.info(f"Adding metric {m.registered_id} to benchmark {self.name}")
+                    self.add_metric(m.registered_id, m())
+                    required_metrics.add(m)
+            for f in p.plot.required_features:
+                if f not in self.features:
+                    Benchmark._logger.info(f"Adding feature {f.registered_id} to benchmark {self.name}")
+                    self.add_feature(f.registered_id, f())
+                    required_features.add(f)
+        for m in self.metrics:
+            for f in m.metric.required_features:
+                if f not in self.features:
+                    Benchmark._logger.info(f"Adding feature {f.registered_id} to benchmark {self.name}")
+                    self.add_feature(f.registered_id, f())
+                    required_features.add(f)
+
     def run(self) -> None:
         """Execute the benchmark."""
+        self.add_dependencies()
         self.run_features()
         self.run_algorithms()
         self.run_metrics()
