@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import multiprocessing
 import platform
+import subprocess
+import sys
 from contextlib import contextmanager
-from multiprocessing import Process
 from typing import TYPE_CHECKING, cast
 
 from huey import MemoryHuey, SqliteHuey
@@ -18,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class HueyBackgroundTaskClient(BackgroundTaskClient):
-    _process: Process | None = None
+    _process: subprocess.Popen[bytes] | None = None
     _logger = Logging.get_logger(__name__)
 
     huey: SqliteHuey | MemoryHuey = (
@@ -64,8 +66,6 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
             case "Windows":
                 return cast("str", WORKER_THREAD)
             case "Darwin":
-                import multiprocessing  # noqa: PLC0415 # Import here since we only need it for Darwin machines
-
                 multiprocessing.set_start_method("fork", force=True)
                 HueyBackgroundTaskClient._logger.debug(
                     "For your OS Darwin, the default worker type is 'process'. But we have to set the start method"
@@ -106,7 +106,7 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
 
         try:
             HueyBackgroundTaskClient._logger.debug("Huey consumer started.")
-            consumer.run()  # does not install signal handlers
+            consumer.run()
 
         finally:
             HueyBackgroundTaskClient._logger.debug("Huey consumer exiting.")
@@ -122,15 +122,21 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
 
             return
 
-        if cls._process.is_alive():
+        if cls._process.poll() is None:
             cls._logger.debug(
                 f"Huey consumer is running and should be terminated. Will wait for {config.LB_HUEY_JOIN_TIMEOUT}sec "
                 f"before force-killing."
             )
             cls._process.terminate()
-            cls._process.join(timeout=config.LB_HUEY_JOIN_TIMEOUT)
+            try:
+                cls._process.wait(timeout=config.LB_HUEY_JOIN_TIMEOUT)
+            except subprocess.TimeoutExpired:
+                cls._logger.warning("Huey consumer did not terminate in time. Force-killing process.")
+                cls._process.kill()
+                cls._process.wait(timeout=config.LB_HUEY_JOIN_TIMEOUT)
             cls._logger.debug("Huey consumer stopped.")
-            cls._process = None
+
+        cls._process = None
 
     @classmethod
     def _start_consumer(cls) -> None:
@@ -140,12 +146,26 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
             HueyBackgroundTaskClient._stop_consumer()
 
         cls._logger.debug("Starting background_tasks consumer in a new process.")
-        cls._process = Process(target=HueyBackgroundTaskClient._run_consumer, name="background_tasks-consumer")
-        cls._process.start()
+        bootstrap_code = (
+            "import importlib,sys\n"
+            "obj=importlib.import_module(sys.argv[1])\n"
+            "for part in sys.argv[2].split('.'):\n"
+            "    obj=getattr(obj, part)\n"
+            "obj._run_consumer()\n"
+        )
+        cls._process = subprocess.Popen(  # noqa: S603 # command is built from trusted class metadata
+            [
+                sys.executable,
+                "-c",
+                bootstrap_code,
+                cls.__module__,
+                cls.__qualname__,
+            ]
+        )
 
     @classmethod
     def is_consumer_running(cls) -> bool:
-        return cls._process is not None and cls._process.is_alive()
+        return cls._process is not None and cls._process.poll() is None
 
     @classmethod
     @contextmanager
