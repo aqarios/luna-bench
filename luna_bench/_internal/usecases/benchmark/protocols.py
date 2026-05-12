@@ -6,7 +6,6 @@ from returns.maybe import Maybe
 from returns.result import Result
 
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
-from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
 from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
 from luna_bench.entities import (
     AlgorithmEntity,
@@ -197,8 +196,6 @@ class BenchmarkSetModelsetUc(Protocol):
 
 
 class PlotsRunUc(Protocol):
-    error_handling_mode: UseCaseErrorHandlingMode
-
     def __call__(
         self,
         benchmark: BenchmarkEntity,

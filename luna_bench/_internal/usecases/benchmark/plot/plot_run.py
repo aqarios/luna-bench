@@ -29,19 +29,6 @@ class PlotsRunUcImpl(PlotsRunUc):
     This class orchestrates the execution of all plots defined in a benchmark,
     handling validation and execution errors according to the configured mode.
 
-    Parameters
-    ----------
-    error_handling_mode : UseCaseErrorHandlingMode, optional
-        Determines behavior when plot validation or execution fails.
-        - FAIL_ON_ERROR: Stop on first error and return Failure
-        - CONTINUE_ON_ERROR: Log warning and continue with remaining plots
-        Default is FAIL_ON_ERROR.
-
-    Attributes
-    ----------
-    error_handling_mode : UseCaseErrorHandlingMode
-        The configured error handling strategy.
-
     Notes
     -----
     Plot execution is sequential and order-dependent based on the benchmark
@@ -102,17 +89,13 @@ class PlotsRunUcImpl(PlotsRunUc):
 
         This method iterates through all plots in the benchmark, validates each
         plot against the benchmark data, and executes the plot generation if
-        validation succeeds. Error handling behavior depends on the configured
-        error_handling_mode.
+        validation succeeds.
 
         Parameters
         ----------
         benchmark : BenchmarkEntity
             The benchmark containing plots to execute and the data (metrics,
             features, algorithms, models) required for plot generation.
-        error_handling_mode : UseCaseErrorHandlingMode, optional
-            Error handling strategy for plot validation and execution failures.
-            Default is FAIL_ON_ERROR.
 
         Returns
         -------
