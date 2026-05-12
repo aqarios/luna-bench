@@ -1,25 +1,9 @@
 from .decorators import (
     algorithm,
-    algorithms_async,
-    algorithms_sync,
     feature,
-    features,
     metric,
-    metrics,
     plot,
-    plots,
-    registry_info,
 )
+from .registry_info import RegistryInfo
 
-__all__ = [
-    "algorithm",
-    "algorithms_async",
-    "algorithms_sync",
-    "feature",
-    "features",
-    "metric",
-    "metrics",
-    "plot",
-    "plots",
-    "registry_info",
-]
+__all__ = ["RegistryInfo", "algorithm", "feature", "metric", "plot"]

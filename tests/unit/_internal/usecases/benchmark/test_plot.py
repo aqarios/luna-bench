@@ -1,30 +1,29 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
 from luna_bench.base_components import BasePlot
 from luna_bench.entities import BenchmarkEntity, PlotEntity
 from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
-from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
-from luna_bench.errors.unknown_error import UnknownLunaBenchError
-from tests.unit.fixtures.mock_components import MockPlot, MockPlotWithValidationError, UnregisteredPlot
+from tests.unit.fixtures.mock_components import MockPlot, MockPlotWithError, UnregisteredPlot
 
 if TYPE_CHECKING:
     from pydantic import ValidationError
 
     from luna_bench._internal.usecases.usecase_container import UsecaseContainer
     from luna_bench.errors.registry.unknown_id_error import UnknownIdError
+    from luna_bench.errors.unknown_error import UnknownLunaBenchError
+    from tests.unit.fixtures.mock_database import SetupBenchmark
 
 
-def _empty_plot(name: str, plot: BasePlot[Any]) -> PlotEntity:
+def _empty_plot(name: str, plot: BasePlot) -> PlotEntity:
     return PlotEntity(
         name=name,
         status=JobStatus.CREATED,
@@ -47,7 +46,7 @@ class TestPlot:
         usecase: UsecaseContainer,
         benchmark_name: str,
         plot_name: str,
-        plot: BasePlot[Any],
+        plot: BasePlot,
         exp: Result[
             PlotEntity,
             DataNotUniqueError
@@ -106,18 +105,17 @@ class TestPlot:
             assert isinstance(result.failure(), type(exp.failure()))
 
     @pytest.mark.parametrize(
-        ("error_handling_mode", "plot", "exp"),
+        ("plot", "exp"),
         [
-            (UseCaseErrorHandlingMode.FAIL_ON_ERROR, MockPlot(), Failure(UnknownLunaBenchError(NotImplementedError()))),
-            (UseCaseErrorHandlingMode.FAIL_ON_ERROR, MockPlotWithValidationError(), Failure(PlotRunError())),
-            (UseCaseErrorHandlingMode.CONTINUE_ON_ERROR, MockPlotWithValidationError(), Success(None)),
+            (MockPlot(), Success(None)),
+            (MockPlotWithError(), Success(None)),
         ],
     )
     def test_run_plots(
         self,
+        setup_benchmark: SetupBenchmark,
         usecase: UsecaseContainer,
-        error_handling_mode: UseCaseErrorHandlingMode,
-        plot: BasePlot[Any],
+        plot: BasePlot,
         exp: Result[
             PlotEntity,
             DataNotUniqueError
@@ -128,16 +126,10 @@ class TestPlot:
             | ValidationError,
         ],
     ) -> None:
-        benchmark = BenchmarkEntity(
-            name="test",
-            modelset=None,
-            features=[],
-            algorithms=[],
-            metrics=[],
-            plots=[_empty_plot("test", plot)],
-        )
 
-        result = usecase.benchmark_run_plots_uc()(benchmark, error_handling_mode)
+        cast("Any", setup_benchmark.benchmark).plots = [_empty_plot("test", plot)]
+
+        result = usecase.benchmark_run_plots_uc()(cast("BenchmarkEntity", setup_benchmark.benchmark))
 
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()

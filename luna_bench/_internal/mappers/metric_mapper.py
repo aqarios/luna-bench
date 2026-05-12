@@ -8,7 +8,7 @@ from luna_bench._internal.registries import PydanticRegistry
 from luna_bench.base_components import BaseMetric
 from luna_bench.entities import MetricEntity, MetricResultEntity
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
-from luna_bench.types import MetricResult
+from luna_bench.types import AlgorithmName, MetricResult, ModelName
 
 
 class MetricMapper(ModelListMixin[MetricDomain, MetricEntity]):
@@ -31,9 +31,14 @@ class MetricMapper(ModelListMixin[MetricDomain, MetricEntity]):
 
     @staticmethod
     def result_to_user_model_dict(
-        results: dict[tuple[str, str], MetricResultDomain],
-    ) -> dict[tuple[str, str], MetricResultEntity]:
-        return {(k, m): MetricMapper.result_to_user_model(result) for (k, m), result in results.items()}
+        results: dict[ModelName, dict[AlgorithmName, MetricResultDomain]],
+    ) -> dict[ModelName, dict[AlgorithmName, MetricResultEntity]]:
+        return {
+            model_name: {
+                algorithm_name: MetricMapper.result_to_user_model(result) for algorithm_name, result in r.items()
+            }
+            for model_name, r in results.items()
+        }
 
     def to_user_model(
         self,

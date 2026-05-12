@@ -9,7 +9,7 @@ from pydantic import Field
 
 from luna_bench.base_components import BaseMetric
 from luna_bench.base_components.data_types.feature_results import FeatureResults
-from luna_bench.components.features.optsol_feature import OptSolFeature, OptSolFeatureResult
+from luna_bench.components.features.optsol_feature import OptSolFeature
 from luna_bench.helpers import metric
 from luna_bench.types import MetricResult
 
@@ -36,8 +36,8 @@ class TimeToSolutionResult(MetricResult):
     num_samples: int = Field(ge=0, description="The total number of samples in the solution.")
 
 
-@metric(required_features=OptSolFeature)
-class TimeToSolution(BaseMetric):
+@metric(OptSolFeature)
+class TimeToSolution(BaseMetric[TimeToSolutionResult]):
     r"""Metric that calculates the Time-to-Solution (TTS) for finding optimal solutions.
 
     The Time-to-Solution metric measures how long it takes for a solver to find
@@ -104,8 +104,7 @@ class TimeToSolution(BaseMetric):
             Contains the calculated TTS and related statistics.
         """
         # Get the optimal solution from features
-        opt_sol: OptSolFeatureResult
-        (opt_sol, _) = feature_results.first(feature_cls=OptSolFeature)  # type: ignore[assignment]
+        opt_sol = feature_results.first(feature_cls=OptSolFeature)
         optimum = opt_sol.best_sol
 
         # Check if any solution exists

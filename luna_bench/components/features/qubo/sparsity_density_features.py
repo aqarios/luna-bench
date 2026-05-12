@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench.base_components import BaseFeature
 from luna_bench.helpers import feature
+from luna_bench.types import FeatureResult
 
 from .get_qubo import get_qubo
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from luna_model import Model
 
 
-class QuboSparsityDensityFeatureResult(ArbitraryDataDomain):
+class QuboSparsityDensityFeatureResult(FeatureResult):
     """Result container for sparsity and density QUBO features.
 
     Attributes
@@ -40,7 +40,7 @@ class QuboSparsityDensityFeatureResult(ArbitraryDataDomain):
 
 
 @feature
-class QuboSparsityDensityFeature(BaseFeature):
+class QuboSparsityDensityFeature(BaseFeature[QuboSparsityDensityFeatureResult]):
     """Extract sparsity and density features from QUBO models.
 
     Compute structural features describing the fill pattern of the QUBO matrix.

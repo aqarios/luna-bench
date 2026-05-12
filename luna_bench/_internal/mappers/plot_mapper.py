@@ -1,5 +1,3 @@
-from typing import Any
-
 from pydantic import ValidationError
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
@@ -16,7 +14,7 @@ from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 class PlotMapper(ModelListMixin[PlotDomain, PlotEntity]):
     def __init__(
         self,
-        plot_registry: PydanticRegistry[BasePlot[Any], RegisteredDataDomain],
+        plot_registry: PydanticRegistry[BasePlot, RegisteredDataDomain],
     ) -> None:
         self._plot_registry = plot_registry
 
@@ -38,8 +36,8 @@ class PlotMapper(ModelListMixin[PlotDomain, PlotEntity]):
             Successful conversion: The user model. Otherwise, an exception.
 
         """
-        user_config: Result[BasePlot[Any], UnknownIdError | ValidationError] = (
-            self._plot_registry.from_domain_to_user_model(domain.config_data)
+        user_config: Result[BasePlot, UnknownIdError | ValidationError] = self._plot_registry.from_domain_to_user_model(
+            domain.config_data
         )
         if not is_successful(user_config):  # pragma: no cover
             return Failure(user_config.failure())

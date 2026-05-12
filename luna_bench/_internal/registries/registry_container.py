@@ -33,6 +33,6 @@ class RegistryContainer(containers.DeclarativeContainer):
         ArbitraryDataRegistry[BaseMetric], kind="metric"
     )
 
-    plot_registry: Provider[PydanticRegistry[BasePlot[Any], RegisteredDataDomain]] = providers.ThreadSafeSingleton(
-        ArbitraryDataRegistry[BasePlot[Any]], kind="plot"
+    plot_registry: Provider[PydanticRegistry[BasePlot, RegisteredDataDomain]] = providers.ThreadSafeSingleton(
+        ArbitraryDataRegistry[BasePlot], kind="plot"
     )

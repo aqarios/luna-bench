@@ -24,7 +24,7 @@ class FeasibilityRatioResult(MetricResult):
 
 
 @metric
-class FeasibilityRatio(BaseMetric):
+class FeasibilityRatio(BaseMetric[FeasibilityRatioResult]):
     """Metric that calculates the ratio of feasible solutions.
 
     The Feasibility Ratio measures what proportion of the samples returned by

@@ -9,7 +9,7 @@ from pydantic import Field
 
 from luna_bench.base_components import BaseMetric
 from luna_bench.base_components.data_types.feature_results import FeatureResults
-from luna_bench.components.features.optsol_feature import OptSolFeature, OptSolFeatureResult
+from luna_bench.components.features.optsol_feature import OptSolFeature
 from luna_bench.components.helper.divider_helper import get_ratio
 from luna_bench.helpers import metric
 from luna_bench.types import MetricResult
@@ -30,8 +30,8 @@ class BestSolutionFoundResult(MetricResult):
     best_solution_found: float = Field(ge=1.0, description="The calculated best solution found ratio.")
 
 
-@metric(required_features=OptSolFeature)
-class BestSolutionFound(BaseMetric):
+@metric(OptSolFeature)
+class BestSolutionFound(BaseMetric[BestSolutionFoundResult]):
     r"""Metric that calculates the Best Solution Found (BSF) ratio against the optimal.
 
     The Best Solution Found metric measures how close the best sample in a solution
@@ -108,8 +108,7 @@ class BestSolutionFound(BaseMetric):
         bsf: float
 
         # Get the optimal solution from features
-        opt_sol: OptSolFeatureResult
-        (opt_sol, _) = feature_results.first(feature_cls=OptSolFeature)  # type: ignore[assignment]
+        opt_sol = feature_results.first(feature_cls=OptSolFeature)
         if solution is None:
             msg = "Solution must not be None."
             raise ValueError(msg)

@@ -157,9 +157,12 @@ class TestMetric:
 
             for m in benchmark.metrics:
                 if metric is None or metric.name == m.name:
-                    assert len(m.results) == num_metrics_to_calculate
-                    for r in m.results.values():
-                        assert r.status == JobStatus.DONE
+                    assert benchmark.modelset is not None
+                    assert len(m.results) == len(benchmark.modelset.models)
+                    for model in benchmark.modelset.models:
+                        assert len(m.results[model.name]) == num_metrics_to_calculate
+                        for r in m.results[model.name].values():
+                            assert r.status == JobStatus.DONE
                 else:
                     assert len(m.results) == 0
 
@@ -191,7 +194,8 @@ class TestMetric:
         assert is_successful(result)
         for m in benchmark.metrics:
             for r in m.results.values():
-                assert r.status is JobStatus.DONE
+                for metric_result in r.values():
+                    assert metric_result.status is JobStatus.DONE
 
         result_2 = usecase.benchmark_run_metric_uc()(benchmark=benchmark, metric=benchmark.metrics[0])
 

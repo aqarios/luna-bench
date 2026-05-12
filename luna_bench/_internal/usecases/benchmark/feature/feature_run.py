@@ -9,6 +9,7 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models import RegisteredDataDomain
+from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.feature_result_domain import FeatureResultDomain
 from luna_bench._internal.domain_models.model_metadata_domain import ModelMetadataDomain
 from luna_bench._internal.mappers import FeatureMapper
@@ -24,7 +25,7 @@ from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetM
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
-    from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
+    from luna_bench.types import FeatureResult
 
 
 class FeatureRunUcImpl(FeatureRunUc):
@@ -59,7 +60,7 @@ class FeatureRunUcImpl(FeatureRunUc):
             self._logger.info(f"Feature {feature.name} for model {model_metadata.name} already exists and is done.")
             return Success(result)
 
-        user_result: ArbitraryDataDomain | None = None
+        user_result: FeatureResult | None = None
         exception: str | None = None
         status: JobStatus
 
@@ -81,7 +82,7 @@ class FeatureRunUcImpl(FeatureRunUc):
         result_domain = FeatureResultDomain.model_construct(
             processing_time_ms=delta_time,
             model_name=model_metadata.name,
-            result=user_result,
+            result=ArbitraryDataDomain.model_construct(**user_result.model_dump()) if user_result else None,
             status=status,
             error=exception,
         )

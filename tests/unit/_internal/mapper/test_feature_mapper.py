@@ -18,14 +18,14 @@ class TestFeatureMapper:
                     model_name="model",
                     status=JobStatus.CREATED,
                     error=None,
-                    result=ArbitraryDataDomain.model_construct(something="xD"),  # type: ignore[call-arg] # Fake data
+                    result=ArbitraryDataDomain.model_construct(something="xD"),  # type: ignore[call-arg]
                 ),
                 FeatureResultEntity.model_construct(
                     processing_time_ms=1,
                     model_name="model",
                     status=JobStatus.CREATED,
                     error=None,
-                    result=FeatureResult.model_construct(something="xD"),  # type: ignore[call-arg] # Fake data
+                    result=FeatureResult.model_construct(something="xD"),  # type: ignore[call-arg]
                 ),
             ),
             (
@@ -59,7 +59,7 @@ class TestFeatureMapper:
                         model_name="model",
                         status=JobStatus.CREATED,
                         error=None,
-                        result=ArbitraryDataDomain.model_construct(something="xD"),  # type: ignore[call-arg] # Fake data
+                        result=ArbitraryDataDomain.model_construct(something="xD"),  # type: ignore[call-arg]
                     )
                 },
                 {
@@ -68,7 +68,7 @@ class TestFeatureMapper:
                         model_name="model",
                         status=JobStatus.CREATED,
                         error=None,
-                        result=FeatureResult.model_construct(something="xD"),  # type: ignore[call-arg] # Fake data
+                        result=FeatureResult.model_construct(something="xD"),  # type: ignore[call-arg]
                     )
                 },
             ),

@@ -22,7 +22,7 @@ class Config(BaseSettings):
 
     LB_ALGORITHM_INTERNAL_BACKOFF_TIME: float = 0.001
 
-    LB_ASYNC_WORKER_COUNT: int = 10
+    LB_ASYNC_WORKER_COUNT: int = 2
 
     LB_HUEY_WORKER_TYPE: Literal["process", "thread", "greenlet"] | None = None
     LB_HUEY_JOIN_TIMEOUT: int = 10

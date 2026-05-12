@@ -84,7 +84,7 @@ class LinearConstraintMatrixFeaturesResult(EnumFeatureResult[CoefStatsKey, CoefS
 
 
 @feature
-class LinearConstraintMatrixFeatures(BaseFeature):
+class LinearConstraintMatrixFeatures(BaseFeature[LinearConstraintMatrixFeaturesResult]):
     """
     Feature extractor for linear constraint matrix properties.
 

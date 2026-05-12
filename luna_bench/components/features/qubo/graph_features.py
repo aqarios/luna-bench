@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 import networkx as nx
 import numpy as np
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench.base_components import BaseFeature
 from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
 from luna_bench.helpers import feature
+from luna_bench.types import FeatureResult
 
 from .get_qubo import get_qubo
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from luna_model import Model
 
 
-class QuboGraphFeatureResult(ArbitraryDataDomain):
+class QuboGraphFeatureResult(FeatureResult):
     """Result container for graph-based QUBO features.
 
     The QUBO matrix is interpreted as a weighted adjacency matrix via
@@ -72,7 +72,7 @@ class QuboGraphFeatureResult(ArbitraryDataDomain):
 
 
 @feature
-class QuboGraphFeature(BaseFeature):
+class QuboGraphFeature(BaseFeature[QuboGraphFeatureResult]):
     """Extract graph-based features from QUBO models.
 
     Compute graph-theoretic features from the QUBO matrix by constructing a

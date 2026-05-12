@@ -11,7 +11,6 @@ from luna_bench.components.model_set import ModelSet
 from luna_bench.entities import (
     AlgorithmEntity,
     BenchmarkEntity,
-    ErrorHandlingMode,
     FeatureEntity,
     JobStatus,
     MetricEntity,
@@ -411,21 +410,8 @@ class TestBenchmark:
         mock.return_value = Success(None)
         empty_benchmark.run_plots()
 
-        # default is FAIL_ON_ERROR = 0
         args, _ = mock.call_args
         assert args[0] == empty_benchmark
-        assert args[1].value == ErrorHandlingMode.FAIL_ON_ERROR.value
-
-    def test_run_plots_continue_on_error(
-        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
-    ) -> None:
-        mock = mocked_usecases["benchmark_run_plots_uc"]
-        mock.return_value = Success(None)
-        empty_benchmark.run_plots(ErrorHandlingMode.CONTINUE_ON_ERROR)
-
-        args, _ = mock.call_args
-        assert args[0] == empty_benchmark
-        assert args[1].value == ErrorHandlingMode.CONTINUE_ON_ERROR.value
 
     def test_run_plots_failure(self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark) -> None:
         error = UnknownLunaBenchError(exception=RuntimeError("another error"))
@@ -450,7 +436,6 @@ class TestBenchmark:
         # for plots it's called with default mode
         args, _ = mocked_usecases["benchmark_run_plots_uc"].call_args
         assert args[0] == empty_benchmark
-        assert args[1].value == ErrorHandlingMode.FAIL_ON_ERROR.value
 
     def test_open_existing_benchmark(self, mocked_usecases: dict[str, MagicMock]) -> None:
         mock_load = mocked_usecases["benchmark_load_uc"]
@@ -571,6 +556,112 @@ class TestBenchmark:
     def test_get_missing_raises(self, getter: str, benchmark_with_entries: Benchmark) -> None:
         with pytest.raises(DataNotExistError):
             getattr(benchmark_with_entries, getter)("missing")
+
+    def test_add_dependencies_plot_requires_metric(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        """Test that add_dependencies adds metrics required by plots."""
+        mock_plot = MagicMock(spec=MockPlot)
+        mock_plot.required_metrics = [MockMetric]
+        mock_plot.required_features = []
+
+        plot_entity = PlotEntity(name="plot_with_deps", status=JobStatus.CREATED, plot=mock_plot)
+        empty_benchmark.plots.append(plot_entity)
+
+        metric_entity = MetricEntity(name="mock_metric", status=JobStatus.CREATED, metric=MockMetric(), results={})
+        mocked_usecases["benchmark_add_metric_uc"].return_value = Success(metric_entity)
+
+        empty_benchmark.add_dependencies()
+
+        assert len(empty_benchmark.metrics) == 1
+        assert empty_benchmark.metrics[0].name == "mock_metric"
+        mocked_usecases["benchmark_add_metric_uc"].assert_called_once()
+
+    def test_add_dependencies_plot_requires_feature(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        """Test that add_dependencies adds features required by plots."""
+        mock_plot = MagicMock(spec=MockPlot)
+        mock_plot.required_metrics = []
+        mock_plot.required_features = [MockFeature]
+
+        plot_entity = PlotEntity(name="plot_with_deps", status=JobStatus.CREATED, plot=mock_plot)
+        empty_benchmark.plots.append(plot_entity)
+
+        feature_entity = FeatureEntity(name="mock_feature", status=JobStatus.CREATED, feature=MockFeature(), results={})
+        mocked_usecases["benchmark_add_feature_uc"].return_value = Success(feature_entity)
+
+        empty_benchmark.add_dependencies()
+
+        assert len(empty_benchmark.features) == 1
+        assert empty_benchmark.features[0].name == "mock_feature"
+        mocked_usecases["benchmark_add_feature_uc"].assert_called_once()
+
+    def test_add_dependencies_metric_requires_feature(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        """Test that add_dependencies adds features required by metrics."""
+        mock_metric = MagicMock(spec=MockMetric)
+        mock_metric.required_features = [MockFeature]
+
+        metric_entity = MetricEntity(name="metric_with_deps", status=JobStatus.CREATED, metric=mock_metric, results={})
+        empty_benchmark.metrics.append(metric_entity)
+
+        feature_entity = FeatureEntity(name="mock_feature", status=JobStatus.CREATED, feature=MockFeature(), results={})
+        mocked_usecases["benchmark_add_feature_uc"].return_value = Success(feature_entity)
+
+        empty_benchmark.add_dependencies()
+
+        assert len(empty_benchmark.features) == 1
+        assert empty_benchmark.features[0].name == "mock_feature"
+        mocked_usecases["benchmark_add_feature_uc"].assert_called_once()
+
+    def test_add_dependencies_skips_existing_components(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        """Test that add_dependencies doesn't add components that already exist."""
+        mock_plot = MagicMock(spec=MockPlot)
+        mock_plot.required_metrics = [MockMetric]
+        mock_plot.required_features = []
+
+        existing_metric_entity = MetricEntity(
+            name="mock_metric", status=JobStatus.CREATED, metric=MockMetric(), results={}
+        )
+        plot_entity = PlotEntity(name="plot_with_deps", status=JobStatus.CREATED, plot=mock_plot)
+
+        empty_benchmark.metrics.append(existing_metric_entity)
+        empty_benchmark.plots.append(plot_entity)
+
+        empty_benchmark.add_dependencies()
+
+        mocked_usecases["benchmark_add_metric_uc"].assert_not_called()
+
+    def test_add_dependencies_nested_dependencies(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        """Test that add_dependencies handles nested dependencies correctly."""
+        mock_metric = MagicMock(spec=MockMetric)
+        mock_metric.required_features = [MockFeature]
+
+        mock_plot = MagicMock(spec=MockPlot)
+        mock_plot.required_metrics = [MockMetric]
+        mock_plot.required_features = []
+
+        plot_entity = PlotEntity(name="plot_with_deps", status=JobStatus.CREATED, plot=mock_plot)
+        empty_benchmark.plots.append(plot_entity)
+
+        metric_entity = MetricEntity(name="mock_metric", status=JobStatus.CREATED, metric=mock_metric, results={})
+        feature_entity = FeatureEntity(name="mock_feature", status=JobStatus.CREATED, feature=MockFeature(), results={})
+
+        mocked_usecases["benchmark_add_metric_uc"].return_value = Success(metric_entity)
+        mocked_usecases["benchmark_add_feature_uc"].return_value = Success(feature_entity)
+
+        empty_benchmark.add_dependencies()
+
+        assert len(empty_benchmark.metrics) == 1
+        assert len(empty_benchmark.features) == 1
+        mocked_usecases["benchmark_add_metric_uc"].assert_called_once()
+        mocked_usecases["benchmark_add_feature_uc"].assert_called_once()
 
 
 class TestResultsToDataframe:

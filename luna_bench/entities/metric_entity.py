@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from luna_bench.base_components import BaseMetric
 from luna_bench.entities.metric_result_entity import MetricResultEntity
-from luna_bench.types import MetricName
+from luna_bench.types import AlgorithmName, MetricName, ModelName
 
 from .enums import JobStatus
 
@@ -16,4 +16,4 @@ class MetricEntity(BaseModel):
     status: JobStatus
 
     metric: BaseMetric
-    results: dict[tuple[str, str], MetricResultEntity]  # key is the algorithm registered id and model name
+    results: dict[ModelName, dict[AlgorithmName, MetricResultEntity]]

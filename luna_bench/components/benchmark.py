@@ -9,7 +9,6 @@ from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from returns.pipeline import is_successful
 
-from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
 from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmAddUc,
     AlgorithmRemoveUc,
@@ -41,7 +40,6 @@ from luna_bench.entities import (
     MetricEntity,
     PlotEntity,
 )
-from luna_bench.entities.enums import ErrorHandlingMode
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -749,7 +747,7 @@ class Benchmark(BenchmarkEntity):
     def add_plot(
         self,
         name: str,
-        plot: BasePlot[Any],
+        plot: BasePlot,
     ) -> PlotEntity:
         """
         Add a plot to the benchmark with a given name.
@@ -867,7 +865,6 @@ class Benchmark(BenchmarkEntity):
 
     def run_plots(
         self,
-        error_handling_mode: ErrorHandlingMode = ErrorHandlingMode.FAIL_ON_ERROR,
     ) -> None:
         """
         Execute all plots registered in the benchmark.
@@ -877,13 +874,6 @@ class Benchmark(BenchmarkEntity):
         validated before execution to ensure required data (metrics, features, etc.)
         is available. Plot execution is sequential and follows the order defined
         in the benchmark configuration.
-
-        Parameters
-        ----------
-        error_handling_mode : ErrorHandlingMode
-            Determines behavior when plot validation or execution fails.
-            - FAIL_ON_ERROR: Stop at the first error and raise RuntimeError
-            - CONTINUE_ON_ERROR: Log warnings and continue with remaining plots
 
         Raises
         ------
@@ -901,14 +891,38 @@ class Benchmark(BenchmarkEntity):
         execution continues with remaining plots.
         """
         benchmark_run_plots = self.__run_plots_uc()
-        result = benchmark_run_plots(self, UseCaseErrorHandlingMode(error_handling_mode.value))
+        result = benchmark_run_plots(self)
         if not is_successful(result):
             error = result.failure()
             Benchmark._logger.error(f"Failed to run plots for the benchmark {self.name} with error: {error}")
             raise RuntimeError(error)
 
+    def add_dependencies(self) -> None:
+        """Add any required dependencies for the benchmark execution."""
+        required_features: set[str] = {f.feature.registered_id for f in self.features}
+        required_metrics: set[str] = {m.metric.registered_id for m in self.metrics}
+
+        for p in self.plots:
+            for m in p.plot.required_metrics:
+                if m.registered_id not in required_metrics:
+                    Benchmark._logger.info(f"Adding metric {m.registered_id} to benchmark {self.name}")
+                    self.add_metric(m.registered_id, m())
+                    required_metrics.add(m.registered_id)
+            for f in p.plot.required_features:
+                if f.registered_id not in required_features:
+                    Benchmark._logger.info(f"Adding feature {f.registered_id} to benchmark {self.name}")
+                    self.add_feature(f.registered_id, f())
+                    required_features.add(f.registered_id)
+        for metric in self.metrics:
+            for f in metric.metric.required_features:
+                if f.registered_id not in required_features:
+                    Benchmark._logger.info(f"Adding feature {f.registered_id} to benchmark {self.name}")
+                    self.add_feature(f.registered_id, f())
+                    required_features.add(f.registered_id)
+
     def run(self) -> None:
         """Execute the benchmark."""
+        self.add_dependencies()
         self.run_features()
         self.run_algorithms()
         self.run_metrics()
@@ -962,10 +976,14 @@ class Benchmark(BenchmarkEntity):
 
     def features_to_dataframe(self, feature_entity: FeatureEntity) -> pd.DataFrame:
         """Return results for a single feature entity as a DataFrame with one row per model."""
-        return self._resultsentity_to_dataframe(
-            entity=feature_entity,
-            key_columns=lambda model_name: {"model": model_name},
-        )
+        rows: list[dict[str, Any]] = []
+        for model_name, result_entity in feature_entity.results.items():
+            row = {"model": model_name}
+            if result_entity.result is not None:
+                for field_name, value in result_entity.result.model_dump().items():
+                    row[f"{feature_entity.name}/{field_name}"] = value
+            rows.append(row)
+        return pd.DataFrame(rows)
 
     def all_features_to_dataframe(self) -> pd.DataFrame:
         """Return all feature results merged into a single DataFrame on ``model``."""
@@ -975,31 +993,21 @@ class Benchmark(BenchmarkEntity):
 
     def metrics_to_dataframe(self, metric_entity: MetricEntity) -> pd.DataFrame:
         """Return results for a single metric entity as a DataFrame with one row per (algorithm, model)."""
-        return self._resultsentity_to_dataframe(
-            entity=metric_entity,
-            key_columns=lambda key: {"algorithm": key[0], "model": key[1]},
-        )
+        rows: list[dict[str, Any]] = []
+        for model_name, algo_results in metric_entity.results.items():
+            for algorithm_name, result_entity in algo_results.items():
+                row = {"algorithm": algorithm_name, "model": model_name}
+                if result_entity.result is not None:
+                    for field_name, value in result_entity.result.model_dump().items():
+                        row[f"{metric_entity.name}/{field_name}"] = value
+                rows.append(row)
+        return pd.DataFrame(rows)
 
     def all_metrics_to_dataframe(self) -> pd.DataFrame:
         """Return all metric results merged into a single DataFrame on ``(algorithm, model)``."""
         return self._merge_result_entity(
             result_entities=self.metrics, on=["algorithm", "model"], entity_to_metric=self.metrics_to_dataframe
         )
-
-    def _resultsentity_to_dataframe(
-        self,
-        entity: ResultEntityT,
-        key_columns: Callable[[Any], dict[str, Any]],
-    ) -> pd.DataFrame:
-        """Flatten result entities into a DataFrame."""
-        rows: list[dict[str, Any]] = []
-        for key, result_entity in entity.results.items():
-            row = key_columns(key)
-            if result_entity.result is not None:
-                for field_name, value in result_entity.result.model_dump().items():
-                    row[f"{entity.name}/{field_name}"] = value
-            rows.append(row)
-        return pd.DataFrame(rows)
 
     def algorithms_to_dataframe(self, exclude: set[str] | None = None) -> pd.DataFrame:
         """Return all algorithm (algorithm, model) combinations as a DataFrame."""
@@ -1027,7 +1035,7 @@ class Benchmark(BenchmarkEntity):
         """Return the metric classes registered on this benchmark."""
         return [type(m.metric) for m in self.metrics]
 
-    def list_plots_classes(self) -> list[type[BasePlot[Any]]]:
+    def list_plots_classes(self) -> list[type[BasePlot]]:
         """Return the plot classes registered on this benchmark."""
         return [type(p.plot) for p in self.plots]
 
@@ -1045,6 +1053,6 @@ class Benchmark(BenchmarkEntity):
         for i, obj in enumerate(obj_list):
             if getattr(obj, "name", None) == name:
                 del obj_list[i]
-                # since we use name as a unique identifier,
+                # SINCE we use name as a unique identifier,
                 # we can break after the first match (only one name per list allowed).
                 return

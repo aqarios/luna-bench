@@ -1,18 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
-from pydantic import BaseModel
-from returns.result import Result
-
+from luna_bench.base_components.data_types.benchmark_results import BenchmarkResults
 from luna_bench.base_components.meta_classes.registered_class_meta import RegisteredClassMeta
-from luna_bench.errors.run_errors.plots_errors.plot_run_error import PlotRunError
-from luna_bench.errors.unknown_error import UnknownLunaBenchError
-
-if TYPE_CHECKING:
-    from luna_bench.entities.benchmark_entity import BenchmarkEntity
+from luna_bench.base_components.registerable_component import RegisterableComponent
+from luna_bench.types import FeatureClass, MetricClass
 
 
-class BasePlot[TValidationResult](BaseModel, ABC, metaclass=RegisteredClassMeta):
+class BasePlot(RegisterableComponent, ABC, metaclass=RegisteredClassMeta):
     """
     Base interface for all plot components.
 
@@ -20,32 +15,15 @@ class BasePlot[TValidationResult](BaseModel, ABC, metaclass=RegisteredClassMeta)
 
     """
 
-    registered_id: ClassVar[str]
+    required_features: ClassVar[list[FeatureClass]]
+    required_metrics: ClassVar[list[MetricClass]]
 
     @abstractmethod
-    def run(self, data: TValidationResult) -> None:
-        """
-        Execute the plot generation logic.
-
-        Subclasses must override this method.
-        The method should generate and save the plot using the provided data.=
-        """
-
-    @abstractmethod
-    def validate_plot(
-        self,
-        benchmark: "BenchmarkEntity",
-    ) -> Result[TValidationResult, PlotRunError | UnknownLunaBenchError]:
-        """
-        Validate the plot from benchmark data.
+    def run(self, benchmark_results: BenchmarkResults) -> None:
+        """Generate plot output from benchmark results.
 
         Parameters
         ----------
-        benchmark : BenchmarkEntity
-            The benchmark containing metrics, features, and other configuration.
-
-        Returns
-        -------
-        Result[None, MetricsMissingError | FeaturesMissingError | UnknownLunaBenchError]
-            Success if plot was generated, Failure with appropriate error otherwise.
+        benchmark_results : BenchmarkResults
+            Aggregated benchmark data consumed by the plot implementation.
         """

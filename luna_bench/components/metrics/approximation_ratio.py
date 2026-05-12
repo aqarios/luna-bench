@@ -6,7 +6,7 @@ from pydantic import Field
 
 from luna_bench.base_components import BaseMetric
 from luna_bench.base_components.data_types.feature_results import FeatureResults
-from luna_bench.components.features.optsol_feature import OptSolFeature, OptSolFeatureResult
+from luna_bench.components.features.optsol_feature import OptSolFeature
 from luna_bench.components.helper.divider_helper import get_ratio
 from luna_bench.helpers import metric
 from luna_bench.types import MetricResult
@@ -26,8 +26,8 @@ class ApproximationRatioResult(MetricResult):
     approximation_ratio: float = Field(ge=1.0, description="The calculated approximation ratio.")
 
 
-@metric(required_features=OptSolFeature)
-class ApproximationRatio(BaseMetric):
+@metric(OptSolFeature)
+class ApproximationRatio(BaseMetric[ApproximationRatioResult]):
     """Metric that calculates the approximation ratio of a solution against the optimal.
 
     The approximation ratio measures how close a found expectation value of a given solution
@@ -88,8 +88,7 @@ class ApproximationRatio(BaseMetric):
             is close to zero (within abt_diff tolerance).
         """
         # Get the optimal solution from features
-        opt_sol: OptSolFeatureResult
-        (opt_sol, _) = feature_results.first(feature_cls=OptSolFeature)  # type: ignore[assignment]
+        opt_sol = feature_results.first(feature_cls=OptSolFeature)
 
         # Check if any solution exists
         if len(solution.samples) == 0:

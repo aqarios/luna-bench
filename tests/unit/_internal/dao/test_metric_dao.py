@@ -258,12 +258,10 @@ class TestMetricDAO:
 
         assert type(set_result) is type(exp)
         if is_successful(exp):
-            assert (
-                next(
-                    iter(setup_benchmark.transaction.metric.load(benchmark_name, metric_name).unwrap().results.values())
-                )
-                == result
-            )
+            for r in setup_benchmark.transaction.metric.load(benchmark_name, metric_name).unwrap().results.values():
+                for d in r.values():
+                    assert d == result
+
         else:
             x = type(exp.failure())
             y = set_result.failure()

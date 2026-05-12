@@ -1,17 +1,18 @@
 from abc import ABC, abstractmethod
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from luna_quantum import Solution
-from pydantic import BaseModel
 
-from luna_bench.base_components.data_types.feature_results import FeatureResults
-from luna_bench.types import MetricResult
+from luna_bench.types import FeatureClass, MetricResult
 
-from .base_feature import BaseFeature
 from .meta_classes.metric_class_meta import MetricClassMeta
+from .registerable_component import RegisterableComponent
+
+if TYPE_CHECKING:
+    from luna_bench.base_components.data_types.feature_results import FeatureResults
 
 
-class BaseMetric(BaseModel, ABC, metaclass=MetricClassMeta):
+class BaseMetric[TMetricResult: MetricResult = MetricResult](RegisterableComponent, ABC, metaclass=MetricClassMeta):
     """
     Base class for all metrics.
 
@@ -21,11 +22,10 @@ class BaseMetric(BaseModel, ABC, metaclass=MetricClassMeta):
     A Metric must always be registered with the `@metric` decorator before it can be used in a benchmark.
     """
 
-    registered_id: ClassVar[str]
-    required_features: ClassVar[list[type[BaseFeature]]]
+    required_features: ClassVar[list[FeatureClass]]
 
     @abstractmethod
-    def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:
+    def run(self, solution: Solution, feature_results: "FeatureResults") -> TMetricResult:
         """
         Compute the metric value for a given solution.
 

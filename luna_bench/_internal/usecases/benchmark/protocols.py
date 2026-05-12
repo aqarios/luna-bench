@@ -6,7 +6,6 @@ from returns.maybe import Maybe
 from returns.result import Result
 
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
-from luna_bench._internal.usecases.benchmark.enums import UseCaseErrorHandlingMode
 from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
 from luna_bench.entities import (
     AlgorithmEntity,
@@ -27,6 +26,7 @@ from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorith
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
 from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
+from luna_bench.errors.run_errors.run_plot_missing_error import RunPlotMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
@@ -94,7 +94,7 @@ class FeatureRunUc(Protocol):
 
 class PlotAddUc(Protocol):
     def __call__(
-        self, benchmark_name: str, name: str, plot: BasePlot[Any]
+        self, benchmark_name: str, name: str, plot: BasePlot
     ) -> Result[
         PlotEntity,
         DataNotUniqueError
@@ -196,13 +196,14 @@ class BenchmarkSetModelsetUc(Protocol):
 
 
 class PlotsRunUc(Protocol):
-    error_handling_mode: UseCaseErrorHandlingMode
-
     def __call__(
         self,
         benchmark: BenchmarkEntity,
-        error_handling_mode: UseCaseErrorHandlingMode = UseCaseErrorHandlingMode.FAIL_ON_ERROR,
-    ) -> Result[None, PlotRunError | UnknownLunaBenchError]: ...
+        plot: PlotEntity | None = None,
+    ) -> Result[
+        None,
+        RunFeatureMissingError | RunPlotMissingError | PlotRunError | UnknownLunaBenchError | RunMetricMissingError,
+    ]: ...
 
 
 class BackgroundRunAlgorithmAsyncUc(Protocol):

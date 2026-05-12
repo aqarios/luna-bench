@@ -21,7 +21,11 @@ _usecase_container.config.from_pydantic(config)
 
 _registry_container.wire(
     modules=[
-        "luna_bench.helpers.decorators",
+        "luna_bench.helpers.decorators.algorithm",
+        "luna_bench.helpers.decorators.feature",
+        "luna_bench.helpers.decorators.metric",
+        "luna_bench.helpers.decorators.plot",
+        "luna_bench.helpers.registry_info",
         "luna_bench.helpers",
         "luna_bench._internal.usecases.modelset",
         "luna_bench._internal.usecases.benchmark",
@@ -36,12 +40,7 @@ _bg_task_container.wire(
     ]
 )
 
-_usecase_container.wire(
-    modules=[
-        "luna_bench.components",
-        "luna_bench.components.plots",
-    ]
-)
+_usecase_container.wire(modules=["luna_bench.components", "luna_bench.components.plots"])
 
 _dao_container.wire(
     modules=[

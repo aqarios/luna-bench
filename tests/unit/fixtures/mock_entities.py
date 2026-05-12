@@ -38,9 +38,11 @@ def make_metric_entity(
     error: str | None = None,
 ) -> MetricEntity:
     """Create a MetricEntity with results from (algo, model, {field: value}) tuples."""
-    results = {}
+    results: dict[str, dict[str, MetricResultEntity]] = {}
     for algo, model, fields in algo_model_results:
-        results[(algo, model)] = MetricResultEntity(
+        if model not in results:
+            results[model] = {}
+        results[model][algo] = MetricResultEntity(
             processing_time_ms=100,
             model_name=model,
             algorithm_name=algo,

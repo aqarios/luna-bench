@@ -14,4 +14,4 @@ class PlotEntity(BaseModel):
     name: PlotName
     status: JobStatus
 
-    plot: BasePlot  # type: ignore[type-arg]
+    plot: BasePlot
