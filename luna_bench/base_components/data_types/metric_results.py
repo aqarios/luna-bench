@@ -45,7 +45,7 @@ class MetricResults(BaseModel):
             raise MetricResultWrongClassError(metric_cls, list(self.data.keys()))
         return cast(
             "Mapping[MetricName, tuple[TMetricResult, BaseMetric[TMetricResult]]]",
-            self.data.get(metric_cls, {}),
+            self.data[cast("MetricClass", metric_cls)],
         )
 
     def get_all[TMetricResult: MetricResult](
@@ -71,7 +71,7 @@ class MetricResults(BaseModel):
         """
         return cast(
             "Mapping[MetricName, TMetricResult]",
-            {name: result[0] for name, result in self.get_all_with_config(metric_cls).items()},
+            {name: result for name, (result, _) in self.get_all_with_config(metric_cls).items()},
         )
 
     def get[TMetricResult: MetricResult](
@@ -128,14 +128,16 @@ class MetricResults(BaseModel):
         """
         if metric_cls not in self.data:
             raise MetricResultWrongClassError(metric_cls, list(self.data.keys()))
-        if metric_name not in self.data[metric_cls]:
+        if metric_name not in self.data[cast("MetricClass", metric_cls)]:
             raise MetricResulUnknownNameError(
-                metric_class=metric_cls, metric_name=metric_name, known_names=list(self.data[metric_cls].keys())
+                metric_class=cast("MetricClass", metric_cls),
+                metric_name=metric_name,
+                known_names=list(self.data[cast("MetricClass", metric_cls)].keys()),
             )
 
         return cast(
             "tuple[TMetricResult, BaseMetric[TMetricResult]]",
-            self.data[metric_cls][metric_name],
+            self.data[cast("MetricClass", metric_cls)][metric_name],
         )
 
     def first[TMetricResult: MetricResult](self, metric_cls: MetricClass[TMetricResult]) -> TMetricResult:

@@ -26,7 +26,7 @@ class FeatureResults(BaseModel):
         """Get all results for a class."""
         return cast(
             "Mapping[FeatureName, TFeatureResult]",
-            {name: result[0] for name, result in self.get_all_with_config(feature_cls=feature_cls).items()},
+            {name: result for name, (result, _) in self.get_all_with_config(feature_cls=feature_cls).items()},
         )
 
     def get_all_with_config[TFeatureResult: FeatureResult](
@@ -54,7 +54,7 @@ class FeatureResults(BaseModel):
             raise FeatureResultWrongClassError(feature_cls, list(self.data.keys()))
         return cast(
             "Mapping[FeatureName, tuple[TFeatureResult, BaseFeature[TFeatureResult]]]",
-            self.data.get(feature_cls, {}),
+            self.data[cast("FeatureClass", feature_cls)],
         )
 
     def get[TFeatureResult: FeatureResult](
@@ -112,14 +112,16 @@ class FeatureResults(BaseModel):
         """
         if feature_cls not in self.data:
             raise FeatureResultWrongClassError(feature_cls, list(self.data.keys()))
-        if feature_name not in self.data[feature_cls]:
+        if feature_name not in self.data[cast("FeatureClass", feature_cls)]:
             raise FeatureResulUnknownNameError(
-                feature_class=feature_cls, feature_name=feature_name, known_names=list(self.data[feature_cls].keys())
+                feature_class=cast("FeatureClass", feature_cls),
+                feature_name=feature_name,
+                known_names=list(self.data[cast("FeatureClass", feature_cls)].keys()),
             )
 
         return cast(
             "tuple[TFeatureResult, BaseFeature[TFeatureResult]]",
-            self.data[feature_cls][feature_name],
+            self.data[cast("FeatureClass", feature_cls)][feature_name],
         )
 
     def first[TFeatureResult: FeatureResult](self, feature_cls: FeatureClass[TFeatureResult]) -> TFeatureResult:
