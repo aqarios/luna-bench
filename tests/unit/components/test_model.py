@@ -7,8 +7,8 @@ import pytest
 from luna_model import Model
 from returns.result import Failure, Result, Success
 
+from luna_bench import ModelMetadata
 from luna_bench._internal.usecases.modelset.protocols import ModelFetchUc
-from luna_bench.components import ModelMetadata
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from tests.utils.luna_model import simple_model
 

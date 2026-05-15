@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from luna_bench.components.plots.fake_plot import FakePlot
+from luna_bench.plots.fake_plot import FakePlot
 
 
 class TestFakePlot:
@@ -16,9 +16,9 @@ class TestFakePlot:
 
         plt.close("all")
 
-    @patch("luna_bench.components.plots.fake_plot.plt.show")
-    @patch("luna_bench.components.plots.fake_plot.sns.barplot")
-    @patch("luna_bench.components.plots.fake_plot.plt.figure")
+    @patch("luna_bench.plots.fake_plot.plt.show")
+    @patch("luna_bench.plots.fake_plot.sns.barplot")
+    @patch("luna_bench.plots.fake_plot.plt.figure")
     def test_fake_plot_is_instantiable(
         self, mock_figure: MagicMock, mock_barplot: MagicMock, mock_show: MagicMock
     ) -> None:
@@ -29,9 +29,9 @@ class TestFakePlot:
         plot = FakePlot()
         assert plot is not None
 
-    @patch("luna_bench.components.plots.fake_plot.plt.show")
-    @patch("luna_bench.components.plots.fake_plot.sns.barplot")
-    @patch("luna_bench.components.plots.fake_plot.plt.figure")
+    @patch("luna_bench.plots.fake_plot.plt.show")
+    @patch("luna_bench.plots.fake_plot.sns.barplot")
+    @patch("luna_bench.plots.fake_plot.plt.figure")
     def test_fake_plot_has_run_method(
         self, mock_figure: MagicMock, mock_barplot: MagicMock, mock_show: MagicMock
     ) -> None:
@@ -43,9 +43,9 @@ class TestFakePlot:
         assert hasattr(plot, "run")
         assert callable(plot.run)
 
-    @patch("luna_bench.components.plots.fake_plot.plt.show")
-    @patch("luna_bench.components.plots.fake_plot.sns.barplot")
-    @patch("luna_bench.components.plots.fake_plot.plt.figure")
+    @patch("luna_bench.plots.fake_plot.plt.show")
+    @patch("luna_bench.plots.fake_plot.sns.barplot")
+    @patch("luna_bench.plots.fake_plot.plt.figure")
     def test_fake_plot_run_creates_figure(
         self, mock_figure: MagicMock, mock_barplot: MagicMock, mock_show: MagicMock
     ) -> None:
@@ -68,9 +68,9 @@ class TestFakePlot:
         first_call = mock_figure.call_args_list[0]
         assert first_call[1].get("figsize") == (8, 5)
 
-    @patch("luna_bench.components.plots.fake_plot.plt.show")
-    @patch("luna_bench.components.plots.fake_plot.sns.barplot")
-    @patch("luna_bench.components.plots.fake_plot.plt.figure")
+    @patch("luna_bench.plots.fake_plot.plt.show")
+    @patch("luna_bench.plots.fake_plot.sns.barplot")
+    @patch("luna_bench.plots.fake_plot.plt.figure")
     def test_fake_plot_run_calls_barplot(
         self, mock_figure: MagicMock, mock_barplot: MagicMock, mock_show: MagicMock
     ) -> None:
@@ -97,9 +97,9 @@ class TestFakePlot:
         assert call_kwargs["hue"] == "algorithm"
         assert call_kwargs["legend"] is False
 
-    @patch("luna_bench.components.plots.fake_plot.plt.show")
-    @patch("luna_bench.components.plots.fake_plot.sns.barplot")
-    @patch("luna_bench.components.plots.fake_plot.plt.figure")
+    @patch("luna_bench.plots.fake_plot.plt.show")
+    @patch("luna_bench.plots.fake_plot.sns.barplot")
+    @patch("luna_bench.plots.fake_plot.plt.figure")
     def test_fake_plot_run_sets_labels_and_title(
         self, mock_figure: MagicMock, mock_barplot: MagicMock, mock_show: MagicMock
     ) -> None:
@@ -117,9 +117,9 @@ class TestFakePlot:
         benchmark_results.get_all_metrics.return_value = [("model1", "algo1", metrics_result)]
 
         with (
-            patch("luna_bench.components.plots.fake_plot.plt.ylabel") as mock_ylabel,
-            patch("luna_bench.components.plots.fake_plot.plt.xlabel") as mock_xlabel,
-            patch("luna_bench.components.plots.fake_plot.plt.title") as mock_title,
+            patch("luna_bench.plots.fake_plot.plt.ylabel") as mock_ylabel,
+            patch("luna_bench.plots.fake_plot.plt.xlabel") as mock_xlabel,
+            patch("luna_bench.plots.fake_plot.plt.title") as mock_title,
         ):
             plot = FakePlot()
             plot.run(benchmark_results)
@@ -128,9 +128,9 @@ class TestFakePlot:
             mock_xlabel.assert_called_once_with("Algorithm")
             mock_title.assert_called_once_with("Average FakeMetric Value per Solver")
 
-    @patch("luna_bench.components.plots.fake_plot.plt.show")
-    @patch("luna_bench.components.plots.fake_plot.sns.barplot")
-    @patch("luna_bench.components.plots.fake_plot.plt.figure")
+    @patch("luna_bench.plots.fake_plot.plt.show")
+    @patch("luna_bench.plots.fake_plot.sns.barplot")
+    @patch("luna_bench.plots.fake_plot.plt.figure")
     def test_fake_plot_run_rotates_xticks(
         self, mock_figure: MagicMock, mock_barplot: MagicMock, mock_show: MagicMock
     ) -> None:
@@ -147,15 +147,15 @@ class TestFakePlot:
         benchmark_results = MagicMock()
         benchmark_results.get_all_metrics.return_value = [("model1", "algo1", metrics_result)]
 
-        with patch("luna_bench.components.plots.fake_plot.plt.xticks") as mock_xticks:
+        with patch("luna_bench.plots.fake_plot.plt.xticks") as mock_xticks:
             plot = FakePlot()
             plot.run(benchmark_results)
 
             mock_xticks.assert_called_once_with(rotation=45, ha="right")
 
-    @patch("luna_bench.components.plots.fake_plot.plt.show")
-    @patch("luna_bench.components.plots.fake_plot.sns.barplot")
-    @patch("luna_bench.components.plots.fake_plot.plt.figure")
+    @patch("luna_bench.plots.fake_plot.plt.show")
+    @patch("luna_bench.plots.fake_plot.sns.barplot")
+    @patch("luna_bench.plots.fake_plot.plt.figure")
     def test_fake_plot_run_calls_show(
         self, mock_figure: MagicMock, mock_barplot: MagicMock, mock_show: MagicMock
     ) -> None:
@@ -176,9 +176,9 @@ class TestFakePlot:
 
         mock_show.assert_called_once()
 
-    @patch("luna_bench.components.plots.fake_plot.plt.show")
-    @patch("luna_bench.components.plots.fake_plot.sns.barplot")
-    @patch("luna_bench.components.plots.fake_plot.plt.figure")
+    @patch("luna_bench.plots.fake_plot.plt.show")
+    @patch("luna_bench.plots.fake_plot.sns.barplot")
+    @patch("luna_bench.plots.fake_plot.plt.figure")
     def test_fake_plot_run_with_multiple_models_and_algorithms(
         self, mock_figure: MagicMock, mock_barplot: MagicMock, mock_show: MagicMock
     ) -> None:
@@ -208,9 +208,9 @@ class TestFakePlot:
         assert isinstance(data, pd.DataFrame)
         assert len(data) == 4  # 2 models * 2 algorithms
 
-    @patch("luna_bench.components.plots.fake_plot.plt.show")
-    @patch("luna_bench.components.plots.fake_plot.sns.barplot")
-    @patch("luna_bench.components.plots.fake_plot.plt.figure")
+    @patch("luna_bench.plots.fake_plot.plt.show")
+    @patch("luna_bench.plots.fake_plot.sns.barplot")
+    @patch("luna_bench.plots.fake_plot.plt.figure")
     def test_fake_plot_run_dataframe_contains_required_columns(
         self, mock_figure: MagicMock, mock_barplot: MagicMock, mock_show: MagicMock
     ) -> None:
@@ -236,9 +236,9 @@ class TestFakePlot:
         assert "random_number" in data.columns
         assert "metric_name" in data.columns
 
-    @patch("luna_bench.components.plots.fake_plot.plt.show")
-    @patch("luna_bench.components.plots.fake_plot.sns.barplot")
-    @patch("luna_bench.components.plots.fake_plot.plt.figure")
+    @patch("luna_bench.plots.fake_plot.plt.show")
+    @patch("luna_bench.plots.fake_plot.sns.barplot")
+    @patch("luna_bench.plots.fake_plot.plt.figure")
     def test_fake_plot_run_algorithm_column_format(
         self, mock_figure: MagicMock, mock_barplot: MagicMock, mock_show: MagicMock
     ) -> None:
@@ -264,9 +264,9 @@ class TestFakePlot:
         assert "model1" in algorithm_col
         assert "metric1" in algorithm_col
 
-    @patch("luna_bench.components.plots.fake_plot.plt.show")
-    @patch("luna_bench.components.plots.fake_plot.sns.barplot")
-    @patch("luna_bench.components.plots.fake_plot.plt.figure")
+    @patch("luna_bench.plots.fake_plot.plt.show")
+    @patch("luna_bench.plots.fake_plot.sns.barplot")
+    @patch("luna_bench.plots.fake_plot.plt.figure")
     def test_fake_plot_run_tight_layout_called(
         self, mock_figure: MagicMock, mock_barplot: MagicMock, mock_show: MagicMock
     ) -> None:
@@ -283,16 +283,16 @@ class TestFakePlot:
         benchmark_results = MagicMock()
         benchmark_results.get_all_metrics.return_value = [("model1", "algo1", metrics_result)]
 
-        with patch("luna_bench.components.plots.fake_plot.plt.tight_layout") as mock_tight_layout:
+        with patch("luna_bench.plots.fake_plot.plt.tight_layout") as mock_tight_layout:
             plot = FakePlot()
             plot.run(benchmark_results)
 
             mock_tight_layout.assert_called_once()
 
-    @patch("luna_bench.components.plots.fake_plot.plt.show")
-    @patch("luna_bench.components.plots.fake_plot.sns.barplot")
-    @patch("luna_bench.components.plots.fake_plot.plt.figure")
-    @patch("luna_bench.components.plots.fake_plot.AqariosColours.palette")
+    @patch("luna_bench.plots.fake_plot.plt.show")
+    @patch("luna_bench.plots.fake_plot.sns.barplot")
+    @patch("luna_bench.plots.fake_plot.plt.figure")
+    @patch("luna_bench.plots.fake_plot.AqariosColours.palette")
     def test_fake_plot_run_uses_palette(
         self, mock_palette: MagicMock, mock_figure: MagicMock, mock_barplot: MagicMock, mock_show: MagicMock
     ) -> None:

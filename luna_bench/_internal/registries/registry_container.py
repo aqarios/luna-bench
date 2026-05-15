@@ -4,7 +4,11 @@ from typing import TYPE_CHECKING, Any
 
 from dependency_injector import containers, providers
 
-from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
+from luna_bench.custom.base_components.base_algorithm_async import BaseAlgorithmAsync
+from luna_bench.custom.base_components.base_algorithm_sync import BaseAlgorithmSync
+from luna_bench.custom.base_components.base_feature import BaseFeature
+from luna_bench.custom.base_components.base_metric import BaseMetric
+from luna_bench.custom.base_components.base_plot import BasePlot
 
 from .arbitrary_data_registry import ArbitraryDataRegistry
 

@@ -28,8 +28,8 @@ if TYPE_CHECKING:
     from pydantic import BaseModel
     from returns.result import Result
 
+    from luna_bench.custom.types import AlgorithmName, ModelName
     from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
-    from luna_bench.types import AlgorithmName, ModelName
 
 
 class MetricSqlDao(MetricDao):

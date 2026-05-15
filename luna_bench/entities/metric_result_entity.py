@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from luna_bench.types import MetricResult
+from luna_bench.custom.base_results.metric_result import MetricResult
 
 from .enums import JobStatus
 

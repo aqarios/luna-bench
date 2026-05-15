@@ -7,7 +7,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.mappers.algorithm_mapper import AlgorithmMapper
 from luna_bench._internal.usecases.benchmark.protocols import AlgorithmRetrieveAsyncSolutionsUc
-from luna_bench.base_components import BaseAlgorithmAsync
+from luna_bench.custom import BaseAlgorithmAsync
 from luna_bench.entities import BenchmarkEntity
 from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError

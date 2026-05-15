@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from luna_bench.base_components import BasePlot
-from luna_bench.types import PlotName
+from luna_bench.custom import BasePlot
+from luna_bench.custom.types import PlotName
 
 from .enums import JobStatus
 

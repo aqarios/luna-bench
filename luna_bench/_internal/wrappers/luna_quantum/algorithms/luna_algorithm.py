@@ -11,7 +11,7 @@ from pydantic import BaseModel, field_validator, model_serializer
 from pydantic_core.core_schema import SerializerFunctionWrapHandler
 from returns.result import Failure, Result, Success
 
-from luna_bench.base_components import BaseAlgorithmAsync
+from luna_bench.custom import BaseAlgorithmAsync
 
 config.LUNA_LOG_DISABLE_SPINNER = True
 

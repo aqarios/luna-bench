@@ -14,8 +14,8 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmRetrieveSyncSolutionsUc,
     BackgroundRetrieveAlgorithmSyncUc,
 )
-from luna_bench.base_components import BaseAlgorithmSync
 from luna_bench.configs.config import config
+from luna_bench.custom import BaseAlgorithmSync
 from luna_bench.entities import AlgorithmEntity, AlgorithmResultEntity, BenchmarkEntity
 from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError

@@ -1,6 +1,6 @@
-from luna_bench.base_components.base_feature import BaseFeature
+from luna_bench.custom.base_components.base_feature import BaseFeature
+from luna_bench.custom.types import FeatureName
 from luna_bench.errors.components.features.feature_error import FeatureError
-from luna_bench.types import FeatureName
 
 
 class FeatureResulUnknownNameError(FeatureError):

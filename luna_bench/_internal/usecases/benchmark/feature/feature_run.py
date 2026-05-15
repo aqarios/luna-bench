@@ -16,7 +16,7 @@ from luna_bench._internal.mappers import FeatureMapper
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.protocols import FeatureRunUc
-from luna_bench.base_components import BaseFeature
+from luna_bench.custom import BaseFeature
 from luna_bench.entities import BenchmarkEntity, FeatureEntity, FeatureResultEntity
 from luna_bench.entities.enums import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
@@ -25,7 +25,7 @@ from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetM
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
-    from luna_bench.types import FeatureResult
+    from luna_bench.custom.base_results.feature_result import FeatureResult
 
 
 class FeatureRunUcImpl(FeatureRunUc):

@@ -6,15 +6,19 @@ from luna_model import Solution
 from pydantic import BaseModel
 from returns.result import Result, Success
 
-from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
-from luna_bench.helpers.decorators import algorithm, feature, metric, plot
-from luna_bench.types import FeatureResult, MetricResult
+from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
+from luna_bench.custom.base_results.feature_result import FeatureResult
+from luna_bench.custom.base_results.metric_result import MetricResult
+from luna_bench.custom.decorators.algorithm import algorithm
+from luna_bench.custom.decorators.feature import feature
+from luna_bench.custom.decorators.metric import metric
+from luna_bench.custom.decorators.plot import plot
 
 if TYPE_CHECKING:
     from luna_model import Model
 
-    from luna_bench.base_components.data_types.benchmark_results import BenchmarkResults
-    from luna_bench.base_components.data_types.feature_results import FeatureResults
+    from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
+    from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
 
 
 @feature(feature_id="mock_feature")
@@ -64,33 +68,33 @@ class UnregisteredAlgorithm(BaseAlgorithmSync):
 
 @plot
 class MockPlot(BasePlot):
-    def run(self, benchmark_results: BenchmarkResults) -> None:
+    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
         raise NotImplementedError
 
 
 class UnregisteredPlot(BasePlot):
-    def run(self, benchmark_results: BenchmarkResults) -> None:
+    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
         raise NotImplementedError
 
 
 @plot
 class MockPlotWithError(BasePlot):
-    def run(self, benchmark_results: BenchmarkResults) -> None:
+    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
         raise NotImplementedError
 
 
 @metric(metric_id="mock_metric")
 class MockMetric(BaseMetric[MetricResult]):
-    def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:  # noqa: ARG002
+    def run(self, solution: Solution, feature_results: FeatureResultContainer) -> MetricResult:  # noqa: ARG002
         return MetricResult()
 
 
 @metric
 class MockMetricError(BaseMetric[MetricResult]):
-    def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:
+    def run(self, solution: Solution, feature_results: FeatureResultContainer) -> MetricResult:
         raise NotImplementedError
 
 
 class UnregisteredMetric(BaseMetric[MetricResult]):
-    def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:  # noqa: ARG002
+    def run(self, solution: Solution, feature_results: FeatureResultContainer) -> MetricResult:  # noqa: ARG002
         return MetricResult()

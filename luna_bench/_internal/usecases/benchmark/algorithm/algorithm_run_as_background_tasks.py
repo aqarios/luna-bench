@@ -11,7 +11,7 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     BackgroundRunAlgorithmAsyncUc,
     BackgroundRunAlgorithmSyncUc,
 )
-from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
+from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync
 from luna_bench.entities import AlgorithmEntity, ModelMetadataEntity
 from luna_bench.entities.enums.job_status_enum import JobStatus
 

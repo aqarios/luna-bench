@@ -7,7 +7,7 @@ import pytest
 from luna_model import Bounds, Model, Sense, Variable, Vtype
 from luna_model.translator import QuboTranslator
 
-from luna_bench.components.features.qubo.get_qubo import get_qubo
+from luna_bench.features.qubo.get_qubo import get_qubo
 
 
 def create_mock_qubo_model(sense: Sense, objective: float) -> MagicMock:
@@ -53,7 +53,7 @@ class TestGetQubo:
 
         mock_translator = creat_mock_translator([[1.0]])
 
-        with patch("luna_bench.components.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
+        with patch("luna_bench.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
             mock_translator_cls.from_lm.return_value = mock_translator
             get_qubo(mock_model)
 
@@ -93,7 +93,7 @@ class TestGetQubo:
     def test_raises_runtime_error_for_unknown_exception(self) -> None:
         mock_model = create_mock_qubo_model(Sense.MIN, 0.0)
 
-        with patch("luna_bench.components.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
+        with patch("luna_bench.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
             mock_translator_cls.from_lm.side_effect = ValueError("something unexpected")
 
             with pytest.raises(RuntimeError, match="Unknown error"):
@@ -103,7 +103,7 @@ class TestGetQubo:
         mock_model = create_mock_qubo_model(Sense.MIN, 0.0)
         original_error = ValueError("original")
 
-        with patch("luna_bench.components.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
+        with patch("luna_bench.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
             mock_translator_cls.from_lm.side_effect = original_error
 
             with pytest.raises(RuntimeError) as exc_info:
@@ -117,7 +117,7 @@ class TestGetQubo:
 
         mock_translator = creat_mock_translator([[1.0]])
 
-        with patch("luna_bench.components.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
+        with patch("luna_bench.features.qubo.get_qubo.QuboTranslator") as mock_translator_cls:
             mock_translator_cls.from_lm.return_value = mock_translator
             get_qubo(mock_model)
 

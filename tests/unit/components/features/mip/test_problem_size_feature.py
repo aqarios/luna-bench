@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 from luna_model import Bounds, Model, Variable, Vtype, quicksum
 
-from luna_bench.components.features.mip.problem_size_feature import (
+from luna_bench.features.mip.problem_size_feature import (
     ModelBoundsError,
     ProblemSizeFeatures,
     ProblemSizeFeaturesResult,

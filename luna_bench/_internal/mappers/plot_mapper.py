@@ -6,7 +6,7 @@ from luna_bench._internal.domain_models import RegisteredDataDomain
 from luna_bench._internal.domain_models.plot_config_domain import PlotDomain
 from luna_bench._internal.mappers.mixins.model_list_mixin import ModelListMixin
 from luna_bench._internal.registries import PydanticRegistry
-from luna_bench.base_components import BasePlot
+from luna_bench.custom import BasePlot
 from luna_bench.entities import PlotEntity
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 

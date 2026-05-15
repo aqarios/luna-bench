@@ -6,19 +6,19 @@ from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
 
-from luna_bench.base_components import BaseMetric  # noqa: TC001
-from luna_bench.base_components.data_types.metric_results import MetricResults
-from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
-from luna_bench.types import (  # noqa: TC001
+from luna_bench.custom import BaseMetric  # noqa: TC001
+from luna_bench.custom.result_containers.metric_result_container import MetricResultContainer
+from luna_bench.custom.types import (  # noqa: TC001
     AlgorithmName,
     MetricClass,
     MetricComputed,
     MetricName,
-    MetricResult,
     ModelName,
 )
+from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
 
 if TYPE_CHECKING:
+    from luna_bench.custom.base_results.metric_result import MetricResult
     from luna_bench.entities import BenchmarkEntity
 
 
@@ -67,7 +67,7 @@ class MetricResultBuilder:
         model_name: ModelName,
         algorithm_name: AlgorithmName,
         required_metrics: list[MetricClass],
-    ) -> Result[MetricResults, RunMetricMissingError]:
+    ) -> Result[MetricResultContainer, RunMetricMissingError]:
         """
         Build and validate feature results for a metric and model.
 
@@ -96,7 +96,7 @@ class MetricResultBuilder:
             m_dict[data[2]] = (data[0], data[1])
 
         return Success(
-            MetricResults.model_construct(
+            MetricResultContainer.model_construct(
                 data=metric_data,
             )
         )

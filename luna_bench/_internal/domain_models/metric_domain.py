@@ -1,5 +1,5 @@
+from luna_bench.custom.types import AlgorithmName, ModelName
 from luna_bench.entities.enums.job_status_enum import JobStatus
-from luna_bench.types import AlgorithmName, ModelName
 
 from .base_domain import BaseDomain
 from .metric_result_domain import MetricResultDomain

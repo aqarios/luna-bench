@@ -3,9 +3,9 @@ import pytest
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.feature_result_domain import FeatureResultDomain
 from luna_bench._internal.mappers.feature_mapper import FeatureMapper
+from luna_bench.custom.base_results.feature_result import FeatureResult
 from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.entities.feature_result_entity import FeatureResultEntity
-from luna_bench.types import FeatureResult
 
 
 class TestFeatureMapper:

@@ -6,7 +6,7 @@ import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench.base_components import BasePlot
+from luna_bench.custom import BasePlot
 from luna_bench.entities import BenchmarkEntity, PlotEntity
 from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError

@@ -6,8 +6,7 @@ import pandas as pd
 import pytest
 from returns.result import Failure, Success
 
-from luna_bench.components.benchmark import Benchmark
-from luna_bench.components.model_set import ModelSet
+from luna_bench import Benchmark, ModelSet
 from luna_bench.entities import (
     AlgorithmEntity,
     BenchmarkEntity,

@@ -8,7 +8,7 @@ import pytest
 from luna_model import Sense
 from pydantic import ValidationError
 
-from luna_bench.components.metrics.feasbility_ratio import FeasibilityRatio, FeasibilityRatioResult
+from luna_bench.metrics.feasbility_ratio import FeasibilityRatio, FeasibilityRatioResult
 
 if TYPE_CHECKING:
     from unittest.mock import MagicMock

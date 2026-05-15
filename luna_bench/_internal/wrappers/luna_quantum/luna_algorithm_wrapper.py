@@ -15,9 +15,9 @@ from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.wrappers.luna_quantum import algorithms
 from luna_bench._internal.wrappers.luna_quantum.algorithms import LunaAlgorithm
-from luna_bench.base_components import BaseAlgorithmAsync
+from luna_bench.custom import BaseAlgorithmAsync
+from luna_bench.custom.decorators.algorithm import algorithm
 from luna_bench.errors.bench_type_errors.algorithm_sub_type_error import AlgorithmSubTypeError
-from luna_bench.helpers.decorators import algorithm
 
 
 class LunaAlgorithmWrapper:
