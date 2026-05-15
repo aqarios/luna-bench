@@ -5,10 +5,11 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.domain_models import MetricDomain, MetricResultDomain, RegisteredDataDomain
 from luna_bench._internal.mappers.mixins.model_list_mixin import ModelListMixin
 from luna_bench._internal.registries import PydanticRegistry
-from luna_bench.base_components import BaseMetric
+from luna_bench.custom import BaseMetric
+from luna_bench.custom.base_results.metric_result import MetricResult
+from luna_bench.custom.types import AlgorithmName, ModelName
 from luna_bench.entities import MetricEntity, MetricResultEntity
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
-from luna_bench.types import AlgorithmName, MetricResult, ModelName
 
 
 class MetricMapper(ModelListMixin[MetricDomain, MetricEntity]):

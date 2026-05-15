@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from luna_bench.components.helper.numpy_stats_helper import NumpyStatsHelper
+from luna_bench.helpers.numpy_stats_helper import NumpyStatsHelper
 
 
 class TestNumpyStatsHelper:

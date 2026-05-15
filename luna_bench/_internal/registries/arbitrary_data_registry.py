@@ -3,8 +3,8 @@ from pydantic import BaseModel, ValidationError
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.domain_models import RegisteredDataDomain
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
+from luna_bench._internal.domain_models.registered_data_domain import RegisteredDataDomain
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.base_registry import BaseRegistry
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError

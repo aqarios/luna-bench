@@ -8,7 +8,7 @@ from pydantic import BaseModel
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
+    from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync
 
 
 class BackgroundTaskClient(Protocol):

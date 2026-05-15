@@ -16,7 +16,7 @@ from luna_bench._internal.mappers import FeatureMapper
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.protocols import FeatureRunUc
-from luna_bench.base_components import BaseFeature
+from luna_bench.custom import BaseFeature
 from luna_bench.entities import BenchmarkEntity, FeatureEntity, FeatureResultEntity
 from luna_bench.entities.enums import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError

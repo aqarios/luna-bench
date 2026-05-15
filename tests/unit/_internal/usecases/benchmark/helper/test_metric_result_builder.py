@@ -6,10 +6,10 @@ import pytest
 from returns.pipeline import is_successful
 
 from luna_bench._internal.usecases.benchmark.helper.metric_result_builder import MetricResultBuilder
-from luna_bench.base_components import BaseMetric
+from luna_bench.custom import BaseMetric
+from luna_bench.custom.base_results.metric_result import MetricResult
 from luna_bench.entities import BenchmarkEntity, MetricEntity
 from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
-from luna_bench.types import MetricResult
 from tests.unit.fixtures.mock_components import MockMetric
 from tests.unit.fixtures.mock_entities import make_metric_entity
 

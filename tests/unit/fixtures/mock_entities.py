@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from luna_bench.custom.base_results.feature_result import FeatureResult
+from luna_bench.custom.base_results.metric_result import MetricResult
 from luna_bench.entities import (
     AlgorithmEntity,
     AlgorithmResultEntity,
@@ -9,7 +11,6 @@ from luna_bench.entities import (
     MetricResultEntity,
 )
 from luna_bench.entities.enums import JobStatus
-from luna_bench.types import FeatureResult, MetricResult
 
 from .mock_components import MockAlgorithm, MockFeature, MockMetric
 

@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from luna_bench.base_components.data_types.feature_results import FeatureResults
-from luna_bench.components.metrics.runtime import Runtime, RuntimeResult
+from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
+from luna_bench.metrics.runtime import Runtime, RuntimeResult
 
 if TYPE_CHECKING:
     from unittest.mock import MagicMock
@@ -15,9 +15,9 @@ if TYPE_CHECKING:
     from tests.unit.fixtures.mock_feature_results import SolutionFactory
 
 
-def _create_empty_feature_results() -> FeatureResults:
+def _create_empty_feature_results() -> FeatureResultContainer:
     """Create empty FeatureResults (Runtime doesn't need features)."""
-    return FeatureResults(data={})
+    return FeatureResultContainer(data={})
 
 
 class TestRuntimeResult:

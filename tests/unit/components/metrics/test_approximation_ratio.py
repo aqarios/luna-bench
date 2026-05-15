@@ -8,7 +8,7 @@ import pytest
 from luna_model import Sense
 from pydantic import ValidationError
 
-from luna_bench.components.metrics.approximation_ratio import (
+from luna_bench.metrics.approximation_ratio import (
     ApproximationRatio,
     ApproximationRatioResult,
 )

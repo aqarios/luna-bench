@@ -7,10 +7,10 @@ from returns.result import Result, Success
 
 from luna_bench._internal.registries import Registry
 from luna_bench._internal.registries.arbitrary_data_registry import ArbitraryDataRegistry
-from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
+from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync
+from luna_bench.custom.decorators.algorithm import algorithm
 from luna_bench.errors.decorators.invalid_return_type_error import InvalidReturnTypeError
 from luna_bench.errors.incompatible_class_error import IncompatibleClassError
-from luna_bench.helpers.decorators.algorithm import algorithm
 
 
 class TestAlgorithmSyncDecorator:

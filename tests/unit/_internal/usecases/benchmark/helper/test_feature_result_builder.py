@@ -6,10 +6,10 @@ import pytest
 from returns.pipeline import is_successful
 
 from luna_bench._internal.usecases.benchmark.helper.feature_result_builder import FeatureResultBuilder
-from luna_bench.base_components import BaseFeature
+from luna_bench.custom import BaseFeature
+from luna_bench.custom.base_results.feature_result import FeatureResult
 from luna_bench.entities import BenchmarkEntity, FeatureEntity
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
-from luna_bench.types import FeatureResult
 from tests.unit.fixtures.mock_components import MockFeature
 from tests.unit.fixtures.mock_entities import make_feature_entity
 

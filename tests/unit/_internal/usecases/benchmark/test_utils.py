@@ -20,7 +20,7 @@ from luna_bench._internal.mappers.feature_mapper import FeatureMapper
 from luna_bench._internal.mappers.metric_mapper import MetricMapper
 from luna_bench._internal.mappers.plot_mapper import PlotMapper
 from luna_bench._internal.registries.arbitrary_data_registry import ArbitraryDataRegistry
-from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
+from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
 from luna_bench.entities import (
     AlgorithmEntity,
     BenchmarkEntity,

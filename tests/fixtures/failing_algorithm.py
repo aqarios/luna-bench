@@ -6,8 +6,7 @@ from typing import ClassVar
 from luna_model import Model, Solution
 from luna_quantum import Logging
 
-from luna_bench.base_components import BaseAlgorithmSync
-from luna_bench.helpers import algorithm
+from luna_bench.custom import BaseAlgorithmSync, algorithm
 
 
 class _CustomError(Exception):

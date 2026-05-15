@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from luna_model import Bounds, Model, Unbounded, Variable, Vtype
 
-from luna_bench.components.features.mip.right_hand_side_feature import (
+from luna_bench.features.mip.right_hand_side_feature import (
     ComparatorError,
     ConstraintSense,
     RhsStatsKey,

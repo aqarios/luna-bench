@@ -7,7 +7,7 @@ import pytest
 if TYPE_CHECKING:
     from luna_model import Model
 
-from luna_bench.components.features.optsol_feature import InfeasibleModelError, OptSolFeature
+from luna_bench.features.optsol_feature import InfeasibleModelError, OptSolFeature
 
 
 class TestOptSolFeature:

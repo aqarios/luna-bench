@@ -98,8 +98,8 @@ That's it. Luna-Bench runs your solvers against every model in the set, computes
 Subclass `BaseAlgorithmSync` and register it with the `@algorithm` decorator.
 
 ```python
-from luna_bench.base_components import BaseAlgorithmSync
-from luna_bench.helpers import algorithm
+from luna_bench.custom import BaseAlgorithmSync
+from luna_bench.custom import algorithm
 from luna_model import Model, Solution
 
 
@@ -117,8 +117,8 @@ class MyAlgorithm(BaseAlgorithmSync):
 Features extract properties from models. They run before algorithms and metrics.
 
 ```python
-from luna_bench.base_components import BaseFeature
-from luna_bench.helpers import feature
+from luna_bench.custom import BaseFeature
+from luna_bench.custom import feature
 from luna_bench.types import FeatureResult
 from luna_model import Model
 
@@ -138,9 +138,9 @@ class MyFeature(BaseFeature):
 Metrics evaluate solutions. They can depend on features for reference data like optimal solutions.
 
 ```python
-from luna_bench.base_components import BaseMetric
-from luna_bench.base_components.data_types.feature_results import FeatureResults
-from luna_bench.helpers import metric
+from luna_bench.custom import BaseMetric
+from luna_bench.custom.data_types.feature_result_container import FeatureResultContainer
+from luna_bench.custom import metric
 from luna_bench.types import MetricResult
 from luna_model import Solution
 
@@ -151,7 +151,7 @@ class MyMetricResult(MetricResult):
 
 @metric()
 class MyMetric(BaseMetric):
-    def run(self, solution: Solution, feature_results: FeatureResults) -> MyMetricResult:
+    def run(self, solution: Solution, feature_results: FeatureResultContainer) -> MyMetricResult:
         score = solution.expectation_value()
         return MyMetricResult(score=score)
 ```

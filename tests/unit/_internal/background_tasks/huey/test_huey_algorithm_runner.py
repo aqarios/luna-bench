@@ -9,7 +9,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.background_tasks.huey.huey_algorithm_runner import HueyAlgorithmRunner
 from luna_bench._internal.dao import DaoTransaction
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
+from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError

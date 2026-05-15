@@ -1,6 +1,6 @@
 from luna_model import Model
 
-from luna_bench.components.features.var_num_feature import VarNumberFeature
+from luna_bench.features.var_num_feature import VarNumberFeature
 
 
 class TestVarNumberFeature:

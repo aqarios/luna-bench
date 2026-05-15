@@ -3,8 +3,8 @@
 import pytest
 from luna_model import Bounds, Model, Unbounded, Variable, Vtype
 
-from luna_bench.components.helper.degree import ConstraintDegree
-from luna_bench.components.helper.model_matrix_extraction import ModelMatrix
+from luna_bench.helpers.degree import ConstraintDegree
+from luna_bench.helpers.model_matrix_extraction import ModelMatrix
 
 
 class TestConstraintMatrix:

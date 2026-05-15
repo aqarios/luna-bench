@@ -1,0 +1,118 @@
+import tempfile
+from logging import Logger
+from pathlib import Path
+from typing import ClassVar
+
+from luna_model import Model, Solution, Timer
+from luna_model.translator import LpTranslator
+from luna_quantum import Logging
+from pyscipopt import Model as PyScipModel
+
+from luna_bench.custom import BaseAlgorithmSync, algorithm
+from luna_bench.errors.infeasible_model_error import InfeasibleModelError
+
+SCIP_QUAD_VAR_DUMMY = "quadobjvar"
+
+
+@algorithm()
+class ScipAlgorithm(BaseAlgorithmSync):
+    """
+    Classical exact optimization algorithm using SCIP (Solving Constraint Integer Programs).
+
+    This algorithm wraps the SCIP solver to provide exact solutions for optimization
+    problems using classical branch-and-bound methods. It translates Luna quantum models
+    to LP format, solves them with SCIP, and translates the results back.
+
+    Parameters
+    ----------
+    max_runtime: int | None
+        Defines the maximum runtime for the SCIP solver in seconds, defaults to 1 hour.
+    quiet_output: bool
+        Defines the verbosity of the SCIP solver output.
+    _logger: Logger
+        Class-level logger for tracking algorithm execution.
+
+    Raises
+    ------
+    InfeasibleModelError: If the model has no feasible solution.
+    """
+
+    max_runtime: int | None = 60 * 60
+    quiet_output: bool = True
+
+    _logger: ClassVar[Logger] = Logging.get_logger(__name__)
+
+    def run(self, model: Model) -> Solution:
+        """
+        Solve an optimization model using the SCIP classical solver.
+
+        Parameters
+        ----------
+        model : Model
+            The Luna optimization model to solve.
+
+        Returns
+        -------
+        Solution
+            Solution object containing the optimal variable assignments,
+            objective value, and timing information.
+
+        Raises
+        ------
+        InfeasibleModelError
+            If SCIP determines the model is infeasible.
+
+        Examples
+        --------
+        >>> scip_algo = ScipAlgorithm()
+        >>> solution = scip_algo.run(my_model)
+        """
+        scip_model = PyScipModel()
+        scip_model.hideOutput(quiet=self.quiet_output)
+
+        if self.max_runtime is not None:
+            scip_model.setParam("limits/time", self.max_runtime)
+
+        timer = Timer.start()
+
+        self._logger.info(f"Running SCIP for model {model.name}")
+
+        # Create temporary LP file for SCIP
+        with tempfile.NamedTemporaryFile(suffix=".lp", delete=False) as tmp:
+            path = Path(tmp.name)
+
+        try:
+            LpTranslator.from_lm(
+                model,
+                filepath=path,
+            )
+            scip_model.readProblem(path)
+        finally:
+            if path.exists():
+                path.unlink()
+
+        scip_model.optimize()
+
+        timing = timer.stop()
+
+        if scip_model.getStatus() == "infeasible":
+            raise InfeasibleModelError
+
+        self._logger.info(f"Completed SCIP optimization for model {model.name} in {timing.total_seconds:.2f}s.")
+
+        # Extract solution values from SCIP model
+        model_var_names = {v.name for v in model.variables()}
+        solution_dict: dict[str, float] = {}
+        for var in scip_model.getVars():
+            if var.name == SCIP_QUAD_VAR_DUMMY:
+                continue  # SCIP adds this internally to linearise quadratic objectives
+            if var.name not in model_var_names:
+                raise ValueError(f"SCIP returned unknown variable '{var.name}' not present in model")  # noqa: TRY003
+            solution_dict[var.name] = scip_model.getVal(var)
+
+        return Solution.from_dict(
+            data=solution_dict,
+            model=model,
+            timing=timing,
+            counts=1,
+        )

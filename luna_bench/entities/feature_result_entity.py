@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from luna_bench.types import FeatureResult, ModelName
+from luna_bench.custom.base_results.feature_result import FeatureResult
+from luna_bench.custom.types import ModelName
 
 from .enums import JobStatus
 

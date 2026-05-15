@@ -10,7 +10,8 @@ from unittest.mock import patch
 import pytest
 from luna_model import Model, Solution, Variable, Vtype
 
-from luna_bench.components.algorithms.scip import InfeasibleModelError, ScipAlgorithm
+from luna_bench.algorithms import ScipAlgorithm
+from luna_bench.algorithms.scip import InfeasibleModelError
 
 
 class TestScipAlgorithm:
