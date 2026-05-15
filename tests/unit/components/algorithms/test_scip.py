@@ -11,7 +11,7 @@ import pytest
 from luna_model import Model, Solution, Variable, Vtype
 
 from luna_bench.algorithms import ScipAlgorithm
-from luna_bench.algorithms.scip import InfeasibleModelError
+from luna_bench.errors.infeasible_model_error import InfeasibleModelError
 
 
 class TestScipAlgorithm:

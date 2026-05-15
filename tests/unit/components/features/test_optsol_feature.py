@@ -4,10 +4,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from luna_bench.errors.infeasible_model_error import InfeasibleModelError
+
 if TYPE_CHECKING:
     from luna_model import Model
 
-from luna_bench.features.optsol_feature import InfeasibleModelError, OptSolFeature
+from luna_bench.features.optsol_feature import OptSolFeature
 
 
 class TestOptSolFeature:

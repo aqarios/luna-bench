@@ -14,6 +14,7 @@ from luna_bench.errors.infeasible_model_error import InfeasibleModelError
 if TYPE_CHECKING:
     from luna_model import Model
 
+
 class OptSolFeatureResult(FeatureResult):
     """
     Result container for optimal solution feature calculations.

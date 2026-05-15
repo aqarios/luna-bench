@@ -25,7 +25,7 @@ from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetM
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
-    from luna_bench.types import FeatureResult
+    from luna_bench.custom.base_results.feature_result import FeatureResult
 
 
 class FeatureRunUcImpl(FeatureRunUc):
