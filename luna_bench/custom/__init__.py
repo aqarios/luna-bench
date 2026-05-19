@@ -3,12 +3,26 @@ from .base_components.base_algorithm_sync import BaseAlgorithmSync
 from .base_components.base_feature import BaseFeature
 from .base_components.base_metric import BaseMetric
 from .base_components.base_plot import BasePlot
+from .base_results.feature_result import FeatureResult
+from .base_results.metric_result import MetricResult
 from .decorators.algorithm import algorithm
 from .decorators.feature import feature
 from .decorators.metric import metric
 from .decorators.plot import plot
 from .registry_info import RegistryInfo
-from .types import AlgorithmName, BenchmarkName, FeatureName, MetricName, ModelName, ModelSetName, PlotName
+from .result_containers.feature_result_container import FeatureResultContainer
+from .result_containers.metric_result_container import MetricResultContainer
+from .types import (
+    AlgorithmName,
+    BenchmarkName,
+    FeatureComputed,
+    FeatureName,
+    MetricComputed,
+    MetricName,
+    ModelName,
+    ModelSetName,
+    PlotName,
+)
 
 __all__ = [
     "AlgorithmName",
@@ -18,8 +32,14 @@ __all__ = [
     "BaseMetric",
     "BasePlot",
     "BenchmarkName",
+    "FeatureComputed",
     "FeatureName",
+    "FeatureResult",
+    "FeatureResultContainer",
+    "MetricComputed",
     "MetricName",
+    "MetricResult",
+    "MetricResultContainer",
     "ModelName",
     "ModelSetName",
     "ModelSetName",
