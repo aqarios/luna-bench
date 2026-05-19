@@ -122,8 +122,7 @@ def plot(
     --------
     Basic plot from a class:
 
-    >>> from luna_bench.base_components import BasePlot
-    >>> from luna_bench.base_components.data_types.benchmark_results import BenchmarkResults
+    >>> from luna_bench.custom import BasePlot, BenchmarkResults
     >>>
     >>> @plot
     ... class MyPlot(BasePlot):
@@ -138,7 +137,7 @@ def plot(
 
     Plot that depends on a specific metric:
 
-    >>> from luna_bench.components.metrics.runtime import Runtime
+    >>> from luna_bench.metrics import Runtime
     >>>
     >>> @plot(Runtime)
     ... class RuntimeVisualization(BasePlot):

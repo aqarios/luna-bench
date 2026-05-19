@@ -9,8 +9,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from luna_bench.custom import plot
-from luna_bench.features.var_num_feature import VarNumberFeature
-from luna_bench.metrics.runtime import Runtime
+from luna_bench.features import VarNumberFeature
+from luna_bench.metrics import Runtime
 from luna_bench.plots.generics.scatter_plot import ScatterPlot
 
 if TYPE_CHECKING:

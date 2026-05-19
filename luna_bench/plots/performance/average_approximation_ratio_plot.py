@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from luna_bench.custom import plot
-from luna_bench.metrics.approximation_ratio import ApproximationRatio
+from luna_bench.metrics import ApproximationRatio
 from luna_bench.plots.generics.bar_plot import BarPlot
 
 if TYPE_CHECKING:
-    from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
+    from luna_bench.custom import BenchmarkResultContainer
 
 
 @plot(ApproximationRatio)

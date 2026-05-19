@@ -4,7 +4,7 @@ import numpy as np
 from luna_model import Constraint, Model, Variable, Vtype
 from numpy.typing import NDArray
 
-from luna_bench.helpers.degree import ConstraintDegree
+from .degree import ConstraintDegree
 
 
 class ModelMatrix:

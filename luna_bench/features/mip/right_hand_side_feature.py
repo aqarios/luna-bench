@@ -7,9 +7,8 @@ import numpy as np
 from luna_model import Comparator, Model
 from pydantic import BaseModel
 
-from luna_bench.custom import BaseFeature, feature
-from luna_bench.features.enum_feature_result import EnumFeatureResult
-from luna_bench.helpers.numpy_stats_helper import NumpyStatsHelper
+from luna_bench.custom import BaseFeature, FeatureResultEnum, feature
+from luna_bench.helpers import NumpyStatsHelper
 
 
 class ComparatorError(Exception):
@@ -64,7 +63,7 @@ class RhsStats(BaseModel):
     std: float
 
 
-class RightHandSideFeaturesResult(EnumFeatureResult[RhsStatsKey, RhsStats]):
+class RightHandSideFeaturesResult(FeatureResultEnum[RhsStatsKey, RhsStats]):
     """
     Result container for right-hand side feature calculations.
 
@@ -72,7 +71,7 @@ class RightHandSideFeaturesResult(EnumFeatureResult[RhsStatsKey, RhsStats]):
     -------
     .. code-block:: python
 
-        from luna_bench.components.features.mip.right_hand_side_feature import (
+        from luna_bench.features.mip.right_hand_side_feature import (
             ConstraintSense,
             RhsStatsKey,
             RightHandSideFeatures,

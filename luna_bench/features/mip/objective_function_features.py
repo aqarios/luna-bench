@@ -7,12 +7,8 @@ import numpy as np
 from luna_model import Model, Variable, Vtype
 from pydantic import BaseModel
 
-from luna_bench.custom import BaseFeature, feature
-from luna_bench.features.enum_feature_result import EnumFeatureResult
-from luna_bench.helpers.degree import ConstraintDegree
-from luna_bench.helpers.model_matrix_extraction import ModelMatrix
-from luna_bench.helpers.numpy_stats_helper import NumpyStatsHelper
-from luna_bench.helpers.var_scope import VarScope
+from luna_bench.custom import BaseFeature, FeatureResultEnum, feature
+from luna_bench.helpers import ConstraintDegree, ModelMatrix, NumpyStatsHelper, VarScope
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -60,7 +56,7 @@ class ObjCoefStats(BaseModel):
     std: float
 
 
-class ObjectiveFunctionFeatureResult(EnumFeatureResult[ObjCoefStatsKey, ObjCoefStats]):
+class ObjectiveFunctionFeatureResult(FeatureResultEnum[ObjCoefStatsKey, ObjCoefStats]):
     """
     Result container for objective function feature calculations.
 
@@ -68,7 +64,7 @@ class ObjectiveFunctionFeatureResult(EnumFeatureResult[ObjCoefStatsKey, ObjCoefS
     -------
     .. code-block:: python
 
-        from luna_bench.components.features.mip.objective_function_features import (
+        from luna_bench.features.mip.objective_function_features import (
             NormType,
             ObjCoefStatsKey,
             ObjectiveFunctionFeature,

@@ -4,11 +4,9 @@ from luna_model import Sense, Solution
 from luna_model.solution import ValueSource
 from pydantic import Field
 
-from luna_bench.custom import BaseMetric, metric
-from luna_bench.custom.base_results.metric_result import MetricResult
-from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
-from luna_bench.features.optsol_feature import OptSolFeature
-from luna_bench.helpers.divider_helper import get_ratio
+from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
+from luna_bench.features import OptSolFeature
+from luna_bench.helpers import get_ratio
 
 
 class ApproximationRatioResult(MetricResult):
@@ -49,7 +47,7 @@ class ApproximationRatio(BaseMetric[ApproximationRatioResult]):
 
     Examples
     --------
-    >>> from luna_bench.components.metrics.approximation_ratio import ApproximationRatio
+    >>> from luna_bench.metrics import ApproximationRatio
     >>> metric = ApproximationRatio()
     >>> result = metric.run(solution, feature_results)
     >>> print(f"Approximation Ratio: {result.approximation_ratio}")

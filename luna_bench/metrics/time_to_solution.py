@@ -7,9 +7,7 @@ import numpy as np
 from luna_model import Solution
 from pydantic import Field
 
-from luna_bench.custom import BaseMetric, metric
-from luna_bench.custom.base_results.metric_result import MetricResult
-from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
+from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
 from luna_bench.features import OptSolFeature
 
 
@@ -69,7 +67,7 @@ class TimeToSolution(BaseMetric[TimeToSolutionResult]):
 
     Examples
     --------
-    >>> from luna_bench.components.metrics.time_to_solution import TimeToSolution
+    >>> from luna_bench.metrics import TimeToSolution
     >>> metric = TimeToSolution()
     >>> result = metric.run(solution, feature_results)
     >>> print(f"TTS: {result.time_to_solution} seconds")

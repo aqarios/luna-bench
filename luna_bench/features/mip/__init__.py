@@ -13,7 +13,7 @@ To use these feature extractors in your benchmark:
 .. code-block:: python
 
     from luna_bench import Benchmark
-    from luna_bench.components.features.mip import ProblemSizeFeatures, LinearConstraintMatrixFeatures
+    from luna_bench.features import ProblemSizeFeatures, LinearConstraintMatrixFeatures
 
     # Create a benchmark
     b = Benchmark()

@@ -3,8 +3,7 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
-from luna_bench.custom import BaseFeature, feature
-from luna_bench.custom.base_results.feature_result import FeatureResult
+from luna_bench.custom import BaseFeature, FeatureResult, feature
 
 if TYPE_CHECKING:
     from luna_model import Model

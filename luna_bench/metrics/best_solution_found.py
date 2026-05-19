@@ -7,11 +7,9 @@ import numpy as np
 from luna_model import Sense, Solution
 from pydantic import Field
 
-from luna_bench.custom import BaseMetric, metric
-from luna_bench.custom.base_results.metric_result import MetricResult
-from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
-from luna_bench.features.optsol_feature import OptSolFeature
-from luna_bench.helpers.divider_helper import get_ratio
+from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
+from luna_bench.features import OptSolFeature
+from luna_bench.helpers import get_ratio
 
 
 class BestSolutionFoundResult(MetricResult):
@@ -66,7 +64,7 @@ class BestSolutionFound(BaseMetric[BestSolutionFoundResult]):
 
     Examples
     --------
-    >>> from luna_bench.components.metrics.best_solution_found import BestSolutionFound
+    >>> from luna_bench.metrics import BestSolutionFound
     >>> metric = BestSolutionFound()
     >>> result = metric.run(solution, feature_results)
     >>> print(f"Best Solution Found ratio: {result.best_solution_found}")

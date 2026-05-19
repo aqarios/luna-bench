@@ -7,8 +7,9 @@ from matplotlib import pyplot as plt
 from pandas import DataFrame
 from seaborn import scatterplot
 
-from luna_bench.plots.generics.seaborn_plot import SeabornPlot
 from luna_bench.plots.utils import AqariosColours
+
+from .seaborn_plot import SeabornPlot
 
 
 class ScatterPlot(SeabornPlot, ABC):

@@ -7,8 +7,7 @@ from typing import TYPE_CHECKING
 from luna_model.translator import LpTranslator
 from pyscipopt import Model as ScipModel
 
-from luna_bench.custom import BaseFeature, feature
-from luna_bench.custom.base_results.feature_result import FeatureResult
+from luna_bench.custom import BaseFeature, FeatureResult, feature
 from luna_bench.errors.infeasible_model_error import InfeasibleModelError
 
 if TYPE_CHECKING:

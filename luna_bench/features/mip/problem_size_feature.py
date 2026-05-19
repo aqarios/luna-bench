@@ -7,12 +7,8 @@ import numpy as np
 from luna_model import Model, Unbounded, Vtype
 from pydantic import BaseModel
 
-from luna_bench.custom import BaseFeature, feature
-from luna_bench.custom.base_results.feature_result import FeatureResult
-from luna_bench.features.enum_feature_result import EnumFeatureResult
-from luna_bench.helpers.degree import ConstraintDegree
-from luna_bench.helpers.model_matrix_extraction import ModelMatrix
-from luna_bench.helpers.numpy_stats_helper import NumpyStatsHelper
+from luna_bench.custom import BaseFeature, FeatureResult, FeatureResultEnum, feature
+from luna_bench.helpers import ConstraintDegree, ModelMatrix, NumpyStatsHelper
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -78,7 +74,7 @@ class VarCountStats(BaseModel):
     fraction: float
 
 
-class VarCountResult(EnumFeatureResult[VarTypeKey, VarCountStats]):
+class VarCountResult(FeatureResultEnum[VarTypeKey, VarCountStats]):
     """
     Result container for variable count statistics.
 
@@ -86,7 +82,7 @@ class VarCountResult(EnumFeatureResult[VarTypeKey, VarCountStats]):
     -------
     .. code-block:: python
 
-        from luna_bench.components.features.mip.problem_size_feature import (
+        from luna_bench.features.mip.problem_size_feature import (
             VarCountResult,
             VarType,
             VarTypeKey,

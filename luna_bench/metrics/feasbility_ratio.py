@@ -3,9 +3,7 @@
 from luna_model import Solution
 from pydantic import Field
 
-from luna_bench.custom import BaseMetric, metric
-from luna_bench.custom.base_results.metric_result import MetricResult
-from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
+from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
 
 
 class FeasibilityRatioResult(MetricResult):
@@ -36,7 +34,7 @@ class FeasibilityRatio(BaseMetric[FeasibilityRatioResult]):
 
     Examples
     --------
-    >>> from luna_bench.components.metrics.feasbility_ratio import FeasibilityRatio
+    >>> from luna_bench.metrics import FeasibilityRatio
     >>> metric = FeasibilityRatio()
     >>> result = metric.run(solution, feature_results)
     >>> print(f"Feasibility Ratio: {result.feasibility_ratio}")

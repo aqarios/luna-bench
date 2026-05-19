@@ -8,9 +8,9 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 
-from luna_bench.plots.generics.seaborn_plot import SeabornPlot
-from luna_bench.plots.utils import AqariosColours
-from luna_bench.plots.utils.aggregation_enum import Aggregation
+from luna_bench.plots.utils import Aggregation, AqariosColours
+
+from .seaborn_plot import SeabornPlot
 
 
 class BarPlot(SeabornPlot, ABC):
