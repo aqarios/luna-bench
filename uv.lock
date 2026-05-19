@@ -506,7 +506,7 @@ wheels = [
 
 [[package]]
 name = "luna-bench"
-version = "0.0.1a3"
+version = "0.0.1a4"
 source = { editable = "." }
 dependencies = [
     { name = "dependency-injector" },
