@@ -8,6 +8,7 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 import luna_bench
+from luna_bench import ModelMetadata, ModelSet
 from luna_bench._internal.domain_models import ModelMetadataDomain, ModelSetDomain
 from luna_bench._internal.usecases.modelset.protocols import (
     ModelAddUc,
@@ -18,7 +19,6 @@ from luna_bench._internal.usecases.modelset.protocols import (
     ModelSetLoadAllUc,
     ModelSetLoadUc,
 )
-from luna_bench.components import ModelMetadata, ModelSet
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError

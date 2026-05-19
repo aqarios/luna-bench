@@ -12,7 +12,7 @@ from luna_bench._internal.usecases.benchmark import AlgorithmRetrieveAsyncRetriv
 from luna_bench._internal.usecases.benchmark.protocols import (
     BackgroundRetrieveAlgorithmAsyncUc,
 )
-from luna_bench.base_components import BaseAlgorithmAsync
+from luna_bench.custom import BaseAlgorithmAsync
 from luna_bench.entities import JobStatus
 from luna_bench.entities.algorithm_result_entity import AlgorithmResultEntity
 from luna_bench.entities.benchmark_entity import BenchmarkEntity

@@ -1,4 +1,5 @@
 import time
+from typing import TYPE_CHECKING
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
@@ -13,8 +14,8 @@ from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.helper import FeatureResultBuilder
 from luna_bench._internal.usecases.benchmark.protocols import MetricRunUc
-from luna_bench.base_components import BaseMetric
-from luna_bench.base_components.data_types.feature_results import FeatureResults
+from luna_bench.custom import BaseMetric
+from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
 from luna_bench.entities import AlgorithmResultEntity, BenchmarkEntity, MetricEntity, MetricResultEntity
 from luna_bench.entities.enums import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
@@ -23,7 +24,9 @@ from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMis
 from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
-from luna_bench.types import MetricResult  # noqa: TC001
+
+if TYPE_CHECKING:
+    from luna_bench.custom.base_results.metric_result import MetricResult
 
 
 class MetricRunUcImpl(MetricRunUc):
@@ -54,7 +57,7 @@ class MetricRunUcImpl(MetricRunUc):
         algorithm_name: str,
         model_name: str,
         algorithm_result: AlgorithmResultEntity,
-        feature_results: FeatureResults,
+        feature_results: FeatureResultContainer,
         metric: MetricEntity,
     ) -> Result[MetricResultEntity, AlgorithmNotDoneError | DataNotExistError | UnknownLunaBenchError]:
         # CHECK if result for metric and algorithm already exists and if it should be updated/recalulated or not.

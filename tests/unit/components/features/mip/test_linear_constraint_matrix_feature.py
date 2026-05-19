@@ -4,13 +4,13 @@ import numpy as np
 import pytest
 from luna_model import Bounds, Model, Unbounded, Variable, Vtype
 
-from luna_bench.components.features.mip.linear_constraint_matrix import (
+from luna_bench.features.mip.linear_constraint_matrix import (
     CoefStatsKey,
     CoefType,
     LinearConstraintMatrixFeatures,
     LinearConstraintMatrixFeaturesResult,
 )
-from luna_bench.components.helper.var_scope import VarScope
+from luna_bench.helpers.var_scope import VarScope
 
 
 class TestLinearConstraintMatrixFeatures:

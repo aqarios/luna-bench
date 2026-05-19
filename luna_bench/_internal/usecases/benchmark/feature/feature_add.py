@@ -8,7 +8,7 @@ from luna_bench._internal.domain_models import FeatureDomain, RegisteredDataDoma
 from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.protocols import FeatureAddUc
-from luna_bench.base_components import BaseFeature
+from luna_bench.custom import BaseFeature
 from luna_bench.entities.feature_entity import FeatureEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError

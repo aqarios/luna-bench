@@ -6,7 +6,7 @@ from luna_bench._internal.domain_models import AlgorithmDomain, AlgorithmResultD
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
 from luna_bench._internal.mappers.mixins.model_list_mixin import ModelListMixin
 from luna_bench._internal.registries import PydanticRegistry
-from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
+from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync
 from luna_bench.entities import AlgorithmEntity
 from luna_bench.entities.algorithm_result_entity import AlgorithmResultEntity
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from luna_model import Model, Solution
 
-from luna_bench.components.algorithms.fake_algorithm import FakeAlgorithm
+from luna_bench.algorithms import FakeAlgorithm
 
 
 class TestFakeAlgorithm:

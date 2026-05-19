@@ -1,6 +1,6 @@
 from luna_model import Model
 
-from luna_bench.components.features.fake_feature import FakeFeature
+from luna_bench.features.fake_feature import FakeFeature
 
 
 class TestFakeFeature:

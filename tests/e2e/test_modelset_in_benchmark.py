@@ -1,4 +1,4 @@
-from luna_bench.components import Benchmark, ModelSet
+from luna_bench import Benchmark, ModelSet
 from tests.utils.luna_model import simple_model
 
 

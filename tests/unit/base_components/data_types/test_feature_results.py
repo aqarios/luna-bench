@@ -3,14 +3,16 @@ from typing import TYPE_CHECKING, ClassVar
 import pytest
 from luna_model import Model
 
-from luna_bench.base_components.base_feature import BaseFeature
-from luna_bench.base_components.data_types.feature_results import FeatureResults
+from luna_bench.custom.base_components.base_feature import BaseFeature
+from luna_bench.custom.base_results.feature_result import FeatureResult
+from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
 from luna_bench.errors.components.features.feature_result_unknown_name_error import FeatureResulUnknownNameError
 from luna_bench.errors.components.features.feature_result_wrong_class_error import FeatureResultWrongClassError
-from luna_bench.types import FeatureClass, FeatureName, FeatureResult
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+
+    from luna_bench.custom.types import FeatureClass, FeatureName
 
 
 class MockFeature(BaseFeature):
@@ -34,7 +36,7 @@ class TestFeatureResults:
         data: Mapping[FeatureClass, Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
             MockFeature: {"feat1": (fr, f1)}
         }
-        results = FeatureResults.model_construct(data=data)
+        results = FeatureResultContainer.model_construct(data=data)
         assert results.data == data
 
     def test_get_all_success(self) -> None:
@@ -43,16 +45,16 @@ class TestFeatureResults:
         data: Mapping[FeatureClass, Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
             MockFeature: {"feat1": (fr, f1)}
         }
-        results = FeatureResults.model_construct(data=data)
+        results = FeatureResultContainer.model_construct(data=data)
         assert results.get_all(MockFeature) == {"feat1": fr}
         assert results.get_all_with_config(MockFeature) == {"feat1": (fr, f1)}
 
     def test_get_all_empty(self) -> None:
-        results = FeatureResults.model_construct(data={MockFeature: {}})
+        results = FeatureResultContainer.model_construct(data={MockFeature: {}})
         assert results.get_all(MockFeature) == {}
 
     def test_get_all_wrong_class(self) -> None:
-        results = FeatureResults.model_construct(data={})
+        results = FeatureResultContainer.model_construct(data={})
         with pytest.raises(FeatureResultWrongClassError):
             results.get_all(MockFeature2)
 
@@ -62,12 +64,12 @@ class TestFeatureResults:
         data: Mapping[FeatureClass, Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
             MockFeature: {"feat1": (fr, f1)}
         }
-        results = FeatureResults.model_construct(data=data)
+        results = FeatureResultContainer.model_construct(data=data)
         assert results.get(MockFeature, "feat1") == fr
         assert results.get_with_config(MockFeature, "feat1") == (fr, f1)
 
     def test_get_wrong_class(self) -> None:
-        results = FeatureResults.model_construct(data={})
+        results = FeatureResultContainer.model_construct(data={})
         with pytest.raises(FeatureResultWrongClassError):
             results.get(MockFeature2, "feat1")
 
@@ -77,7 +79,7 @@ class TestFeatureResults:
         data: Mapping[FeatureClass, Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
             MockFeature: {"feat1": (fr, f1)}
         }
-        results = FeatureResults.model_construct(data=data)
+        results = FeatureResultContainer.model_construct(data=data)
         with pytest.raises(FeatureResulUnknownNameError):
             results.get(MockFeature, "feat2")
 
@@ -87,6 +89,6 @@ class TestFeatureResults:
         data: Mapping[FeatureClass, Mapping[FeatureName, tuple[FeatureResult, BaseFeature]]] = {
             MockFeature: {"feat1": (fr, f1)}
         }
-        results = FeatureResults.model_construct(data=data)
+        results = FeatureResultContainer.model_construct(data=data)
         assert results.first(MockFeature) == fr
         assert results.first_with_config(MockFeature) == (fr, f1)

@@ -2,7 +2,7 @@ from dependency_injector.wiring import Provide, inject
 
 from luna_bench._internal.background_tasks import BackgroundAlgorithmRunner, BackgroundTaskContainer
 from luna_bench._internal.usecases.benchmark.protocols import BackgroundRunAlgorithmSyncUc
-from luna_bench.base_components import BaseAlgorithmSync
+from luna_bench.custom import BaseAlgorithmSync
 
 
 class BackgroundRunAlgorithmSyncUcImpl(BackgroundRunAlgorithmSyncUc):

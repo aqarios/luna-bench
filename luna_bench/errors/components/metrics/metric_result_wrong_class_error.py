@@ -1,6 +1,6 @@
 from typing import Any
 
-from luna_bench.base_components import BaseMetric
+from luna_bench.custom import BaseMetric
 from luna_bench.errors.components.metrics.metric_error import MetricError
 
 

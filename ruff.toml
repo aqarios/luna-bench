@@ -85,8 +85,13 @@ allow-star-arg-any = true # At some point we should remove all args and kwargs
 ]
 "luna_bench/entities/**/*.py" = ["TC001", "TC002"] # Disable Type checking block checks for pydantic objs
 "luna_bench/_internal/domain_models/**/*.py" = ["TC001"] # Disable Type checking block checks for pydantic objs
-"luna_bench/components/*.py" = ["TC001"] # Disable Type checking block checks for pydantic objs
-"luna_bench/base_components/**/*.py" = ["TC001", "TC003"] # Disable Type checking block checks for pydantic objs
+"luna_bench/algorithms/**/*.py" = ["TC001"] # Disable Type checking block checks for pydantic objs
+"luna_bench/features/**/*.py" = ["TC001"] # Disable Type checking block checks for pydantic objs
+"luna_bench/plots/**/*.py" = ["TC001"] # Disable Type checking block checks for pydantic objs
+"luna_bench/metrics/**/*.py" = ["TC001"] # Disable Type checking block checks for pydantic objs
+"luna_bench/custom/base_components/**/*.py" = ["TC001", "TC003"] # Disable Type checking block checks for pydantic objs
+"luna_bench/custom/base_results/**/*.py" = ["TC001", "TC003"] # Disable Type checking block checks for pydantic objs
+"luna_bench/custom/result_containers/**/*.py" = ["TC001", "TC003"] # Disable Type checking block checks for pydantic objs
 
 [lint.pydocstyle]
 convention = "numpy"

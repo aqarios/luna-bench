@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from luna_bench.types import ModelName
+from luna_bench.custom.types import ModelName
 
 
 class ModelMetadataEntity(BaseModel):

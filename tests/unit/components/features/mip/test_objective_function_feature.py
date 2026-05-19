@@ -4,13 +4,13 @@ import numpy as np
 import pytest
 from luna_model import Bounds, Model, Unbounded, Variable, Vtype
 
-from luna_bench.components.features.mip.objective_function_features import (
+from luna_bench.features.mip.objective_function_features import (
     NormType,
     ObjCoefStatsKey,
     ObjectiveFunctionFeature,
     ObjectiveFunctionFeatureResult,
 )
-from luna_bench.components.helper.var_scope import VarScope
+from luna_bench.helpers.var_scope import VarScope
 
 
 class TestObjectiveFunctionFeature:

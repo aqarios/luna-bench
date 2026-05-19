@@ -6,7 +6,7 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.usecases.benchmark.helper import FeatureResultBuilder, MetricResultBuilder
 from luna_bench._internal.usecases.benchmark.protocols import PlotsRunUc
-from luna_bench.base_components.data_types.benchmark_results import BenchmarkResults
+from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
 from luna_bench.entities import PlotEntity
 from luna_bench.entities.benchmark_entity import BenchmarkEntity
 from luna_bench.errors.run_errors.plots_errors.plot_exectuion_error import PlotExecutionError
@@ -17,9 +17,9 @@ from luna_bench.errors.run_errors.run_plot_missing_error import RunPlotMissingEr
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
-    from luna_bench.base_components.data_types.feature_results import FeatureResults
-    from luna_bench.base_components.data_types.metric_results import MetricResults
-    from luna_bench.types import AlgorithmName, ModelName
+    from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
+    from luna_bench.custom.result_containers.metric_result_container import MetricResultContainer
+    from luna_bench.custom.types import AlgorithmName, ModelName
 
 
 class PlotsRunUcImpl(PlotsRunUc):
@@ -43,8 +43,8 @@ class PlotsRunUcImpl(PlotsRunUc):
     def _run_plot(
         self, plot_entity: PlotEntity, benchmark: BenchmarkEntity
     ) -> Result[None, RunFeatureMissingError | RunMetricMissingError | PlotExecutionError]:
-        features: dict[ModelName, FeatureResults] = {}
-        metrics: dict[ModelName, dict[AlgorithmName, MetricResults]] = {}
+        features: dict[ModelName, FeatureResultContainer] = {}
+        metrics: dict[ModelName, dict[AlgorithmName, MetricResultContainer]] = {}
         if benchmark.modelset is None:
             self._logger.warning(f"Modelset is missing for benchmark '{benchmark.name}'")
             return Success(None)
@@ -65,7 +65,7 @@ class PlotsRunUcImpl(PlotsRunUc):
 
                     metrics[m.name][a.name] = me.unwrap()
 
-        benchmark_result: BenchmarkResults = BenchmarkResults(
+        benchmark_result: BenchmarkResultContainer = BenchmarkResultContainer(
             features=features,
             metrics=metrics,
         )

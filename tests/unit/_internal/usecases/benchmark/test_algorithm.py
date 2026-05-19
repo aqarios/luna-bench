@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from pydantic import ValidationError
 
     from luna_bench._internal.usecases.usecase_container import UsecaseContainer
-    from luna_bench.base_components import BaseAlgorithmAsync, BaseAlgorithmSync
+    from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync
     from luna_bench.errors.registry.unknown_id_error import UnknownIdError
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 

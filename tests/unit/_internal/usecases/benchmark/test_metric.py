@@ -6,7 +6,7 @@ import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench.base_components import BaseMetric
+from luna_bench.custom import BaseMetric
 from luna_bench.entities import FeatureEntity, MetricEntity
 from luna_bench.entities.algorithm_result_entity import AlgorithmResultEntity
 from luna_bench.entities.enums.job_status_enum import JobStatus

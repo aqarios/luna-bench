@@ -9,7 +9,7 @@ from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDa
 from luna_bench._internal.usecases.benchmark import (
     AlgorithmRetrieveAsyncSolutionsUcImpl,
 )
-from luna_bench.base_components import BaseAlgorithmAsync
+from luna_bench.custom import BaseAlgorithmAsync
 from luna_bench.entities import JobStatus
 from luna_bench.entities.algorithm_result_entity import AlgorithmResultEntity
 from luna_bench.entities.benchmark_entity import BenchmarkEntity

@@ -1,6 +1,6 @@
-from luna_bench.base_components import BaseMetric
+from luna_bench.custom import BaseMetric
+from luna_bench.custom.types import MetricName
 from luna_bench.errors.components.metrics.metric_error import MetricError
-from luna_bench.types import MetricName
 
 
 class MetricResulUnknownNameError(MetricError):

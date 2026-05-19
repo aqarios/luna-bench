@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy.typing import NDArray
 
-from luna_bench.components.features.qubo.sparsity_density_features import (
+from luna_bench.features.qubo.sparsity_density_features import (
     QuboSparsityDensityFeature,
     QuboSparsityDensityFeatureResult,
 )

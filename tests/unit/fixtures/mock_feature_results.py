@@ -6,8 +6,8 @@ import pytest
 from _pytest.fixtures import FixtureRequest
 from luna_model import Bounds, Model, Sense, Solution, Timer, Unbounded, Variable, Vtype
 
-from luna_bench.base_components.data_types.feature_results import FeatureResults
-from luna_bench.components.features.optsol_feature import OptSolFeatureResult
+from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
+from luna_bench.features.optsol_feature import OptSolFeatureResult
 
 SolutionFactory = Callable[..., Solution]
 
@@ -65,7 +65,7 @@ def mock_feature_results(request: FixtureRequest) -> MagicMock:
 
     opt_sol_result = OptSolFeatureResult(best_sol=optimal_value, pre_terminated=False, runtime=0.01)
 
-    feature_results = MagicMock(spec=FeatureResults)
+    feature_results = MagicMock(spec=FeatureResultContainer)
     feature_results.first.return_value = opt_sol_result
 
     return feature_results

@@ -21,17 +21,16 @@ _usecase_container.config.from_pydantic(config)
 
 _registry_container.wire(
     modules=[
-        "luna_bench.helpers.decorators.algorithm",
-        "luna_bench.helpers.decorators.feature",
-        "luna_bench.helpers.decorators.metric",
-        "luna_bench.helpers.decorators.plot",
-        "luna_bench.helpers.registry_info",
-        "luna_bench.helpers",
+        "luna_bench.custom.decorators.algorithm",
+        "luna_bench.custom.decorators.feature",
+        "luna_bench.custom.decorators.metric",
+        "luna_bench.custom.decorators.plot",
+        "luna_bench.custom.registry_info",
+        "luna_bench.custom",
         "luna_bench._internal.usecases.modelset",
         "luna_bench._internal.usecases.benchmark",
-        "luna_bench.components",
         "luna_bench._internal.wrappers",
-    ]
+    ],
 )
 _bg_task_container.wire(
     modules=[
@@ -40,7 +39,17 @@ _bg_task_container.wire(
     ]
 )
 
-_usecase_container.wire(modules=["luna_bench.components", "luna_bench.components.plots"])
+_usecase_container.wire(
+    modules=[
+        "luna_bench.algorithms",
+        "luna_bench.features",
+        "luna_bench.metrics",
+        "luna_bench.plots",
+        "luna_bench.benchmark",
+        "luna_bench.model_set",
+        "luna_bench.model_metadata",
+    ]
+)
 
 _dao_container.wire(
     modules=[
@@ -59,20 +68,15 @@ _mapper_container.wire(
 )
 
 # Import components AFTER wiring to ensure decorators have access to injected registries
-import luna_bench.components.algorithms as Algorithm  # noqa: E402, N812
-import luna_bench.components.features as Feature  # noqa: E402, N812
-import luna_bench.components.metrics as Metric  # noqa: E402, N812
-import luna_bench.components.plots as Plot  # noqa: E402, N812
-from luna_bench.components import Benchmark, ModelMetadata, ModelSet  # noqa: E402
+
+from luna_bench.benchmark import Benchmark  # noqa: E402
+from luna_bench.model_metadata import ModelMetadata  # noqa: E402
+from luna_bench.model_set import ModelSet  # noqa: E402
 
 __all__ = (
-    "Algorithm",
     "Benchmark",
-    "Feature",
-    "Metric",
     "ModelMetadata",
     "ModelSet",
-    "Plot",
 )
 
 # Import and wrapping after the wiring is done,

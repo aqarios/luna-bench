@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from luna_bench.base_components.data_types.metric_results import MetricResults
+from luna_bench.custom.result_containers.metric_result_container import MetricResultContainer
 from luna_bench.errors.components.metrics.metric_result_unknown_name_error import (
     MetricResulUnknownNameError,
 )
@@ -28,15 +28,15 @@ class TestMetricResults:
         self.metric_config1: Any = MagicMock()
         self.metric_config2: Any = MagicMock()
 
-    def _build_data(self, metric_cls: Any, metrics: dict[str, Any]) -> MetricResults:  # noqa: ANN401
+    def _build_data(self, metric_cls: Any, metrics: dict[str, Any]) -> MetricResultContainer:  # noqa: ANN401
         """Build MetricResults with given class and metrics."""
         data: dict[Any, dict[str, Any]] = {metric_cls: metrics}
-        return MetricResults.model_construct(data=data)
+        return MetricResultContainer.model_construct(data=data)
 
     def test_initialization_with_empty_data(self) -> None:
         """Test MetricResults initialization with empty data."""
         data: dict[Any, Any] = {}
-        results = MetricResults.model_construct(data=data)
+        results = MetricResultContainer.model_construct(data=data)
         assert results.data == data
 
     def test_initialization_with_data(self) -> None:
@@ -47,7 +47,7 @@ class TestMetricResults:
                 "metric2": (self.metric_result2, self.metric_config2),
             }
         }
-        results = MetricResults.model_construct(data=data)
+        results = MetricResultContainer.model_construct(data=data)
         assert results.data == data
 
     def test_get_all_methods(self) -> None:
@@ -58,7 +58,7 @@ class TestMetricResults:
                 "metric2": (self.metric_result2, self.metric_config2),
             }
         }
-        results = MetricResults.model_construct(data=data)
+        results = MetricResultContainer.model_construct(data=data)
 
         all_with_config: Any = results.get_all_with_config(self.metric_cls1)
         assert all_with_config["metric1"] == (self.metric_result1, self.metric_config1)
@@ -148,7 +148,7 @@ class TestMetricResults:
                 "metric_a": (self.metric_result1, self.metric_config1),
             },
         }
-        results = MetricResults.model_construct(data=data)
+        results = MetricResultContainer.model_construct(data=data)
 
         all1: Any = results.get_all(self.metric_cls1)
         assert len(all1) == 3
@@ -165,7 +165,7 @@ class TestMetricResults:
                 "metric1": (self.metric_result1, self.metric_config1),
             }
         }
-        results = MetricResults.model_construct(data=data)
+        results = MetricResultContainer.model_construct(data=data)
         assert len(results.data) == 1
 
     def test_consistency_get_variants(self) -> None:
@@ -262,7 +262,7 @@ class TestMetricResults:
                 "m2": (self.metric_result2, self.metric_config2),
             },
         }
-        results = MetricResults.model_construct(data=data)
+        results = MetricResultContainer.model_construct(data=data)
         assert len(results.data) == 2
         assert self.metric_cls1 in results.data
         assert self.metric_cls2 in results.data

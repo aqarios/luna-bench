@@ -1,8 +1,8 @@
 import pytest
 from luna_model import Model
 
+from luna_bench import ModelSet
 from luna_bench._internal.dao import DaoTransaction
-from luna_bench.components import ModelSet
 from tests.utils.luna_model import simple_model
 
 

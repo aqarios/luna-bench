@@ -9,7 +9,7 @@ import pytest
 from luna_model import Sense, Solution
 from pydantic import ValidationError
 
-from luna_bench.components.metrics.best_solution_found import (
+from luna_bench.metrics.best_solution_found import (
     BestSolutionFound,
     BestSolutionFoundResult,
 )

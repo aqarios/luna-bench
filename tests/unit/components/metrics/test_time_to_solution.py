@@ -10,7 +10,7 @@ import pytest
 from luna_model import Sense, Solution, Timer, Vtype
 from pydantic import ValidationError
 
-from luna_bench.components.metrics.time_to_solution import TimeToSolution, TimeToSolutionResult
+from luna_bench.metrics.time_to_solution import TimeToSolution, TimeToSolutionResult
 
 if TYPE_CHECKING:
     from unittest.mock import MagicMock

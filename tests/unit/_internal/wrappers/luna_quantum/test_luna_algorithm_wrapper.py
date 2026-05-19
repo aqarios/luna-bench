@@ -20,7 +20,7 @@ from luna_bench._internal.wrappers.luna_quantum.algorithms.luna_algorithm import
 from luna_bench._internal.wrappers.luna_quantum.luna_algorithm_wrapper import (
     LunaAlgorithmWrapper,
 )
-from luna_bench.base_components import BaseAlgorithmAsync
+from luna_bench.custom import BaseAlgorithmAsync
 from luna_bench.errors.bench_type_errors.algorithm_sub_type_error import AlgorithmSubTypeError
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 

@@ -5,16 +5,17 @@ from typing import TYPE_CHECKING, cast
 import pytest
 
 from luna_bench._internal.registries.arbitrary_data_registry import ArbitraryDataRegistry
-from luna_bench.base_components import BaseFeature, BaseMetric, BasePlot
-from luna_bench.helpers.decorators.plot import plot
-from luna_bench.types import FeatureResult, MetricResult
+from luna_bench.custom import BaseFeature, BaseMetric, BasePlot
+from luna_bench.custom.base_results.feature_result import FeatureResult
+from luna_bench.custom.base_results.metric_result import MetricResult
+from luna_bench.custom.decorators.plot import plot
 
 if TYPE_CHECKING:
     from luna_model import Model, Solution
 
     from luna_bench._internal.registries import Registry
-    from luna_bench.base_components.data_types.benchmark_results import BenchmarkResults
-    from luna_bench.base_components.data_types.feature_results import FeatureResults
+    from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
+    from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
 
 
 class MockPlotFeature(BaseFeature[FeatureResult]):
@@ -23,7 +24,7 @@ class MockPlotFeature(BaseFeature[FeatureResult]):
 
 
 class MockPlotMetric(BaseMetric[MetricResult]):
-    def run(self, solution: Solution, feature_results: FeatureResults) -> MetricResult:
+    def run(self, solution: Solution, feature_results: FeatureResultContainer) -> MetricResult:
         raise NotImplementedError
 
 
@@ -48,7 +49,7 @@ class TestPlotDecorator:
     ) -> None:
         @plot(plot_id=plot_id, plot_registry=plot_registry)
         class TestPlot(BasePlot):
-            def run(self, benchmark_results: BenchmarkResults) -> None:
+            def run(self, benchmark_results: BenchmarkResultContainer) -> None:
                 _ = benchmark_results
 
         assert isinstance(TestPlot, type)
@@ -57,7 +58,7 @@ class TestPlotDecorator:
 
     def test_plot_function_registration(self, plot_registry: Registry[BasePlot]) -> None:
         @plot(plot_registry=plot_registry)
-        def my_test_plot(benchmark_results: BenchmarkResults) -> None:
+        def my_test_plot(benchmark_results: BenchmarkResultContainer) -> None:
             _ = benchmark_results
 
         assert isinstance(my_test_plot, type)
@@ -66,16 +67,16 @@ class TestPlotDecorator:
 
     def test_plot_function_execution(self) -> None:
         @plot
-        def executable_plot(benchmark_results: BenchmarkResults) -> None:
+        def executable_plot(benchmark_results: BenchmarkResultContainer) -> None:
             _ = benchmark_results
 
         plot_inst = executable_plot()
-        result = plot_inst.run(cast("BenchmarkResults", {}))
+        result = plot_inst.run(cast("BenchmarkResultContainer", {}))
         assert result is None
 
     def test_plot_preserves_function_metadata(self) -> None:
         @plot
-        def documented_plot(benchmark_results: BenchmarkResults) -> None:
+        def documented_plot(benchmark_results: BenchmarkResultContainer) -> None:
             """Run this."""
             _ = benchmark_results
 
@@ -105,7 +106,7 @@ class TestPlotDecorator:
     ) -> None:
         @plot(required_components, plot_registry=plot_registry)
         class TestComponentPlot(BasePlot):
-            def run(self, benchmark_results: BenchmarkResults) -> None:
+            def run(self, benchmark_results: BenchmarkResultContainer) -> None:
                 _ = benchmark_results
 
         assert TestComponentPlot.required_features == expected_features
@@ -117,7 +118,7 @@ class TestPlotDecorator:
     ) -> None:
         @plot(required_components=[MockPlotFeature, MockPlotMetric], plot_registry=plot_registry)
         class MixedPlot(BasePlot):
-            def run(self, benchmark_results: BenchmarkResults) -> None:
+            def run(self, benchmark_results: BenchmarkResultContainer) -> None:
                 _ = benchmark_results
 
         assert MixedPlot.required_features == [MockPlotFeature]
@@ -129,7 +130,7 @@ class TestPlotDecorator:
     ) -> None:
         @plot(required_components=MockPlotMetric, plot_registry=plot_registry)
         class SingleMetricPlot(BasePlot):
-            def run(self, benchmark_results: BenchmarkResults) -> None:
+            def run(self, benchmark_results: BenchmarkResultContainer) -> None:
                 _ = benchmark_results
 
         assert SingleMetricPlot.required_features == []
@@ -141,7 +142,7 @@ class TestPlotDecorator:
     ) -> None:
         @plot([MockPlotFeature, MockPlotMetric], plot_registry=plot_registry)
         class ListArgPlot(BasePlot):
-            def run(self, benchmark_results: BenchmarkResults) -> None:
+            def run(self, benchmark_results: BenchmarkResultContainer) -> None:
                 _ = benchmark_results
 
         assert ListArgPlot.required_features == [MockPlotFeature]

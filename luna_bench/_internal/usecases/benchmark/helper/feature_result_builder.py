@@ -6,18 +6,18 @@ from typing import TYPE_CHECKING
 
 from returns.result import Failure, Result, Success
 
-from luna_bench.base_components import BaseFeature  # noqa: TC001
-from luna_bench.base_components.data_types.feature_results import FeatureResults
-from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
-from luna_bench.types import (  # noqa: TC001
+from luna_bench.custom import BaseFeature  # noqa: TC001
+from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
+from luna_bench.custom.types import (  # noqa: TC001
     FeatureClass,
     FeatureComputed,
     FeatureName,
-    FeatureResult,
     ModelName,
 )
+from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
 
 if TYPE_CHECKING:
+    from luna_bench.custom.base_results.feature_result import FeatureResult
     from luna_bench.entities import BenchmarkEntity
 
 
@@ -62,7 +62,7 @@ class FeatureResultBuilder:
         self,
         model_name: ModelName,
         required_features: list[FeatureClass],
-    ) -> Result[FeatureResults, RunFeatureMissingError]:
+    ) -> Result[FeatureResultContainer, RunFeatureMissingError]:
         """
         Build and validate feature results for a metric and model.
 
@@ -75,7 +75,7 @@ class FeatureResultBuilder:
 
         Returns
         -------
-        Result[FeatureResults, RunFeatureMissingError]
+        Result[FeatureResultContainer, RunFeatureMissingError]
             Success with FeatureResults if all required features are available,
             Failure with RunFeatureMissingError if any required feature is missing.
         """
@@ -88,7 +88,7 @@ class FeatureResultBuilder:
             feature_data[f] = self._lookup_map[key].copy()
 
         return Success(
-            FeatureResults.model_construct(
+            FeatureResultContainer.model_construct(
                 data=feature_data,
             )
         )

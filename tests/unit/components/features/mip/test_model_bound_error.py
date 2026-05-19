@@ -1,4 +1,4 @@
-from luna_bench.components.features.mip.problem_size_feature import ModelBoundsError
+from luna_bench.features.mip.problem_size_feature import ModelBoundsError
 
 
 def test_instantiation() -> None:

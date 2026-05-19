@@ -4,14 +4,14 @@ from unittest.mock import MagicMock, patch
 
 from matplotlib import pyplot as plt
 
-from luna_bench.base_components.data_types.benchmark_results import BenchmarkResults
-from luna_bench.components.plots.generics.seaborn_plot import SeabornPlot
+from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
+from luna_bench.plots.generics.seaborn_plot import SeabornPlot
 
 
 class ConcreteSeabornPlot(SeabornPlot):
     """Concrete implementation of SeabornPlot for testing."""
 
-    def run(self, benchmark_results: BenchmarkResults) -> None:
+    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
         """Test implementation for SeabornPlot."""
 
 
@@ -43,7 +43,7 @@ class TestSeabornPlot:
         assert fig.get_figwidth() == 12
         assert fig.get_figheight() == 8
 
-    @patch("luna_bench.components.plots.generics.seaborn_plot.plt.show")
+    @patch("luna_bench.plots.generics.seaborn_plot.plt.show")
     def test_finalize_plot_with_all_parameters(self, mock_show: MagicMock) -> None:
         """Test finalize_plot with all parameters."""
         _ = mock_show
@@ -60,7 +60,7 @@ class TestSeabornPlot:
 
         mock_show.assert_called_once()
 
-    @patch("luna_bench.components.plots.generics.seaborn_plot.plt.show")
+    @patch("luna_bench.plots.generics.seaborn_plot.plt.show")
     def test_finalize_plot_without_show(self, mock_show: MagicMock) -> None:
         """Test finalize_plot respects show=False."""
         plot = ConcreteSeabornPlot()
@@ -75,14 +75,14 @@ class TestSeabornPlot:
 
         mock_show.assert_not_called()
 
-    @patch("luna_bench.components.plots.generics.seaborn_plot.plt.show")
+    @patch("luna_bench.plots.generics.seaborn_plot.plt.show")
     def test_finalize_plot_zero_rotation(self, mock_show: MagicMock) -> None:
         """Test finalize_plot with zero x_rotation doesn't set rotation."""
         _ = mock_show
         plot = ConcreteSeabornPlot()
         plot.setup_figure()
 
-        with patch("luna_bench.components.plots.generics.seaborn_plot.plt.xticks") as mock_xticks:
+        with patch("luna_bench.plots.generics.seaborn_plot.plt.xticks") as mock_xticks:
             plot.finalize_plot(
                 xlabel="X",
                 ylabel="Y",
@@ -91,14 +91,14 @@ class TestSeabornPlot:
             )
             mock_xticks.assert_not_called()
 
-    @patch("luna_bench.components.plots.generics.seaborn_plot.plt.show")
+    @patch("luna_bench.plots.generics.seaborn_plot.plt.show")
     def test_finalize_plot_with_ylim(self, mock_show: MagicMock) -> None:
         """Test finalize_plot correctly sets y-axis limits."""
         _ = mock_show
         plot = ConcreteSeabornPlot()
         plot.setup_figure()
 
-        with patch("luna_bench.components.plots.generics.seaborn_plot.plt.ylim") as mock_ylim:
+        with patch("luna_bench.plots.generics.seaborn_plot.plt.ylim") as mock_ylim:
             plot.finalize_plot(
                 xlabel="X",
                 ylabel="Y",
@@ -107,14 +107,14 @@ class TestSeabornPlot:
             )
             mock_ylim.assert_called_once_with(10, 50)
 
-    @patch("luna_bench.components.plots.generics.seaborn_plot.plt.show")
+    @patch("luna_bench.plots.generics.seaborn_plot.plt.show")
     def test_finalize_plot_without_ylim(self, mock_show: MagicMock) -> None:
         """Test finalize_plot doesn't set ylim when None."""
         _ = mock_show
         plot = ConcreteSeabornPlot()
         plot.setup_figure()
 
-        with patch("luna_bench.components.plots.generics.seaborn_plot.plt.ylim") as mock_ylim:
+        with patch("luna_bench.plots.generics.seaborn_plot.plt.ylim") as mock_ylim:
             plot.finalize_plot(
                 xlabel="X",
                 ylabel="Y",
@@ -123,7 +123,7 @@ class TestSeabornPlot:
             )
             mock_ylim.assert_not_called()
 
-    @patch("luna_bench.components.plots.generics.seaborn_plot.plt.show")
+    @patch("luna_bench.plots.generics.seaborn_plot.plt.show")
     def test_finalize_plot_empty_labels(self, mock_show: MagicMock) -> None:
         """Test finalize_plot with empty string labels."""
         _ = mock_show
@@ -131,8 +131,8 @@ class TestSeabornPlot:
         plot.setup_figure()
 
         with (
-            patch("luna_bench.components.plots.generics.seaborn_plot.plt.xlabel") as mock_xlabel,
-            patch("luna_bench.components.plots.generics.seaborn_plot.plt.ylabel") as mock_ylabel,
+            patch("luna_bench.plots.generics.seaborn_plot.plt.xlabel") as mock_xlabel,
+            patch("luna_bench.plots.generics.seaborn_plot.plt.ylabel") as mock_ylabel,
         ):
             plot.finalize_plot(
                 xlabel="",

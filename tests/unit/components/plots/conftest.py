@@ -1,15 +1,14 @@
 from collections.abc import Callable
 from typing import Any
 
-from luna_bench.base_components.base_feature import BaseFeature
-from luna_bench.base_components.base_metric import BaseMetric
-from luna_bench.components.features.var_num_feature import VarNumberFeature, VarNumberFeatureResult
+from luna_bench.custom import BaseFeature, BaseMetric
+from luna_bench.custom.base_results.feature_result import FeatureResult
 from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.entities.feature_entity import FeatureEntity
 from luna_bench.entities.feature_result_entity import FeatureResultEntity
 from luna_bench.entities.metric_entity import MetricEntity
 from luna_bench.entities.metric_result_entity import MetricResultEntity
-from luna_bench.types import FeatureResult
+from luna_bench.features.var_num_feature import VarNumberFeature, VarNumberFeatureResult
 
 
 def mock_metric_entity(

@@ -5,11 +5,11 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.domain_models import FeatureDomain, FeatureResultDomain, RegisteredDataDomain
 from luna_bench._internal.mappers.mixins.model_list_mixin import ModelListMixin
 from luna_bench._internal.registries import PydanticRegistry
-from luna_bench.base_components import BaseFeature
+from luna_bench.custom import BaseFeature
+from luna_bench.custom.base_results.feature_result import FeatureResult
 from luna_bench.entities.feature_entity import FeatureEntity
 from luna_bench.entities.feature_result_entity import FeatureResultEntity
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
-from luna_bench.types import FeatureResult
 
 
 class FeatureMapper(ModelListMixin[FeatureDomain, FeatureEntity]):

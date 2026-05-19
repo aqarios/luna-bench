@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING, Any, cast
 import pytest
 
 from luna_bench._internal.registries.arbitrary_data_registry import ArbitraryDataRegistry
-from luna_bench.base_components import BaseFeature
-from luna_bench.helpers.decorators.feature import feature
-from luna_bench.types import FeatureResult
+from luna_bench.custom import BaseFeature
+from luna_bench.custom.base_results.feature_result import FeatureResult
+from luna_bench.custom.decorators.feature import feature
 
 if TYPE_CHECKING:
     from luna_model import Model

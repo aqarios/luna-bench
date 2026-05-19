@@ -8,7 +8,7 @@ import pytest
 from luna_model import Sense
 from pydantic import ValidationError
 
-from luna_bench.components.metrics.fraction_of_overall_best_solution import (
+from luna_bench.metrics.fraction_of_overall_best_solution import (
     FractionOfOverallBestSolution,
     FractionOfOverallBestSolutionResult,
 )

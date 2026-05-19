@@ -5,15 +5,16 @@ from typing import TYPE_CHECKING, cast
 import pytest
 
 from luna_bench._internal.registries.arbitrary_data_registry import ArbitraryDataRegistry
-from luna_bench.base_components import BaseFeature, BaseMetric
-from luna_bench.helpers.decorators.metric import metric
-from luna_bench.types import FeatureResult, MetricResult
+from luna_bench.custom import BaseFeature, BaseMetric
+from luna_bench.custom.base_results.metric_result import MetricResult
+from luna_bench.custom.decorators.metric import metric
 
 if TYPE_CHECKING:
     from luna_model import Model, Solution
 
     from luna_bench._internal.registries import Registry
-    from luna_bench.base_components.data_types.feature_results import FeatureResults
+    from luna_bench.custom.base_results.feature_result import FeatureResult
+    from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
 
 
 class MockFeature(BaseFeature):
@@ -46,7 +47,7 @@ class TestMetricDecorator:
             def run(
                 self,
                 solution: Solution,
-                feature_results: FeatureResults,
+                feature_results: FeatureResultContainer,
             ) -> MetricResult:
                 _ = solution, feature_results
                 return MetricResult.model_construct(result=0.95)  # type: ignore[call-arg]
@@ -59,7 +60,7 @@ class TestMetricDecorator:
         @metric
         def documented_metric(
             solution: Solution,
-            feature_results: FeatureResults,
+            feature_results: FeatureResultContainer,
         ) -> float:
             """Run, this is the metric documentation."""
             _ = solution, feature_results
@@ -85,26 +86,26 @@ class TestMetricDecorator:
         @metric
         def typed_metric(
             solution: Solution,
-            feature_results: FeatureResults,
+            feature_results: FeatureResultContainer,
         ) -> float:
             _ = solution, feature_results
             return return_value
 
         metric_inst = typed_metric()
-        result = metric_inst.run(cast("Solution", None), cast("FeatureResults", {}))
+        result = metric_inst.run(cast("Solution", None), cast("FeatureResultContainer", {}))
         assert result.result == expected_result  # type: ignore[attr-defined]
 
     def test_metric_returns_metric_result_directly(self) -> None:
         @metric
         def metric_returning_result(
             solution: Solution,
-            feature_results: FeatureResults,
+            feature_results: FeatureResultContainer,
         ) -> MetricResult:
             _ = solution, feature_results
             return MetricResult.model_construct(result=0.99)  # type: ignore[call-arg]
 
         metric_inst = metric_returning_result()
-        result = metric_inst.run(cast("Solution", None), cast("FeatureResults", {}))
+        result = metric_inst.run(cast("Solution", None), cast("FeatureResultContainer", {}))
         assert result.result == 0.99  # type: ignore[attr-defined]
 
     @pytest.mark.parametrize(
@@ -128,7 +129,7 @@ class TestMetricDecorator:
             def run(
                 self,
                 solution: Solution,
-                feature_results: FeatureResults,
+                feature_results: FeatureResultContainer,
             ) -> MetricResult:
                 _ = solution, feature_results
                 return MetricResult.model_construct(result=0.5)  # type: ignore[call-arg]

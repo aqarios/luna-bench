@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from luna_bench.base_components import BaseFeature
-from luna_bench.helpers import feature
-from luna_bench.types import FeatureResult
+from luna_bench.custom import BaseFeature, feature
+from luna_bench.custom.base_results.feature_result import FeatureResult
 
 if TYPE_CHECKING:
     from luna_model import Model

@@ -5,19 +5,19 @@ import numpy as np
 from numpy.typing import NDArray
 
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench.components.features.qubo.graph_features import (
+from luna_bench.features.qubo.graph_features import (
     QuboGraphFeature,
     QuboGraphFeatureResult,
 )
-from luna_bench.components.features.qubo.matrix_features import (
+from luna_bench.features.qubo.matrix_features import (
     QuboMatrixFeature,
     QuboMatrixFeatureResult,
 )
-from luna_bench.components.features.qubo.sparsity_density_features import (
+from luna_bench.features.qubo.sparsity_density_features import (
     QuboSparsityDensityFeature,
     QuboSparsityDensityFeatureResult,
 )
-from luna_bench.components.features.qubo.spectral_analysis_features import (
+from luna_bench.features.qubo.spectral_analysis_features import (
     QuboSpectralAnalysisFeature,
     QuboSpectralAnalysisFeatureResult,
 )

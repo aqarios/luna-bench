@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from luna_bench.types import BenchmarkName
+from luna_bench.custom.types import BenchmarkName
 
 from .algorithm_entity import AlgorithmEntity
 from .feature_entity import FeatureEntity
