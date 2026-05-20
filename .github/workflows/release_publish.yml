@@ -74,6 +74,13 @@ jobs:
             ```
           reviewers: jflxb,Llewe,MaximilianJanetschek
 
+      - name: Checkout release branch for build
+        run: |
+          git fetch origin "${BRANCH_NAME}"
+          git checkout "${BRANCH_NAME}"
+        env:
+          BRANCH_NAME: ${{ steps.package-version.outputs.branch_name }}
+
       - name: Build package
         run: |
           rm -rf dist build luna_bench.egg-info
