@@ -72,5 +72,5 @@ qubo-features = [
     "scipy>=1.17.0",
 ]
 
-[tool.setuptools]
-packages = ["luna_bench"]
+[tool.setuptools.packages.find]
+include = ["luna_bench*"]
