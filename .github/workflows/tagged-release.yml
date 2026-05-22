@@ -1,0 +1,62 @@
+name: Tagged Release
+
+on:
+  workflow_run:
+    workflows:
+      - "Create Release Tag"
+    types:
+      - completed
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: tagged-release-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-release:
+    name: Build and publish tagged release
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve tag
+        id: resolve
+        run: |
+          HEAD_BRANCH="${WORKFLOW_HEAD_BRANCH}"
+          if [[ "${HEAD_BRANCH}" != release/v* ]]; then
+            echo "Expected release/v* branch, got: ${HEAD_BRANCH}"
+            exit 1
+          fi
+          TAG="v${HEAD_BRANCH#release/v}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+        env:
+          WORKFLOW_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ steps.resolve.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: Build artifacts
+        run: uv build
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.resolve.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+
+#      - name: Publish to PyPI
+#        uses: pypa/gh-action-pypi-publish@release/v1

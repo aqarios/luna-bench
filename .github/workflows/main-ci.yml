@@ -1,0 +1,47 @@
+name: Main CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "luna_bench/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "ruff.toml"
+      - "pytest.ini"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: main-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, test, and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Run tests
+        run: uv run pytest tests
+
+      - name: Build
+        run: uv build
