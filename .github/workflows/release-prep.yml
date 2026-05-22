@@ -1,0 +1,95 @@
+name: Prepare Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Release bump type"
+        type: choice
+        required: true
+        default: "patch"
+        options:
+          - none
+          - major
+          - minor
+          - patch
+          - none
+      prerelease:
+        description: "Optional prerelease bump"
+        type: choice
+        required: false
+        default: "none"
+        options:
+          - none
+          - rc
+          - beta
+          - alpha
+          - dev
+      base_branch:
+        description: "Branch to release from"
+        type: string
+        required: true
+        default: "main"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-prep-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Create Release PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.inputs.base_branch }}
+          fetch-depth: 0
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: Bump version
+        id: bump
+        run: |
+          if [[ "$RELEASE_TYPE" == "none" ]]; then
+            if [[ "$PRERELEASE" == "none" ]]; then
+              echo "release_type=none requires prerelease to be one of: rc, beta, alpha, dev"
+              exit 1
+            fi
+            uv version --bump "$PRERELEASE"
+          elif [[ "$PRERELEASE" == "none" ]]; then
+            uv version --bump "$RELEASE_TYPE"
+          else
+            uv version --bump "$RELEASE_TYPE" --bump "$PRERELEASE"
+          fi
+          VERSION="$(uv version --short)"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        env:
+          RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          PRERELEASE: ${{ github.event.inputs.prerelease }}
+
+      - name: Create release pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: ${{ github.event.inputs.base_branch }}
+          branch: release/v${{ steps.bump.outputs.version }}
+          delete-branch: true
+          commit-message: "release: bump version to v${{ steps.bump.outputs.version }}"
+          title: Release v${{ steps.bump.outputs.version }}
+          body: |
+            Automated release preparation PR for `v${{ steps.bump.outputs.version }}`.
+
+            When merged, `tag-release.yml` creates tag `v${{ steps.bump.outputs.version }}`.
+            `tagged-release.yml` then runs via `workflow_run`, builds from this tag, and publishes the release.
+          labels: |
+            release
+            automated

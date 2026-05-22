@@ -1,0 +1,66 @@
+name: Create Release Tag
+
+on:
+  pull_request:
+    types:
+      - closed
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-tag:
+    name: Tag merged release PR
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && startsWith(github.event.pull_request.head.ref, 'release/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract version from release branch
+        id: version
+        run: |
+          VERSION="${PR_HEAD_REF#release/v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        env:
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+
+      - name: Create tag
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const version = '${{ steps.version.outputs.version }}';
+            const sha = context.payload.pull_request.merge_commit_sha;
+            const ref = `refs/tags/v${version}`;
+
+            try {
+              await github.rest.git.getRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `tags/v${version}`
+              });
+              core.info(`Tag v${version} already exists. Skipping createRef.`);
+              return;
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+            }
+
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref,
+              sha
+            });
+
+      - name: Comment on PR
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `Tag \`v${{ steps.version.outputs.version }}\` created from merge commit. \`tagged-release.yml\` will run via \`workflow_run\` after this workflow succeeds.`
+            });
