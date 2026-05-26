@@ -43,46 +43,49 @@ class TestSeabornPlot:
         assert fig.get_figwidth() == 12
         assert fig.get_figheight() == 8
 
-    @patch("luna_bench.plots.generics.seaborn_plot.plt.show")
-    def test_finalize_plot_with_all_parameters(self, mock_show: MagicMock) -> None:
+    @patch("luna_bench.plots.generics.seaborn_plot.check_optional_dependency")
+    def test_finalize_plot_with_all_parameters(self, mock_check_dep: MagicMock) -> None:
         """Test finalize_plot with all parameters."""
-        _ = mock_show
-        plot = ConcreteSeabornPlot()
-        plot.setup_figure()
+        _ = mock_check_dep
+        with patch("matplotlib.pyplot.show") as mock_show:
+            plot = ConcreteSeabornPlot()
+            plot.setup_figure()
 
-        plot.finalize_plot(
-            xlabel="Test X",
-            ylabel="Test Y",
-            title="Test Title",
-            ylim=(0, 100),
-            x_rotation=30,
-        )
+            plot.finalize_plot(
+                xlabel="Test X",
+                ylabel="Test Y",
+                title="Test Title",
+                ylim=(0, 100),
+                x_rotation=30,
+            )
 
-        mock_show.assert_called_once()
+            mock_show.assert_called_once()
 
-    @patch("luna_bench.plots.generics.seaborn_plot.plt.show")
-    def test_finalize_plot_without_show(self, mock_show: MagicMock) -> None:
+    @patch("luna_bench.plots.generics.seaborn_plot.check_optional_dependency")
+    def test_finalize_plot_without_show(self, mock_check_dep: MagicMock) -> None:
         """Test finalize_plot respects show=False."""
-        plot = ConcreteSeabornPlot()
-        plot.show = False
-        plot.setup_figure()
+        _ = mock_check_dep
+        with patch("matplotlib.pyplot.show") as mock_show:
+            plot = ConcreteSeabornPlot()
+            plot.show = False
+            plot.setup_figure()
 
-        plot.finalize_plot(
-            xlabel="X",
-            ylabel="Y",
-            title="Title",
-        )
+            plot.finalize_plot(
+                xlabel="X",
+                ylabel="Y",
+                title="Title",
+            )
 
-        mock_show.assert_not_called()
+            mock_show.assert_not_called()
 
-    @patch("luna_bench.plots.generics.seaborn_plot.plt.show")
-    def test_finalize_plot_zero_rotation(self, mock_show: MagicMock) -> None:
+    @patch("luna_bench.plots.generics.seaborn_plot.check_optional_dependency")
+    def test_finalize_plot_zero_rotation(self, mock_check_dep: MagicMock) -> None:
         """Test finalize_plot with zero x_rotation doesn't set rotation."""
-        _ = mock_show
-        plot = ConcreteSeabornPlot()
-        plot.setup_figure()
+        _ = mock_check_dep
+        with patch("matplotlib.pyplot.show"), patch("matplotlib.pyplot.xticks") as mock_xticks:
+            plot = ConcreteSeabornPlot()
+            plot.setup_figure()
 
-        with patch("luna_bench.plots.generics.seaborn_plot.plt.xticks") as mock_xticks:
             plot.finalize_plot(
                 xlabel="X",
                 ylabel="Y",
@@ -91,14 +94,14 @@ class TestSeabornPlot:
             )
             mock_xticks.assert_not_called()
 
-    @patch("luna_bench.plots.generics.seaborn_plot.plt.show")
-    def test_finalize_plot_with_ylim(self, mock_show: MagicMock) -> None:
+    @patch("luna_bench.plots.generics.seaborn_plot.check_optional_dependency")
+    def test_finalize_plot_with_ylim(self, mock_check_dep: MagicMock) -> None:
         """Test finalize_plot correctly sets y-axis limits."""
-        _ = mock_show
-        plot = ConcreteSeabornPlot()
-        plot.setup_figure()
+        _ = mock_check_dep
+        with patch("matplotlib.pyplot.show"), patch("matplotlib.pyplot.ylim") as mock_ylim:
+            plot = ConcreteSeabornPlot()
+            plot.setup_figure()
 
-        with patch("luna_bench.plots.generics.seaborn_plot.plt.ylim") as mock_ylim:
             plot.finalize_plot(
                 xlabel="X",
                 ylabel="Y",
@@ -107,14 +110,14 @@ class TestSeabornPlot:
             )
             mock_ylim.assert_called_once_with(10, 50)
 
-    @patch("luna_bench.plots.generics.seaborn_plot.plt.show")
-    def test_finalize_plot_without_ylim(self, mock_show: MagicMock) -> None:
+    @patch("luna_bench.plots.generics.seaborn_plot.check_optional_dependency")
+    def test_finalize_plot_without_ylim(self, mock_check_dep: MagicMock) -> None:
         """Test finalize_plot doesn't set ylim when None."""
-        _ = mock_show
-        plot = ConcreteSeabornPlot()
-        plot.setup_figure()
+        _ = mock_check_dep
+        with patch("matplotlib.pyplot.show"), patch("matplotlib.pyplot.ylim") as mock_ylim:
+            plot = ConcreteSeabornPlot()
+            plot.setup_figure()
 
-        with patch("luna_bench.plots.generics.seaborn_plot.plt.ylim") as mock_ylim:
             plot.finalize_plot(
                 xlabel="X",
                 ylabel="Y",
@@ -123,17 +126,18 @@ class TestSeabornPlot:
             )
             mock_ylim.assert_not_called()
 
-    @patch("luna_bench.plots.generics.seaborn_plot.plt.show")
-    def test_finalize_plot_empty_labels(self, mock_show: MagicMock) -> None:
+    @patch("luna_bench.plots.generics.seaborn_plot.check_optional_dependency")
+    def test_finalize_plot_empty_labels(self, mock_check_dep: MagicMock) -> None:
         """Test finalize_plot with empty string labels."""
-        _ = mock_show
-        plot = ConcreteSeabornPlot()
-        plot.setup_figure()
-
+        _ = mock_check_dep
         with (
-            patch("luna_bench.plots.generics.seaborn_plot.plt.xlabel") as mock_xlabel,
-            patch("luna_bench.plots.generics.seaborn_plot.plt.ylabel") as mock_ylabel,
+            patch("matplotlib.pyplot.show"),
+            patch("matplotlib.pyplot.xlabel") as mock_xlabel,
+            patch("matplotlib.pyplot.ylabel") as mock_ylabel,
         ):
+            plot = ConcreteSeabornPlot()
+            plot.setup_figure()
+
             plot.finalize_plot(
                 xlabel="",
                 ylabel="",

@@ -26,9 +26,7 @@ dependencies = [
     "luna-model>=0.6.0",
     "luna-quantum>=1.2.1",
     "peewee>=4.0.0",
-    "pip-licenses>=5.5.1",
     "pydantic-settings>=2.11.0",
-    "pyrefly>=0.45.0",
     "returns[compatible-mypy]>=0.27.0",
     "rich>=14.1.0",
 ]
@@ -57,19 +55,16 @@ dev = [
     "seaborn>=0.13.0",
     "networkx>=3.6.1",
     "scipy>=1.17.0",
+    "pip-licenses>=5.5.1",
 ]
 
 [project.optional-dependencies]
-opt-metrics = [
-    "pyscipopt>=6.0.1",
-]
-plot = [
-    "matplotlib>=3.10.8",
-    "seaborn>=0.13.0",
-]
-qubo-features = [
+pre-defined = [
     "networkx>=3.6.1",
     "scipy>=1.17.0",
+    "pyscipopt>=6.0.1",
+    "matplotlib>=3.10.8",
+    "seaborn>=0.13.0",
 ]
 
 [tool.setuptools.packages.find]

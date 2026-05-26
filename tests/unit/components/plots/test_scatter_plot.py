@@ -23,58 +23,63 @@ class TestScatterPlot:
         """Clean up matplotlib figures after each test."""
         plt.close("all")
 
-    @patch("luna_bench.plots.generics.scatter_plot.plt.show")
-    @patch("luna_bench.plots.generics.scatter_plot.scatterplot")
-    def test_create_with_minimal_data(self, mock_scatterplot: MagicMock, mock_show: MagicMock) -> None:
+    @patch("luna_bench.plots.generics.scatter_plot.check_optional_dependency")
+    def test_create_with_minimal_data(self, mock_check_dep: MagicMock) -> None:
         """Test create with minimal required data."""
-        plot = ConcreteScatterPlot()
-        rows = [
-            {"algorithm": "Algo1", "x": 1, "y": 10},
-            {"algorithm": "Algo2", "x": 2, "y": 20},
-        ]
+        _ = mock_check_dep
+        with patch("seaborn.scatterplot") as mock_scatterplot, patch("matplotlib.pyplot.show") as mock_show:
+            plot = ConcreteScatterPlot()
+            rows = [
+                {"algorithm": "Algo1", "x": 1, "y": 10},
+                {"algorithm": "Algo2", "x": 2, "y": 20},
+            ]
 
-        plot.create(
-            rows=rows,
-            xlabel="X Values",
-            ylabel="Y Values",
-            title="Test Plot",
-            hue="algorithm",
-        )
-
-        mock_scatterplot.assert_called_once()
-        mock_show.assert_called_once()
-
-    @patch("luna_bench.plots.generics.scatter_plot.plt.show")
-    @patch("luna_bench.plots.generics.scatter_plot.scatterplot")
-    def test_create_with_empty_rows_logs_warning(self, mock_scatterplot: MagicMock, mock_show: MagicMock) -> None:
-        """Test create logs warning when rows is empty."""
-        plot = ConcreteScatterPlot()
-
-        with patch.object(plot.logger, "warning") as mock_logger:
             plot.create(
-                rows=[],
-                xlabel="X",
-                ylabel="Y",
-                title="Test",
-                hue="category",
+                rows=rows,
+                xlabel="X Values",
+                ylabel="Y Values",
+                title="Test Plot",
+                hue="algorithm",
             )
 
-            mock_logger.assert_called_once()
-            mock_scatterplot.assert_not_called()
-            mock_show.assert_not_called()
+            mock_scatterplot.assert_called_once()
+            mock_show.assert_called_once()
 
-    @patch("luna_bench.plots.generics.scatter_plot.plt.show")
-    @patch("luna_bench.plots.generics.scatter_plot.scatterplot")
-    def test_create_with_hline(self, mock_scatterplot: MagicMock, mock_show: MagicMock) -> None:
+    @patch("luna_bench.plots.generics.scatter_plot.check_optional_dependency")
+    def test_create_with_empty_rows_logs_warning(self, mock_check_dep: MagicMock) -> None:
+        """Test create logs warning when rows is empty."""
+        _ = mock_check_dep
+        with patch("seaborn.scatterplot") as mock_scatterplot, patch("matplotlib.pyplot.show") as mock_show:
+            plot = ConcreteScatterPlot()
+
+            with patch.object(plot.logger, "warning") as mock_logger:
+                plot.create(
+                    rows=[],
+                    xlabel="X",
+                    ylabel="Y",
+                    title="Test",
+                    hue="category",
+                )
+
+                mock_logger.assert_called_once()
+                mock_scatterplot.assert_not_called()
+                mock_show.assert_not_called()
+
+    @patch("luna_bench.plots.generics.scatter_plot.check_optional_dependency")
+    def test_create_with_hline(self, mock_check_dep: MagicMock) -> None:
         """Test create adds horizontal reference line."""
-        _ = mock_scatterplot, mock_show
-        plot = ConcreteScatterPlot()
-        rows = [
-            {"algorithm": "Algo1", "x": 1, "y": 10},
-            {"algorithm": "Algo2", "x": 2, "y": 20},
-        ]
+        _ = mock_check_dep
+        with (
+            patch("seaborn.scatterplot"),
+            patch("matplotlib.pyplot.show"),
+            patch("matplotlib.pyplot.axhline") as mock_axhline,
+        ):
+            plot = ConcreteScatterPlot()
+            rows = [
+                {"algorithm": "Algo1", "x": 1, "y": 10},
+                {"algorithm": "Algo2", "x": 2, "y": 20},
+            ]
 
-        with patch("luna_bench.plots.generics.scatter_plot.plt.axhline") as mock_axhline:
             plot.create(
                 rows=rows,
                 xlabel="X",
@@ -90,15 +95,18 @@ class TestScatterPlot:
             assert call_kwargs["y"] == 15.0
             assert call_kwargs["label"] == "Target"
 
-    @patch("luna_bench.plots.generics.scatter_plot.plt.show")
-    @patch("luna_bench.plots.generics.scatter_plot.scatterplot")
-    def test_create_without_hline(self, mock_scatterplot: MagicMock, mock_show: MagicMock) -> None:
+    @patch("luna_bench.plots.generics.scatter_plot.check_optional_dependency")
+    def test_create_without_hline(self, mock_check_dep: MagicMock) -> None:
         """Test create without horizontal line."""
-        _ = mock_scatterplot, mock_show
-        plot = ConcreteScatterPlot()
-        rows = [{"algorithm": "Algo1", "x": 1, "y": 10}]
+        _ = mock_check_dep
+        with (
+            patch("seaborn.scatterplot"),
+            patch("matplotlib.pyplot.show"),
+            patch("matplotlib.pyplot.axhline") as mock_axhline,
+        ):
+            plot = ConcreteScatterPlot()
+            rows = [{"algorithm": "Algo1", "x": 1, "y": 10}]
 
-        with patch("luna_bench.plots.generics.scatter_plot.plt.axhline") as mock_axhline:
             plot.create(
                 rows=rows,
                 xlabel="X",
@@ -110,40 +118,43 @@ class TestScatterPlot:
 
             mock_axhline.assert_not_called()
 
-    @patch("luna_bench.plots.generics.scatter_plot.plt.show")
-    @patch("luna_bench.plots.generics.scatter_plot.scatterplot")
-    def test_create_with_custom_column_names(self, mock_scatterplot: MagicMock, mock_show: MagicMock) -> None:
+    @patch("luna_bench.plots.generics.scatter_plot.check_optional_dependency")
+    def test_create_with_custom_column_names(self, mock_check_dep: MagicMock) -> None:
         """Test create with custom x and y column names."""
-        _ = mock_show
-        plot = ConcreteScatterPlot()
-        rows = [
-            {"solver": "Algo1", "time": 1.5, "quality": 95},
-            {"solver": "Algo2", "time": 2.0, "quality": 98},
-        ]
+        _ = mock_check_dep
+        with patch("seaborn.scatterplot") as mock_scatterplot, patch("matplotlib.pyplot.show"):
+            plot = ConcreteScatterPlot()
+            rows = [
+                {"solver": "Algo1", "time": 1.5, "quality": 95},
+                {"solver": "Algo2", "time": 2.0, "quality": 98},
+            ]
 
-        plot.create(
-            rows=rows,
-            xlabel="Time",
-            ylabel="Quality",
-            title="Test",
-            hue="solver",
-            x="time",
-            y="quality",
-        )
+            plot.create(
+                rows=rows,
+                xlabel="Time",
+                ylabel="Quality",
+                title="Test",
+                hue="solver",
+                x="time",
+                y="quality",
+            )
 
-        call_kwargs = mock_scatterplot.call_args[1]
-        assert call_kwargs["x"] == "time"
-        assert call_kwargs["y"] == "quality"
+            call_kwargs = mock_scatterplot.call_args[1]
+            assert call_kwargs["x"] == "time"
+            assert call_kwargs["y"] == "quality"
 
-    @patch("luna_bench.plots.generics.scatter_plot.plt.show")
-    @patch("luna_bench.plots.generics.scatter_plot.scatterplot")
-    def test_create_with_custom_hline_color(self, mock_scatterplot: MagicMock, mock_show: MagicMock) -> None:
+    @patch("luna_bench.plots.generics.scatter_plot.check_optional_dependency")
+    def test_create_with_custom_hline_color(self, mock_check_dep: MagicMock) -> None:
         """Test create with custom horizontal line color."""
-        _ = mock_scatterplot, mock_show
-        plot = ConcreteScatterPlot()
-        rows = [{"algorithm": "Algo1", "x": 1, "y": 10}]
+        _ = mock_check_dep
+        with (
+            patch("seaborn.scatterplot"),
+            patch("matplotlib.pyplot.show"),
+            patch("matplotlib.pyplot.axhline") as mock_axhline,
+        ):
+            plot = ConcreteScatterPlot()
+            rows = [{"algorithm": "Algo1", "x": 1, "y": 10}]
 
-        with patch("luna_bench.plots.generics.scatter_plot.plt.axhline") as mock_axhline:
             plot.create(
                 rows=rows,
                 xlabel="X",
@@ -157,15 +168,18 @@ class TestScatterPlot:
             call_kwargs = mock_axhline.call_args[1]
             assert call_kwargs["color"] == "red"
 
-    @patch("luna_bench.plots.generics.scatter_plot.plt.show")
-    @patch("luna_bench.plots.generics.scatter_plot.scatterplot")
-    def test_create_x_rotation_is_zero(self, mock_scatterplot: MagicMock, mock_show: MagicMock) -> None:
+    @patch("luna_bench.plots.generics.scatter_plot.check_optional_dependency")
+    def test_create_x_rotation_is_zero(self, mock_check_dep: MagicMock) -> None:
         """Test create uses zero x_rotation for scatter plots."""
-        _ = mock_scatterplot, mock_show
-        plot = ConcreteScatterPlot()
-        rows = [{"algorithm": "Algo1", "x": 1, "y": 10}]
+        _ = mock_check_dep
+        with (
+            patch("seaborn.scatterplot"),
+            patch("matplotlib.pyplot.show"),
+            patch("matplotlib.pyplot.xticks") as mock_xticks,
+        ):
+            plot = ConcreteScatterPlot()
+            rows = [{"algorithm": "Algo1", "x": 1, "y": 10}]
 
-        with patch("luna_bench.plots.generics.scatter_plot.plt.xticks") as mock_xticks:
             plot.create(
                 rows=rows,
                 xlabel="X",
@@ -177,41 +191,44 @@ class TestScatterPlot:
             # x_rotation=0 should not call xticks
             mock_xticks.assert_not_called()
 
-    @patch("luna_bench.plots.generics.scatter_plot.plt.show")
-    @patch("luna_bench.plots.generics.scatter_plot.scatterplot")
-    def test_create_scatterplot_parameters(self, mock_scatterplot: MagicMock, mock_show: MagicMock) -> None:
+    @patch("luna_bench.plots.generics.scatter_plot.check_optional_dependency")
+    def test_create_scatterplot_parameters(self, mock_check_dep: MagicMock) -> None:
         """Test create passes correct parameters to scatterplot."""
-        _ = mock_show
-        plot = ConcreteScatterPlot()
-        rows = [
-            {"model": "ModelA", "x": 1, "y": 10},
-            {"model": "ModelB", "x": 2, "y": 20},
-            {"model": "ModelA", "x": 3, "y": 30},
-        ]
+        _ = mock_check_dep
+        with patch("seaborn.scatterplot") as mock_scatterplot, patch("matplotlib.pyplot.show"):
+            plot = ConcreteScatterPlot()
+            rows = [
+                {"model": "ModelA", "x": 1, "y": 10},
+                {"model": "ModelB", "x": 2, "y": 20},
+                {"model": "ModelA", "x": 3, "y": 30},
+            ]
 
-        plot.create(
-            rows=rows,
-            xlabel="X",
-            ylabel="Y",
-            title="Test",
-            hue="model",
-        )
+            plot.create(
+                rows=rows,
+                xlabel="X",
+                ylabel="Y",
+                title="Test",
+                hue="model",
+            )
 
-        call_kwargs = mock_scatterplot.call_args[1]
-        assert call_kwargs["s"] == 60
-        assert call_kwargs["alpha"] == 0.8
-        assert "palette" in call_kwargs
-        assert call_kwargs["hue"] == "model"
+            call_kwargs = mock_scatterplot.call_args[1]
+            assert call_kwargs["s"] == 60
+            assert call_kwargs["alpha"] == 0.8
+            assert "palette" in call_kwargs
+            assert call_kwargs["hue"] == "model"
 
-    @patch("luna_bench.plots.generics.scatter_plot.plt.show")
-    @patch("luna_bench.plots.generics.scatter_plot.scatterplot")
-    def test_create_default_hline_color(self, mock_scatterplot: MagicMock, mock_show: MagicMock) -> None:
+    @patch("luna_bench.plots.generics.scatter_plot.check_optional_dependency")
+    def test_create_default_hline_color(self, mock_check_dep: MagicMock) -> None:
         """Test create uses success color by default for hline."""
-        _ = mock_scatterplot, mock_show
-        plot = ConcreteScatterPlot()
-        rows = [{"algorithm": "Algo1", "x": 1, "y": 10}]
+        _ = mock_check_dep
+        with (
+            patch("seaborn.scatterplot"),
+            patch("matplotlib.pyplot.show"),
+            patch("matplotlib.pyplot.axhline") as mock_axhline,
+        ):
+            plot = ConcreteScatterPlot()
+            rows = [{"algorithm": "Algo1", "x": 1, "y": 10}]
 
-        with patch("luna_bench.plots.generics.scatter_plot.plt.axhline") as mock_axhline:
             plot.create(
                 rows=rows,
                 xlabel="X",
@@ -223,3 +240,4 @@ class TestScatterPlot:
 
             call_kwargs = mock_axhline.call_args[1]
             assert call_kwargs["color"] == AqariosColours.SUCCESS
+        _ = mock_check_dep

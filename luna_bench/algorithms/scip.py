@@ -6,10 +6,10 @@ from typing import ClassVar
 from luna_model import Model, Solution, Timer
 from luna_model.translator import LpTranslator
 from luna_quantum import Logging
-from pyscipopt import Model as PyScipModel
 
 from luna_bench.custom import BaseAlgorithmSync, algorithm
 from luna_bench.errors.infeasible_model_error import InfeasibleModelError
+from luna_bench.helpers.optional_dependencies import check_optional_dependency
 
 SCIP_QUAD_VAR_DUMMY = "quadobjvar"
 
@@ -35,6 +35,10 @@ class ScipAlgorithm(BaseAlgorithmSync):
     Raises
     ------
     InfeasibleModelError: If the model has no feasible solution.
+
+    Requires
+    --------
+    Install the 'pre-defined' extra: ``pip install luna-bench[pre-defined]``
     """
 
     max_runtime: int | None = 60 * 60
@@ -67,6 +71,9 @@ class ScipAlgorithm(BaseAlgorithmSync):
         >>> scip_algo = ScipAlgorithm()
         >>> solution = scip_algo.run(my_model)
         """
+        check_optional_dependency("pyscipopt")
+        from pyscipopt import Model as PyScipModel  # noqa: PLC0415
+
         scip_model = PyScipModel()
         scip_model.hideOutput(quiet=self.quiet_output)
 

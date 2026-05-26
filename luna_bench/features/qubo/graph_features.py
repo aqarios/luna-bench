@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import networkx as nx
 import numpy as np
 
 from luna_bench.custom import BaseFeature, FeatureResult, feature
 from luna_bench.helpers import NumpyStatsHelper
+from luna_bench.helpers.optional_dependencies import check_optional_dependency
 
 from .get_qubo import get_qubo
 
@@ -91,6 +91,10 @@ class QuboGraphFeature(BaseFeature[QuboGraphFeatureResult]):
         the graph, analyzing only variable interactions. If True, linear terms
         are included as self-loops, which affects degree calculations and other
         metrics.
+
+    Requires
+    --------
+    Install the 'pre-defined' extra: ``pip install luna-bench[pre-defined]``
     """
 
     include_self_loops: bool = False
@@ -108,6 +112,9 @@ class QuboGraphFeature(BaseFeature[QuboGraphFeatureResult]):
         QuboGraphFeatureResult
             A result object containing the computed graph features.
         """
+        check_optional_dependency("networkx")
+        import networkx as nx  # noqa: PLC0415
+
         qubo = get_qubo(model)
 
         if not self.include_self_loops:
