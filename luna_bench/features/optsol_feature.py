@@ -5,10 +5,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from luna_model.translator import LpTranslator
-from pyscipopt import Model as ScipModel
 
 from luna_bench.custom import BaseFeature, FeatureResult, feature
 from luna_bench.errors.infeasible_model_error import InfeasibleModelError
+from luna_bench.helpers.optional_dependencies import check_optional_dependency
 
 if TYPE_CHECKING:
     from luna_model import Model
@@ -53,6 +53,10 @@ class OptSolFeature(BaseFeature[OptSolFeatureResult]):
     ------
     InfeasibleModelError
         If the model has no feasible solution.
+
+    Requires
+    --------
+    Install the 'pre-defined' extra: ``pip install luna-bench[pre-defined]``
 
     Examples
     --------
@@ -101,6 +105,9 @@ class OptSolFeature(BaseFeature[OptSolFeatureResult]):
         - When pre_terminated is True, the returned best_sol is an upper bound
           (for minimization) or lower bound (for maximization) on the optimal value
         """
+        check_optional_dependency("pyscipopt")
+        from pyscipopt import Model as ScipModel  # noqa: PLC0415
+
         scip_model = ScipModel()
         if self.max_runtime is not None:
             scip_model.setParam("limits/time", self.max_runtime)

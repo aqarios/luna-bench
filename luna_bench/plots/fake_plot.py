@@ -1,9 +1,8 @@
 import pandas as pd
-import seaborn as sns
-from matplotlib import pyplot as plt
 
 from luna_bench.custom import plot
 from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
+from luna_bench.helpers.optional_dependencies import check_optional_dependency
 from luna_bench.metrics.fake_metric import FakeMetric
 from luna_bench.plots.utils.style import AqariosColours
 
@@ -16,7 +15,16 @@ def FakePlot(benchmark_results: BenchmarkResultContainer) -> None:  # noqa: N802
     ----------
     benchmark_results : BenchmarkResultContainer
         Benchmark outputs containing metric results used to build the plot.
+
+    Requires
+    --------
+    Install the 'pre-defined' extra: ``pip install luna-bench[pre-defined]``
     """
+    check_optional_dependency("matplotlib")
+    check_optional_dependency("seaborn")
+    import seaborn as sns  # noqa: PLC0415
+    from matplotlib import pyplot as plt  # noqa: PLC0415
+
     rows = []
     for model_name, algorithm_name, metrics_result in benchmark_results.get_all_metrics():
         for metric_name, metric_result in metrics_result.get_all(FakeMetric).items():

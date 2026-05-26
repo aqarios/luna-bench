@@ -1,7 +1,7 @@
 import numpy as np
 from numpy._typing import NDArray
-from scipy.stats import kurtosis as scipy_kurtosis
-from scipy.stats import skew as scipy_skew
+
+from luna_bench.helpers.optional_dependencies import check_optional_dependency
 
 
 class NumpyStatsHelper:
@@ -68,16 +68,32 @@ class NumpyStatsHelper:
 
     @staticmethod
     def skew(data: NDArray[np.float64]) -> float:
-        """Calculate the skewness of the array, returning 0 if empty."""
+        """Calculate the skewness of the array, returning 0 if empty.
+
+        Requires
+        --------
+        Install the 'pre-defined' extra: ``pip install luna-bench[pre-defined]``
+        """
         if len(data) == 0:
             return 0.0
+        check_optional_dependency("scipy")
+        from scipy.stats import skew as scipy_skew  # noqa: PLC0415
+
         return float(scipy_skew(data))
 
     @staticmethod
     def kurtosis(data: NDArray[np.float64]) -> float:
-        """Calculate the excess kurtosis of the array, returning 0 if empty."""
+        """Calculate the excess kurtosis of the array, returning 0 if empty.
+
+        Requires
+        --------
+        Install the 'pre-defined' extra: ``pip install luna-bench[pre-defined]``
+        """
         if len(data) == 0:
             return 0.0
+        check_optional_dependency("scipy")
+        from scipy.stats import kurtosis as scipy_kurtosis  # noqa: PLC0415
+
         return float(scipy_kurtosis(data))
 
     @staticmethod

@@ -1,12 +1,16 @@
 from abc import ABC
 
-from matplotlib import pyplot as plt
-
 from luna_bench.custom import BasePlot
+from luna_bench.helpers.optional_dependencies import check_optional_dependency
 
 
 class SeabornPlot(BasePlot, ABC):
-    """Base of a seaborn-oriented plot with a shared figure and axis configuration."""
+    """Base of a seaborn-oriented plot with a shared figure and axis configuration.
+
+    Requires
+    --------
+    Install the 'pre-defined' extra: ``pip install luna-bench[pre-defined]``
+    """
 
     width: int = 8
     height: int = 6
@@ -15,6 +19,9 @@ class SeabornPlot(BasePlot, ABC):
 
     def setup_figure(self) -> None:
         """Create a matplotlib figure."""
+        check_optional_dependency("matplotlib")
+        from matplotlib import pyplot as plt  # noqa: PLC0415
+
         plt.figure(figsize=(self.width, self.height), dpi=self.dpi)
 
     def finalize_plot(
@@ -40,6 +47,9 @@ class SeabornPlot(BasePlot, ABC):
         x_rotation : int, optional
             Rotation angle for x-axis tick labels, by default ``45``.
         """
+        check_optional_dependency("matplotlib")
+        from matplotlib import pyplot as plt  # noqa: PLC0415
+
         if x_rotation > 0:
             plt.xticks(rotation=x_rotation, ha="right")
 

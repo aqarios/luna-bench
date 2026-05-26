@@ -4,17 +4,20 @@ from logging import Logger
 from typing import Any, ClassVar
 
 import pandas as pd
-import seaborn as sns
-from matplotlib import pyplot as plt
-from matplotlib.lines import Line2D
 
+from luna_bench.helpers.optional_dependencies import check_optional_dependency
 from luna_bench.plots.utils import Aggregation, AqariosColours
 
 from .seaborn_plot import SeabornPlot
 
 
 class BarPlot(SeabornPlot, ABC):
-    """Base helper for generating aggregated seaborn bar plots."""
+    """Base helper for generating aggregated seaborn bar plots.
+
+    Requires
+    --------
+    Install the 'pre-defined' extra: ``pip install luna-bench[pre-defined]``
+    """
 
     logger: ClassVar[Logger] = logging.getLogger(__name__)
 
@@ -65,6 +68,12 @@ class BarPlot(SeabornPlot, ABC):
         legend : bool, optional
             Whether seaborn should create a legend for hue groups, by default ``False``.
         """
+        check_optional_dependency("matplotlib")
+        check_optional_dependency("seaborn")
+        import seaborn as sns  # noqa: PLC0415
+        from matplotlib import pyplot as plt  # noqa: PLC0415
+        from matplotlib.lines import Line2D  # noqa: PLC0415
+
         if not rows:
             self.logger.warning(f"{self.__class__}: no data to plot")
             return

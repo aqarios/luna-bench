@@ -3,17 +3,21 @@ from logging import Logger
 from typing import Any, ClassVar
 
 from luna_quantum import Logging
-from matplotlib import pyplot as plt
 from pandas import DataFrame
-from seaborn import scatterplot
 
+from luna_bench.helpers.optional_dependencies import check_optional_dependency
 from luna_bench.plots.utils import AqariosColours
 
 from .seaborn_plot import SeabornPlot
 
 
 class ScatterPlot(SeabornPlot, ABC):
-    """Base helper for generating seaborn scatter plots."""
+    """Base helper for generating seaborn scatter plots.
+
+    Requires
+    --------
+    Install the 'pre-defined' extra: ``pip install luna-bench[pre-defined]``
+    """
 
     logger: ClassVar[Logger] = Logging.get_logger(__name__)
 
@@ -56,6 +60,11 @@ class ScatterPlot(SeabornPlot, ABC):
         hcolor : str, optional
             Color of the horizontal reference line, by default ``AqariosColours.SUCCESS``.
         """
+        check_optional_dependency("matplotlib")
+        check_optional_dependency("seaborn")
+        from matplotlib import pyplot as plt  # noqa: PLC0415
+        from seaborn import scatterplot  # noqa: PLC0415
+
         if not rows:
             self.logger.warning(f"{self.__class__}: no data to plot")
             return
