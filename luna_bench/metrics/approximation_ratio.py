@@ -97,7 +97,9 @@ class ApproximationRatio(BaseMetric[ApproximationRatioResult]):
         exp_val = solution.expectation_value(value_toggle=self.value_source)
 
         # Calculate ratio based on optimization sense
-        nom, denom = (exp_val, opt_sol.global_best_sol) if solution.sense == Sense.MIN else (opt_sol.global_best_sol, exp_val)
+        nom, denom = (
+            (exp_val, opt_sol.global_best_sol) if solution.sense == Sense.MIN else (opt_sol.global_best_sol, exp_val)
+        )
         ar = get_ratio(nominator=nom, denominator=denom, abt_diff=self.abt_diff)
 
         return ApproximationRatioResult(approximation_ratio=ar)
