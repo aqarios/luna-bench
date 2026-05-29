@@ -99,7 +99,7 @@ class FractionOfOverallBestSolution(BaseMetric[FractionOfOverallBestSolutionResu
 
         # Get the optimal solution from features
         opt_sol = feature_results.first(feature_cls=OptSolFeature)
-        optimum = opt_sol.best_sol
+        optimum = opt_sol.global_best_sol
         filtered_sol = solution.filter_feasible().filter(
             lambda s: s.obj_value is not None and bool(np.isclose(s.obj_value, optimum, atol=self.abs_tol))
         )

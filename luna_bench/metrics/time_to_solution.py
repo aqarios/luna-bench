@@ -102,7 +102,7 @@ class TimeToSolution(BaseMetric[TimeToSolutionResult]):
         """
         # Get the optimal solution from features
         opt_sol = feature_results.first(feature_cls=OptSolFeature)
-        optimum = opt_sol.best_sol
+        optimum = opt_sol.global_best_sol
 
         # Check if any solution exists
         num_samples = solution.counts.sum()
