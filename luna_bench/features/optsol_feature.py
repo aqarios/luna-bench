@@ -20,7 +20,7 @@ class OptSolFeatureResult(FeatureResult):
 
     Attributes
     ----------
-    best_sol : float
+    global_best_sol : float
         The best objective value found by the SCIP solver. This is either the
         optimal solution or the best feasible solution found within the time limit.
     pre_terminated : bool
@@ -28,7 +28,7 @@ class OptSolFeatureResult(FeatureResult):
         If True, best_sol represents an upper bound rather than the proven optimum.
     """
 
-    best_sol: float
+    global_best_sol: float
     pre_terminated: bool
     runtime: float
 
@@ -63,15 +63,15 @@ class OptSolFeature(BaseFeature[OptSolFeatureResult]):
     >>> # Solve to optimality (no time limit)
     >>> feature = OptSolFeature()
     >>> result = feature.run(model)
-    >>> print(f"Optimal value: {result.best_sol}")
+    >>> print(f"Optimal value: {result.global_best_sol}")
 
     >>> # Get best solution within 60 seconds
     >>> feature = OptSolFeature(max_runtime=60)
     >>> result = feature.run(model)
     >>> if result.pre_terminated:
-    ...     print(f"Upper bound: {result.best_sol}")
+    ...     print(f"Upper bound: {result.global_best_sol}")
     ... else:
-    ...     print(f"Optimal value: {result.best_sol}")
+    ...     print(f"Optimal value: {result.global_best_sol}")
     """
 
     max_runtime: float | None = None  # define max runtime in seconds
@@ -135,7 +135,7 @@ class OptSolFeature(BaseFeature[OptSolFeatureResult]):
             pre_terminated = True
 
         return OptSolFeatureResult(
-            best_sol=scip_model.getObjVal(),
+            global_best_sol=scip_model.getObjVal(),
             pre_terminated=pre_terminated,
             runtime=scip_model.getSolvingTime(),
         )
