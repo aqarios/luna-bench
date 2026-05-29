@@ -44,6 +44,9 @@ class ApproximationRatio(BaseMetric[ApproximationRatioResult]):
     abt_diff : float
         Absolute tolerance for considering a value as zero. Used to prevent
         division by zero errors. Default is 1e-3.
+    value_source : ValueSource
+        The value_source defines if the objective values or the raw energies values form the algorithm should be used
+        to calulate the approximation ratio. Default is ValueSource.OBJ.
 
     Examples
     --------
@@ -94,7 +97,7 @@ class ApproximationRatio(BaseMetric[ApproximationRatioResult]):
         exp_val = solution.expectation_value(value_toggle=self.value_source)
 
         # Calculate ratio based on optimization sense
-        nom, denom = (exp_val, opt_sol.best_sol) if solution.sense == Sense.MIN else (opt_sol.best_sol, exp_val)
+        nom, denom = (exp_val, opt_sol.global_best_sol) if solution.sense == Sense.MIN else (opt_sol.global_best_sol, exp_val)
         ar = get_ratio(nominator=nom, denominator=denom, abt_diff=self.abt_diff)
 
         return ApproximationRatioResult(approximation_ratio=ar)
