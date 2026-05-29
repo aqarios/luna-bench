@@ -26,10 +26,15 @@ class TestBestSolutionFoundResult:
         result = BestSolutionFoundResult(best_solution_found=5.0)
         assert result.best_solution_found == 5.0
 
-    def test_accepts_infinity(self) -> None:
-        """Test that infinity is valid (no feasible solution found)."""
-        result = BestSolutionFoundResult(best_solution_found=float("inf"))
-        assert result.best_solution_found == float("inf")
+    def test_accepts_none(self) -> None:
+        """Test that None is valid and is the default (no feasible solution found)."""
+        result = BestSolutionFoundResult(best_solution_found=None)
+        assert result.best_solution_found is None
+
+    def test_defaults_to_none(self) -> None:
+        """Test that the field defaults to None when omitted."""
+        result = BestSolutionFoundResult()
+        assert result.best_solution_found is None
 
     def test_accepts_negative_value(self) -> None:
         """Unlike the ratio metric, raw objective values may be negative."""
@@ -82,28 +87,28 @@ class TestBestSolutionFound:
         assert isinstance(result, BestSolutionFoundResult)
         assert result.best_solution_found == 15.0
 
-    def test_no_feasible_solution_returns_inf(
+    def test_no_feasible_solution_returns_none(
         self, create_solution: SolutionFactory, mock_feature_results: MagicMock
     ) -> None:
-        """Test that inf is returned when no sample is feasible."""
+        """Test that None is returned when no sample is feasible."""
         solution = create_solution(obj_values=[10.0, 5.0], sense=Sense.MIN, feasible=[False, False])
         result = BestSolutionFound().run(solution, mock_feature_results)
 
         assert isinstance(result, BestSolutionFoundResult)
-        assert result.best_solution_found == float("inf")
+        assert result.best_solution_found is None
 
-    def test_best_returns_none_returns_inf(self, mock_feature_results: MagicMock) -> None:
-        """Test that inf is returned when best() returns None (no feasible result)."""
+    def test_best_returns_none_returns_none(self, mock_feature_results: MagicMock) -> None:
+        """Test that None is returned when best() returns None (no feasible result)."""
         solution = MagicMock(spec=Solution)
         solution.best.return_value = None
 
         result = BestSolutionFound().run(solution, mock_feature_results)
 
         assert isinstance(result, BestSolutionFoundResult)
-        assert result.best_solution_found == float("inf")
+        assert result.best_solution_found is None
 
-    def test_value_is_none_returns_inf(self, mock_feature_results: MagicMock) -> None:
-        """Test that inf is returned when the best sample has obj_value=None."""
+    def test_value_is_none_returns_none(self, mock_feature_results: MagicMock) -> None:
+        """Test that None is returned when the best sample has obj_value=None."""
         best_view = MagicMock()
         best_view.obj_value = None
 
@@ -113,7 +118,7 @@ class TestBestSolutionFound:
         result = BestSolutionFound().run(solution, mock_feature_results)
 
         assert isinstance(result, BestSolutionFoundResult)
-        assert result.best_solution_found == float("inf")
+        assert result.best_solution_found is None
 
     def test_value_source_raw_energy(self, mock_feature_results: MagicMock) -> None:
         """Test that ValueSource.RAW reads the raw energy instead of the objective."""

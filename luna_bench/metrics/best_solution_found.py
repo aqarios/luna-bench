@@ -12,12 +12,14 @@ class BestSolutionFoundResult(MetricResult):
 
     Attributes
     ----------
-    best_solution_found : float
+    best_solution_found : float | None
         The best feasible objective value found in the solution set.
-        Returns inf if no feasible solution is found.
+        None if no feasible solution is found.
     """
 
-    best_solution_found: float = Field(description="The best feasible objective value found.")
+    best_solution_found: float | None = Field(
+        default=None, description="The best feasible objective value found, or None if none was found."
+    )
 
 
 @metric()
@@ -62,7 +64,7 @@ class BestSolutionFound(BaseMetric[BestSolutionFoundResult]):
         Returns
         -------
         BestSolutionFoundResult
-            Contains the best feasible objective value. Returns inf if no feasible
+            Contains the best feasible objective value, or None if no feasible
             solution is available.
 
         Raises
@@ -77,11 +79,11 @@ class BestSolutionFound(BaseMetric[BestSolutionFoundResult]):
         # best() already returns the best *feasible* result for the given sense.
         best = solution.best()
         if best is None:
-            return BestSolutionFoundResult(best_solution_found=float("inf"))
+            return BestSolutionFoundResult(best_solution_found=None)
 
         best_view = best[0]
         value = best_view.obj_value if self.value_source == ValueSource.OBJ else best_view.raw_energy
         if value is None:
-            return BestSolutionFoundResult(best_solution_found=float("inf"))
+            return BestSolutionFoundResult(best_solution_found=None)
 
         return BestSolutionFoundResult(best_solution_found=float(value))
