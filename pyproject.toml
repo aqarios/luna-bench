@@ -36,7 +36,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://aqarios.com"
-Documentation = "https://docs.aqarios.com"
+Documentation = "https://docs.aqarios.com/luna-bench/intro"
 
 [dependency-groups]
 dev = [
