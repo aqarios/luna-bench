@@ -60,6 +60,11 @@ jobs:
       - name: Build artifacts
         run: uv build
 
+      - name: Publish to PyPI
+        run: uv publish
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
         with:
@@ -69,6 +74,3 @@ jobs:
           files: |
             dist/*.whl
             dist/*.tar.gz
-
-#      - name: Publish to PyPI
-#        uses: pypa/gh-action-pypi-publish@release/v1
