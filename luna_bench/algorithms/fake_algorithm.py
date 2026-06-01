@@ -14,7 +14,7 @@ class FakeAlgorithm(BaseAlgorithmSync):
     """
     Fake algorithm that does nothing.
 
-    This algorithm is used in the development process. After that it will be deleted.
+    This algorithm is used in the development process.
     """
 
     time_to_sleep: float = random.uniform(0, 0.5)  # noqa: S311
