@@ -31,7 +31,7 @@ class TestOptSolFeature:
         assert result.pre_terminated is True
 
         # Should still have a best solution (upper bound)
-        assert isinstance(result.best_sol, float)
+        assert isinstance(result.global_best_sol, float)
 
         # Runtime should be lower than defined limit
         assert result.runtime < (runtime_limit + 1)
@@ -52,7 +52,7 @@ class TestOptSolFeature:
         assert result.pre_terminated is False
 
         # Should have a best solution as a float
-        assert isinstance(result.best_sol, float)
+        assert isinstance(result.global_best_sol, float)
 
         # For this specific model, the optimal solution should be 0 (minimize x + y with x, y >= 0)
-        assert result.best_sol == 0.0
+        assert result.global_best_sol == 0.0
