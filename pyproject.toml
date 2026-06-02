@@ -10,10 +10,12 @@ readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.13"
 authors = [
-    { name = "Aqarios GmbH", email = "support@aqarios.com" },
     { name = "Llewellyn Hochhauser", email = "llewellyn.hochhauser@aqarios.com" },
     { name = "Maximilian Janetschek", email = "maximilian.janetschek@aqarios.com" },
     { name = "Jonas Blenninger", email = "jonas.blenninger@aqarios.com" },
+]
+maintainers = [
+    { name = "Aqarios GmbH", email = "support@aqarios.com" }
 ]
 keywords = [
     "aqarios",

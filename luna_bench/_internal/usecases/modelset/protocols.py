@@ -33,7 +33,7 @@ class ModelFetchUc(Protocol):
 
         Parameters
         ----------
-        model_id : int
+        model_id: int
             The id of the model to fetch.
 
         Returns
@@ -54,7 +54,7 @@ class ModelSetCreateUc(Protocol):
 
         Parameters
         ----------
-        modelset_name : str
+        modelset_name: str
             The name of the model set to create.
 
         Returns
@@ -75,7 +75,7 @@ class ModelSetLoadUc(Protocol):
 
         Parameters
         ----------
-        modelset_name : str
+        modelset_name: str
             The name of the model set to load.
 
         Returns
@@ -101,9 +101,9 @@ class ModelAddUc(Protocol):
 
         Parameters
         ----------
-        modelset_name : str
+        modelset_name: str
             The name of the model set to add the model to.
-        model : Model
+        model: Model
             The model to add to the model set.
 
         Returns
@@ -126,9 +126,9 @@ class ModelRemoveUc(Protocol):
 
         Parameters
         ----------
-        modelset_name : str
+        modelset_name: str
             The name of the model set to remove the model from.
-        model : Model
+        model: Model
             The model to remove from the model set.
 
         Returns
@@ -149,7 +149,7 @@ class ModelSetDeleteUc(Protocol):
 
         Parameters
         ----------
-        modelset_name : str
+        modelset_name: str
             The name of the model set to delete.
 
         Returns
