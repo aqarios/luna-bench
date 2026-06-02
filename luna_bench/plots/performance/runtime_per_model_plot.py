@@ -22,7 +22,9 @@ class RuntimePerModelPlot(BarPlot):
     >>> bench.add_plot(name="runtime_per_model", plot=RuntimePerModelPlot())
     """
 
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    figure_filename: str = "runtime_per_model"
+
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Generate plot output from benchmark results.
 
         Parameters
@@ -40,6 +42,7 @@ class RuntimePerModelPlot(BarPlot):
         ]
 
         self.create(
+            save_dir=save_dir,
             rows=rows,
             x="model",
             y="runtime_seconds",

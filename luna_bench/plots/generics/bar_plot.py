@@ -38,6 +38,7 @@ class BarPlot(SeabornPlot, ABC):
         hline_label: str | None = None,
         ylim: tuple[float, float] | None = None,
         legend: bool = False,
+        save_dir: str | None = None,
     ) -> None:
         """Create a bar plot from row-oriented data.
 
@@ -105,4 +106,4 @@ class BarPlot(SeabornPlot, ABC):
         if handles:
             plt.legend(handles=handles, labels=labels)
 
-        self.finalize_plot(xlabel, ylabel, title, ylim)
+        self.finalize_plot(xlabel, ylabel, title, ylim, save_dir=save_dir)

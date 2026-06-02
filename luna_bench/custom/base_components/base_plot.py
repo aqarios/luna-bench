@@ -19,7 +19,7 @@ class BasePlot(RegisterableComponent, ABC, metaclass=RegisteredClassMeta):
     required_metrics: ClassVar[list[MetricClass]]
 
     @abstractmethod
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Generate plot output from benchmark results.
 
         Parameters

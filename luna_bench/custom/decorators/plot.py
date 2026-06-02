@@ -187,8 +187,9 @@ def plot(
         class_name = func.__name__
 
         @functools.wraps(func)
-        def run(self: BasePlot, benchmark_results: BenchmarkResultContainer) -> None:
+        def run(self: BasePlot, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
             _ = self
+            _ = save_dir
             return func(benchmark_results)
 
         # Create the dynamic class

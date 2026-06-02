@@ -39,7 +39,7 @@ class SeabornPlot(BasePlot, ABC):
 
         plt.figure(figsize=(self.width, self.height), dpi=self.dpi)
 
-    def finalize_plot(
+    def finalize_plot(  # noqa: PLR0913
         self,
         xlabel: str,
         ylabel: str,
@@ -62,6 +62,8 @@ class SeabornPlot(BasePlot, ABC):
             Lower and upper y-axis limits, by default ``None``.
         x_rotation : int, optional
             Rotation angle for x-axis tick labels, by default ``45``.
+        save_dir : str | None, optional
+            Directory to save the figure into, by default ``None``.
         """
         check_optional_dependency("matplotlib")
         from matplotlib import pyplot as plt  # noqa: PLC0415
@@ -83,11 +85,8 @@ class SeabornPlot(BasePlot, ABC):
 
         plt.tight_layout()
 
-        # Try duck-typed save_dir attribute first (set by OutputUc at runtime),
-        # then fall back to the explicit parameter.
-        effective_save_dir = save_dir or getattr(self, "save_dir", None)
-        if effective_save_dir:
-            save_path = Path(effective_save_dir) / self.figure_filename
+        if save_dir:
+            save_path = Path(save_dir) / self.figure_filename
             save_path.parent.mkdir(parents=True, exist_ok=True)
             plt.savefig(str(save_path), dpi=self.dpi, bbox_inches="tight")
 

@@ -28,21 +28,21 @@ class Config(BaseSettings):
     LB_HUEY_WORKER_TYPE: Literal["process", "thread", "greenlet"] | None = None
     LB_HUEY_JOIN_TIMEOUT: int = 10
 
-    LB_OUTPUT_DIR: str = "./benchmark_output"
+    LB_DATA_DIR: str = "./benchmark_data"
 
     @property
     def resolved_db_connection_string(self) -> str:
         """Full path for the main benchmark database."""
         if self.LB_DB_CONNECTION_STRING:
             return self.LB_DB_CONNECTION_STRING
-        return str(Path(self.LB_OUTPUT_DIR) / "luna_bench.db")
+        return str(Path(self.LB_DATA_DIR) / "luna_bench.db")
 
     @property
     def resolved_jobs_db_connection_string(self) -> str:
         """Full path for the Huey jobs database."""
         if self.LB_DB_JOBS_CONNECTION_STRING:
             return self.LB_DB_JOBS_CONNECTION_STRING
-        return str(Path(self.LB_OUTPUT_DIR) / "luna_bench-jobs.db")
+        return str(Path(self.LB_DATA_DIR) / "luna_bench-jobs.db")
 
 
 config = Config()

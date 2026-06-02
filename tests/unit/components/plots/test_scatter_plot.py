@@ -12,7 +12,7 @@ from luna_bench.plots.utils.style import AqariosColours
 class ConcreteScatterPlot(ScatterPlot):
     """Concrete implementation of ScatterPlot for testing."""
 
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Test implementation for ScatterPlot."""
 
 

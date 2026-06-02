@@ -70,7 +70,7 @@ class PlotsRunUcImpl(PlotsRunUc):
             metrics=metrics,
         )
         try:
-            plot_entity.plot.run(benchmark_result)
+            plot_entity.plot.run(benchmark_result, save_dir=benchmark.data_dir_plots)
         except Exception as e:
             self._logger.warning(f"Error running plot {plot_entity.name}: {e}")
             return Failure(PlotExecutionError(plot_entity.name, benchmark.name, e))

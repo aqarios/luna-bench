@@ -49,7 +49,8 @@ class TestPlotDecorator:
     ) -> None:
         @plot(plot_id=plot_id, plot_registry=plot_registry)
         class TestPlot(BasePlot):
-            def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+            def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
+                _ = save_dir
                 _ = benchmark_results
 
         assert isinstance(TestPlot, type)
@@ -106,7 +107,8 @@ class TestPlotDecorator:
     ) -> None:
         @plot(required_components, plot_registry=plot_registry)
         class TestComponentPlot(BasePlot):
-            def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+            def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
+                _ = save_dir
                 _ = benchmark_results
 
         assert TestComponentPlot.required_features == expected_features
@@ -118,7 +120,8 @@ class TestPlotDecorator:
     ) -> None:
         @plot(required_components=[MockPlotFeature, MockPlotMetric], plot_registry=plot_registry)
         class MixedPlot(BasePlot):
-            def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+            def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
+                _ = save_dir
                 _ = benchmark_results
 
         assert MixedPlot.required_features == [MockPlotFeature]
@@ -130,7 +133,8 @@ class TestPlotDecorator:
     ) -> None:
         @plot(required_components=MockPlotMetric, plot_registry=plot_registry)
         class SingleMetricPlot(BasePlot):
-            def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+            def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
+                _ = save_dir
                 _ = benchmark_results
 
         assert SingleMetricPlot.required_features == []
@@ -142,7 +146,8 @@ class TestPlotDecorator:
     ) -> None:
         @plot([MockPlotFeature, MockPlotMetric], plot_registry=plot_registry)
         class ListArgPlot(BasePlot):
-            def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+            def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
+                _ = save_dir
                 _ = benchmark_results
 
         assert ListArgPlot.required_features == [MockPlotFeature]

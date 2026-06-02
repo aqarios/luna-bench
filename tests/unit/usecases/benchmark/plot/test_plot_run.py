@@ -7,7 +7,6 @@ from returns.result import Failure, Success
 
 from luna_bench._internal.usecases.benchmark.plot.plot_run import PlotsRunUcImpl
 from luna_bench.entities import PlotEntity
-from luna_bench.entities.benchmark_entity import BenchmarkEntity
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
 from luna_bench.errors.run_errors.run_plot_missing_error import RunPlotMissingError
 
@@ -37,11 +36,12 @@ class TestPlotsRunUcImpl:
         if plots is None:
             plots = []
 
-        benchmark = MagicMock(spec=BenchmarkEntity)
+        benchmark = MagicMock()
         benchmark.name = "test_benchmark"
         benchmark.modelset = modelset
         benchmark.algorithms = algorithms
         benchmark.plots = plots
+        benchmark.data_dir_plots = None
         return benchmark
 
     def create_mock_plot(

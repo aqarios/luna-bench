@@ -22,7 +22,7 @@ class BenchmarkEntity(BaseModel):
     algorithms: list[AlgorithmEntity]
     plots: list[PlotEntity]
 
-    output_dir: str | None = None
-    output_dir_plots: str | None = None
-    output_dir_logs: str | None = None
-    output_dir_import_models: str | None = None
+    data_dir: str | None = None
+    data_dir_plots: str | None = None
+    data_dir_logs: str | None = None
+    data_dir_import_models: str | None = None

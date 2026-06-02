@@ -230,10 +230,11 @@ class BackgroundRetrieveAlgorithmSyncUc(Protocol):
     ]: ...
 
 
-class OutputDirSetupUc(Protocol):
-    """Set up the output directory for a benchmark run."""
+class DataDirSetupUc(Protocol):
+    """Set up the data_dir directory for a benchmark run."""
 
     def __call__(
         self,
         benchmark: BenchmarkEntity,
+        root_folder: str | None = None,
     ) -> Result[None, str]: ...

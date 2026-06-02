@@ -38,13 +38,13 @@ if TYPE_CHECKING:
         BenchmarkLoadUc,
         BenchmarkRemoveModelsetUc,
         BenchmarkSetModelsetUc,
+        DataDirSetupUc,
         FeatureAddUc,
         FeatureRemoveUc,
         FeatureRunUc,
         MetricAddUc,
         MetricRemoveUc,
         MetricRunUc,
-        OutputDirSetupUc,
         PlotAddUc,
         PlotRemoveUc,
         PlotsRunUc,
@@ -80,10 +80,10 @@ class Benchmark(BenchmarkEntity):
 
     @staticmethod
     @inject
-    def __output_dir_setup_uc(
-        benchmark_setup_output: OutputDirSetupUc = Provide[UsecaseContainer.benchmark_setup_output_dir_uc],
-    ) -> OutputDirSetupUc:
-        return benchmark_setup_output
+    def __data_dir_setup_uc(
+        benchmark_setup: DataDirSetupUc = Provide[UsecaseContainer.benchmark_setup_data_dir_uc],
+    ) -> DataDirSetupUc:
+        return benchmark_setup
 
     @staticmethod
     @inject
@@ -931,7 +931,7 @@ class Benchmark(BenchmarkEntity):
 
     def run(self) -> None:
         """Execute the benchmark."""
-        setup_uc = self.__output_dir_setup_uc()
+        setup_uc = self.__data_dir_setup_uc()
         result = setup_uc(self)
         if not is_successful(result):
             Benchmark._logger.warning("Output setup failed: %s", result.failure())

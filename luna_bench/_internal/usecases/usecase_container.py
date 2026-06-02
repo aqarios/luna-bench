@@ -32,13 +32,13 @@ from luna_bench._internal.usecases.benchmark.benchmark_load import BenchmarkLoad
 from luna_bench._internal.usecases.benchmark.benchmark_load_all import BenchmarkLoadAllUcImpl
 from luna_bench._internal.usecases.benchmark.benchmark_remove_modelset import BenchmarkRemoveModelsetUcImpl
 from luna_bench._internal.usecases.benchmark.benchmark_set_modelset import BenchmarkSetModelsetUcImpl
+from luna_bench._internal.usecases.benchmark.data_dir import DataDirSetupUcImpl
 from luna_bench._internal.usecases.benchmark.feature.feature_add import FeatureAddUcImpl
 from luna_bench._internal.usecases.benchmark.feature.feature_remove import FeatureRemoveUcImpl
 from luna_bench._internal.usecases.benchmark.feature.feature_run import FeatureRunUcImpl
 from luna_bench._internal.usecases.benchmark.metric.metric_add import MetricAddUcImpl
 from luna_bench._internal.usecases.benchmark.metric.metric_remove import MetricRemoveUcImpl
 from luna_bench._internal.usecases.benchmark.metric.metric_run import MetricRunUcImpl
-from luna_bench._internal.usecases.benchmark.output import OutputDirSetupUcImpl
 from luna_bench._internal.usecases.benchmark.plot.plot_add import PlotAddUcImpl
 from luna_bench._internal.usecases.benchmark.plot.plot_remove import PlotRemoveUcImpl
 from luna_bench._internal.usecases.benchmark.plot.plot_run import PlotsRunUcImpl
@@ -61,13 +61,13 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     BenchmarkLoadUc,
     BenchmarkRemoveModelsetUc,
     BenchmarkSetModelsetUc,
+    DataDirSetupUc,
     FeatureAddUc,
     FeatureRemoveUc,
     FeatureRunUc,
     MetricAddUc,
     MetricRemoveUc,
     MetricRunUc,
-    OutputDirSetupUc,
     PlotAddUc,
     PlotRemoveUc,
     PlotsRunUc,
@@ -251,4 +251,4 @@ class UsecaseContainer(containers.DeclarativeContainer):
         MetricRunUcImpl, transaction=dao_container.transaction
     )
 
-    benchmark_setup_output_dir_uc: Provider[OutputDirSetupUc] = providers.ThreadSafeSingleton(OutputDirSetupUcImpl)
+    benchmark_setup_data_dir_uc: Provider[DataDirSetupUc] = providers.ThreadSafeSingleton(DataDirSetupUcImpl)

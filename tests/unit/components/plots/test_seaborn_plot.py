@@ -11,7 +11,7 @@ from luna_bench.plots.generics.seaborn_plot import SeabornPlot
 class ConcreteSeabornPlot(SeabornPlot):
     """Concrete implementation of SeabornPlot for testing."""
 
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Test implementation for SeabornPlot."""
 
 
