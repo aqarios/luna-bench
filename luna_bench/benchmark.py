@@ -44,6 +44,7 @@ if TYPE_CHECKING:
         MetricAddUc,
         MetricRemoveUc,
         MetricRunUc,
+        OutputDirSetupUc,
         PlotAddUc,
         PlotRemoveUc,
         PlotsRunUc,
@@ -76,6 +77,13 @@ class Benchmark(BenchmarkEntity):
         benchmark_run_plots: PlotsRunUc = Provide[UsecaseContainer.benchmark_run_plots_uc],
     ) -> PlotsRunUc:
         return benchmark_run_plots
+
+    @staticmethod
+    @inject
+    def __output_dir_setup_uc(
+        benchmark_setup_output: OutputDirSetupUc = Provide[UsecaseContainer.benchmark_setup_output_dir_uc],
+    ) -> OutputDirSetupUc:
+        return benchmark_setup_output
 
     @staticmethod
     @inject
@@ -923,6 +931,11 @@ class Benchmark(BenchmarkEntity):
 
     def run(self) -> None:
         """Execute the benchmark."""
+        setup_uc = self.__output_dir_setup_uc()
+        result = setup_uc(self)
+        if not is_successful(result):
+            Benchmark._logger.warning("Output setup failed: %s", result.failure())
+
         self.add_dependencies()
         self.run_features()
         self.run_algorithms()

@@ -13,7 +13,6 @@ class BasePlot(RegisterableComponent, ABC, metaclass=RegisteredClassMeta):
     Base interface for all plot components.
 
     Subclasses should implement the `run` method.
-
     """
 
     required_features: ClassVar[list[FeatureClass]]

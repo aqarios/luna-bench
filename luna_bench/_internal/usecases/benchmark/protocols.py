@@ -228,3 +228,12 @@ class BackgroundRetrieveAlgorithmSyncUc(Protocol):
     ) -> Maybe[
         Result[Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]
     ]: ...
+
+
+class OutputDirSetupUc(Protocol):
+    """Set up the output directory for a benchmark run."""
+
+    def __call__(
+        self,
+        benchmark: BenchmarkEntity,
+    ) -> Result[None, str]: ...
