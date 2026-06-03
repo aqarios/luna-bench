@@ -36,6 +36,21 @@ class WriteOnceMeta(PydanticModelMetaclass, ABCMeta):
                 )
             else:
                 existing = namespace.get("__annotations__", {})
+                try:
+                    # For python 3.14+ we need to collect all pre-existing annotations.
+                    # If the annotation lib doesn't exist,
+                    # it means we are in python <3.14 and lazy loading doesn't exist.
+
+                    from annotationlib import (  # noqa: PLC0415
+                        Format,
+                        call_annotate_function,
+                        get_annotate_from_class_namespace,
+                    )
+
+                    if annotate := get_annotate_from_class_namespace(namespace):
+                        existing = call_annotate_function(annotate, format=Format.FORWARDREF)
+                except ImportError:
+                    pass
 
                 namespace["__annotations__"] = {**existing, field_name: type_hint}
 
