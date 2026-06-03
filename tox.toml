@@ -1,9 +1,16 @@
 requires = ["tox>=4", "tox-uv"]
-env_list = ["3.13", "3.14"]
+env_list = ["py313", "py314"]
+
+[env.py313]
+base_python = "3.13"
+
+[env.py314]
+base_python = "3.14"
 
 [env_run_base]
 allowlist_externals = ["uv", "pytest"]
 runner = "uv-venv-runner"
 description = "run unit tests"
 deps = []
+dependency_groups = ["dev"]
 commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]

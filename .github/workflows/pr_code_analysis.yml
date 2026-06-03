@@ -16,8 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.13"
-          - "3.14"
+          - "3.13" # Only one version here since we do the checks with tox
 
     steps:
       - name: "Checkout code"
