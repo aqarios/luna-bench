@@ -6,6 +6,7 @@ from returns.result import Result
 from luna_bench.entities import ModelMetadataEntity, ModelSetEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.model_name_already_used_error import ModelNameAlreadyUsedError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
@@ -94,7 +95,7 @@ class ModelAddUc(Protocol):
         self, modelset_name: str, model: Model
     ) -> Result[
         ModelSetEntity,
-        DataNotExistError | DataNotUniqueError | UnknownLunaBenchError,
+        DataNotExistError | ModelNameAlreadyUsedError | UnknownLunaBenchError,
     ]:
         """
         Add a model to the model set.

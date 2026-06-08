@@ -9,6 +9,8 @@ from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.usecases.modelset.protocols import ModelAddUc
 from luna_bench.entities import ModelMetadataEntity, ModelSetEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
+from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.model_name_already_used_error import ModelNameAlreadyUsedError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 if TYPE_CHECKING:
@@ -34,7 +36,7 @@ class ModelAddUcImpl(ModelAddUc):
 
     def __call__(
         self, modelset_name: str, model: Model
-    ) -> Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError]:
+    ) -> Result[ModelSetEntity, DataNotExistError | ModelNameAlreadyUsedError | UnknownLunaBenchError]:
         """
         Add a model to a model set.
 
@@ -54,11 +56,14 @@ class ModelAddUcImpl(ModelAddUc):
             On failure: An Exception
         """
         with self._transaction as t:
-            result_create: Result[ModelMetadataDomain, UnknownLunaBenchError] = t.model.get_or_create(
-                model_name=model.name, model_hash=model.__hash__(), binary=model.encode()
+            result_create: Result[ModelMetadataDomain, DataNotUniqueError | UnknownLunaBenchError] = (
+                t.model.get_or_create(model_name=model.name, model_hash=model.__hash__(), binary=model.encode())
             )
             if not is_successful(result_create):
-                return Failure(result_create.failure())
+                error = result_create.failure()
+                if isinstance(error, DataNotUniqueError):
+                    return Failure(ModelNameAlreadyUsedError(model.name))
+                return Failure(error)
             success_create: ModelMetadataDomain = result_create.unwrap()
 
             result_add: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError] = t.modelset.add_model(
