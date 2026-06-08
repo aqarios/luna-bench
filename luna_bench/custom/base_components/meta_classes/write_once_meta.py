@@ -35,8 +35,24 @@ class WriteOnceMeta(PydanticModelMetaclass, ABCMeta):
                     f"This field is intended to be a write-once field."
                 )
             else:
-                annotations: dict[str, Any] = namespace.setdefault("__annotations__", {})
-                annotations.setdefault(field_name, type_hint)
+                existing = namespace.get("__annotations__", {})
+                try:
+                    # For python 3.14+ we need to collect all pre-existing annotations.
+                    # If the annotation lib doesn't exist,
+                    # it means we are in python <3.14 and lazy loading doesn't exist.
+
+                    from annotationlib import (  # type: ignore[import-not-found] # noqa: PLC0415
+                        Format,
+                        call_annotate_function,
+                        get_annotate_from_class_namespace,
+                    )
+
+                    if annotate := get_annotate_from_class_namespace(namespace):
+                        existing = call_annotate_function(annotate, format=Format.FORWARDREF)
+                except ImportError:
+                    pass
+
+                namespace["__annotations__"] = {**existing, field_name: type_hint}
 
         return super().__new__(cls, name, bases, namespace, **kwargs)
 
