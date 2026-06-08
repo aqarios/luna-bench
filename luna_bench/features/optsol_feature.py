@@ -48,6 +48,8 @@ class OptSolFeature(BaseFeature[OptSolFeatureResult]):
         Maximum solver runtime in seconds. If None (default), the solver runs until
         optimality is proven or infeasibility is detected. If set, the solver may
         return a suboptimal solution marked with pre_terminated=True.
+    quiet_output: bool
+        Defines the verbosity of the SCIP solver output.
 
     Raises
     ------
@@ -75,6 +77,7 @@ class OptSolFeature(BaseFeature[OptSolFeatureResult]):
     """
 
     max_runtime: float | None = None  # define max runtime in seconds
+    quiet_output: bool = True
 
     def run(self, model: Model) -> OptSolFeatureResult:
         """
@@ -109,6 +112,7 @@ class OptSolFeature(BaseFeature[OptSolFeatureResult]):
         from pyscipopt import Model as ScipModel  # noqa: PLC0415
 
         scip_model = ScipModel()
+        scip_model.hideOutput(quiet=self.quiet_output)
         if self.max_runtime is not None:
             scip_model.setParam("limits/time", self.max_runtime)
 
