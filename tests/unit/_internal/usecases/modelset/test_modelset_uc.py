@@ -19,6 +19,7 @@ from tests.utils.luna_model import simple_model
 if TYPE_CHECKING:
     from luna_bench._internal.usecases import ModelAddUc, ModelSetCreateUc, ModelSetDeleteUc
     from luna_bench._internal.usecases.modelset.protocols import ModelRemoveUc, ModelSetLoadAllUc, ModelSetLoadUc
+    from luna_bench.errors.model_name_already_used_error import ModelNameAlreadyUsedError
 
 
 class TestModelsetUc:
@@ -65,7 +66,7 @@ class TestModelsetUc:
         uc: ModelAddUc = usecase.model_add_uc()
         result: Result[
             ModelSetEntity,
-            DataNotExistError | DataNotUniqueError | UnknownLunaBenchError,
+            DataNotExistError | ModelNameAlreadyUsedError | UnknownLunaBenchError,
         ] = uc(modelset_name=modelset_name, model=model)
         assert type(result) is type(exp)
 
@@ -89,7 +90,7 @@ class TestModelsetUc:
 
         result: Result[
             ModelSetEntity,
-            DataNotExistError | DataNotUniqueError | UnknownLunaBenchError,
+            DataNotExistError | ModelNameAlreadyUsedError | UnknownLunaBenchError,
         ] = uc(modelset_name="A", model=simple_model("M3"))
         assert isinstance(result.failure(), UnknownLunaBenchError)
 
