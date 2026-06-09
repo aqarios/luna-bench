@@ -215,7 +215,7 @@ class ModelSet(ModelSetEntity):
 
     def add(
         self,
-        model: Model,
+        model: Model | list[Model],
     ) -> None:
         """
         Add a model to this model set.
@@ -224,12 +224,17 @@ class ModelSet(ModelSetEntity):
 
         Parameters
         ----------
-        model : Model
-            The model to add to this model set.
+        model : Model | list[Model]
+            The model to add to this model set. If its a list of models, all models will be added.
         modelset_add : ModelSetAddUc, injected
             The use case for adding models to a model set, by default provided by dependency injection.
         """
         modelset_add = self.__model_add_uc()
+
+        if isinstance(model, list):
+            for m in model:
+                self.add(m)
+            return
 
         result: Result[ModelSetEntity, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError] = modelset_add(
             modelset_name=self.name, model=model
