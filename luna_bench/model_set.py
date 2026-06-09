@@ -112,8 +112,6 @@ class ModelSet(ModelSetEntity):
         ----------
         modelset_name : str
             The name of the dataset.
-        modelset_create : ModelSetCreateUc, injected
-            The use case for creating model sets, by default, it's provided by dependency injection.
 
         Returns
         -------
@@ -152,8 +150,7 @@ class ModelSet(ModelSetEntity):
         ----------
         name : str
             The unique name of the model set to load.
-        modelset_load : ModelSetLoadUc, injected
-            The use case for loading model sets, by default provided by dependency injection.
+
 
         Returns
         -------
@@ -200,11 +197,6 @@ class ModelSet(ModelSetEntity):
 
         Retrieves all models stored in the database, regardless of which model set they belong to.
 
-        Parameters
-        ----------
-        model_all : ModelAllUc, injected
-            The use case for retrieving all models, by default provided by dependency injection.
-
         Returns
         -------
         list[ModelMetadata]
@@ -226,8 +218,6 @@ class ModelSet(ModelSetEntity):
         ----------
         model : Model | list[Model]
             The model to add to this model set. If its a list of models, all models will be added.
-        modelset_add : ModelSetAddUc, injected
-            The use case for adding models to a model set, by default provided by dependency injection.
         """
         modelset_add = self.__model_add_uc()
 
@@ -259,8 +249,6 @@ class ModelSet(ModelSetEntity):
         ----------
         model : Model
             The model to remove from this model set.
-        modelset_remove : ModelSetRemoveUc, injected
-            The use case for removing models from a model set, by default provided by dependency injection.
         """
         modelset_remove = self.__model_remove_uc()
 
@@ -279,11 +267,6 @@ class ModelSet(ModelSetEntity):
         Delete this model set from the database.
 
         Permanently removes this model set from the database.
-
-        Parameters
-        ----------
-        modelset_delete_uc : ModelSetDeleteUc, injected
-            The use case for deleting model sets, by default provided by dependency injection.
         """
         modelset_delete_uc = self.__delete_uc()
 
