@@ -21,14 +21,14 @@ class TestApproximationRatio:
     """Tests for the ApproximationRatio metric class."""
 
     @pytest.mark.parametrize("mock_feature_results", [10.0], indirect=True)
-    def test_no_solution_returns_infinity(
+    def test_no_solution_returns_negative_infinity(
         self, mock_solution_config: MagicMock, mock_feature_results: MagicMock
     ) -> None:
-        """Test that when no solution is found, the approximation ratio is infinity."""
+        """Test that when no solution is found, the approximation ratio is negative infinity."""
         result = ApproximationRatio().run(mock_solution_config, mock_feature_results)
 
         assert isinstance(result, ApproximationRatioResult)
-        assert result.approximation_ratio == float("inf")
+        assert result.approximation_ratio == float("-inf")
 
     @pytest.mark.parametrize("mock_solution_config", [(Sense.MIN, 5.0)], indirect=True)
     def test_optimal_solution_zero_raises_error(
@@ -79,14 +79,19 @@ class TestApproximationRatio:
     @pytest.mark.parametrize(
         ("mock_solution_config", "mock_feature_results", "expected_ratio"),
         [
-            # Minimization: AR = expectation_value / optimal # noqa: ERA001
-            ((Sense.MIN, 10.0), 10.0, 1.0),  # Perfect: 10/10 = 1.0
-            ((Sense.MIN, 20.0), 10.0, 2.0),  # Worse: 20/10 = 2.0
-            ((Sense.MIN, 15.0), 10.0, 1.5),  # Worse: 15/10 = 1.5
-            # Maximization: AR = optimal / expectation_value # noqa: ERA001
-            ((Sense.MAX, 100.0), 100.0, 1.0),  # Perfect: 100/100 = 1.0
-            ((Sense.MAX, 50.0), 100.0, 2.0),  # Worse: 100/50 = 2.0
-            ((Sense.MAX, 20.0), 100.0, 5.0),  # Worse: 100/20 = 5.0
+            # AR = 1 - abs(expectation_value - optimal) / abs(optimal), sense-agnostic.
+            # Minimization
+            ((Sense.MIN, 10.0), 10.0, 1.0),  # Perfect: 1 - |10-10|/10 = 1.0
+            ((Sense.MIN, 20.0), 10.0, 0.0),  # Worse: 1 - |20-10|/10 = 0.0
+            ((Sense.MIN, 15.0), 10.0, 0.5),  # Worse: 1 - |15-10|/10 = 0.5
+            # Maximization
+            ((Sense.MAX, 100.0), 100.0, 1.0),  # Perfect: 1 - |100-100|/100 = 1.0
+            ((Sense.MAX, 50.0), 100.0, 0.5),  # Worse: 1 - |50-100|/100 = 0.5
+            ((Sense.MAX, 20.0), 100.0, 0.2),  # Worse: 1 - |20-100|/100 = 0.2
+            # Negative / mixed-sign optimal: abs keeps the metric monotonic
+            ((Sense.MIN, 0.0), -5.0, 0.0),  # opt=-5, exp=0:  1 - |0-(-5)|/5 = 0.0
+            ((Sense.MIN, -2.5), -5.0, 0.5),  # opt=-5, exp=-2.5: 1 - |-2.5+5|/5 = 0.5
+            ((Sense.MAX, -50.0), 100.0, -0.5),  # opt=100, exp=-50: 1 - |-50-100|/100 = -0.5
         ],
         indirect=["mock_solution_config", "mock_feature_results"],
     )
@@ -108,13 +113,13 @@ class TestApproximationRatioResult:
 
     def test_raise_error_invalid_approximation_ratio(self) -> None:
         """Test that an invalid approximation ratio raises an error."""
-        with pytest.raises(ValidationError, match=r"Input should be greater than or equal to 1"):
-            ApproximationRatioResult(approximation_ratio=0.5)
+        with pytest.raises(ValidationError, match=r"Input should be less than or equal to 1"):
+            ApproximationRatioResult(approximation_ratio=1.5)
 
     def test_result_serialization(self) -> None:
         """Test that the result can be serialized to dict."""
-        result = ApproximationRatioResult(approximation_ratio=1.5)
+        result = ApproximationRatioResult(approximation_ratio=-0.5)
         result_dict = result.model_dump()
 
         assert "approximation_ratio" in result_dict
-        assert result_dict["approximation_ratio"] == 1.5
+        assert result_dict["approximation_ratio"] == -0.5
