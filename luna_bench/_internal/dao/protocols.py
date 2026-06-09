@@ -95,7 +95,7 @@ class ModelDao(Protocol):
     @staticmethod
     def get_or_create(
         model_name: str, model_hash: int, binary: bytes
-    ) -> Result[ModelMetadataDomain, UnknownLunaBenchError]:
+    ) -> Result[ModelMetadataDomain, DataNotUniqueError | UnknownLunaBenchError]:
         """Upsert model metadata by hash, inserting the binary on first creation.
 
         Parameters

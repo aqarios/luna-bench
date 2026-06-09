@@ -111,7 +111,7 @@ class TestModelData:
                 Success(ModelSetDomain(id=1, name="B", models=[ModelMetadataDomain(id=1, name="A", hash=1)])),
                 nullcontext(ModelSet(id=1, name="B", models=[ModelMetadata(id=1, name="A", hash=1)])),
             ),
-            (Failure(DataNotExistError()), pytest.raises(RuntimeError)),
+            (Failure(DataNotExistError()), pytest.raises(DataNotExistError)),
         ],
     )
     def test_add_model(

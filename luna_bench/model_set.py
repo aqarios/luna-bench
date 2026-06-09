@@ -27,6 +27,7 @@ if TYPE_CHECKING:
         ModelSetLoadUc,
     )
     from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
+    from luna_bench.errors.model_name_already_used_error import ModelNameAlreadyUsedError
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 
@@ -226,14 +227,14 @@ class ModelSet(ModelSetEntity):
                 self.add(m)
             return
 
-        result: Result[ModelSetEntity, DataNotExistError | DataNotUniqueError | UnknownLunaBenchError] = modelset_add(
-            modelset_name=self.name, model=model
+        result: Result[ModelSetEntity, DataNotExistError | ModelNameAlreadyUsedError | UnknownLunaBenchError] = (
+            modelset_add(modelset_name=self.name, model=model)
         )
 
         if not is_successful(result):
             error = result.failure()
-            ModelSet._logger.info(f"Error: {error}")
-            raise RuntimeError(error)
+            ModelSet._logger.info(f"Error adding model '{model.name}': {error}")
+            raise error
         self._update(result.unwrap())
 
     def remove_model(
