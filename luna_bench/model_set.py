@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, ClassVar
 
 from dependency_injector.wiring import Provide, inject
@@ -208,7 +209,7 @@ class ModelSet(ModelSetEntity):
 
     def add(
         self,
-        model: Model | list[Model],
+        model: Model | Iterable[Model],
     ) -> None:
         """
         Add a model to this model set.
@@ -217,25 +218,25 @@ class ModelSet(ModelSetEntity):
 
         Parameters
         ----------
-        model : Model | list[Model]
-            The model to add to this model set. If its a list of models, all models will be added.
+        model : Model | Iterable[Model]
+            The model to add to this model set. If it is an iterable of models
+            (e.g. list, tuple, generator, iterator), all models will be added.
         """
         modelset_add = self.__model_add_uc()
 
-        if isinstance(model, list):
+        if isinstance(model, Iterable):
             for m in model:
                 self.add(m)
-            return
+        else:
+            result: Result[ModelSetEntity, DataNotExistError | ModelNameAlreadyUsedError | UnknownLunaBenchError] = (
+                modelset_add(modelset_name=self.name, model=model)
+            )
 
-        result: Result[ModelSetEntity, DataNotExistError | ModelNameAlreadyUsedError | UnknownLunaBenchError] = (
-            modelset_add(modelset_name=self.name, model=model)
-        )
-
-        if not is_successful(result):
-            error = result.failure()
-            ModelSet._logger.info(f"Error adding model '{model.name}': {error}")
-            raise error
-        self._update(result.unwrap())
+            if not is_successful(result):
+                error = result.failure()
+                ModelSet._logger.info(f"Error adding model '{model.name}': {error}")
+                raise error
+            self._update(result.unwrap())
 
     def remove_model(
         self,
