@@ -231,7 +231,7 @@ class TestModelData:
                 [simple_model("A")],
                 Failure(DataNotExistError()),
                 1,
-                pytest.raises(RuntimeError),
+                pytest.raises(DataNotExistError),
                 id="list_with_error",
             ),
         ],
@@ -241,7 +241,7 @@ class TestModelData:
         models: list[Model],
         return_value: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
         exp_call_count: int,
-        exp: AbstractContextManager[ModelSet | RuntimeError],
+        exp: AbstractContextManager[ModelSet | DataNotExistError],
     ) -> None:
         mock: Mock = Mock(spec=ModelAddUc)
         mock.return_value = return_value
