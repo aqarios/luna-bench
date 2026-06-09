@@ -42,7 +42,7 @@ class TestApproximationRatio:
         with pytest.raises(ZeroDivisionError) as exc_info:
             metric.run(mock_solution_config, mock_feature_results)
 
-        assert "Approximation Ratio is not implemented for cases dividing by 0!" in str(exc_info.value)
+        assert "Approximation ratio cannot be calculated since the optimal value is zero." in str(exc_info.value)
 
     @pytest.mark.parametrize(
         ("mock_solution_config", "mock_feature_results"),
