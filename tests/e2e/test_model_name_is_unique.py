@@ -3,6 +3,7 @@ from luna_model import Model
 
 from luna_bench import ModelSet
 from luna_bench._internal.dao import DaoTransaction
+from luna_bench.errors.model_name_already_used_error import ModelNameAlreadyUsedError
 from tests.utils.luna_model import simple_model
 
 
@@ -16,12 +17,12 @@ class TestModelNameNotUnique:
         # Adding the same model multiple times must be possible
         model_set1.add(simple_model("name"))
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(ModelNameAlreadyUsedError):
             model_set1.add(Model("name"))
 
         assert len(rest_db_each_time.model.get_all()) == 1
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(ModelNameAlreadyUsedError):
             model_set2.add(Model("name"))
         assert len(rest_db_each_time.model.get_all()) == 1
 

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./assets/luna_bench_logo.svg" alt="Luna-Bench" width="300">
+  <img src="https://raw.githubusercontent.com/aqarios/luna-bench/main/assets/luna_bench_logo.svg" alt="Luna-Bench" width="300">
 </div>
 
 # Luna-Bench
@@ -26,7 +26,7 @@ consistent results.
 - Reproducible benchmarks with database-backed result tracking
 
 <div align="center">
-  <img src="./assets/luna_bench_dark.svg" alt="Luna-Bench Overview" width="600">
+  <img src="https://raw.githubusercontent.com/aqarios/luna-bench/main/assets/luna_bench_dark.svg" alt="Luna-Bench Overview" width="600">
 </div>
 
 ## Installation

@@ -3,11 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from luna_quantum import Logging
-from peewee import DoesNotExist
+from peewee import DoesNotExist, IntegrityError
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models import ModelMetadataDomain
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
+from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 from .protocols import ModelDao
@@ -68,7 +69,7 @@ class ModelSqlDao(ModelDao):
     @staticmethod
     def get_or_create(
         model_name: str, model_hash: int, binary: bytes
-    ) -> Result[ModelMetadataDomain, UnknownLunaBenchError]:
+    ) -> Result[ModelMetadataDomain, DataNotUniqueError | UnknownLunaBenchError]:
         """Get an existing model or create a new one.
 
         Attempts to retrieve a model with the specified hash. If not found, creates a new model
@@ -97,6 +98,8 @@ class ModelSqlDao(ModelDao):
                 ModelTable.create(model_id=metadata, encoded_model=binary)
 
             return Success(ModelSqlDao.model_to_domain(metadata))
+        except IntegrityError:
+            return Failure(DataNotUniqueError())
         except Exception as e:  # pragma: no cover
             ModelSqlDao._logger.debug(e)
             return Failure(UnknownLunaBenchError(e))
