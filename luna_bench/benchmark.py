@@ -953,17 +953,17 @@ class Benchmark(BenchmarkEntity):
                     self.add_feature(f.registered_id, f())
                     required_features.add(f.registered_id)
 
-    def run(self, *, retry_failed: bool = False) -> None:
+    def run(self, *, retry_uncompleted: bool = False) -> None:
         """Execute the benchmark.
 
         Parameters
         ----------
-        retry_failed: bool
-            If True, clear only non-DONE results before running so that
-            failed or incomplete components are retried while DONE results
-            are preserved. Defaults to False.
+        retry_uncompleted: bool
+            If True, clear only non-DONE (uncompleted) results before running
+            so that failed or incomplete components are retried while DONE
+            results are preserved. Defaults to False.
         """
-        if retry_failed:
+        if retry_uncompleted:
             self.reset(soft=True)
         self.add_dependencies()
         self.run_features()

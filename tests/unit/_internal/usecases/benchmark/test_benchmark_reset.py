@@ -280,7 +280,7 @@ class TestBenchmarkReset:
         with pytest.raises(DataNotExistError):
             bench.reset()
 
-    def test_retry_failed_via_benchmark_class(
+    def test_retry_uncompleted_via_benchmark_class(
         self,
         usecase: UsecaseContainer,
         setup_benchmark: SetupBenchmark,
@@ -305,4 +305,4 @@ class TestBenchmarkReset:
         bench = Benchmark.model_validate(entity, from_attributes=True)
         assert len(bench.algorithms[0].results) > 0
 
-        bench.run(retry_failed=True)
+        bench.run(retry_uncompleted=True)
