@@ -207,6 +207,20 @@ class ModelSet(ModelSetEntity):
         model_all = ModelSet.__model_all_uc()
         return [ModelMetadata.model_validate(m, from_attributes=True) for m in model_all()]
 
+    def add_list(self, models: list[Model]) -> None:
+        """
+        Add a list of models to this model set.
+
+        Adds the specified models of the given list to this model set and updates the model set's state.
+
+        Parameters
+        ----------
+        model : Model
+            The model to add to this model set.
+        """
+        for model in models:
+            self.add(model)
+
     def add(
         self,
         model: Model | Iterable[Model],

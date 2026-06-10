@@ -1,6 +1,6 @@
 """Approximation Ratio metric for evaluating solution quality against optimal solutions."""
 
-from luna_model import Sense, Solution
+from luna_model import Solution
 from luna_model.solution import ValueSource
 from pydantic import Field
 
@@ -16,11 +16,11 @@ class ApproximationRatioResult(MetricResult):
     ----------
     approximation_ratio : float
         The calculated approximation ratio. A value of 1.0 indicates an optimal
-        solution. For minimization as for maximization problems, values > 1 indicate worse solutions quality.
-        Returns inf if no solution was found.
+        solution. For minimization as for maximization problems, values < 1.0 indicate worse
+        solution quality. Returns -inf if no solution was found.
     """
 
-    approximation_ratio: float = Field(ge=1.0, description="The calculated approximation ratio.")
+    approximation_ratio: float = Field(le=1.0, description="The calculated approximation ratio.")
 
 
 @metric(OptSolFeature)
@@ -30,14 +30,16 @@ class ApproximationRatio(BaseMetric[ApproximationRatioResult]):
     The approximation ratio measures how close a found expectation value of a given solution
     is to the optimal solution. It uses the expectation value (average energy) of
     all samples in the solution rather than just the best sample. A value of 1.0 indicates an optimal
-    solution, while values > 1.0 indicate progressively worse solution quality.
+    solution, while values < 1.0 indicate progressively worse solution quality. The metric is
+    bounded by 1.0.
 
+    It is computed from the (absolute) relative energy error of the expectation value with respect
+    to the optimal value. Taking the absolute value makes the metric sense-agnostic (the same formula
+    applies to minimization and maximization) and keeps it monotonic for negative or mixed-sign
+    optimal values, since the expectation value is normalized against the fixed ``|optimal_value|``:
 
-    For minimization problems:
-        AR = expectation_value / optimal_value
-
-    For maximization problems:
-        AR = optimal_value / expectation_value
+        relative_energy_error = (expectation_value - optimal_value) / optimal_value
+        AR = 1 - abs(relative_energy_error)
 
     Attributes
     ----------
@@ -78,28 +80,37 @@ class ApproximationRatio(BaseMetric[ApproximationRatioResult]):
         Returns
         -------
         ApproximationRatioResult
-            Contains the calculated approximation ratio. Returns inf if no
+            Contains the calculated approximation ratio. Returns -inf if no
             solution samples are available.
 
         Raises
         ------
         ZeroDivisionError
-            If the denominator (optimal value for Min, expectation value for Max)
-            is close to zero (within abt_diff tolerance).
+            If the optimal value is close to zero (within abt_diff tolerance),
+            since the relative energy error is normalized by the optimal value.
         """
         # Get the optimal solution from features
         opt_sol = feature_results.first(feature_cls=OptSolFeature)
 
         # Check if any solution exists
         if len(solution.samples) == 0:
-            return ApproximationRatioResult(approximation_ratio=float("inf"))
+            return ApproximationRatioResult(approximation_ratio=float("-inf"))
 
         exp_val = solution.expectation_value(value_toggle=self.value_source)
 
-        # Calculate ratio based on optimization sense
-        nom, denom = (
-            (exp_val, opt_sol.global_best_sol) if solution.sense == Sense.MIN else (opt_sol.global_best_sol, exp_val)
-        )
-        ar = get_ratio(nominator=nom, denominator=denom, abt_diff=self.abt_diff)
+        # Relative energy error of the expectation value w.r.t. the optimal value. Normalizing against
+        # the fixed |optimal_value| and taking the absolute value makes the metric sense-agnostic and
+        # keeps it monotonic for negative or mixed-sign optima.
+        try:
+            relative_energy_error = get_ratio(
+                nominator=(exp_val - opt_sol.global_best_sol),
+                denominator=opt_sol.global_best_sol,
+                abt_diff=self.abt_diff,
+            )
+        except Exception as e:
+            if isinstance(e, ZeroDivisionError):
+                msg = "Approximation ratio cannot be calculated since the optimal value is zero."
+                raise ZeroDivisionError(msg) from e
+            raise
 
-        return ApproximationRatioResult(approximation_ratio=ar)
+        return ApproximationRatioResult(approximation_ratio=1 - abs(relative_energy_error))
