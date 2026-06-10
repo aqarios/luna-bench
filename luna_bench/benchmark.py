@@ -37,6 +37,7 @@ if TYPE_CHECKING:
         BenchmarkLoadAllUc,
         BenchmarkLoadUc,
         BenchmarkRemoveModelsetUc,
+        BenchmarkResetUc,
         BenchmarkSetModelsetUc,
         FeatureAddUc,
         FeatureRemoveUc,
@@ -197,6 +198,13 @@ class Benchmark(BenchmarkEntity):
         return benchmark_remove_plot
 
     @staticmethod
+    @inject
+    def __reset_uc(
+        benchmark_reset: BenchmarkResetUc = Provide[UsecaseContainer.benchmark_reset_uc],
+    ) -> BenchmarkResetUc:
+        return benchmark_reset
+
+    @staticmethod
     def create(
         name: str,
     ) -> Benchmark:
@@ -335,8 +343,32 @@ class Benchmark(BenchmarkEntity):
         ta = TypeAdapter(list[Benchmark])
         return ta.validate_python(result.unwrap(), from_attributes=True)
 
-    def reset(self) -> None:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError  # pragma: no cover
+    def reset(self, *, soft: bool = False) -> None:
+        """Clear results for the benchmark.
+
+        Removes algorithm, metric, and feature results from the database.
+        Metric results are cascaded (cleared along with algorithms). After
+        the operation, the entity is reloaded from the database so its
+        in-memory state is fully consistent.
+
+        Parameters
+        ----------
+        soft: bool
+            If True, only clear non-DONE results (soft reset).
+            DONE results are preserved. Defaults to False.
+        """
+        benchmark_reset = self.__reset_uc()
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_reset(self, soft=soft)
+
+        if not is_successful(result):
+            error = result.failure()
+            Benchmark._logger.error(f"Failed to reset benchmark '{self.name}': {error}")
+            if isinstance(error, UnknownLunaBenchError):
+                raise error.error()
+            raise error
+
+        fresh = Benchmark.load(self.name)
+        self.__dict__.update(fresh.__dict__)
 
     def export_to_file(self, file_path: str) -> None:  # noqa: D102 # Not yet implemented
         raise NotImplementedError  # pragma: no cover
@@ -921,8 +953,18 @@ class Benchmark(BenchmarkEntity):
                     self.add_feature(f.registered_id, f())
                     required_features.add(f.registered_id)
 
-    def run(self) -> None:
-        """Execute the benchmark."""
+    def run(self, *, retry_failed: bool = False) -> None:
+        """Execute the benchmark.
+
+        Parameters
+        ----------
+        retry_failed: bool
+            If True, clear only non-DONE results before running so that
+            failed or incomplete components are retried while DONE results
+            are preserved. Defaults to False.
+        """
+        if retry_failed:
+            self.reset(soft=True)
         self.add_dependencies()
         self.run_features()
         self.run_algorithms()

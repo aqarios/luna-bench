@@ -168,8 +168,7 @@ class AlgorithmSqlDao(AlgorithmDao):
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            result = AlgorithmResultTable.get(AlgorithmResultTable.algorithm == algorithm)  # type: ignore[no-untyped-call]
-            result.delete_instance()
+            AlgorithmResultTable.delete().where(AlgorithmResultTable.algorithm == algorithm).execute()  # type: ignore[no-untyped-call]
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())

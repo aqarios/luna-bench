@@ -138,8 +138,7 @@ class MetricSqlDao(MetricDao):
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            result = MetricResultTable.get(MetricResultTable.metric == metric)  # type: ignore[no-untyped-call]
-            result.delete_instance()
+            MetricResultTable.delete().where(MetricResultTable.metric == metric).execute()  # type: ignore[no-untyped-call]
             metric.status = BenchmarkStatus.CREATED
             metric.save()
             return Success(None)
