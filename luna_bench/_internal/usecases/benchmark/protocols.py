@@ -705,3 +705,39 @@ class BackgroundRetrieveAlgorithmSyncUc(Protocol):
             the task is still running. The inner ``Result`` holds either the
             ``Solution`` or an error.
         """
+
+
+class BenchmarkResetUc(Protocol):
+    """Protocol for resetting benchmark results."""
+
+    def __call__(
+        self,
+        benchmark: BenchmarkEntity,
+        *,
+        soft: bool = False,
+    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+        """Delete algorithm, metric, and feature results for a benchmark.
+
+        When ``soft=False`` (default) all results are cleared unconditionally.
+        When ``soft=True`` only non-DONE algorithm and feature results are
+        cleared; metric results are cascaded (cleared whenever any algorithm
+        was touched) since they depend on algorithm outputs.
+
+        Only the database is modified — the caller is responsible for
+        reloading the entity afterwards.
+
+        Parameters
+        ----------
+        benchmark: BenchmarkEntity
+            The benchmark whose results are to clear. Used to determine which
+            components exist and, for soft mode, which have non-DONE results.
+        soft: bool
+            If True, only clear non-DONE results (soft reset).
+            Defaults to False (clear everything).
+
+        Returns
+        -------
+        Result[None, DataNotExistError | UnknownLunaBenchError]
+            None on success, or an error if a component was not found or an
+            unexpected error occurs.
+        """
