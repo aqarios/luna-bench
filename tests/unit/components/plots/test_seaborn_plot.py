@@ -153,3 +153,29 @@ class TestSeabornPlot:
         assert plot.height == 6
         assert plot.dpi == 100
         assert plot.show is True
+        assert plot.figure_filename == "seaborn_plot.png"
+
+    @patch("luna_bench.plots.generics.seaborn_plot.check_optional_dependency")
+    def test_finalize_plot_with_save_dir(self, mock_check_dep: MagicMock) -> None:
+        """Test finalize_plot with save_dir saves the figure."""
+        _ = mock_check_dep
+        with (
+            patch("matplotlib.pyplot.show") as mock_show,
+            patch("matplotlib.pyplot.savefig") as mock_savefig,
+            patch("pathlib.Path.mkdir") as mock_mkdir,
+            patch.object(ConcreteSeabornPlot.logger, "info") as mock_logger,
+        ):
+            plot = ConcreteSeabornPlot()
+            plot.setup_figure()
+
+            plot.finalize_plot(
+                xlabel="X",
+                ylabel="Y",
+                title="Test",
+                save_dir="/tmp/test_plots",
+            )
+
+            mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+            mock_savefig.assert_called_once()
+            mock_logger.assert_called_once()
+            mock_show.assert_called_once()
