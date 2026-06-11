@@ -147,6 +147,9 @@ class MetricRunUcImpl(MetricRunUc):
                     metric_result = self._run(benchmark.name, a.name, model_name, result, feature_results.unwrap(), m)
 
                     if not is_successful(metric_result):
-                        pass  # TODO(Llewellyn): decide what to do with the failed run # noqa: FIX002
+                        self._logger.warning(
+                            f"Algorithm '{a.name}' failed on model '{model_name}' "
+                            f"and will be skipped for metric '{m.name}'."
+                        )
 
         return Success(None)

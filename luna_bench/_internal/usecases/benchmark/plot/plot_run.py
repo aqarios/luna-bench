@@ -61,7 +61,11 @@ class PlotsRunUcImpl(PlotsRunUc):
                 for a in benchmark.algorithms:
                     me = MetricResultBuilder(benchmark).results(m.name, a.name, plot_entity.plot.required_metrics)
                     if not is_successful(me):
-                        return Failure(me.failure())
+                        self._logger.warning(
+                            f"Algorithm '{a.name}' failed on model '{m.name}' "
+                            f"and will be skipped for plot '{plot_entity.name}'."
+                        )
+                        continue
 
                     metrics[m.name][a.name] = me.unwrap()
 
