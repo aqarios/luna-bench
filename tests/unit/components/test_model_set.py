@@ -26,6 +26,8 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from tests.utils.luna_model import simple_model
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from luna_model import Model
 
 
@@ -239,6 +241,51 @@ class TestModelData:
     def test_add_model_list(
         self,
         models: list[Model],
+        return_value: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
+        exp_call_count: int,
+        exp: AbstractContextManager[ModelSet | DataNotExistError],
+    ) -> None:
+        mock: Mock = Mock(spec=ModelAddUc)
+        mock.return_value = return_value
+        modelset = ModelSet(id=1, name="B", models=[])
+
+        with exp as e, luna_bench._usecase_container.model_add_uc.override(mock):
+            modelset.add(model=models)
+
+        assert mock.call_count == exp_call_count
+
+        if is_successful(return_value):
+            assert e == modelset
+
+    @pytest.mark.parametrize(
+        ("models", "return_value", "exp_call_count", "exp"),
+        [
+            pytest.param(
+                iter([simple_model("A"), simple_model("B")]),
+                Success(ModelSetDomain(id=1, name="B", models=[ModelMetadataDomain(id=2, name="B", hash=2)])),
+                2,
+                nullcontext(ModelSet(id=1, name="B", models=[ModelMetadata(id=2, name="B", hash=2)])),
+                id="iterator_of_two_models",
+            ),
+            pytest.param(
+                iter([]),
+                Success(ModelSetDomain(id=1, name="B", models=[])),
+                0,
+                nullcontext(ModelSet(id=1, name="B", models=[])),
+                id="empty_iterator",
+            ),
+            pytest.param(
+                (m for m in [simple_model("A")]),
+                Failure(DataNotExistError()),
+                1,
+                pytest.raises(DataNotExistError),
+                id="generator_with_error",
+            ),
+        ],
+    )
+    def test_add_model_iterator(
+        self,
+        models: Iterable[Model],
         return_value: Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError],
         exp_call_count: int,
         exp: AbstractContextManager[ModelSet | DataNotExistError],
