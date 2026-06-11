@@ -705,3 +705,28 @@ class BackgroundRetrieveAlgorithmSyncUc(Protocol):
             the task is still running. The inner ``Result`` holds either the
             ``Solution`` or an error.
         """
+
+
+class DataDirSetupUc(Protocol):
+    """Protocol for setting up the data directory for a benchmark run."""
+
+    def __call__(
+        self,
+        benchmark: BenchmarkEntity,
+        root_folder: str | None = None,
+    ) -> Result[None, str]:
+        """Create the data directory structure needed for a benchmark run.
+
+        Parameters
+        ----------
+        benchmark: BenchmarkEntity
+            The benchmark whose data directory to set up.
+        root_folder: str | None
+            Optional root folder path. If None, a default location is used.
+
+        Returns
+        -------
+        Result[None, str]
+            None on success, or a string error message if the directory
+            could not be created.
+        """

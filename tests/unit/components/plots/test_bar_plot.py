@@ -12,7 +12,7 @@ from luna_bench.plots.utils.aggregation_enum import Aggregation
 class ConcreteBarPlot(BarPlot):
     """Concrete implementation of BarPlot for testing."""
 
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Test implementation for BarPlot."""
 
 

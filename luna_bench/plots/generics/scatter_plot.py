@@ -34,6 +34,7 @@ class ScatterPlot(SeabornPlot, ABC):
         hline: float | None = None,
         hline_label: str | None = None,
         hcolor: str = AqariosColours.SUCCESS,
+        save_dir: str | None = None,
     ) -> None:
         """Create a scatter plot from row-oriented data.
 
@@ -90,4 +91,5 @@ class ScatterPlot(SeabornPlot, ABC):
             ylabel=ylabel,
             title=title,
             x_rotation=0,
+            save_dir=save_dir,
         )

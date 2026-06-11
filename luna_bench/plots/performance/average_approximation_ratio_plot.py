@@ -22,7 +22,9 @@ class AverageApproximationRatioPlot(BarPlot):
     >>> bench.add_plot(name="avg_approx", plot=AverageApproximationRatioPlot())
     """
 
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    figure_filename: str = "average_approximation_ratio"
+
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Generate plot output from benchmark results.
 
         Parameters
@@ -42,6 +44,7 @@ class AverageApproximationRatioPlot(BarPlot):
         ]
 
         self.create(
+            save_dir=save_dir,
             rows=rows,
             x="algorithm",
             y="approximation_ratio",

@@ -5,6 +5,7 @@ import platform
 import subprocess
 import sys
 from contextlib import contextmanager
+from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 from huey import MemoryHuey, SqliteHuey
@@ -23,16 +24,29 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
     _process: subprocess.Popen[bytes] | None = None
     _logger = Logging.get_logger(__name__)
 
-    huey: SqliteHuey | MemoryHuey = (
-        MemoryHuey()
-        if config.LB_DB_JOBS_CONNECTION_STRING == ":memory:"
-        else SqliteHuey(
-            name="luna-bench-background_tasks",
-            filename=config.LB_DB_JOBS_CONNECTION_STRING,
-            timeout=30,
-            journal_mode="wal",
-        )
-    )
+    class LazyHuey:
+        """Lazily creation of the shared SqliteHuey / MemoryHuey instance."""
+
+        _huey: SqliteHuey | MemoryHuey | None = None
+
+        def __get__(self, obj: object | None, objtype: type) -> SqliteHuey | MemoryHuey:
+            if self._huey is None:
+                filename = config.resolved_jobs_db_connection_string
+                if filename != ":memory:":
+                    Path(filename).parent.mkdir(parents=True, exist_ok=True)
+                self._huey = (
+                    MemoryHuey()
+                    if filename == ":memory:"
+                    else SqliteHuey(
+                        name="luna-bench-background_tasks",
+                        filename=filename,
+                        timeout=30,
+                        journal_mode="wal",
+                    )
+                )
+            return self._huey
+
+    huey = LazyHuey()
 
     @staticmethod
     def _get_worker_type() -> str:
@@ -87,7 +101,7 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
     def _run_consumer() -> None:  # pragma: no cover # another process, hart/impossible to measure coverage
         worker_type = HueyBackgroundTaskClient._get_worker_type()
         HueyBackgroundTaskClient._logger.debug(
-            f"Initializing {config.LB_DB_JOBS_CONNECTION_STRING} huey consumer with worker type: {worker_type}."
+            f"Initializing {config.resolved_jobs_db_connection_string} huey consumer with worker type: {worker_type}."
         )
         consumer = Consumer(
             HueyBackgroundTaskClient.huey,

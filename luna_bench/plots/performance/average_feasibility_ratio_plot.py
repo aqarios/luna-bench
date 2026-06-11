@@ -22,7 +22,9 @@ class AverageFeasibilityRatioPlot(BarPlot):
     >>> bench.add_plot(name="avg_feasibility", plot=AverageFeasibilityRatioPlot())
     """
 
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    figure_filename: str = "average_feasibility_ratio"
+
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Generate plot output from benchmark results.
 
         Parameters
@@ -40,6 +42,7 @@ class AverageFeasibilityRatioPlot(BarPlot):
         ]
 
         self.create(
+            save_dir=save_dir,
             rows=rows,
             x="algorithm",
             y="feasibility_ratio",
