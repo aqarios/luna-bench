@@ -146,11 +146,18 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
             HueyBackgroundTaskClient._stop_consumer()
 
         cls._logger.debug("Starting background_tasks consumer in a new process.")
+
+        # Serialize the parent's config so the child process sees the same values.t.
+        config_json = config.model_dump_json()
+
         bootstrap_code = (
-            "import importlib,sys\n"
+            "import importlib,sys,json\n"
             "obj=importlib.import_module(sys.argv[1])\n"
             "for part in sys.argv[2].split('.'):\n"
             "    obj=getattr(obj, part)\n"
+            "from luna_bench.configs.config import config as cfg\n"
+            "for k, v in json.loads(sys.argv[3]).items():\n"
+            "    setattr(cfg, k, v)\n"
             "obj._run_consumer()\n"
         )
         cls._process = subprocess.Popen(  # noqa: S603 # command is built from trusted class metadata
@@ -160,6 +167,7 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
                 bootstrap_code,
                 cls.__module__,
                 cls.__qualname__,
+                config_json,
             ]
         )
 
