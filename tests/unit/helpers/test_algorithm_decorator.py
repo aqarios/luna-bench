@@ -1,3 +1,4 @@
+import pickle
 from typing import cast
 
 import pytest
@@ -89,6 +90,51 @@ class TestAlgorithmSyncDecorator:
             @algorithm
             class NotAnAlgorithm:  # type: ignore[type-var]
                 pass
+
+    def test_algorithm_sync_function_pickle_roundtrip(self) -> None:
+
+        @algorithm
+        def algo_to_pickle(model: Model) -> Solution:
+            _ = model
+            return Solution(samples=[])
+
+        inst = algo_to_pickle()
+        data = pickle.dumps(inst)
+        restored = pickle.loads(data)
+
+        assert isinstance(restored, BaseAlgorithmSync)
+        assert type(restored).__name__ == "algo_to_pickle"
+        assert hasattr(restored, "run")
+        result = restored.run(cast("Model", {}))
+        assert isinstance(result, Solution)
+
+    def test_algorithm_inline_pickle_roundtrip(self) -> None:
+        exec_globals: dict[str, object] = {"__name__": "__main__"}
+        exec(
+            """
+from luna_model import Model, Solution
+from luna_bench.custom.decorators.algorithm import algorithm
+
+@algorithm()
+def main_algo(model: Model) -> Solution:
+    _ = model
+    return Solution(samples=[])
+""",
+            exec_globals,
+        )
+
+        algo_cls = exec_globals["main_algo"]
+        assert isinstance(algo_cls, type)
+        assert issubclass(algo_cls, BaseAlgorithmSync)
+
+        inst = algo_cls()
+        data = pickle.dumps(inst)
+        restored = pickle.loads(data)
+
+        assert isinstance(restored, BaseAlgorithmSync)
+        assert hasattr(restored, "run")
+        result = restored.run(cast("Model", {}))
+        assert isinstance(result, Solution)
 
 
 class TestAlgorithmAsyncDecorator:
