@@ -1,6 +1,7 @@
 import pickle
 from typing import cast
 
+import cloudpickle
 import pytest
 from luna_model import Model, Solution
 from pydantic import BaseModel
@@ -9,7 +10,7 @@ from returns.result import Result, Success
 from luna_bench._internal.registries import Registry
 from luna_bench._internal.registries.arbitrary_data_registry import ArbitraryDataRegistry
 from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync
-from luna_bench.custom.decorators.algorithm import algorithm
+from luna_bench.custom.decorators.algorithm import _rebuild_algorithm, algorithm
 from luna_bench.errors.decorators.invalid_return_type_error import InvalidReturnTypeError
 from luna_bench.errors.incompatible_class_error import IncompatibleClassError
 
@@ -111,15 +112,15 @@ class TestAlgorithmSyncDecorator:
     def test_algorithm_inline_pickle_roundtrip(self) -> None:
         exec_globals: dict[str, object] = {"__name__": "__main__"}
         exec(
-            """
-from luna_model import Model, Solution
-from luna_bench.custom.decorators.algorithm import algorithm
-
-@algorithm()
-def main_algo(model: Model) -> Solution:
-    _ = model
-    return Solution(samples=[])
-""",
+            (
+                "from luna_model import Model, Solution\n"
+                "from luna_bench.custom.decorators.algorithm import algorithm\n"
+                "\n"
+                "@algorithm()\n"
+                "def main_algo(model: Model) -> Solution:\n"
+                "    _ = model\n"
+                "    return Solution(samples=[])\n"
+            ),
             exec_globals,
         )
 
@@ -135,6 +136,21 @@ def main_algo(model: Model) -> Solution:
         assert hasattr(restored, "run")
         result = restored.run(cast("Model", {}))
         assert isinstance(result, Solution)
+
+    def test_rebuild_algorithm_invalid_return_type(self) -> None:
+        """Verify that _rebuild_algorithm raises InvalidReturnTypeError.
+
+        The deserialised function returns a non-Solution value.
+        """
+
+        def bad_func(_model: Model) -> str:
+            return "not_a_solution"
+
+        bad_bytes = cloudpickle.dumps(bad_func)
+        restored = _rebuild_algorithm(bad_bytes)
+
+        with pytest.raises(InvalidReturnTypeError):
+            restored.run(cast("Model", {}))
 
 
 class TestAlgorithmAsyncDecorator:

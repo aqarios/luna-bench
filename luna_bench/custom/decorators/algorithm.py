@@ -20,7 +20,7 @@ def _rebuild_algorithm(func_bytes: bytes) -> BaseAlgorithmSync:
     """Reconstruct a function-based algorithm from a cloudpickled function.
 
     Used as the ``__reduce__`` target for dynamic algorithm classes so
-    inline ``@algorithm`` decorators can be pickled and deserialised in
+    inline ``@algorithm`` decorators can be pickled and deserialized in
     the huey consumer subprocess.
     """
     func = cloudpickle.loads(func_bytes)
