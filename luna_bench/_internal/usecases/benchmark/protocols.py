@@ -14,6 +14,7 @@ from luna_bench.entities import (
     ModelMetadataEntity,
     PlotEntity,
 )
+from luna_bench.entities.enums import ResetLevel
 from luna_bench.entities.feature_entity import FeatureEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
@@ -714,14 +715,21 @@ class BenchmarkResetUc(Protocol):
         self,
         benchmark: BenchmarkEntity,
         *,
-        soft: bool = False,
+        mode: ResetLevel,
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         """Delete algorithm, metric, and feature results for a benchmark.
 
-        When ``soft=False`` (default) all results are cleared unconditionally.
-        When ``soft=True`` only non-DONE algorithm and feature results are
-        cleared; metric results are cascaded (cleared whenever any algorithm
-        was touched) since they depend on algorithm outputs.
+        ``mode`` controls which results are cleared:
+
+        * ``ResetLevel.ALL`` — clear all results unconditionally.
+        * ``ResetLevel.UNFINISHED`` — clear only results whose status is
+          **not** ``DONE`` (i.e. ``CREATED``, ``UPDATED``, ``RUNNING``,
+          ``FAILED``). This includes failed components.
+        * ``ResetLevel.FAILED`` — clear only results whose status is ``FAILED``.
+
+        Metric results follow a cascade rule: they are cleared when
+        any algorithm result matching the same level is cleared
+        (since metrics depend on algorithm outputs).
 
         Only the database is modified — the caller is responsible for
         reloading the entity afterwards.
@@ -730,10 +738,9 @@ class BenchmarkResetUc(Protocol):
         ----------
         benchmark: BenchmarkEntity
             The benchmark whose results are to clear. Used to determine which
-            components exist and, for soft mode, which have non-DONE results.
-        soft: bool
-            If True, only clear non-DONE results (soft reset).
-            Defaults to False (clear everything).
+            components exist and, for some modes, which have specific statuses.
+        mode: ResetLevel
+            Which results to clear. No default — must be explicitly provided.
 
         Returns
         -------

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 import pandas as pd
 from dependency_injector.wiring import Provide, inject
@@ -18,6 +18,7 @@ from luna_bench.entities import (
     MetricEntity,
     PlotEntity,
 )
+from luna_bench.entities.enums import ResetLevel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -343,7 +344,7 @@ class Benchmark(BenchmarkEntity):
         ta = TypeAdapter(list[Benchmark])
         return ta.validate_python(result.unwrap(), from_attributes=True)
 
-    def reset(self, *, soft: bool = False) -> None:
+    def reset(self, *, mode: ResetLevel | Literal["All", "Unfinished", "Failed"]) -> None:
         """Clear results for the benchmark.
 
         Removes algorithm, metric, and feature results from the database.
@@ -353,12 +354,15 @@ class Benchmark(BenchmarkEntity):
 
         Parameters
         ----------
-        soft: bool
-            If True, only clear non-DONE results (soft reset).
-            DONE results are preserved. Defaults to False.
+        mode: ResetLevel | Literal["All", "Unfinished", "Failed"]
+            ``ResetLevel.ALL`` or ``"All"`` clears all results unconditionally.
+            ``ResetLevel.UNFINISHED`` or ``"Unfinished"`` clears only non-DONE
+            results (includes failed).
+            ``ResetLevel.FAILED`` or ``"Failed"`` clears only FAILED results.
+            No default — must be explicitly provided.
         """
         benchmark_reset = self.__reset_uc()
-        result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_reset(self, soft=soft)
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_reset(self, mode=ResetLevel(mode))
 
         if not is_successful(result):
             error = result.failure()
@@ -964,7 +968,7 @@ class Benchmark(BenchmarkEntity):
             results are preserved. Defaults to False.
         """
         if retry_uncompleted:
-            self.reset(soft=True)
+            self.reset(mode="Unfinished")
         self.add_dependencies()
         self.run_features()
         self.run_algorithms()
