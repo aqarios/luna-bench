@@ -14,7 +14,6 @@ from luna_bench.entities.feature_result_entity import FeatureResultEntity
 from luna_bench.entities.metric_result_entity import MetricResultEntity
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockFeature, MockMetric
 
-
 if TYPE_CHECKING:
     from luna_bench._internal.usecases.usecase_container import UsecaseContainer
     from tests.unit.fixtures.mock_database import SetupBenchmark
