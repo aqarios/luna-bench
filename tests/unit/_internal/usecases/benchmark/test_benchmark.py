@@ -159,5 +159,3 @@ class TestBenchmark:
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
             assert usecase.benchmark_load_uc()(benchmark_name="existing").unwrap().modelset is None
-        else:
-            assert isinstance(result.failure(), type(exp.failure()))

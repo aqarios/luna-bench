@@ -14,6 +14,7 @@ from luna_bench.entities import (
     ModelMetadataEntity,
     PlotEntity,
 )
+from luna_bench.entities.enums import ResetLevel
 from luna_bench.entities.feature_entity import FeatureEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
@@ -707,6 +708,48 @@ class BackgroundRetrieveAlgorithmSyncUc(Protocol):
         """
 
 
+class BenchmarkResetUc(Protocol):
+    """Protocol for resetting benchmark results."""
+
+    def __call__(
+        self,
+        benchmark: BenchmarkEntity,
+        *,
+        mode: ResetLevel,
+    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+        """Delete algorithm, metric, and feature results for a benchmark.
+
+        ``mode`` controls which results are cleared:
+
+        * ``ResetLevel.ALL`` — clear all results unconditionally.
+        * ``ResetLevel.UNFINISHED`` — clear only results whose status is
+          **not** ``DONE`` (i.e. ``CREATED``, ``UPDATED``, ``RUNNING``,
+          ``FAILED``). This includes failed components.
+        * ``ResetLevel.FAILED`` — clear only results whose status is ``FAILED``.
+
+        Metric results follow a cascade rule: they are cleared when
+        any algorithm result matching the same level is cleared
+        (since metrics depend on algorithm outputs).
+
+        Only the database is modified — the caller is responsible for
+        reloading the entity afterwards.
+
+        Parameters
+        ----------
+        benchmark: BenchmarkEntity
+            The benchmark whose results are to clear. Used to determine which
+            components exist and, for some modes, which have specific statuses.
+        mode: ResetLevel
+            Which results to clear. No default — must be explicitly provided.
+
+        Returns
+        -------
+        Result[None, DataNotExistError | UnknownLunaBenchError]
+            None on success, or an error if a component was not found or an
+            unexpected error occurs.
+        """
+
+
 class DataDirSetupUc(Protocol):
     """Protocol for setting up the data directory for a benchmark run."""
 
@@ -730,3 +773,4 @@ class DataDirSetupUc(Protocol):
             None on success, or a string error message if the directory
             could not be created.
         """
+

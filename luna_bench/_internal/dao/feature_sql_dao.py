@@ -132,8 +132,7 @@ class FeatureSqlDao(FeatureDao):
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            result = FeatureResultTable.get(FeatureResultTable.feature == feature)  # type: ignore[no-untyped-call]
-            result.delete_instance()
+            FeatureResultTable.delete().where(FeatureResultTable.feature == feature).execute()  # type: ignore[no-untyped-call]
             feature.status = BenchmarkStatus.CREATED
             feature.save()
             return Success(None)

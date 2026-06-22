@@ -286,3 +286,40 @@ class TestMetric:
         assert is_successful(result)
         for m in benchmark.metrics:
             assert len(m.results) == 0
+
+    def test_run_metric_raises_during_execution(
+        self,
+        usecase: UsecaseContainer,
+        setup_benchmark: SetupBenchmark,
+        mapper: MapperContainer,
+        solution: Solution,
+    ) -> None:
+        benchmark = mapper.benchmark_mapper().to_user_model(setup_benchmark.benchmark).unwrap()
+        for a in benchmark.algorithms:
+            assert benchmark.modelset is not None
+            for model in benchmark.modelset.models:
+                a.results[model.name] = AlgorithmResultEntity(
+                    meta_data=None,
+                    status=JobStatus.DONE,
+                    error=None,
+                    solution=solution,
+                    task_id=None,
+                    retrival_data=None,
+                    model_id=model.id,
+                )
+        metric_result = usecase.benchmark_add_metric_uc()(
+            benchmark_name=benchmark.name, name="error metric", metric=MockMetricError()
+        )
+        assert is_successful(metric_result)
+        metric = metric_result.unwrap()
+        benchmark.metrics.append(metric)
+        result = usecase.benchmark_run_metric_uc()(benchmark=benchmark, metric=metric)
+
+        assert is_successful(result)
+
+        error_metric = next(m for m in benchmark.metrics if m.name == "error metric")
+        assert len(error_metric.results) > 0
+        for model_results in error_metric.results.values():
+            for r in model_results.values():
+                assert r.status == JobStatus.FAILED
+                assert r.error is not None

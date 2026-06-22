@@ -31,6 +31,7 @@ from luna_bench._internal.usecases.benchmark.benchmark_delete import BenchmarkDe
 from luna_bench._internal.usecases.benchmark.benchmark_load import BenchmarkLoadUcImpl
 from luna_bench._internal.usecases.benchmark.benchmark_load_all import BenchmarkLoadAllUcImpl
 from luna_bench._internal.usecases.benchmark.benchmark_remove_modelset import BenchmarkRemoveModelsetUcImpl
+from luna_bench._internal.usecases.benchmark.benchmark_reset import BenchmarkResetUcImpl
 from luna_bench._internal.usecases.benchmark.benchmark_set_modelset import BenchmarkSetModelsetUcImpl
 from luna_bench._internal.usecases.benchmark.data_dir import DataDirSetupUcImpl
 from luna_bench._internal.usecases.benchmark.feature.feature_add import FeatureAddUcImpl
@@ -60,6 +61,7 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     BenchmarkLoadAllUc,
     BenchmarkLoadUc,
     BenchmarkRemoveModelsetUc,
+    BenchmarkResetUc,
     BenchmarkSetModelsetUc,
     DataDirSetupUc,
     FeatureAddUc,
@@ -183,6 +185,10 @@ class UsecaseContainer(containers.DeclarativeContainer):
 
     benchmark_remove_modelset_uc: Provider[BenchmarkRemoveModelsetUc] = providers.ThreadSafeSingleton(
         BenchmarkRemoveModelsetUcImpl, transaction=dao_container.transaction
+    )
+
+    benchmark_reset_uc: Provider[BenchmarkResetUc] = providers.ThreadSafeSingleton(
+        BenchmarkResetUcImpl, transaction=dao_container.transaction
     )
 
     benchmark_run_feature_uc: Provider[FeatureRunUc] = providers.ThreadSafeSingleton(

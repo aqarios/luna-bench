@@ -118,12 +118,7 @@ class TestPlot:
         plot: BasePlot,
         exp: Result[
             PlotEntity,
-            DataNotUniqueError
-            | DataNotExistError
-            | UnknownLunaBenchError
-            | UnknownComponentError
-            | UnknownIdError
-            | ValidationError,
+            DataNotUniqueError | DataNotExistError | UnknownLunaBenchError | UnknownComponentError | ValidationError,
         ],
     ) -> None:
 
@@ -135,3 +130,18 @@ class TestPlot:
             assert result.unwrap() == exp.unwrap()
         else:
             assert isinstance(result.failure(), type(exp.failure()))
+
+    def test_run_plot_without_modelset(
+        self,
+        usecase: UsecaseContainer,
+    ) -> None:
+        benchmark = BenchmarkEntity(
+            name="test_no_modelset",
+            modelset=None,
+            features=[],
+            metrics=[],
+            algorithms=[],
+            plots=[_empty_plot("test", MockPlot())],
+        )
+        result = usecase.benchmark_run_plots_uc()(benchmark=benchmark)
+        assert is_successful(result)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 import pandas as pd
 from dependency_injector.wiring import Provide, inject
@@ -18,6 +18,7 @@ from luna_bench.entities import (
     MetricEntity,
     PlotEntity,
 )
+from luna_bench.entities.enums import ResetLevel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -37,6 +38,7 @@ if TYPE_CHECKING:
         BenchmarkLoadAllUc,
         BenchmarkLoadUc,
         BenchmarkRemoveModelsetUc,
+        BenchmarkResetUc,
         BenchmarkSetModelsetUc,
         DataDirSetupUc,
         FeatureAddUc,
@@ -205,6 +207,13 @@ class Benchmark(BenchmarkEntity):
         return benchmark_remove_plot
 
     @staticmethod
+    @inject
+    def __reset_uc(
+        benchmark_reset: BenchmarkResetUc = Provide[UsecaseContainer.benchmark_reset_uc],
+    ) -> BenchmarkResetUc:
+        return benchmark_reset
+
+    @staticmethod
     def create(
         name: str,
     ) -> Benchmark:
@@ -343,8 +352,35 @@ class Benchmark(BenchmarkEntity):
         ta = TypeAdapter(list[Benchmark])
         return ta.validate_python(result.unwrap(), from_attributes=True)
 
-    def reset(self) -> None:  # noqa: D102 # Not yet implemented
-        raise NotImplementedError  # pragma: no cover
+    def reset(self, *, mode: ResetLevel | Literal["All", "Unfinished", "Failed"]) -> None:
+        """Clear results for the benchmark.
+
+        Removes algorithm, metric, and feature results from the database.
+        Metric results are cascaded (cleared along with algorithms). After
+        the operation, the entity is reloaded from the database so its
+        in-memory state is fully consistent.
+
+        Parameters
+        ----------
+        mode: ResetLevel | Literal["All", "Unfinished", "Failed"]
+            ``ResetLevel.ALL`` or ``"All"`` clears all results unconditionally.
+            ``ResetLevel.UNFINISHED`` or ``"Unfinished"`` clears only non-DONE
+            results (includes failed).
+            ``ResetLevel.FAILED`` or ``"Failed"`` clears only FAILED results.
+            No default — must be explicitly provided.
+        """
+        benchmark_reset = self.__reset_uc()
+        result: Result[None, DataNotExistError | UnknownLunaBenchError] = benchmark_reset(self, mode=ResetLevel(mode))
+
+        if not is_successful(result):
+            error = result.failure()
+            Benchmark._logger.error(f"Failed to reset benchmark '{self.name}': {error}")
+            if isinstance(error, UnknownLunaBenchError):
+                raise error.error()
+            raise error
+
+        fresh = Benchmark.load(self.name)
+        self.__dict__.update(fresh.__dict__)
 
     def export_to_file(self, file_path: str) -> None:  # noqa: D102 # Not yet implemented
         raise NotImplementedError  # pragma: no cover
@@ -929,8 +965,19 @@ class Benchmark(BenchmarkEntity):
                     self.add_feature(f.registered_id, f())
                     required_features.add(f.registered_id)
 
-    def run(self) -> None:
-        """Execute the benchmark."""
+    def run(self, *, retry_uncompleted: bool = False) -> None:
+        """Execute the benchmark.
+
+        Parameters
+        ----------
+        retry_uncompleted: bool
+            If True, clear only non-DONE (uncompleted) results before running
+            so that failed or incomplete components are retried while DONE
+            results are preserved. Defaults to False.
+        """
+        if retry_uncompleted:
+            self.reset(mode="Unfinished")
+
         setup_uc = self.__data_dir_setup_uc()
         result = setup_uc(self)
         if not is_successful(result):
