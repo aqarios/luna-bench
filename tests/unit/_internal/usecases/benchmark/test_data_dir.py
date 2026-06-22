@@ -70,7 +70,7 @@ class TestDataDirSetupUc:
     def test_sets_field(self, entity: BenchmarkEntity, tmp_data_dir: Path, field: str, subfolder: str) -> None:
         self._run(DataDirSetupUcImpl(), entity, tmp_data_dir)
 
-        expected = str(tmp_data_dir / "benchmarks" / entity.name / subfolder)
+        expected = str(tmp_data_dir.resolve() / "benchmarks" / entity.name / subfolder)
         assert getattr(entity, field) == expected
 
     def test_updates_config_data_dir(self, entity: BenchmarkEntity, tmp_data_dir: Path) -> None:
