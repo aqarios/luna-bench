@@ -773,4 +773,3 @@ class DataDirSetupUc(Protocol):
             None on success, or a string error message if the directory
             could not be created.
         """
-
