@@ -97,7 +97,7 @@ class TestBestSolutionFoundRatio:
 
         metric = BestSolutionFoundRatio()
 
-        with pytest.raises(ZeroDivisionError, match="dividing by 0"):
+        with pytest.raises(ZeroDivisionError, match="denominator is 0"):
             metric.run(solution, mock_feature_results)
 
     @pytest.mark.parametrize("mock_feature_results", [1e-4], indirect=True)
