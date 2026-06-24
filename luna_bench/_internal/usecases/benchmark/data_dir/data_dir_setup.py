@@ -36,12 +36,8 @@ class DataDirSetupUcImpl(DataDirSetupUc):
         dir_logs = Path(dir_data, "logs")
         dir_logs.mkdir(parents=True, exist_ok=True)
 
-        dir_import_models = Path(dir_data, "import_model")
-        dir_import_models.mkdir(parents=True, exist_ok=True)
-
         benchmark.data_dir_plots = str(dir_plots)
         benchmark.data_dir_logs = str(dir_logs)
-        benchmark.data_dir_import_models = str(dir_import_models)
 
         # Need to overwrite it here, otherwise the database paths will not be updated
         config.LB_DATA_DIR = str(root)

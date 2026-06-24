@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Literal
 
@@ -35,14 +37,14 @@ class Config(BaseSettings):
         """Full path for the main benchmark database."""
         if self.LB_DB_CONNECTION_STRING:
             return self.LB_DB_CONNECTION_STRING
-        return str(Path(self.LB_DATA_DIR) / "luna_bench.db")
+        return str(Path(self.LB_DATA_DIR) / "database" / "luna_bench.db")
 
     @property
     def resolved_jobs_db_connection_string(self) -> str:
         """Full path for the Huey jobs database."""
         if self.LB_DB_JOBS_CONNECTION_STRING:
             return self.LB_DB_JOBS_CONNECTION_STRING
-        return str(Path(self.LB_DATA_DIR) / "luna_bench-jobs.db")
+        return str(Path(self.LB_DATA_DIR) / "database" / "luna_bench-jobs.db")
 
 
 config = Config()

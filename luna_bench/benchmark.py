@@ -214,6 +214,22 @@ class Benchmark(BenchmarkEntity):
         return benchmark_reset
 
     @staticmethod
+    def _setup_data_dir(
+        benchmark: BenchmarkEntity,
+    ) -> None:
+        """Set up the data directory for a benchmark and update the config path.
+
+        This is called early (from ``open`` / ``create`` / ``load``) so that
+        ``config.LB_DATA_DIR`` is resolved to an absolute path **before** any
+        code that creates files (database, Huey jobs DB, etc.) runs with a stale
+        default.
+        """
+        setup_uc = Benchmark.__data_dir_setup_uc()
+        result = setup_uc(benchmark)
+        if not is_successful(result):
+            Benchmark._logger.warning("Output setup failed: %s", result.failure())
+
+    @staticmethod
     def create(
         name: str,
     ) -> Benchmark:
@@ -252,7 +268,9 @@ class Benchmark(BenchmarkEntity):
                         raise error.error()
                     raise error
 
-        return Benchmark.model_validate(result.unwrap(), from_attributes=True)
+        benchmark = Benchmark.model_validate(result.unwrap(), from_attributes=True)
+        Benchmark._setup_data_dir(benchmark)
+        return benchmark
 
     @staticmethod
     def open(name: str) -> Benchmark:
@@ -276,7 +294,9 @@ class Benchmark(BenchmarkEntity):
         ] = benchmark_load(name)
 
         if is_successful(result):
-            return Benchmark.model_validate(result.unwrap(), from_attributes=True)
+            benchmark = Benchmark.model_validate(result.unwrap(), from_attributes=True)
+            Benchmark._setup_data_dir(benchmark)
+            return benchmark
 
         if not isinstance(result.failure(), DataNotExistError):
             error = result.failure()
@@ -322,7 +342,9 @@ class Benchmark(BenchmarkEntity):
                 raise error.error()
             raise error
 
-        return Benchmark.model_validate(result.unwrap(), from_attributes=True)
+        result_entity = Benchmark.model_validate(result.unwrap(), from_attributes=True)
+        Benchmark._setup_data_dir(result_entity)
+        return result_entity
 
     @staticmethod
     def load_all() -> list[Benchmark]:
