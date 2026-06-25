@@ -51,7 +51,6 @@ class TestDataDirSetupUc:
         [
             "plots",
             "logs",
-            "import_model",
         ],
     )
     def test_creates_subdirs(self, entity: BenchmarkEntity, tmp_data_dir: Path, subdir: str) -> None:
@@ -64,7 +63,6 @@ class TestDataDirSetupUc:
             ("data_dir", ""),
             ("data_dir_plots", "plots"),
             ("data_dir_logs", "logs"),
-            ("data_dir_import_models", "import_model"),
         ],
     )
     def test_sets_field(self, entity: BenchmarkEntity, tmp_data_dir: Path, field: str, subfolder: str) -> None:
