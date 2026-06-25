@@ -114,7 +114,7 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
 
         # Disable signal handlers — signal.signal() only works in the main
         # thread, and this consumer runs in a background thread.
-        consumer._set_signal_handlers = lambda: None  # type: ignore[method-assign]  # noqa: SLF001
+        consumer._set_signal_handlers = lambda: None  # noqa: SLF001
 
         # Publish the consumer reference so _stop_consumer can call .stop()
         HueyBackgroundTaskClient._consumer = consumer
