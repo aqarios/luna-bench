@@ -6,9 +6,8 @@ from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError, ModelSelect
 from returns.result import Failure, Success
 
-from luna_bench._internal.domain_models import BenchmarkStatus, PlotDomain, RegisteredDataDomain
+from luna_bench._internal.domain_models import PlotDomain, RegisteredDataDomain
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
@@ -37,7 +36,6 @@ class PlotSqlDao(PlotDao):
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             plot = PlotConfigTable(
                 name=plot_name,
-                status=BenchmarkStatus.CREATED,
                 config_data=plot_config,
                 benchmark=benchmark,
                 registered_id=registered_id,
@@ -72,26 +70,8 @@ class PlotSqlDao(PlotDao):
                 BenchmarkTable.name == benchmark_name
             )
             plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            plot.status = BenchmarkStatus.CREATED
             plot.config_data = plot_config
             plot.registered_id = registered_id
-            plot.save()
-            return Success(None)
-        except DoesNotExist:
-            return Failure(DataNotExistError())
-        except Exception as e:  # pragma: no cover
-            return Failure(UnknownLunaBenchError(e))
-
-    @staticmethod
-    def update_status(
-        benchmark_name: str, plot_name: str, status: BenchmarkStatus
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        try:
-            benchmark: ModelSelect = BenchmarkTable.select(BenchmarkTable.id).where(
-                BenchmarkTable.name == benchmark_name
-            )
-            plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            plot.status = status
             plot.save()
             return Success(None)
         except DoesNotExist:
@@ -116,7 +96,6 @@ class PlotSqlDao(PlotDao):
     def plot_to_domain(plot: PlotConfigTable) -> PlotDomain:
         return PlotDomain(
             name=cast("str", plot.name),
-            status=JobStatus(cast("str", plot.status)),
             config_data=RegisteredDataDomain(
                 registered_id=cast("str", plot.registered_id),
                 data=ArbitraryDataDomain.model_validate(plot.config_data, from_attributes=True),

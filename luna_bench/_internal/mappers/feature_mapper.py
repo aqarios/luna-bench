@@ -60,7 +60,6 @@ class FeatureMapper(ModelListMixin[FeatureDomain, FeatureEntity]):
         return Success(
             FeatureEntity.model_construct(
                 name=domain.name,
-                status=domain.status,
                 feature=user_config.unwrap(),
                 results=self.result_to_user_model_dict(domain.results),
             )

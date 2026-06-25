@@ -6,7 +6,7 @@ import pytest
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.domain_models import BenchmarkStatus, MetricDomain, MetricResultDomain
+from luna_bench._internal.domain_models import MetricDomain, MetricResultDomain
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.registered_data_domain import RegisteredDataDomain
@@ -57,7 +57,6 @@ class TestMetricDAO:
                 Success(
                     MetricDomain(
                         name="non-existing",
-                        status=JobStatus.CREATED,
                         results={},
                         config_data=RegisteredDataDomain(
                             registered_id="existing",
@@ -170,34 +169,8 @@ class TestMetricDAO:
             assert result.unwrap() == exp.unwrap()
             r = setup_transaction.benchmark.load(benchmark_name).unwrap().metrics[0]
 
-            assert r.status == JobStatus.CREATED
             assert getattr(r.config_data.data, "something", "nope") == "xD2"
             assert r.config_data.registered_id == "existing2"
-        else:
-            assert isinstance(result.failure(), type(exp.failure()))
-
-    @pytest.mark.parametrize(
-        ("benchmark_name", "metric_name", "exp"),
-        [
-            (
-                "existing",
-                "existing",
-                Success(None),
-            ),
-            ("non-existing", "existing", Failure(DataNotExistError())),
-            ("existing", "non-existing", Failure(DataNotExistError())),
-        ],
-    )
-    @staticmethod
-    def test_update_metric_status(
-        setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result[None, DataNotExistError]
-    ) -> None:
-        result = setup_transaction.metric.update_status(benchmark_name, metric_name, BenchmarkStatus.DONE)
-        assert type(result) is type(exp)
-
-        if is_successful(exp):
-            assert result.unwrap() == exp.unwrap()
-            assert setup_transaction.benchmark.load(benchmark_name).unwrap().metrics[0].status == JobStatus.DONE
         else:
             assert isinstance(result.failure(), type(exp.failure()))
 

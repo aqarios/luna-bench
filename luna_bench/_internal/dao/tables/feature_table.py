@@ -15,8 +15,6 @@ class FeatureTable(BaseTable):
 
     registered_id = CharField(max_length=255)
 
-    status = CharField(max_length=16)
-
     benchmark = ForeignKeyField(
         BenchmarkTable,
         backref="features",

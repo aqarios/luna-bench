@@ -45,7 +45,6 @@ class PlotMapper(ModelListMixin[PlotDomain, PlotEntity]):
         return Success(
             PlotEntity.model_construct(
                 name=domain.name,
-                status=domain.status,
                 plot=user_config.unwrap(),
             )
         )

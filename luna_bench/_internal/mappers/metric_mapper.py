@@ -68,7 +68,6 @@ class MetricMapper(ModelListMixin[MetricDomain, MetricEntity]):
         return Success(
             MetricEntity.model_construct(
                 name=domain.name,
-                status=domain.status,
                 metric=user_config.unwrap(),
                 results=self.result_to_user_model_dict(domain.results),
             )

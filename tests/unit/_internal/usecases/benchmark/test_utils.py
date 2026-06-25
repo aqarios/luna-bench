@@ -30,7 +30,6 @@ from luna_bench.entities import (
     ModelSetEntity,
     PlotEntity,
 )
-from luna_bench.entities.enums import JobStatus
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockAsyncAlgorithm, MockFeature, MockMetric, MockPlot
 from tests.utils.luna_model import simple_model
 
@@ -67,15 +66,13 @@ def _full_benchmark_usermodel(name: str) -> BenchmarkEntity:
                 )
             ],
         ),
-        features=[FeatureEntity(name="existing", status=JobStatus.CREATED, feature=MockFeature(), results={})],
+        features=[FeatureEntity(name="existing", feature=MockFeature(), results={})],
         algorithms=[
-            AlgorithmEntity(name="existing", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={}),
-            AlgorithmEntity(
-                name="existing_async", status=JobStatus.CREATED, algorithm=MockAsyncAlgorithm(), results={}
-            ),
+            AlgorithmEntity(name="existing", algorithm=MockAlgorithm(), results={}),
+            AlgorithmEntity(name="existing_async", algorithm=MockAsyncAlgorithm(), results={}),
         ],
-        metrics=[MetricEntity(name="existing", status=JobStatus.CREATED, metric=MockMetric(), results={})],
-        plots=[PlotEntity(name="existing", status=JobStatus.CREATED, plot=MockPlot())],
+        metrics=[MetricEntity(name="existing", metric=MockMetric(), results={})],
+        plots=[PlotEntity(name="existing", plot=MockPlot())],
     )
 
 
@@ -110,7 +107,6 @@ def _full_domainmodel(name: str) -> BenchmarkDomain:
         features=[
             FeatureDomain(
                 name="existing",
-                status=JobStatus.CREATED,
                 results={},
                 config_data=RegisteredDataDomain(registered_id="feature", data=ArbitraryDataDomain()),
             )
@@ -118,14 +114,12 @@ def _full_domainmodel(name: str) -> BenchmarkDomain:
         algorithms=[
             AlgorithmDomain(
                 name="existing",
-                status=JobStatus.CREATED,
                 algorithm_type=AlgorithmType.SYNC,
                 results={},
                 config_data=RegisteredDataDomain(registered_id="algorithm", data=ArbitraryDataDomain()),
             ),
             AlgorithmDomain(
                 name="existing_async",
-                status=JobStatus.CREATED,
                 algorithm_type=AlgorithmType.ASYNC,
                 results={},
                 config_data=RegisteredDataDomain(registered_id="algorithm_async", data=ArbitraryDataDomain()),
@@ -134,7 +128,6 @@ def _full_domainmodel(name: str) -> BenchmarkDomain:
         metrics=[
             MetricDomain(
                 name="existing",
-                status=JobStatus.CREATED,
                 results={},
                 config_data=RegisteredDataDomain(registered_id="metric", data=ArbitraryDataDomain()),
             )
@@ -142,7 +135,6 @@ def _full_domainmodel(name: str) -> BenchmarkDomain:
         plots=[
             PlotDomain(
                 name="existing",
-                status=JobStatus.CREATED,
                 config_data=RegisteredDataDomain(registered_id="plot", data=ArbitraryDataDomain()),
             )
         ],

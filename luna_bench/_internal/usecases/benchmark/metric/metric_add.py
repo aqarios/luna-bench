@@ -73,7 +73,6 @@ class MetricAddUcImpl(MetricAddUc):
             return Success(
                 MetricEntity(
                     name=name,
-                    status=result.unwrap().status,
                     metric=config.unwrap(),
                     results={},
                 )

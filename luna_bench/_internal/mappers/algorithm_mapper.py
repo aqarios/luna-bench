@@ -83,7 +83,6 @@ class AlgorithmMapper(ModelListMixin[AlgorithmDomain, AlgorithmEntity]):
         return Success(
             AlgorithmEntity.model_construct(
                 name=domain.name,
-                status=domain.status,
                 algorithm=user_config.unwrap(),
                 results=self.result_to_user_model_dict(domain.results),
             )

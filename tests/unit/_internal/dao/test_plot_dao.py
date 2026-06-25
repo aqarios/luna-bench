@@ -8,9 +8,7 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models import PlotDomain
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
-from luna_bench._internal.domain_models.benchmark_status_enum import BenchmarkStatus
 from luna_bench._internal.domain_models.registered_data_domain import RegisteredDataDomain
-from luna_bench.entities import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from tests.unit.fixtures.mock_config import MockConfig
@@ -51,7 +49,6 @@ class TestPlotDAO:
                 Success(
                     PlotDomain(
                         name="non-existing",
-                        status=JobStatus.CREATED,
                         config_data=RegisteredDataDomain(
                             registered_id="existing",
                             data=MockConfig(something="xD"),
@@ -92,7 +89,6 @@ class TestPlotDAO:
                             ),
                         ),
                         name="existing",
-                        status=JobStatus.CREATED,
                     )
                 ),
             ),
@@ -156,33 +152,7 @@ class TestPlotDAO:
         if is_successful(exp):
             assert result.unwrap() == exp.unwrap()
             plot = setup_transaction.benchmark.load(benchmark_name).unwrap().plots[0]
-            assert plot.status == JobStatus.CREATED
             assert getattr(plot.config_data.data, "something", "nope") == "xD2"
             assert plot.config_data.registered_id == "existing2"
-        else:
-            assert isinstance(result.failure(), type(exp.failure()))
-
-    @pytest.mark.parametrize(
-        ("benchmark_name", "plot_name", "exp"),
-        [
-            (
-                "existing",
-                "existing",
-                Success(None),
-            ),
-            ("non-existing", "existing", Failure(DataNotExistError())),
-            ("existing", "non-existing", Failure(DataNotExistError())),
-        ],
-    )
-    @staticmethod
-    def test_update_plot_status(
-        setup_transaction: DaoTransaction, benchmark_name: str, plot_name: str, exp: Result[None, DataNotExistError]
-    ) -> None:
-        result = setup_transaction.plot.update_status(benchmark_name, plot_name, BenchmarkStatus.DONE)
-        assert type(result) is type(exp)
-
-        if is_successful(exp):
-            assert result.unwrap() == exp.unwrap()
-            assert setup_transaction.plot.load(benchmark_name, plot_name).unwrap().status == JobStatus.DONE
         else:
             assert isinstance(result.failure(), type(exp.failure()))
