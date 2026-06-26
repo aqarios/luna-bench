@@ -6,7 +6,6 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
-from luna_bench.entities import JobStatus
 from luna_bench.entities.algorithm_entity import AlgorithmEntity
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockAsyncAlgorithm
@@ -22,49 +21,31 @@ class TestAlgorithmFilter:
             (
                 AlgorithmType.ASYNC,
                 None,
-                Success(
-                    [
-                        AlgorithmEntity(
-                            name="existing_async", status=JobStatus.CREATED, algorithm=MockAsyncAlgorithm(), results={}
-                        )
-                    ]
-                ),
+                Success([AlgorithmEntity(name="existing_async", algorithm=MockAsyncAlgorithm(), results={})]),
             ),
             (
                 AlgorithmType.ASYNC,
-                AlgorithmEntity(
-                    name="existing_async", status=JobStatus.CREATED, algorithm=MockAsyncAlgorithm(), results={}
-                ),
-                Success(
-                    [
-                        AlgorithmEntity(
-                            name="existing_async", status=JobStatus.CREATED, algorithm=MockAsyncAlgorithm(), results={}
-                        )
-                    ]
-                ),
+                AlgorithmEntity(name="existing_async", algorithm=MockAsyncAlgorithm(), results={}),
+                Success([AlgorithmEntity(name="existing_async", algorithm=MockAsyncAlgorithm(), results={})]),
             ),
             (
                 AlgorithmType.SYNC,
                 None,
-                Success(
-                    [AlgorithmEntity(name="existing", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={})]
-                ),
+                Success([AlgorithmEntity(name="existing", algorithm=MockAlgorithm(), results={})]),
             ),
             (
                 AlgorithmType.SYNC,
-                AlgorithmEntity(name="existing", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={}),
-                Success(
-                    [AlgorithmEntity(name="existing", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={})]
-                ),
+                AlgorithmEntity(name="existing", algorithm=MockAlgorithm(), results={}),
+                Success([AlgorithmEntity(name="existing", algorithm=MockAlgorithm(), results={})]),
             ),
             (
                 AlgorithmType.ASYNC,
-                AlgorithmEntity(name="existing", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={}),
+                AlgorithmEntity(name="existing", algorithm=MockAlgorithm(), results={}),
                 Success([]),
             ),
             (
                 AlgorithmType.ASYNC,
-                AlgorithmEntity(name="non_existing", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={}),
+                AlgorithmEntity(name="non_existing", algorithm=MockAlgorithm(), results={}),
                 Failure(RunAlgorithmMissingError("non_existing", "existing")),
             ),
         ],

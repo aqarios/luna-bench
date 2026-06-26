@@ -12,7 +12,6 @@ if TYPE_CHECKING:
         AlgorithmDomain,
         AlgorithmResultDomain,
         BenchmarkDomain,
-        BenchmarkStatus,
         FeatureResultDomain,
         MetricResultDomain,
         ModelMetadataDomain,
@@ -180,7 +179,7 @@ class PlotDao(Protocol):
     def update(
         benchmark_name: str, plot_name: str, registered_id: str, plot_config: ArbitraryDataDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Update a plot config, resetting its status to CREATED.
+        """Update a plot config.
 
         Parameters
         ----------
@@ -192,28 +191,6 @@ class PlotDao(Protocol):
             The new registry id.
         plot_config: ArbitraryDataDomain
             The new serialized plot configuration.
-
-        Returns
-        -------
-        Result[None, DataNotExistError | UnknownLunaBenchError]
-            On success: Nothing.
-            On failure: An error if the plot was not found.
-        """
-
-    @staticmethod
-    def update_status(
-        benchmark_name: str, plot_name: str, status: BenchmarkStatus
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Update only the status of a plot configuration.
-
-        Parameters
-        ----------
-        benchmark_name: str
-            The benchmark the plot belongs to.
-        plot_name: str
-            The name of the plot.
-        status: BenchmarkStatus
-            The new status value.
 
         Returns
         -------
@@ -293,7 +270,7 @@ class FeatureDao(Protocol):
     def update(
         benchmark_name: str, feature_name: str, registered_id: str, feature_config: ArbitraryDataDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Update a feature's config, resetting its status to CREATED.
+        """Update a feature's config.
 
         Parameters
         ----------
@@ -305,28 +282,6 @@ class FeatureDao(Protocol):
             The new registry id.
         feature_config: ArbitraryDataDomain
             The new serialised feature config.
-
-        Returns
-        -------
-        Result[None, DataNotExistError | UnknownLunaBenchError]
-            On success: Nothing.
-            On failure: An error if the feature was not found.
-        """
-
-    @staticmethod
-    def update_status(
-        benchmark_name: str, feature_name: str, status: BenchmarkStatus
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Update only the status of a feature.
-
-        Parameters
-        ----------
-        benchmark_name: str
-            The benchmark the feature belongs to.
-        feature_name: str
-            The name of the feature.
-        status: BenchmarkStatus
-            The new status value.
 
         Returns
         -------
@@ -361,7 +316,7 @@ class FeatureDao(Protocol):
     def remove_result(
         benchmark_name: str, feature_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Delete all results for a feature and reset its status to CREATED.
+        """Delete all results for a feature.
 
         Parameters
         ----------
@@ -447,7 +402,7 @@ class MetricDao(Protocol):
     def update(
         benchmark_name: str, metric_name: str, registered_id: str, metric_config: BaseModel
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Update a metric's config, resetting its status to CREATED.
+        """Update a metric's config.
 
         Parameters
         ----------
@@ -459,28 +414,6 @@ class MetricDao(Protocol):
             The new registry id.
         metric_config: BaseModel
             The new serialised metric config.
-
-        Returns
-        -------
-        Result[None, DataNotExistError | UnknownLunaBenchError]
-            On success: Nothing.
-            On failure: An error if the metric was not found.
-        """
-
-    @staticmethod
-    def update_status(
-        benchmark_name: str, metric_name: str, status: BenchmarkStatus
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Update only the status of a metric.
-
-        Parameters
-        ----------
-        benchmark_name: str
-            The benchmark the metric belongs to.
-        metric_name: str
-            The name of the metric.
-        status: BenchmarkStatus
-            The new status value.
 
         Returns
         -------
@@ -513,7 +446,7 @@ class MetricDao(Protocol):
 
     @staticmethod
     def remove_result(benchmark_name: str, metric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Delete all results for a metric and reset its status to CREATED.
+        """Delete all results for a metric.
 
         Parameters
         ----------
@@ -606,7 +539,7 @@ class AlgorithmDao(Protocol):
         registered_id: str,
         algorithm_config: ArbitraryDataDomain,
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Update an algorithm's config, resetting its status to CREATED.
+        """Update an algorithm's config.
 
         Parameters
         ----------
@@ -618,28 +551,6 @@ class AlgorithmDao(Protocol):
             The new registry id.
         algorithm_config: ArbitraryDataDomain
             The new serialised algorithm config.
-
-        Returns
-        -------
-        Result[None, DataNotExistError | UnknownLunaBenchError]
-            On success: Nothing.
-            On failure: An error if the algorithm was not found.
-        """
-
-    @staticmethod
-    def update_status(
-        benchmark_name: str, algorithm_name: str, status: BenchmarkStatus
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Update only the status of an algorithm.
-
-        Parameters
-        ----------
-        benchmark_name: str
-            The benchmark the algorithm belongs to.
-        algorithm_name: str
-            The name of the algorithm.
-        status: BenchmarkStatus
-            The new status value.
 
         Returns
         -------

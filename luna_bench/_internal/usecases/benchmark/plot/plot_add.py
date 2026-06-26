@@ -73,7 +73,6 @@ class PlotAddUcImpl(PlotAddUc):
             return Success(
                 PlotEntity.model_construct(
                     name=name,
-                    status=result.unwrap().status,
                     plot=config.unwrap(),
                 )
             )

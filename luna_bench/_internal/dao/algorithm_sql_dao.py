@@ -9,7 +9,6 @@ from returns.result import Failure, Success
 from luna_bench._internal.domain_models import (
     AlgorithmDomain,
     AlgorithmResultDomain,
-    BenchmarkStatus,
     RegisteredDataDomain,
 )
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
@@ -49,7 +48,6 @@ class AlgorithmSqlDao(AlgorithmDao):
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             algorithm_db = AlgorithmTable(
                 name=algorithm_name,
-                status=BenchmarkStatus.CREATED,
                 algorithm_type=algorithm_type,
                 benchmark=benchmark,
                 config_data=algorithm,
@@ -85,24 +83,8 @@ class AlgorithmSqlDao(AlgorithmDao):
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            algorithm.status = BenchmarkStatus.CREATED
             algorithm.config_data = algorithm_config
             algorithm.registered_id = registered_id
-            algorithm.save()
-            return Success(None)
-        except DoesNotExist:
-            return Failure(DataNotExistError())
-        except Exception as e:  # pragma: no cover
-            return Failure(UnknownLunaBenchError(e))
-
-    @staticmethod
-    def update_status(
-        benchmark_name: str, algorithm_name: str, status: BenchmarkStatus
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            algorithm.status = status
             algorithm.save()
             return Success(None)
         except DoesNotExist:
@@ -196,7 +178,6 @@ class AlgorithmSqlDao(AlgorithmDao):
 
         return AlgorithmDomain(
             name=cast("str", algorithm.name),
-            status=algorithm.status,
             algorithm_type=AlgorithmType(cast("str", algorithm.algorithm_type)),
             results=result_data,
             config_data=RegisteredDataDomain(

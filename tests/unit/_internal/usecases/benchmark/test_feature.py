@@ -27,7 +27,6 @@ if TYPE_CHECKING:
 def _empty_feature(name: str, feature: BaseFeature) -> FeatureEntity:
     return FeatureEntity(
         name=name,
-        status=JobStatus.CREATED,
         feature=feature,
         results={},
     )
