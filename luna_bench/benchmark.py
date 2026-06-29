@@ -864,13 +864,7 @@ class Benchmark(BenchmarkEntity):
         self._remove_name_from_list(self.plots, plot_name)
 
     def run_features(self) -> None:
-        """
-        Calculate all configured features for all models of this benchmark.
-
-        Parameters
-        ----------
-        benchmark_run_features: FeatureRunUc, inject
-        """
+        """Calculate all configured features for all models of this benchmark."""
         benchmark_run_features = self.__run_feature_uc()
         result: Result[None, RunFeatureMissingError | RunModelsetMissingError] = benchmark_run_features(self)
 

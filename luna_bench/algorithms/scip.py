@@ -23,14 +23,12 @@ class ScipAlgorithm(BaseAlgorithmSync):
     problems using classical branch-and-bound methods. It translates Luna quantum models
     to LP format, solves them with SCIP, and translates the results back.
 
-    Parameters
+    Attributes
     ----------
     max_runtime: int | None
         Defines the maximum runtime for the SCIP solver in seconds, defaults to 1 hour.
     quiet_output: bool
         Defines the verbosity of the SCIP solver output.
-    _logger: Logger
-        Class-level logger for tracking algorithm execution.
 
     Raises
     ------
