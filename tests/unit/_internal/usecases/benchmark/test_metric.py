@@ -31,7 +31,6 @@ if TYPE_CHECKING:
 def _empty_metric(name: str, metric: BaseMetric) -> MetricEntity:
     return MetricEntity(
         name=name,
-        status=JobStatus.CREATED,
         metric=metric,
         results={},
     )

@@ -7,7 +7,6 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models import (
-    BenchmarkStatus,
     FeatureDomain,
     FeatureResultDomain,
 )
@@ -52,7 +51,6 @@ class TestFeatureDAO:
                 Success(
                     FeatureDomain(
                         name="non-existing",
-                        status=JobStatus.CREATED,
                         results={},
                         config_data=RegisteredDataDomain(
                             registered_id="existing",
@@ -164,35 +162,8 @@ class TestFeatureDAO:
             assert result.unwrap() == exp.unwrap()
             r = setup_transaction.benchmark.load(benchmark_name).unwrap().features[0]
 
-            assert r.status == JobStatus.CREATED
             assert getattr(r.config_data.data, "something", "nope") == "xD2"
             assert r.config_data.registered_id == "existing2"
-        else:
-            assert isinstance(result.failure(), type(exp.failure()))
-
-    @pytest.mark.parametrize(
-        ("benchmark_name", "metric_name", "exp"),
-        [
-            (
-                "existing",
-                "existing",
-                Success(None),
-            ),
-            ("non-existing", "existing", Failure(DataNotExistError())),
-            ("existing", "non-existing", Failure(DataNotExistError())),
-        ],
-    )
-    @staticmethod
-    def test_update_feature_status(
-        setup_transaction: DaoTransaction, benchmark_name: str, metric_name: str, exp: Result[None, DataNotUniqueError]
-    ) -> None:
-        result = setup_transaction.feature.update_status(benchmark_name, metric_name, BenchmarkStatus.DONE)
-        assert is_successful(result) == is_successful(exp)
-
-        if is_successful(exp):
-            assert result.unwrap() == exp.unwrap()
-
-            assert setup_transaction.benchmark.load(benchmark_name).unwrap().features[0].status == JobStatus.DONE
         else:
             assert isinstance(result.failure(), type(exp.failure()))
 

@@ -8,7 +8,6 @@ from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao.tables.model_metadata_table import ModelMetadataTable
 from luna_bench._internal.domain_models import (
-    BenchmarkStatus,
     FeatureDomain,
     FeatureResultDomain,
     RegisteredDataDomain,
@@ -41,7 +40,6 @@ class FeatureSqlDao(FeatureDao):
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             feature = FeatureTable(
                 name=feature_name,
-                status=BenchmarkStatus.CREATED,
                 config_data=feature_config,
                 benchmark=benchmark,
                 registered_id=registered_id,
@@ -72,24 +70,8 @@ class FeatureSqlDao(FeatureDao):
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            feature.status = BenchmarkStatus.CREATED
             feature.config_data = feature_config
             feature.registered_id = registered_id
-            feature.save()
-            return Success(None)
-        except DoesNotExist:
-            return Failure(DataNotExistError())
-        except Exception as e:  # pragma: no cover
-            return Failure(UnknownLunaBenchError(e))
-
-    @staticmethod
-    def update_status(
-        benchmark_name: str, feature_name: str, status: BenchmarkStatus
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            feature.status = status
             feature.save()
             return Success(None)
         except DoesNotExist:
@@ -133,8 +115,6 @@ class FeatureSqlDao(FeatureDao):
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
             FeatureResultTable.delete().where(FeatureResultTable.feature == feature).execute()  # type: ignore[no-untyped-call]
-            feature.status = BenchmarkStatus.CREATED
-            feature.save()
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
@@ -170,7 +150,6 @@ class FeatureSqlDao(FeatureDao):
 
         return FeatureDomain(
             name=cast("str", feature.name),
-            status=JobStatus(cast("str", feature.status)),
             results=result_data,
             config_data=RegisteredDataDomain(
                 registered_id=cast("str", feature.registered_id),

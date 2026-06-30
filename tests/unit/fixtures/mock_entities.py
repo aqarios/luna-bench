@@ -29,7 +29,7 @@ def make_feature_entity(
             error=None,
             result=FeatureResult.model_construct(**fields),  # type: ignore[arg-type]
         )
-    return FeatureEntity(name=name, status=JobStatus.DONE, feature=MockFeature(), results=results)
+    return FeatureEntity(name=name, feature=MockFeature(), results=results)
 
 
 def make_metric_entity(
@@ -51,14 +51,13 @@ def make_metric_entity(
             error=error,
             result=MetricResult.model_construct(**fields) if fields else None,  # type: ignore[arg-type]
         )
-    return MetricEntity(name=name, status=status, metric=MockMetric(), results=results)
+    return MetricEntity(name=name, metric=MockMetric(), results=results)
 
 
 def make_algo_entity(name: str, model_names: list[str]) -> AlgorithmEntity:
     """Create an AlgorithmEntity with empty results for given models."""
     return AlgorithmEntity(
         name=name,
-        status=JobStatus.DONE,
         algorithm=MockAlgorithm(),
         results={
             m: AlgorithmResultEntity(

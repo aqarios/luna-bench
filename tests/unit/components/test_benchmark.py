@@ -128,7 +128,7 @@ class TestBenchmark:
 
     def test_add_feature_success(self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark) -> None:
         mock_add = mocked_usecases["benchmark_add_feature_uc"]
-        feature_entity = FeatureEntity(name="feat", status=JobStatus.CREATED, feature=MockFeature(), results={})
+        feature_entity = FeatureEntity(name="feat", feature=MockFeature(), results={})
         mock_add.return_value = Success(feature_entity)
 
         res = empty_benchmark.add_feature("feat", MagicMock())
@@ -167,7 +167,7 @@ class TestBenchmark:
 
     def test_add_algorithm_success(self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark) -> None:
         mock_add = mocked_usecases["benchmark_add_algorithm_uc"]
-        algorithm_entity = AlgorithmEntity(name="algo", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={})
+        algorithm_entity = AlgorithmEntity(name="algo", algorithm=MockAlgorithm(), results={})
         mock_add.return_value = Success(algorithm_entity)
 
         res = empty_benchmark.add_algorithm("algo", MagicMock())
@@ -177,7 +177,7 @@ class TestBenchmark:
 
     def test_add_metric_success(self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark) -> None:
         mock_add = mocked_usecases["benchmark_add_metric_uc"]
-        metric_entity = MetricEntity(name="met", status=JobStatus.CREATED, metric=MockMetric(), results={})
+        metric_entity = MetricEntity(name="met", metric=MockMetric(), results={})
         mock_add.return_value = Success(metric_entity)
 
         res = empty_benchmark.add_metric("met", MagicMock())
@@ -187,7 +187,7 @@ class TestBenchmark:
 
     def test_add_plot_success(self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark) -> None:
         mock_add = mocked_usecases["benchmark_add_plot_uc"]
-        plot_entity = PlotEntity(name="plot", status=JobStatus.CREATED, plot=MockPlot())
+        plot_entity = PlotEntity(name="plot", plot=MockPlot())
         mock_add.return_value = Success(plot_entity)
 
         res = empty_benchmark.add_plot("plot", MagicMock())
@@ -262,7 +262,7 @@ class TestBenchmark:
         assert exc_info.value == error
 
     def test_remove_feature_success(self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark) -> None:
-        feature_entity = FeatureEntity(name="feat", status=JobStatus.CREATED, feature=MockFeature(), results={})
+        feature_entity = FeatureEntity(name="feat", feature=MockFeature(), results={})
         empty_benchmark.features.append(feature_entity)
 
         mock_remove = mocked_usecases["benchmark_remove_feature_uc"]
@@ -273,7 +273,7 @@ class TestBenchmark:
         mock_remove.assert_called_once_with(empty_benchmark.name, "feat")
 
     def test_remove_metric_success(self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark) -> None:
-        metric_entity = MetricEntity(name="met", status=JobStatus.CREATED, metric=MockMetric(), results={})
+        metric_entity = MetricEntity(name="met", metric=MockMetric(), results={})
         empty_benchmark.metrics.append(metric_entity)
 
         mock_remove = mocked_usecases["benchmark_remove_metric_uc"]
@@ -284,7 +284,7 @@ class TestBenchmark:
         mock_remove.assert_called_once_with(empty_benchmark.name, "met")
 
     def test_remove_algorithm_success(self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark) -> None:
-        algorithm_entity = AlgorithmEntity(name="algo", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={})
+        algorithm_entity = AlgorithmEntity(name="algo", algorithm=MockAlgorithm(), results={})
         empty_benchmark.algorithms.append(algorithm_entity)
 
         mock_remove = mocked_usecases["benchmark_remove_algorithm_uc"]
@@ -295,7 +295,7 @@ class TestBenchmark:
         mock_remove.assert_called_once_with(empty_benchmark.name, "algo")
 
     def test_remove_plot_success(self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark) -> None:
-        plot_entity = PlotEntity(name="plot", status=JobStatus.CREATED, plot=MockPlot())
+        plot_entity = PlotEntity(name="plot", plot=MockPlot())
         empty_benchmark.plots.append(plot_entity)
 
         mock_remove = mocked_usecases["benchmark_remove_plot_uc"]
@@ -486,7 +486,7 @@ class TestBenchmark:
     def test_add_feature_already_exists_returns_existing(
         self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
     ) -> None:
-        feature_entity = FeatureEntity(name="feat", status=JobStatus.CREATED, feature=MockFeature(), results={})
+        feature_entity = FeatureEntity(name="feat", feature=MockFeature(), results={})
         empty_benchmark.features.append(feature_entity)
         mocked_usecases["benchmark_add_feature_uc"].return_value = Failure(DataNotUniqueError())
 
@@ -496,7 +496,7 @@ class TestBenchmark:
     def test_add_metric_already_exists_returns_existing(
         self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
     ) -> None:
-        metric_entity = MetricEntity(name="met", status=JobStatus.CREATED, metric=MockMetric(), results={})
+        metric_entity = MetricEntity(name="met", metric=MockMetric(), results={})
         empty_benchmark.metrics.append(metric_entity)
         mocked_usecases["benchmark_add_metric_uc"].return_value = Failure(DataNotUniqueError())
 
@@ -506,7 +506,7 @@ class TestBenchmark:
     def test_add_algorithm_already_exists_returns_existing(
         self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
     ) -> None:
-        algorithm_entity = AlgorithmEntity(name="algo", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={})
+        algorithm_entity = AlgorithmEntity(name="algo", algorithm=MockAlgorithm(), results={})
         empty_benchmark.algorithms.append(algorithm_entity)
         mocked_usecases["benchmark_add_algorithm_uc"].return_value = Failure(DataNotUniqueError())
 
@@ -516,7 +516,7 @@ class TestBenchmark:
     def test_add_plot_already_exists_returns_existing(
         self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
     ) -> None:
-        plot_entity = PlotEntity(name="plot", status=JobStatus.CREATED, plot=MockPlot())
+        plot_entity = PlotEntity(name="plot", plot=MockPlot())
         empty_benchmark.plots.append(plot_entity)
         mocked_usecases["benchmark_add_plot_uc"].return_value = Failure(DataNotUniqueError())
 
@@ -525,10 +525,10 @@ class TestBenchmark:
 
     @pytest.fixture()
     def benchmark_with_entries(self) -> Benchmark:
-        feature_entity = FeatureEntity(name="feat", status=JobStatus.CREATED, feature=MockFeature(), results={})
-        metric_entity = MetricEntity(name="met", status=JobStatus.CREATED, metric=MockMetric(), results={})
-        algorithm_entity = AlgorithmEntity(name="algo", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={})
-        plot_entity = PlotEntity(name="plot", status=JobStatus.CREATED, plot=MockPlot())
+        feature_entity = FeatureEntity(name="feat", feature=MockFeature(), results={})
+        metric_entity = MetricEntity(name="met", metric=MockMetric(), results={})
+        algorithm_entity = AlgorithmEntity(name="algo", algorithm=MockAlgorithm(), results={})
+        plot_entity = PlotEntity(name="plot", plot=MockPlot())
         return Benchmark.model_construct(
             name="test",
             modelset=None,
@@ -564,10 +564,10 @@ class TestBenchmark:
         mock_plot.required_metrics = [MockMetric]
         mock_plot.required_features = []
 
-        plot_entity = PlotEntity(name="plot_with_deps", status=JobStatus.CREATED, plot=mock_plot)
+        plot_entity = PlotEntity(name="plot_with_deps", plot=mock_plot)
         empty_benchmark.plots.append(plot_entity)
 
-        metric_entity = MetricEntity(name="mock_metric", status=JobStatus.CREATED, metric=MockMetric(), results={})
+        metric_entity = MetricEntity(name="mock_metric", metric=MockMetric(), results={})
         mocked_usecases["benchmark_add_metric_uc"].return_value = Success(metric_entity)
 
         empty_benchmark.add_dependencies()
@@ -584,10 +584,10 @@ class TestBenchmark:
         mock_plot.required_metrics = []
         mock_plot.required_features = [MockFeature]
 
-        plot_entity = PlotEntity(name="plot_with_deps", status=JobStatus.CREATED, plot=mock_plot)
+        plot_entity = PlotEntity(name="plot_with_deps", plot=mock_plot)
         empty_benchmark.plots.append(plot_entity)
 
-        feature_entity = FeatureEntity(name="mock_feature", status=JobStatus.CREATED, feature=MockFeature(), results={})
+        feature_entity = FeatureEntity(name="mock_feature", feature=MockFeature(), results={})
         mocked_usecases["benchmark_add_feature_uc"].return_value = Success(feature_entity)
 
         empty_benchmark.add_dependencies()
@@ -603,10 +603,10 @@ class TestBenchmark:
         mock_metric = MagicMock(spec=MockMetric)
         mock_metric.required_features = [MockFeature]
 
-        metric_entity = MetricEntity(name="metric_with_deps", status=JobStatus.CREATED, metric=mock_metric, results={})
+        metric_entity = MetricEntity(name="metric_with_deps", metric=mock_metric, results={})
         empty_benchmark.metrics.append(metric_entity)
 
-        feature_entity = FeatureEntity(name="mock_feature", status=JobStatus.CREATED, feature=MockFeature(), results={})
+        feature_entity = FeatureEntity(name="mock_feature", feature=MockFeature(), results={})
         mocked_usecases["benchmark_add_feature_uc"].return_value = Success(feature_entity)
 
         empty_benchmark.add_dependencies()
@@ -623,10 +623,8 @@ class TestBenchmark:
         mock_plot.required_metrics = [MockMetric]
         mock_plot.required_features = []
 
-        existing_metric_entity = MetricEntity(
-            name="mock_metric", status=JobStatus.CREATED, metric=MockMetric(), results={}
-        )
-        plot_entity = PlotEntity(name="plot_with_deps", status=JobStatus.CREATED, plot=mock_plot)
+        existing_metric_entity = MetricEntity(name="mock_metric", metric=MockMetric(), results={})
+        plot_entity = PlotEntity(name="plot_with_deps", plot=mock_plot)
 
         empty_benchmark.metrics.append(existing_metric_entity)
         empty_benchmark.plots.append(plot_entity)
@@ -646,11 +644,11 @@ class TestBenchmark:
         mock_plot.required_metrics = [MockMetric]
         mock_plot.required_features = []
 
-        plot_entity = PlotEntity(name="plot_with_deps", status=JobStatus.CREATED, plot=mock_plot)
+        plot_entity = PlotEntity(name="plot_with_deps", plot=mock_plot)
         empty_benchmark.plots.append(plot_entity)
 
-        metric_entity = MetricEntity(name="mock_metric", status=JobStatus.CREATED, metric=mock_metric, results={})
-        feature_entity = FeatureEntity(name="mock_feature", status=JobStatus.CREATED, feature=MockFeature(), results={})
+        metric_entity = MetricEntity(name="mock_metric", metric=mock_metric, results={})
+        feature_entity = FeatureEntity(name="mock_feature", feature=MockFeature(), results={})
 
         mocked_usecases["benchmark_add_metric_uc"].return_value = Success(metric_entity)
         mocked_usecases["benchmark_add_feature_uc"].return_value = Success(feature_entity)
@@ -764,7 +762,7 @@ class TestFeatureEntityAsDataframe:
         assert list(df["num_vars/count"]) == [42, 7]
 
     def test_empty_feature_entity(self) -> None:
-        feature = FeatureEntity(name="num_vars", status=JobStatus.DONE, feature=MockFeature(), results={})
+        feature = FeatureEntity(name="num_vars", feature=MockFeature(), results={})
         df = self._make_benchmark().features_to_dataframe(feature)
 
         assert df.empty
@@ -804,7 +802,7 @@ class TestMetricEntityAsDataframe:
         assert df.iloc[0]["algorithm"] == "algo1"
 
     def test_empty_metric_entity(self) -> None:
-        metric = MetricEntity(name="accuracy", status=JobStatus.DONE, metric=MockMetric(), results={})
+        metric = MetricEntity(name="accuracy", metric=MockMetric(), results={})
         df = self._make_benchmark().metrics_to_dataframe(metric)
 
         assert df.empty
@@ -863,8 +861,8 @@ class TestListClasses:
         )
 
     def test_list_feature_classes(self) -> None:
-        f1 = FeatureEntity(name="f1", status=JobStatus.CREATED, feature=MockFeature(), results={})
-        f2 = FeatureEntity(name="f2", status=JobStatus.CREATED, feature=MockFeature(), results={})
+        f1 = FeatureEntity(name="f1", feature=MockFeature(), results={})
+        f2 = FeatureEntity(name="f2", feature=MockFeature(), results={})
         benchmark = self._make_benchmark(features=[f1, f2])
 
         result = benchmark.list_feature_classes()
@@ -873,8 +871,8 @@ class TestListClasses:
         assert all(issubclass(c, MockFeature) for c in result)
 
     def test_list_metrics_classes(self) -> None:
-        m1 = MetricEntity(name="acc", status=JobStatus.CREATED, metric=MockMetric(), results={})
-        m2 = MetricEntity(name="loss", status=JobStatus.CREATED, metric=MockMetric(), results={})
+        m1 = MetricEntity(name="acc", metric=MockMetric(), results={})
+        m2 = MetricEntity(name="loss", metric=MockMetric(), results={})
         benchmark = self._make_benchmark(metrics=[m1, m2])
 
         result = benchmark.list_metrics_classes()
@@ -883,8 +881,8 @@ class TestListClasses:
         assert all(issubclass(c, MockMetric) for c in result)
 
     def test_list_plots_classes(self) -> None:
-        p1 = PlotEntity(name="plot1", status=JobStatus.CREATED, plot=MockPlot())
-        p2 = PlotEntity(name="plot2", status=JobStatus.CREATED, plot=MockPlot())
+        p1 = PlotEntity(name="plot1", plot=MockPlot())
+        p2 = PlotEntity(name="plot2", plot=MockPlot())
         benchmark = self._make_benchmark(plots=[p1, p2])
 
         result = benchmark.list_plots_classes()
@@ -893,8 +891,8 @@ class TestListClasses:
         assert all(issubclass(c, MockPlot) for c in result)
 
     def test_list_algorithms(self) -> None:
-        a1 = AlgorithmEntity(name="algo1", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={})
-        a2 = AlgorithmEntity(name="algo2", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={})
+        a1 = AlgorithmEntity(name="algo1", algorithm=MockAlgorithm(), results={})
+        a2 = AlgorithmEntity(name="algo2", algorithm=MockAlgorithm(), results={})
         benchmark = self._make_benchmark(algorithms=[a1, a2])
 
         result = benchmark.list_algorithms()

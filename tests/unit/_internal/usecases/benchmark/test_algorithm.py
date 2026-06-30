@@ -8,7 +8,6 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench.entities import AlgorithmEntity
-from luna_bench.entities.enums.job_status_enum import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
@@ -26,7 +25,6 @@ if TYPE_CHECKING:
 def _empty_algorithm(name: str, algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any]) -> AlgorithmEntity:
     return AlgorithmEntity(
         name=name,
-        status=JobStatus.CREATED,
         algorithm=algorithm,
         results={},
     )

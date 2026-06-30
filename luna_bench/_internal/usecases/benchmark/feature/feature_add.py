@@ -68,4 +68,4 @@ class FeatureAddUcImpl(FeatureAddUc):
             if not is_successful(config):
                 return Failure(config.failure())
 
-            return Success(FeatureEntity(name=name, status=result.unwrap().status, feature=config.unwrap(), results={}))
+            return Success(FeatureEntity(name=name, feature=config.unwrap(), results={}))

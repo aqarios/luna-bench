@@ -5,13 +5,10 @@ from pydantic import BaseModel
 from luna_bench.custom import BasePlot
 from luna_bench.custom.types import PlotName
 
-from .enums import JobStatus
-
 
 class PlotEntity(BaseModel):
     """Represents a fully configured plot."""
 
     name: PlotName
-    status: JobStatus
 
     plot: BasePlot

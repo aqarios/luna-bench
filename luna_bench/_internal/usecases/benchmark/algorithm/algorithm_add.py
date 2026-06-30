@@ -99,8 +99,4 @@ class AlgorithmAddUcImpl(AlgorithmAddUc):
 
             if not is_successful(config):
                 return Failure(config.failure())
-            return Success(
-                AlgorithmEntity.model_construct(
-                    name=name, status=result.unwrap().status, algorithm=config.unwrap(), results={}
-                )
-            )
+            return Success(AlgorithmEntity.model_construct(name=name, algorithm=config.unwrap(), results={}))

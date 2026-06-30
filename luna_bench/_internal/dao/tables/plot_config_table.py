@@ -10,8 +10,6 @@ class PlotConfigTable(BaseTable):
     id = AutoField(primary_key=True)
     name = CharField(max_length=45, unique=True, collation="NOCASE")
 
-    status = CharField(max_length=16, collation="NOCASE")
-
     registered_id = CharField(max_length=255)
 
     config_data = JSONField(  # type: ignore[no-untyped-call]

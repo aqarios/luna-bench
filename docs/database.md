@@ -37,7 +37,6 @@ erDiagram
     Feature {
         int id PK
         string name UK "UK (benchmark, name), max 45chars"
-        string status
         JSONField config_data
     }
 
@@ -49,7 +48,6 @@ erDiagram
     Metric {
         int id PK
         string name UK "UK (benchmark, name), max 45chars"
-        string status
         JSONField config_data
     }
 
@@ -61,7 +59,6 @@ erDiagram
     Algorithm {
         int id PK
         string name UK "UK (benchmark, name), max 45chars"
-        string status
         JSONField config_data
     }
 
@@ -74,7 +71,6 @@ erDiagram
     Plot {
         int id PK
         string name UK "UK (benchmark, name), max 45chars"
-        string status
         JSONField config_data
     }
 

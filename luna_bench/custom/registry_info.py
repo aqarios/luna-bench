@@ -33,9 +33,10 @@ class RegistryInfo:
         Parameters
         ----------
         feature_registry: Registry[BaseFeature], injected
-        algorithm_registry: Registry[IAlgorithm[IBackend]], injected
+        algorithm_sync_registry: Registry[BaseAlgorithmSync], injected
+        algorithm_async_registry: Registry[BaseAlgorithmAsync[BaseModel]], injected
         metric_registry: Registry[BaseMetric], injected
-        plot_registry: Registry[BasePlot[Any]], injected
+        plot_registry: Registry[BasePlot], injected
 
 
         """

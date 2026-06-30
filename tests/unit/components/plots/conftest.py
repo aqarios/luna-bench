@@ -31,7 +31,7 @@ def mock_metric_entity(
             error=error,
             result=result_factory(val),
         )
-    return MetricEntity(name=name, status=status, metric=metric, results=results)
+    return MetricEntity(name=name, metric=metric, results=results)
 
 
 def mock_feature_entity(
@@ -51,7 +51,7 @@ def mock_feature_entity(
             error=None,
             result=result_factory(model_name) if result_factory is not None else None,
         )
-    return FeatureEntity(name=name, status=status, feature=feature, results=results)
+    return FeatureEntity(name=name, feature=feature, results=results)
 
 
 def mock_var_entity(*values: tuple[str, int]) -> FeatureEntity:

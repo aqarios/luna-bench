@@ -22,7 +22,6 @@ if TYPE_CHECKING:
 def _algo(name: str, status: JobStatus) -> AlgorithmEntity:
     return AlgorithmEntity(
         name=name,
-        status=JobStatus.CREATED,
         algorithm=MockAlgorithm(),
         results={
             "model1": AlgorithmResultEntity.model_construct(
@@ -41,7 +40,6 @@ def _algo(name: str, status: JobStatus) -> AlgorithmEntity:
 def _feature(name: str, status: JobStatus) -> FeatureEntity:
     return FeatureEntity(
         name=name,
-        status=JobStatus.CREATED,
         feature=MockFeature(),
         results={
             "model1": FeatureResultEntity.model_construct(
@@ -58,7 +56,6 @@ def _feature(name: str, status: JobStatus) -> FeatureEntity:
 def _metric(name: str, status: JobStatus) -> MetricEntity:
     return MetricEntity(
         name=name,
-        status=JobStatus.CREATED,
         metric=MockMetric(),
         results={
             "model1": {
@@ -79,9 +76,9 @@ def _entity(name: str) -> BenchmarkEntity:
     return BenchmarkEntity(
         name=name,
         modelset=None,
-        features=[FeatureEntity(name="f", status=JobStatus.CREATED, feature=MockFeature(), results={})],
-        algorithms=[AlgorithmEntity(name="a", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={})],
-        metrics=[MetricEntity(name="m", status=JobStatus.CREATED, metric=MockMetric(), results={})],
+        features=[FeatureEntity(name="f", feature=MockFeature(), results={})],
+        algorithms=[AlgorithmEntity(name="a", algorithm=MockAlgorithm(), results={})],
+        metrics=[MetricEntity(name="m", metric=MockMetric(), results={})],
         plots=[],
     )
 
@@ -374,7 +371,6 @@ class TestBenchmarkReset:
             algorithms=[
                 AlgorithmEntity(
                     name="no_such_algo",
-                    status=JobStatus.CREATED,
                     algorithm=MockAlgorithm(),
                     results={},
                 )
@@ -382,7 +378,6 @@ class TestBenchmarkReset:
             features=[
                 FeatureEntity(
                     name="no_such_feature",
-                    status=JobStatus.CREATED,
                     feature=MockFeature(),
                     results={},
                 )
@@ -390,7 +385,6 @@ class TestBenchmarkReset:
             metrics=[
                 MetricEntity(
                     name="no_such_metric",
-                    status=JobStatus.CREATED,
                     metric=MockMetric(),
                     results={},
                 )
@@ -448,9 +442,9 @@ class TestGetResetComponentNames:
             ),
             pytest.param(
                 ResetLevel.ALL,
-                [AlgorithmEntity(name="a", status=JobStatus.CREATED, algorithm=MockAlgorithm(), results={})],
-                [FeatureEntity(name="f", status=JobStatus.CREATED, feature=MockFeature(), results={})],
-                [MetricEntity(name="m", status=JobStatus.CREATED, metric=MockMetric(), results={})],
+                [AlgorithmEntity(name="a", algorithm=MockAlgorithm(), results={})],
+                [FeatureEntity(name="f", feature=MockFeature(), results={})],
+                [MetricEntity(name="m", metric=MockMetric(), results={})],
                 [],
                 [],
                 [],

@@ -7,7 +7,7 @@ from peewee import DoesNotExist, IntegrityError
 from returns.result import Failure, Success
 
 from luna_bench._internal.dao.tables import AlgorithmTable
-from luna_bench._internal.domain_models import BenchmarkStatus, MetricDomain, MetricResultDomain
+from luna_bench._internal.domain_models import MetricDomain, MetricResultDomain
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.registered_data_domain import RegisteredDataDomain
 from luna_bench.entities.enums.job_status_enum import JobStatus
@@ -43,7 +43,6 @@ class MetricSqlDao(MetricDao):
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricTable(
                 name=metric_name,
-                status=BenchmarkStatus.CREATED,
                 config_data=metric_config,
                 benchmark=benchmark,
                 registered_id=registered_id,
@@ -74,24 +73,8 @@ class MetricSqlDao(MetricDao):
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            metric.status = BenchmarkStatus.CREATED
             metric.config_data = metric_config
             metric.registered_id = registered_id
-            metric.save()
-            return Success(None)
-        except DoesNotExist:
-            return Failure(DataNotExistError())
-        except Exception as e:  # pragma: no cover
-            return Failure(UnknownLunaBenchError(e))
-
-    @staticmethod
-    def update_status(
-        benchmark_name: str, metric_name: str, status: BenchmarkStatus
-    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        try:
-            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            metric.status = status
             metric.save()
             return Success(None)
         except DoesNotExist:
@@ -139,8 +122,6 @@ class MetricSqlDao(MetricDao):
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
             MetricResultTable.delete().where(MetricResultTable.metric == metric).execute()  # type: ignore[no-untyped-call]
-            metric.status = BenchmarkStatus.CREATED
-            metric.save()
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
@@ -176,7 +157,6 @@ class MetricSqlDao(MetricDao):
 
         return MetricDomain(
             name=cast("str", metric.name),
-            status=JobStatus(cast("str", metric.status)),
             results=result_data,
             config_data=RegisteredDataDomain(
                 registered_id=cast("str", metric.registered_id),
