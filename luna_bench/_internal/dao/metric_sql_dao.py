@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError
@@ -58,7 +58,7 @@ class MetricSqlDao(MetricDao):
     def remove(benchmark_name: str, metric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)
             metric.delete_instance()
             return Success(None)
         except DoesNotExist:
@@ -72,7 +72,7 @@ class MetricSqlDao(MetricDao):
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)
             metric.config_data = metric_config
             metric.registered_id = registered_id
             metric.save()
@@ -92,11 +92,9 @@ class MetricSqlDao(MetricDao):
                 ModelMetadataTable.name == result.model_name
             )
 
-            metric = MetricTable.get(  # type: ignore[no-untyped-call]
-                MetricTable.name == metric_name, MetricTable.benchmark == benchmark
-            )
+            metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)
 
-            algorithm = AlgorithmTable.get(  # type: ignore[no-untyped-call]
+            algorithm = AlgorithmTable.get(
                 AlgorithmTable.name == result.algorithm_name, AlgorithmTable.benchmark == benchmark
             )
             metric_result = MetricResultTable(
@@ -120,8 +118,8 @@ class MetricSqlDao(MetricDao):
     def remove_result(benchmark_name: str, metric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            MetricResultTable.delete().where(MetricResultTable.metric == metric).execute()  # type: ignore[no-untyped-call]
+            metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)
+            MetricResultTable.delete().where(MetricResultTable.metric == metric).execute()
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
@@ -132,7 +130,7 @@ class MetricSqlDao(MetricDao):
     def load(benchmark_name: str, metric_name: str) -> Result[MetricDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)
 
             return Success(MetricSqlDao.metric_to_domain(metric))
         except DoesNotExist:
@@ -156,10 +154,10 @@ class MetricSqlDao(MetricDao):
             )
 
         return MetricDomain(
-            name=cast("str", metric.name),
+            name=metric.name,
             results=result_data,
             config_data=RegisteredDataDomain(
-                registered_id=cast("str", metric.registered_id),
+                registered_id=metric.registered_id,
                 data=ArbitraryDataDomain.model_validate(metric.config_data, from_attributes=True),
             ),
         )

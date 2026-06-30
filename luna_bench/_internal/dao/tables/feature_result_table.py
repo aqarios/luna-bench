@@ -17,7 +17,7 @@ class FeatureResultTable(BaseTable):
     status = CharField(max_length=16, choices=[(s.value, s.name) for s in JobStatus])
     error = CharField(max_length=255, null=True)
 
-    result_data = JSONField(  # type: ignore[no-untyped-call]
+    result_data = JSONField(
         json_dumps=lambda x: None if x is None else x.model_dump_json(),
         json_loads=lambda x: None if x is None else ArbitraryDataDomain.model_validate_json(x),
         null=True,

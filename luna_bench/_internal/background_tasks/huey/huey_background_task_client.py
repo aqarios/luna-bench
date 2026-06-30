@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import multiprocessing
 import platform
-import threading
+import subprocess
+import sys
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
@@ -19,15 +21,13 @@ if TYPE_CHECKING:
 
 
 class HueyBackgroundTaskClient(BackgroundTaskClient):
-    _thread: threading.Thread | None = None
-    _consumer: Consumer | None = None
-    _consumer_ready: threading.Event = threading.Event()
-
-    _logger = Logging.get_logger(__name__)
+    _process: subprocess.Popen[bytes] | None = None
     _huey: SqliteHuey | MemoryHuey | None = None
+    _logger = Logging.get_logger(__name__)
 
     @staticmethod
     def huey() -> SqliteHuey | MemoryHuey:
+        """Return the Huey instance, creating it lazily from the current config."""
         if HueyBackgroundTaskClient._huey is None:
             filename = config.resolved_jobs_db_connection_string
             HueyBackgroundTaskClient._logger.debug(f"Initializing huey with filename: {filename}.")
@@ -77,7 +77,12 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
             case "Windows":
                 return cast("str", WORKER_THREAD)
             case "Darwin":
-                HueyBackgroundTaskClient._logger.debug("For your OS Darwin, the default worker type is 'process'.")
+                multiprocessing.set_start_method("fork", force=True)
+                HueyBackgroundTaskClient._logger.debug(
+                    "For your OS Darwin, the default worker type is 'process'. But we have to set the start method"
+                    "to 'fork' (since huey relies on that). This is no longer the default on Darwin. If you face issues"
+                    "With that, consider setting LB_HUEY_WORKER_TYPE=thread."
+                )
                 return cast("str", WORKER_PROCESS)
             case "Linux":
                 return cast("str", WORKER_PROCESS)
@@ -90,15 +95,24 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
                 return cast("str", WORKER_THREAD)
 
     @staticmethod
-    def _run_consumer() -> None:  # pragma: no cover
-        """Run the Huey consumer in a background thread."""
+    def _run_consumer() -> None:  # pragma: no cover # another process, hart/impossible to measure coverage
         worker_type = HueyBackgroundTaskClient._get_worker_type()
         HueyBackgroundTaskClient._logger.debug(
             f"Initializing {config.resolved_jobs_db_connection_string} huey consumer with worker type: {worker_type}."
         )
+
+        # The consumer runs in a fresh subprocess with an empty
+        # TaskRegistry.  Register the algorithm task functions here so
+        # it can resolve the task names it reads from the queue.
+        from luna_bench._internal.background_tasks.huey.huey_algorithm_runner import (  # noqa: PLC0415
+            HueyAlgorithmRunner,
+        )
+
         huey = HueyBackgroundTaskClient.huey()
+        HueyAlgorithmRunner.register_tasks(huey)
+
         consumer = Consumer(
-            huey,
+            HueyBackgroundTaskClient.huey(),
             workers=config.LB_ASYNC_WORKER_COUNT,
             periodic=True,
             initial_delay=0.1,
@@ -112,14 +126,6 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
             extra_locks=None,
         )
 
-        # Disable signal handlers — signal.signal() only works in the main
-        # thread, and this consumer runs in a background thread.
-        consumer._set_signal_handlers = lambda: None  # noqa: SLF001
-
-        # Publish the consumer reference so _stop_consumer can call .stop()
-        HueyBackgroundTaskClient._consumer = consumer
-        HueyBackgroundTaskClient._consumer_ready.set()
-
         try:
             HueyBackgroundTaskClient._logger.debug("Huey consumer started.")
             consumer.run()
@@ -127,36 +133,32 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
         finally:
             HueyBackgroundTaskClient._logger.debug("Huey consumer exiting.")
             consumer.stop()
-            HueyBackgroundTaskClient._consumer = None
-            HueyBackgroundTaskClient._consumer_ready.clear()
             HueyBackgroundTaskClient._logger.debug("Huey consumer was stopped.")
 
     @classmethod
     def _stop_consumer(cls) -> None:
         cls._logger.debug("Stopping background_tasks consumer.")
 
-        if cls._thread is None:
+        if cls._process is None:
             cls._logger.debug("Huey consumer is not running.")
+
             return
 
-        if cls._thread.is_alive():
+        if cls._process.poll() is None:
             cls._logger.debug(
                 f"Huey consumer is running and should be terminated. Will wait for {config.LB_HUEY_JOIN_TIMEOUT}sec "
                 f"before force-killing."
             )
-
-            # Wait for the consumer to be ready, then signal it to stop.
-            cls._consumer_ready.wait()
-            if cls._consumer is not None:
-                cls._consumer.stop()
-
-            cls._thread.join(timeout=config.LB_HUEY_JOIN_TIMEOUT)
-            if cls._thread.is_alive():
-                cls._logger.warning("Huey consumer did not terminate in time.")
+            cls._process.terminate()
+            try:
+                cls._process.wait(timeout=config.LB_HUEY_JOIN_TIMEOUT)
+            except subprocess.TimeoutExpired:
+                cls._logger.warning("Huey consumer did not terminate in time. Force-killing process.")
+                cls._process.kill()
+                cls._process.wait(timeout=config.LB_HUEY_JOIN_TIMEOUT)
             cls._logger.debug("Huey consumer stopped.")
 
-        cls._thread = None
-        cls._consumer = None
+        cls._process = None
 
     @classmethod
     def _start_consumer(cls) -> None:
@@ -165,18 +167,37 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
             cls._logger.debug("Huey consumer is already running. Stopping it first.")
             HueyBackgroundTaskClient._stop_consumer()
 
-        cls._logger.debug("Starting background_tasks consumer in a background thread.")
+        cls._logger.debug("Starting background_tasks consumer in a new process.")
 
-        cls._consumer_ready.clear()
-        cls._thread = threading.Thread(
-            target=HueyBackgroundTaskClient._run_consumer,
-            daemon=True,
+        # Serialize the parent's config so the child process sees the same values.
+        config_json = config.model_dump_json()
+
+        # Set config from JSON FIRST, then import the module. That way the
+        # lazy huey() call in _run_consumer picks up the right values.
+        bootstrap_code = (
+            "import importlib,sys,json\n"
+            "from luna_bench.configs.config import config as cfg\n"
+            "for k, v in json.loads(sys.argv[3]).items():\n"
+            "    setattr(cfg, k, v)\n"
+            "obj=importlib.import_module(sys.argv[1])\n"
+            "for part in sys.argv[2].split('.'):\n"
+            "    obj=getattr(obj, part)\n"
+            "obj._run_consumer()\n"
         )
-        cls._thread.start()
+        cls._process = subprocess.Popen(  # noqa: S603 # command is built from trusted class metadata
+            [
+                sys.executable,
+                "-c",
+                bootstrap_code,
+                cls.__module__,
+                cls.__qualname__,
+                config_json,
+            ]
+        )
 
     @classmethod
     def is_consumer_running(cls) -> bool:
-        return cls._thread is not None and cls._thread.is_alive()
+        return cls._process is not None and cls._process.poll() is None
 
     @classmethod
     @contextmanager

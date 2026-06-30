@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError
@@ -55,7 +55,7 @@ class FeatureSqlDao(FeatureDao):
     def remove(benchmark_name: str, feature_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)
             feature.delete_instance()
             return Success(None)
         except DoesNotExist:
@@ -69,7 +69,7 @@ class FeatureSqlDao(FeatureDao):
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)
             feature.config_data = feature_config
             feature.registered_id = registered_id
             feature.save()
@@ -88,7 +88,7 @@ class FeatureSqlDao(FeatureDao):
             model_metadata = ModelMetadataTable.select(ModelMetadataTable.id).where(
                 ModelMetadataTable.name == result.model_name
             )
-            feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)
 
             feature_result = FeatureResultTable(
                 feature=feature,
@@ -113,8 +113,8 @@ class FeatureSqlDao(FeatureDao):
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            FeatureResultTable.delete().where(FeatureResultTable.feature == feature).execute()  # type: ignore[no-untyped-call]
+            feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)
+            FeatureResultTable.delete().where(FeatureResultTable.feature == feature).execute()
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
@@ -127,7 +127,7 @@ class FeatureSqlDao(FeatureDao):
     ) -> Result[FeatureDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)
 
             return Success(FeatureSqlDao.feature_to_domain(feature))
         except DoesNotExist:
@@ -149,10 +149,10 @@ class FeatureSqlDao(FeatureDao):
         }
 
         return FeatureDomain(
-            name=cast("str", feature.name),
+            name=feature.name,
             results=result_data,
             config_data=RegisteredDataDomain(
-                registered_id=cast("str", feature.registered_id),
+                registered_id=feature.registered_id,
                 data=ArbitraryDataDomain.model_validate(feature.config_data, from_attributes=True),
             ),
         )

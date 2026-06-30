@@ -8,6 +8,9 @@ from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDa
 
 from .benchmark_table import BenchmarkTable
 
+if TYPE_CHECKING:
+    from luna_bench._internal.dao.tables.metric_result_table import MetricResultTable
+
 
 class MetricTable(BaseTable):
     id = AutoField(primary_key=True)
@@ -21,13 +24,13 @@ class MetricTable(BaseTable):
         on_delete="CASCADE",
     )
 
-    config_data = JSONField(  # type: ignore[no-untyped-call]
+    config_data = JSONField(
         json_dumps=lambda x: x.model_dump_json(),
         json_loads=ArbitraryDataDomain.model_validate_json,
     )
 
     if TYPE_CHECKING:
-        results: ModelSelect
+        results: ModelSelect[MetricResultTable]
 
     class Meta:
         # Ensures uniqueness of name within each benchmark

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError
@@ -64,7 +64,7 @@ class AlgorithmSqlDao(AlgorithmDao):
     def remove(benchmark_name: str, algorithm_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)
             algorithm.delete_instance()
             return Success(None)
         except DoesNotExist:
@@ -82,7 +82,7 @@ class AlgorithmSqlDao(AlgorithmDao):
         # TODO(Llewellyn): delete results  # noqa: FIX002
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)
             algorithm.config_data = algorithm_config
             algorithm.registered_id = registered_id
             algorithm.save()
@@ -98,7 +98,7 @@ class AlgorithmSqlDao(AlgorithmDao):
     ) -> Result[AlgorithmDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)
             AlgorithmSqlDao.algorithm_to_domain(algorithm)
             return Success(AlgorithmSqlDao.algorithm_to_domain(algorithm))
         except DoesNotExist:
@@ -111,19 +111,19 @@ class AlgorithmSqlDao(AlgorithmDao):
         benchmark_name: str, algorithm_name: str, result: AlgorithmResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get_or_none(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.get_or_none(BenchmarkTable.name == benchmark_name)
 
             model_metadata = ModelMetadataTable.select(ModelMetadataTable.id).where(
                 ModelMetadataTable.id == result.model_id
             )
 
-            algorithm = AlgorithmTable.get_or_none(  # type: ignore[no-untyped-call]
+            algorithm = AlgorithmTable.get_or_none(
                 AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark
             )
             if algorithm is None:
                 return Failure(DataNotExistError())
 
-            existing_id = AlgorithmResultTable.get_or_none(  # type: ignore[no-untyped-call]
+            existing_id = AlgorithmResultTable.get_or_none(
                 (AlgorithmResultTable.algorithm == algorithm) & (AlgorithmResultTable.model_metadata == model_metadata)
             )
 
@@ -149,8 +149,8 @@ class AlgorithmSqlDao(AlgorithmDao):
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
-            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
-            AlgorithmResultTable.delete().where(AlgorithmResultTable.algorithm == algorithm).execute()  # type: ignore[no-untyped-call]
+            algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)
+            AlgorithmResultTable.delete().where(AlgorithmResultTable.algorithm == algorithm).execute()
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
@@ -177,11 +177,11 @@ class AlgorithmSqlDao(AlgorithmDao):
         }
 
         return AlgorithmDomain(
-            name=cast("str", algorithm.name),
-            algorithm_type=AlgorithmType(cast("str", algorithm.algorithm_type)),
+            name=algorithm.name,
+            algorithm_type=AlgorithmType(algorithm.algorithm_type),
             results=result_data,
             config_data=RegisteredDataDomain(
-                registered_id=cast("str", algorithm.registered_id),
+                registered_id=algorithm.registered_id,
                 data=ArbitraryDataDomain.model_validate(algorithm.config_data),
             ),
         )

@@ -1,6 +1,7 @@
 from typing import Any
 
 from dependency_injector.wiring import Provide, inject
+from huey import MemoryHuey, SqliteHuey
 from huey.api import logging
 from luna_model import Model, Solution
 from luna_quantum import Logging
@@ -104,6 +105,18 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
         T, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError
     ]:  # pragma: no cover
         return HueyAlgorithmRunner._run_async(algorithm, model_id)
+
+    @staticmethod
+    def register_tasks(
+        huey: SqliteHuey | MemoryHuey,
+    ) -> None:  # pragma: no cover # registration is a side-effect, called from child process
+        """Register algorithm tasks with a Huey instance so the consumer can run them.
+
+        Called from the consumer subprocess, which starts with an empty
+        registry and needs these entries to resolve queued task names.
+        """
+        _ = huey.task()(HueyAlgorithmRunner._run_sync_huey_task)
+        _ = huey.task()(HueyAlgorithmRunner._run_async_huey_task)
 
     @staticmethod
     def run_sync(

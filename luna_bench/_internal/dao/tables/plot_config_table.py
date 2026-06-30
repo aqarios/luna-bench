@@ -12,7 +12,7 @@ class PlotConfigTable(BaseTable):
 
     registered_id = CharField(max_length=255)
 
-    config_data = JSONField(  # type: ignore[no-untyped-call]
+    config_data = JSONField(
         json_dumps=lambda x: x.model_dump_json(),
         json_loads=ArbitraryDataDomain.model_validate_json,
     )

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError
@@ -45,7 +45,7 @@ class BenchmarkSqlDao(BenchmarkDao):
     @staticmethod
     def load(benchmark_name: str) -> Result[BenchmarkDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
             return Success(BenchmarkSqlDao.benchmark_to_domain(benchmark))
         except DoesNotExist:
             return Failure(DataNotExistError())
@@ -55,7 +55,7 @@ class BenchmarkSqlDao(BenchmarkDao):
     @staticmethod
     def delete(benchmark_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
             benchmark.delete_instance()
             return Success(None)
         except DoesNotExist:
@@ -76,9 +76,9 @@ class BenchmarkSqlDao(BenchmarkDao):
         benchmark_name: str, modelset_name: str
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
             # TODO(Llewellyn): should this reset all results? # noqa: FIX002
-            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)  # type: ignore[no-untyped-call]
+            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
 
             benchmark.modelset = modelset
             benchmark.save()
@@ -91,7 +91,7 @@ class BenchmarkSqlDao(BenchmarkDao):
     @staticmethod
     def remove_modelset(benchmark_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.get(BenchmarkTable.name == benchmark_name)
             # TODO(Llewellyn): should this reset all results? # noqa: FIX002
             benchmark.modelset = None
             benchmark.save()
@@ -104,8 +104,8 @@ class BenchmarkSqlDao(BenchmarkDao):
     @staticmethod
     def benchmark_to_domain(benchmark: BenchmarkTable) -> BenchmarkDomain:
         return BenchmarkDomain(
-            name=cast("str", benchmark.name),
-            status=BenchmarkStatus(cast("str", benchmark.status)),
+            name=benchmark.name,
+            status=BenchmarkStatus(benchmark.status),
             modelset=ModelSetSqlDao.modelset_to_domain(benchmark.modelset) if benchmark.modelset else None,
             features=[FeatureSqlDao.feature_to_domain(feature) for feature in benchmark.features],
             algorithms=[AlgorithmSqlDao.algorithm_to_domain(solvejob) for solvejob in benchmark.algorithms],

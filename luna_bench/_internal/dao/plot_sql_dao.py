@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from luna_quantum import Logging
-from peewee import DoesNotExist, IntegrityError, ModelSelect
+from peewee import DoesNotExist, IntegrityError
 from returns.result import Failure, Success
 
 from luna_bench._internal.domain_models import PlotDomain, RegisteredDataDomain
@@ -50,10 +50,8 @@ class PlotSqlDao(PlotDao):
     @staticmethod
     def remove(benchmark_name: str, plot_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark: ModelSelect = BenchmarkTable.select(BenchmarkTable.id).where(
-                BenchmarkTable.name == benchmark_name
-            )
-            plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
+            plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)
             plot.delete_instance(recursive=True)
             return Success(None)
         except DoesNotExist:
@@ -66,10 +64,8 @@ class PlotSqlDao(PlotDao):
         benchmark_name: str, plot_name: str, registered_id: str, plot_config: ArbitraryDataDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark: ModelSelect = BenchmarkTable.select(BenchmarkTable.id).where(
-                BenchmarkTable.name == benchmark_name
-            )
-            plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
+            plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)
             plot.config_data = plot_config
             plot.registered_id = registered_id
             plot.save()
@@ -82,10 +78,8 @@ class PlotSqlDao(PlotDao):
     @staticmethod
     def load(benchmark_name: str, plot_name: str) -> Result[PlotDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            benchmark: ModelSelect = BenchmarkTable.select(BenchmarkTable.id).where(
-                BenchmarkTable.name == benchmark_name
-            )
-            plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)  # type: ignore[no-untyped-call]
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
+            plot = PlotConfigTable.get(PlotConfigTable.name == plot_name, PlotConfigTable.benchmark == benchmark)
             return Success(PlotSqlDao.plot_to_domain(plot))
         except DoesNotExist:
             return Failure(DataNotExistError())
@@ -95,9 +89,9 @@ class PlotSqlDao(PlotDao):
     @staticmethod
     def plot_to_domain(plot: PlotConfigTable) -> PlotDomain:
         return PlotDomain(
-            name=cast("str", plot.name),
+            name=plot.name,
             config_data=RegisteredDataDomain(
-                registered_id=cast("str", plot.registered_id),
+                registered_id=plot.registered_id,
                 data=ArbitraryDataDomain.model_validate(plot.config_data, from_attributes=True),
             ),
         )
