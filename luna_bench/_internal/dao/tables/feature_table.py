@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 class FeatureTable(BaseTable):
     id = AutoField(primary_key=True)
-    name = CharField(max_length=45, unique=True, collation="NOCASE")
+    name = CharField(max_length=45, collation="NOCASE")
 
     registered_id = CharField(max_length=255)
 
