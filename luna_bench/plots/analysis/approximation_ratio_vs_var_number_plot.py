@@ -22,7 +22,9 @@ class ApproximationRatioVsVarNumberPlot(ScatterPlot):
     >>> bench.add_plot(name="approx_vs_vars", plot=ApproximationRatioVsVarNumberPlot())
     """
 
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    figure_filename: str = "approximation_ratio_vs_var_number"
+
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Generate plot output from benchmark results.
 
         Parameters
@@ -42,6 +44,7 @@ class ApproximationRatioVsVarNumberPlot(ScatterPlot):
             )
         ]
         self.create(
+            save_dir=save_dir,
             rows=rows,
             xlabel="Number of Variables",
             ylabel="Approximation Ratio",

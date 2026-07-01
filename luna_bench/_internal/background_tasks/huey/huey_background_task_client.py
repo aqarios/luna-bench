@@ -5,6 +5,7 @@ import platform
 import subprocess
 import sys
 from contextlib import contextmanager
+from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 from huey import MemoryHuey, SqliteHuey
@@ -21,18 +22,28 @@ if TYPE_CHECKING:
 
 class HueyBackgroundTaskClient(BackgroundTaskClient):
     _process: subprocess.Popen[bytes] | None = None
+    _huey: SqliteHuey | MemoryHuey | None = None
     _logger = Logging.get_logger(__name__)
 
-    huey: SqliteHuey | MemoryHuey = (
-        MemoryHuey()
-        if config.LB_DB_JOBS_CONNECTION_STRING == ":memory:"
-        else SqliteHuey(
-            name="luna-bench-background_tasks",
-            filename=config.LB_DB_JOBS_CONNECTION_STRING,
-            timeout=30,
-            journal_mode="wal",
-        )
-    )
+    @staticmethod
+    def huey() -> SqliteHuey | MemoryHuey:
+        """Return the Huey instance, creating it lazily from the current config."""
+        if HueyBackgroundTaskClient._huey is None:
+            filename = config.resolved_jobs_db_connection_string
+            HueyBackgroundTaskClient._logger.debug(f"Initializing huey with filename: {filename}.")
+            if filename != ":memory:":
+                Path(filename).parent.mkdir(parents=True, exist_ok=True)
+            HueyBackgroundTaskClient._huey = (
+                MemoryHuey()
+                if filename == ":memory:"
+                else SqliteHuey(
+                    name="luna-bench-background_tasks",
+                    filename=filename,
+                    timeout=30,
+                    journal_mode="wal",
+                )
+            )
+        return HueyBackgroundTaskClient._huey
 
     @staticmethod
     def _get_worker_type() -> str:
@@ -87,10 +98,21 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
     def _run_consumer() -> None:  # pragma: no cover # another process, hart/impossible to measure coverage
         worker_type = HueyBackgroundTaskClient._get_worker_type()
         HueyBackgroundTaskClient._logger.debug(
-            f"Initializing {config.LB_DB_JOBS_CONNECTION_STRING} huey consumer with worker type: {worker_type}."
+            f"Initializing {config.resolved_jobs_db_connection_string} huey consumer with worker type: {worker_type}."
         )
+
+        # The consumer runs in a fresh subprocess with an empty
+        # TaskRegistry.  Register the algorithm task functions here so
+        # it can resolve the task names it reads from the queue.
+        from luna_bench._internal.background_tasks.huey.huey_algorithm_runner import (  # noqa: PLC0415
+            HueyAlgorithmRunner,
+        )
+
+        huey = HueyBackgroundTaskClient.huey()
+        HueyAlgorithmRunner.register_tasks(huey)
+
         consumer = Consumer(
-            HueyBackgroundTaskClient.huey,
+            HueyBackgroundTaskClient.huey(),
             workers=config.LB_ASYNC_WORKER_COUNT,
             periodic=True,
             initial_delay=0.1,
@@ -147,17 +169,19 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
 
         cls._logger.debug("Starting background_tasks consumer in a new process.")
 
-        # Serialize the parent's config so the child process sees the same values.t.
+        # Serialize the parent's config so the child process sees the same values.
         config_json = config.model_dump_json()
 
+        # Set config from JSON FIRST, then import the module. That way the
+        # lazy huey() call in _run_consumer picks up the right values.
         bootstrap_code = (
             "import importlib,sys,json\n"
-            "obj=importlib.import_module(sys.argv[1])\n"
-            "for part in sys.argv[2].split('.'):\n"
-            "    obj=getattr(obj, part)\n"
             "from luna_bench.configs.config import config as cfg\n"
             "for k, v in json.loads(sys.argv[3]).items():\n"
             "    setattr(cfg, k, v)\n"
+            "obj=importlib.import_module(sys.argv[1])\n"
+            "for part in sys.argv[2].split('.'):\n"
+            "    obj=getattr(obj, part)\n"
             "obj._run_consumer()\n"
         )
         cls._process = subprocess.Popen(  # noqa: S603 # command is built from trusted class metadata

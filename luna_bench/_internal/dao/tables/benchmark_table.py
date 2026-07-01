@@ -5,6 +5,12 @@ from peewee import AutoField, CharField, ForeignKeyField, ModelSelect
 from luna_bench._internal.dao.tables.base_table import BaseTable
 from luna_bench._internal.dao.tables.modelset_table import ModelSetTable
 
+if TYPE_CHECKING:
+    from luna_bench._internal.dao.tables.algorithm_table import AlgorithmTable
+    from luna_bench._internal.dao.tables.feature_table import FeatureTable
+    from luna_bench._internal.dao.tables.metric_table import MetricTable
+    from luna_bench._internal.dao.tables.plot_config_table import PlotConfigTable
+
 
 class BenchmarkTable(BaseTable):
     id = AutoField(primary_key=True)
@@ -17,7 +23,7 @@ class BenchmarkTable(BaseTable):
     if TYPE_CHECKING:
         # Backrefs
 
-        features: ModelSelect
-        algorithms: ModelSelect
-        metrics: ModelSelect
-        plots: ModelSelect
+        features: ModelSelect[FeatureTable]
+        algorithms: ModelSelect[AlgorithmTable]
+        metrics: ModelSelect[MetricTable]
+        plots: ModelSelect[PlotConfigTable]

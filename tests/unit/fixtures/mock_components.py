@@ -68,18 +68,18 @@ class UnregisteredAlgorithm(BaseAlgorithmSync):
 
 @plot
 class MockPlot(BasePlot):
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         raise NotImplementedError
 
 
 class UnregisteredPlot(BasePlot):
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         raise NotImplementedError
 
 
 @plot
 class MockPlotWithError(BasePlot):
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         raise NotImplementedError
 
 

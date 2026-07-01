@@ -13,14 +13,13 @@ class BasePlot(RegisterableComponent, ABC, metaclass=RegisteredClassMeta):
     Base interface for all plot components.
 
     Subclasses should implement the `run` method.
-
     """
 
     required_features: ClassVar[list[FeatureClass]]
     required_metrics: ClassVar[list[MetricClass]]
 
     @abstractmethod
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Generate plot output from benchmark results.
 
         Parameters

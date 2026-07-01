@@ -24,7 +24,9 @@ class FeasibilityRatioVsVarNumberPlot(ScatterPlot):
     >>> bench.add_plot(name="feasibility_vs_vars", plot=FeasibilityRatioVsVarNumberPlot())
     """
 
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    figure_filename: str = "feasibility_ratio_vs_var_number"
+
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Generate plot output from benchmark results.
 
         Parameters
@@ -42,6 +44,7 @@ class FeasibilityRatioVsVarNumberPlot(ScatterPlot):
             for model_name, algorithm_name, metric_result in benchmark_results.get_all_metrics_of_type(FeasibilityRatio)
         ]
         self.create(
+            save_dir=save_dir,
             rows=rows,
             xlabel="Number of Variables",
             ylabel="Feasibility Ratio",

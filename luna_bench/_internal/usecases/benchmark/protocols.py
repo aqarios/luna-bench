@@ -748,3 +748,28 @@ class BenchmarkResetUc(Protocol):
             None on success, or an error if a component was not found or an
             unexpected error occurs.
         """
+
+
+class DataDirSetupUc(Protocol):
+    """Protocol for setting up the data directory for a benchmark run."""
+
+    def __call__(
+        self,
+        benchmark: BenchmarkEntity,
+        root_folder: str | None = None,
+    ) -> Result[None, str]:
+        """Create the data directory structure needed for a benchmark run.
+
+        Parameters
+        ----------
+        benchmark: BenchmarkEntity
+            The benchmark whose data directory to set up.
+        root_folder: str | None
+            Optional root folder path. If None, a default location is used.
+
+        Returns
+        -------
+        Result[None, str]
+            None on success, or a string error message if the directory
+            could not be created.
+        """

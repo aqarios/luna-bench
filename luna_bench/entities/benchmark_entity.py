@@ -21,3 +21,8 @@ class BenchmarkEntity(BaseModel):
     metrics: list[MetricEntity]
     algorithms: list[AlgorithmEntity]
     plots: list[PlotEntity]
+
+    data_dir: str | None = None
+    data_dir_plots: str | None = None
+    data_dir_logs: str | None = None
+    data_dir_import_models: str | None = None

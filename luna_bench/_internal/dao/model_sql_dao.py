@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError
@@ -47,7 +47,7 @@ class ModelSqlDao(ModelDao):
             On failure: Contains a DataNotExistError.
         """
         try:
-            model = ModelMetadataTable.get(ModelMetadataTable.hash == model_hash)  # type: ignore[no-untyped-call]
+            model = ModelMetadataTable.get(ModelMetadataTable.hash == model_hash)
             return Success(ModelSqlDao.model_to_domain(model))
         except DoesNotExist:
             return Failure(DataNotExistError())
@@ -123,7 +123,7 @@ class ModelSqlDao(ModelDao):
             On failure: Contains an exception.
         """
         try:
-            data = ModelTable.get(ModelTable.model_id == model_id)  # type: ignore[no-untyped-call]
+            data = ModelTable.get(ModelTable.model_id == model_id)
 
             return Success(data.encoded_model)
         except DoesNotExist:
@@ -149,4 +149,4 @@ class ModelSqlDao(ModelDao):
         ModelMetadataDomain
             The converted domain model object.
         """
-        return ModelMetadataDomain(id=cast("int", model.id), name=cast("str", model.name), hash=cast("int", model.hash))
+        return ModelMetadataDomain(id=model.id, name=model.name, hash=model.hash)

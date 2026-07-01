@@ -22,7 +22,9 @@ class AverageBestSolutionFoundRatioPlot(BarPlot):
     >>> bench.add_plot(name="avg_best", plot=AverageBestSolutionFoundRatioPlot())
     """
 
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    figure_filename: str = "average_best_solution_found_ratio"
+
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Generate plot output from benchmark results.
 
         Parameters
@@ -42,6 +44,7 @@ class AverageBestSolutionFoundRatioPlot(BarPlot):
         ]
 
         self.create(
+            save_dir=save_dir,
             rows=rows,
             x="algorithm",
             y="best_solution_found",

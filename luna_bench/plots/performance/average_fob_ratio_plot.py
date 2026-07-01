@@ -22,7 +22,9 @@ class AverageFoBRatioPlot(BarPlot):
     >>> bench.add_plot(name="avg_fob", plot=AverageFoBRatioPlot())
     """
 
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    figure_filename: str = "average_fob_ratio"
+
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Generate plot output from benchmark results.
 
         Parameters
@@ -42,6 +44,7 @@ class AverageFoBRatioPlot(BarPlot):
         ]
 
         self.create(
+            save_dir=save_dir,
             rows=rows,
             x="algorithm",
             y="fraction_of_overall_best",

@@ -1,6 +1,7 @@
 from typing import Any
 
 from dependency_injector.wiring import Provide, inject
+from huey import MemoryHuey, SqliteHuey
 from huey.api import logging
 from luna_model import Model, Solution
 from luna_quantum import Logging
@@ -22,6 +23,8 @@ from .huey_background_task_client import HueyBackgroundTaskClient
 
 class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
     _logger = Logging.get_logger(__name__)
+    _sync_task = None
+    _async_task = None
 
     @staticmethod
     @inject
@@ -66,7 +69,6 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
             return Failure(RunAlgorithmRuntimeError(e))
 
     @staticmethod
-    @HueyBackgroundTaskClient.huey.task()  # type: ignore[untyped-decorator] # Huey doesn't support type hints
     def _run_sync_huey_task(
         algorithm: BaseAlgorithmSync,
         model_id: int,
@@ -95,7 +97,7 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
             return Failure(RunAlgorithmRuntimeError(e))
 
     @staticmethod
-    @HueyBackgroundTaskClient.huey.task()  # type: ignore[untyped-decorator] # Huey doesn't support type hints
+    # @HueyBackgroundTaskClient.huey.task()  # type: ignore[untyped-decorator] # Huey doesn't support type hints
     def _run_async_huey_task[T: BaseModel](
         algorithm: BaseAlgorithmAsync[T],
         model_id: int,
@@ -105,12 +107,29 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
         return HueyAlgorithmRunner._run_async(algorithm, model_id)
 
     @staticmethod
+    def register_tasks(
+        huey: SqliteHuey | MemoryHuey,
+    ) -> None:  # pragma: no cover # registration is a side-effect, called from child process
+        """Register algorithm tasks with a Huey instance so the consumer can run them.
+
+        Called from the consumer subprocess, which starts with an empty
+        registry and needs these entries to resolve queued task names.
+        """
+        _ = huey.task()(HueyAlgorithmRunner._run_sync_huey_task)
+        _ = huey.task()(HueyAlgorithmRunner._run_async_huey_task)
+
+    @staticmethod
     def run_sync(
         algorithm: BaseAlgorithmSync,
         model_id: int,
     ) -> str:  # pragma: no cover
+        if HueyAlgorithmRunner._sync_task is None:
+            HueyAlgorithmRunner._sync_task = HueyBackgroundTaskClient.huey().task()(
+                HueyAlgorithmRunner._run_sync_huey_task
+            )
+
         return str(
-            HueyAlgorithmRunner._run_sync_huey_task(algorithm, model_id).id
+            HueyAlgorithmRunner._sync_task(algorithm, model_id).id
         )  # Different type because of the Huey task decorator
 
     @staticmethod
@@ -118,14 +137,18 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
         algorithm: BaseAlgorithmAsync[T],
         model_id: int,
     ) -> str:  # pragma: no cover
+        if HueyAlgorithmRunner._async_task is None:
+            HueyAlgorithmRunner._async_task = HueyBackgroundTaskClient.huey().task()(
+                HueyAlgorithmRunner._run_async_huey_task
+            )
         return str(
-            HueyAlgorithmRunner._run_async_huey_task(algorithm, model_id).id
+            HueyAlgorithmRunner._async_task(algorithm, model_id).id
         )  # Different type because of the Huey task decorator
 
     @staticmethod
     def retrieve_task_result(
         task_id: str,
     ) -> Any | None:  # noqa: ANN401 # We dont know here what type the result of the task has. We don't know what funktion the task was running on.
-        return HueyBackgroundTaskClient.huey.result(
+        return HueyBackgroundTaskClient.huey().result(
             task_id, blocking=False
         )  # pragma: no cover # Hard to cover, it's just a wrapper for an api call so we can mock it more easily.

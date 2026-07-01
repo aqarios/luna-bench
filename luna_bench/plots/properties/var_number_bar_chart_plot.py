@@ -22,7 +22,9 @@ class VarNumberBarChartPlot(BarPlot):
     >>> bench.add_plot(name="var_number", plot=VarNumberBarChartPlot())
     """
 
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    figure_filename: str = "var_number_bar_chart"
+
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Generate plot output from benchmark results.
 
         Parameters
@@ -39,6 +41,7 @@ class VarNumberBarChartPlot(BarPlot):
         ]
 
         self.create(
+            save_dir=save_dir,
             rows=rows,
             x="model",
             y="var_number",

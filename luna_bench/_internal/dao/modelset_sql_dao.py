@@ -37,7 +37,7 @@ class ModelSetSqlDao(ModelSetDao):
     @staticmethod
     def load(modelset_name: str) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = (ModelSetTable.select(ModelSetTable).where(ModelSetTable.name == modelset_name)).get()  # type: ignore[no-untyped-call]
+            modelset = (ModelSetTable.select(ModelSetTable).where(ModelSetTable.name == modelset_name)).get()
 
             return Success(ModelSetSqlDao.modelset_to_domain(modelset))
         except DoesNotExist:
@@ -49,7 +49,7 @@ class ModelSetSqlDao(ModelSetDao):
     @staticmethod
     def delete(modelset_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)  # type: ignore[no-untyped-call]
+            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
 
             models_to_check = list(modelset.models)
 
@@ -72,8 +72,8 @@ class ModelSetSqlDao(ModelSetDao):
         modelset_name: str, model_id: int
     ) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)  # type: ignore[no-untyped-call]
-            model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)  # type: ignore[no-untyped-call]
+            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
+            model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)
 
             if model_metadata not in modelset.models:
                 modelset.models.add(model_metadata)
@@ -91,8 +91,8 @@ class ModelSetSqlDao(ModelSetDao):
         modelset_name: str, model_id: int
     ) -> Result[ModelSetDomain, DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)  # type: ignore[no-untyped-call]
-            model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)  # type: ignore[no-untyped-call]
+            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
+            model_metadata = ModelMetadataTable.get(ModelMetadataTable.id == model_id)
             modelset.models.remove(model_metadata)
             modelset.save()
             to_return = ModelSetSqlDao.modelset_to_domain(modelset)
@@ -123,7 +123,7 @@ class ModelSetSqlDao(ModelSetDao):
         modelset_name: str,
     ) -> Result[list[ModelMetadataDomain], DataNotExistError | UnknownLunaBenchError]:
         try:
-            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)  # type: ignore[no-untyped-call]
+            modelset = ModelSetTable.get(ModelSetTable.name == modelset_name)
 
             return Success([ModelSqlDao.model_to_domain(m) for m in modelset.models])
         except DoesNotExist:

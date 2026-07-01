@@ -28,7 +28,9 @@ class RuntimeVsVarNumberPlot(ScatterPlot):
     >>> bench.add_plot(name="runtime_vs_vars", plot=RuntimeVsVarNumberPlot())
     """
 
-    def run(self, benchmark_results: BenchmarkResultContainer) -> None:
+    figure_filename: str = "runtime_vs_var_number"
+
+    def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Generate plot output from benchmark results.
 
         Parameters
@@ -47,6 +49,7 @@ class RuntimeVsVarNumberPlot(ScatterPlot):
         ]
 
         self.create(
+            save_dir=save_dir,
             rows=rows,
             x="var_number",
             y="runtime_seconds",

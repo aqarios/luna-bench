@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from peewee import Database, IntegrityError, Model, SqliteDatabase, sqlite3  # type: ignore[attr-defined]
 
+from luna_bench.configs.config import config
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -11,10 +13,12 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 _database: Database = SqliteDatabase(None)
 
 
-def setup_db_proxy(connection_string: str, tables: list[Any]) -> Database:
+def setup_db_proxy(tables: list[Any]) -> Database:
     if _database.is_closed():
+        db_path = config.resolved_db_connection_string
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
         _database.init(
-            connection_string,
+            db_path,
             pragmas=(
                 ("cache_size", -1024 * 64),  # 64MB page-cache.
                 ("journal_mode", "wal"),  # Use WAL-mode (you should always use this!).

@@ -122,17 +122,12 @@ class TestHueyBackgroundTaskClient:
             assert result == WORKER_PROCESS
 
     def test_get_worker_type_darwin_sets_fork_method(self) -> None:
-        """Test that Darwin OS sets a multiprocessing start method to 'fork'."""
+        """Test that Darwin OS returns the process worker type."""
         from luna_bench.configs.config import config
 
-        with (
-            patch.object(config, "LB_HUEY_WORKER_TYPE", None),
-            patch("platform.system", return_value="Darwin"),
-            patch("multiprocessing.set_start_method") as mock_set_method,
-        ):
+        with patch.object(config, "LB_HUEY_WORKER_TYPE", None), patch("platform.system", return_value="Darwin"):
             result = HueyBackgroundTaskClient._get_worker_type()
             assert result == WORKER_PROCESS
-            mock_set_method.assert_called_once_with("fork", force=True)
 
     @pytest.mark.parametrize(
         ("env_value", "exception_type"),

@@ -9,6 +9,9 @@ from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDa
 
 from .benchmark_table import BenchmarkTable
 
+if TYPE_CHECKING:
+    from luna_bench._internal.dao.tables.algorithm_result_table import AlgorithmResultTable
+
 
 class AlgorithmTable(BaseTable):
     id = AutoField(primary_key=True)
@@ -23,12 +26,12 @@ class AlgorithmTable(BaseTable):
         on_delete="CASCADE",
     )
 
-    config_data = JSONField(  # type: ignore[no-untyped-call]
+    config_data = JSONField(
         json_loads=ArbitraryDataDomain.model_validate_json,
         json_dumps=lambda x: x.model_dump_json(),
     )
     if TYPE_CHECKING:
-        results: ModelSelect
+        results: ModelSelect[AlgorithmResultTable]
 
     class Meta:
         # Ensures uniqueness of name within each benchmark
