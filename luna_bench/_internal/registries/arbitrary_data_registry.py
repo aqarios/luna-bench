@@ -1,4 +1,4 @@
-from luna_quantum import Logging
+from luna_bench.logging import Logging
 from pydantic import BaseModel, ValidationError
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success

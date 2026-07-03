@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from luna_quantum import Logging
+from luna_bench.logging import Logging
 from returns.result import Result, Success
 
 from luna_bench._internal.usecases.benchmark.protocols import DataDirSetupUc

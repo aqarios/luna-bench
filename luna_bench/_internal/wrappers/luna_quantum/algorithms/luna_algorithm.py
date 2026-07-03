@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Any
 
 from luna_model import Model, Solution
-from luna_quantum import config
+from luna_bench.configs.config import config
 from luna_quantum.client.schemas.enums.status import StatusEnum
 from luna_quantum.solve import SolveJob
 from luna_quantum.solve.domain.abstract import LunaAlgorithm as LunaQuantumAlgorithm
@@ -13,7 +13,7 @@ from returns.result import Failure, Result, Success
 
 from luna_bench.custom import BaseAlgorithmAsync
 
-config.LUNA_LOG_DISABLE_SPINNER = True
+config.LB_LOG_DISABLE_SPINNER = True
 
 
 class LunaData(BaseModel):

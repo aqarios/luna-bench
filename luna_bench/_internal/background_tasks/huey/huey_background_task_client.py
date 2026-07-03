@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, cast
 
 from huey import MemoryHuey, SqliteHuey
 from huey.consumer import WORKER_GREENLET, WORKER_PROCESS, WORKER_THREAD, Consumer
-from luna_quantum import Logging
+from luna_bench.logging import Logging
 
 from luna_bench._internal.background_tasks.protocols import BackgroundTaskClient
 from luna_bench.configs.config import config

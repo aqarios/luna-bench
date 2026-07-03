@@ -1,5 +1,5 @@
 from dependency_injector.wiring import Provide, inject
-from luna_quantum import Logging
+from luna_bench.logging import Logging
 from pydantic import BaseModel
 
 from luna_bench._internal.registries.protocols import Registry

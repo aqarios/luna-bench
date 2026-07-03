@@ -4,7 +4,7 @@ from time import sleep
 from dependency_injector.wiring import Provide, inject
 from huey.api import partial
 from luna_model import Solution
-from luna_quantum import Logging
+from luna_bench.logging import Logging
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 

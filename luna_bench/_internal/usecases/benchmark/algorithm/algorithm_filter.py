@@ -1,4 +1,4 @@
-from luna_quantum import Logging
+from luna_bench.logging import Logging
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType

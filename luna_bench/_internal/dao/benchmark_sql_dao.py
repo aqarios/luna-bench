@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from luna_quantum import Logging
+from luna_bench.logging import Logging
 from peewee import DoesNotExist, IntegrityError
 from returns.result import Failure, Success
 

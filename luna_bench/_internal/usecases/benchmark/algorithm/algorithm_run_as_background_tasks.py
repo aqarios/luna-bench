@@ -1,7 +1,7 @@
 from itertools import product
 
 from dependency_injector.wiring import Provide, inject
-from luna_quantum import Logging
+from luna_bench.logging import Logging
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models import AlgorithmResultDomain

@@ -2,7 +2,7 @@ from abc import ABC
 from logging import Logger
 from typing import Any, ClassVar
 
-from luna_quantum import Logging
+from luna_bench.logging import Logging
 from pandas import DataFrame
 
 from luna_bench.helpers.optional_dependencies import check_optional_dependency

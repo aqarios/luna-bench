@@ -2,7 +2,7 @@ from collections.abc import Mapping
 from logging import Logger
 from threading import RLock
 
-from luna_quantum import Logging
+from luna_bench.logging import Logging
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.registries.protocols import Registry

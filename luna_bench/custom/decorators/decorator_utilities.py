@@ -2,7 +2,7 @@ import inspect
 from collections.abc import Callable
 from typing import Any, get_type_hints
 
-from luna_quantum import Logging
+from luna_bench.logging import Logging
 
 from luna_bench._internal.registries.protocols import Registry
 from luna_bench.custom.base_components.base_feature import BaseFeature

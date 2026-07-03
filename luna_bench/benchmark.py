@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 import pandas as pd
 from dependency_injector.wiring import Provide, inject
-from luna_quantum import Logging
+from luna_bench.logging import Logging
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from returns.pipeline import is_successful

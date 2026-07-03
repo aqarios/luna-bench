@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING, ClassVar
 
 from dependency_injector.wiring import Provide, inject
-from luna_quantum import Logging
+from luna_bench.logging import Logging
 from returns.pipeline import is_successful
 
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer

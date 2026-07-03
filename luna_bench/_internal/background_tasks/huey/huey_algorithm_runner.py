@@ -4,7 +4,7 @@ from dependency_injector.wiring import Provide, inject
 from huey import MemoryHuey, SqliteHuey
 from huey.api import logging
 from luna_model import Model, Solution
-from luna_quantum import Logging
+from luna_bench.logging import Logging
 from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
