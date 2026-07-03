@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from dependency_injector.wiring import Provide, inject
-from luna_bench.logging import Logging
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench.entities.enums import JobStatus, ResetLevel
+from luna_bench.logging import BenchLogger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -22,7 +22,7 @@ from .protocols import BenchmarkResetUc
 
 class BenchmarkResetUcImpl(BenchmarkResetUc):
     _transaction: DaoTransaction
-    _logger = Logging.get_logger(__name__)
+    _logger = BenchLogger.get_logger(__name__)
 
     @staticmethod
     def _get_reset_component_names(

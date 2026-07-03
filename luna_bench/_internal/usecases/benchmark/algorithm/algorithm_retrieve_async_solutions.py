@@ -1,6 +1,5 @@
 from dependency_injector.wiring import Provide, inject
 from luna_model import Model, Solution
-from luna_bench.logging import Logging
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -14,11 +13,12 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.logging import BenchLogger
 
 
 class AlgorithmRetrieveAsyncSolutionsUcImpl(AlgorithmRetrieveAsyncSolutionsUc):
     _transaction: DaoTransaction
-    _logger = Logging.get_logger(__name__)
+    _logger = BenchLogger.get_logger(__name__)
 
     @inject
     def __init__(

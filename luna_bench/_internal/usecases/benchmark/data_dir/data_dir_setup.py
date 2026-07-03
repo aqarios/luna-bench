@@ -5,11 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from luna_bench.logging import Logging
 from returns.result import Result, Success
 
 from luna_bench._internal.usecases.benchmark.protocols import DataDirSetupUc
 from luna_bench.configs.config import config
+from luna_bench.logging import BenchLogger
 
 if TYPE_CHECKING:
     from luna_bench.entities import BenchmarkEntity
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 class DataDirSetupUcImpl(DataDirSetupUc):
     """Set up the data_dir directory for a benchmark run."""
 
-    _logger = Logging.get_logger(__name__)
+    _logger = BenchLogger.get_logger(__name__)
 
     def __call__(self, benchmark: BenchmarkEntity, root_folder: str | None = None) -> Result[None, str]:
 

@@ -4,7 +4,6 @@ from time import sleep
 from dependency_injector.wiring import Provide, inject
 from huey.api import partial
 from luna_model import Solution
-from luna_bench.logging import Logging
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -22,11 +21,12 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.logging import BenchLogger
 
 
 class AlgorithmRetrieveSyncSolutionsUcImpl(AlgorithmRetrieveSyncSolutionsUc):
     _transaction: DaoTransaction
-    _logger = Logging.get_logger(__name__)
+    _logger = BenchLogger.get_logger(__name__)
     _background_retrieve_sync: BackgroundRetrieveAlgorithmSyncUc
 
     @inject

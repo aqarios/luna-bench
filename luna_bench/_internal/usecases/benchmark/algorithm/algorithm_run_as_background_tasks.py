@@ -1,7 +1,6 @@
 from itertools import product
 
 from dependency_injector.wiring import Provide, inject
-from luna_bench.logging import Logging
 
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.domain_models import AlgorithmResultDomain
@@ -14,11 +13,12 @@ from luna_bench._internal.usecases.benchmark.protocols import (
 from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync
 from luna_bench.entities import AlgorithmEntity, ModelMetadataEntity
 from luna_bench.entities.enums.job_status_enum import JobStatus
+from luna_bench.logging import BenchLogger
 
 
 class AlgorithmRunAsBackgroundTasksUcImpl(AlgorithmRunAsBackgroundTasksUc):
     _transaction: DaoTransaction
-    _logger = Logging.get_logger(__name__)
+    _logger = BenchLogger.get_logger(__name__)
 
     _background_start_async: BackgroundRunAlgorithmAsyncUc
     _background_start_sync: BackgroundRunAlgorithmSyncUc

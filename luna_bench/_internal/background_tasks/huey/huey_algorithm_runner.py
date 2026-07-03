@@ -4,7 +4,6 @@ from dependency_injector.wiring import Provide, inject
 from huey import MemoryHuey, SqliteHuey
 from huey.api import logging
 from luna_model import Model, Solution
-from luna_bench.logging import Logging
 from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
@@ -17,12 +16,13 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.logging import BenchLogger
 
 from .huey_background_task_client import HueyBackgroundTaskClient
 
 
 class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
-    _logger = Logging.get_logger(__name__)
+    _logger = BenchLogger.get_logger(__name__)
     _sync_task = None
     _async_task = None
 

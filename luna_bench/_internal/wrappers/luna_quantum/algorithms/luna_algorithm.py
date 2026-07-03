@@ -2,7 +2,6 @@ from abc import ABC
 from typing import Any
 
 from luna_model import Model, Solution
-from luna_bench.configs.config import config
 from luna_quantum.client.schemas.enums.status import StatusEnum
 from luna_quantum.solve import SolveJob
 from luna_quantum.solve.domain.abstract import LunaAlgorithm as LunaQuantumAlgorithm
@@ -11,6 +10,7 @@ from pydantic import BaseModel, field_validator, model_serializer
 from pydantic_core.core_schema import SerializerFunctionWrapHandler
 from returns.result import Failure, Result, Success
 
+from luna_bench.configs.config import config
 from luna_bench.custom import BaseAlgorithmAsync
 
 config.LB_LOG_DISABLE_SPINNER = True

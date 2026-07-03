@@ -3,7 +3,6 @@ import sys
 from typing import Any
 
 from dependency_injector.wiring import Provide, inject
-from luna_bench.logging import Logging
 from luna_quantum.solve.domain.abstract.luna_algorithm import LunaAlgorithm as LunaQuantumAlgorithm
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from luna_quantum.solve.parameters import algorithms as algos_module
@@ -18,10 +17,11 @@ from luna_bench._internal.wrappers.luna_quantum.algorithms import LunaAlgorithm
 from luna_bench.custom import BaseAlgorithmAsync
 from luna_bench.custom.decorators.algorithm import algorithm
 from luna_bench.errors.bench_type_errors.algorithm_sub_type_error import AlgorithmSubTypeError
+from luna_bench.logging import BenchLogger
 
 
 class LunaAlgorithmWrapper:
-    _logger = Logging.get_logger(__name__)
+    _logger = BenchLogger.get_logger(__name__)
 
     @staticmethod
     def _get_fake_module_name() -> str:

@@ -2,13 +2,13 @@ from collections.abc import Mapping
 from logging import Logger
 from threading import RLock
 
-from luna_bench.logging import Logging
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.registries.protocols import Registry
 from luna_bench.errors.registry.already_registerd_id_error import AlreadyRegisteredIdError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
+from luna_bench.logging import BenchLogger
 
 
 class BaseRegistry[T](Registry[T]):
@@ -16,7 +16,7 @@ class BaseRegistry[T](Registry[T]):
     _by_id: dict[str, type[T]]
     _lock: RLock
 
-    _logging: Logger = Logging.get_logger(__name__)
+    _logging: Logger = BenchLogger.get_logger(__name__)
 
     def __init__(self, kind: str) -> None:
         self._kind: str = kind

@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-from luna_bench.logging import Logging
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -15,6 +14,7 @@ from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMis
 from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
 from luna_bench.errors.run_errors.run_plot_missing_error import RunPlotMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.logging import BenchLogger
 
 if TYPE_CHECKING:
     from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
@@ -38,7 +38,7 @@ class PlotsRunUcImpl(PlotsRunUc):
     def __init__(
         self,
     ) -> None:
-        self._logger = Logging.get_logger(__name__)
+        self._logger = BenchLogger.get_logger(__name__)
 
     def _run_plot(
         self, plot_entity: PlotEntity, benchmark: BenchmarkEntity

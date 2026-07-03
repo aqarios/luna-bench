@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from luna_bench.logging import Logging
 from peewee import Database, _transaction
 
 from luna_bench._internal.dao.protocols import (
@@ -12,6 +11,7 @@ from luna_bench._internal.dao.protocols import (
     MetricDao,
     PlotDao,
 )
+from luna_bench.logging import BenchLogger
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -42,7 +42,7 @@ class PeeweeTransaction(_transaction, DaoTransaction):
         plot_dao: PlotDao,
     ) -> None:
         super().__init__(database)
-        self._logger = Logging.get_logger(__name__)
+        self._logger = BenchLogger.get_logger(__name__)
 
         self._modelset_dao = modelset_dao
         self._model_dao = model_dao
