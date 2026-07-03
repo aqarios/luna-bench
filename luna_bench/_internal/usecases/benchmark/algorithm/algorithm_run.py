@@ -85,9 +85,8 @@ class AlgorithmRunUcImpl(AlgorithmRunUc):
         self._start_tasks(benchmark.name, benchmark.modelset.models, algorithms_async)
         self._start_tasks(benchmark.name, benchmark.modelset.models, algorithms_sync)
 
-        # Tell the (upcoming) consumer subprocess where to write its log file.
+        # Tell the (upcoming) consumer subprocess where to write its log files.
         config.LB_LOG_DIR = benchmark.data_dir_logs or ""
-        config.LB_LOG_FILE = "consumer.txt"
 
         with self._bg_task_client.consumer():
             self._retrieve_sync(benchmark=benchmark)

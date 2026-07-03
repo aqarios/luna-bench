@@ -149,7 +149,12 @@ class BenchLogger:
         return logger
 
     @staticmethod
-    def setup_file_logging(log_dir: str, level: int | str | LogLevel | None = None) -> None:
+    def setup_file_logging(
+        log_dir: str,
+        level: int | str | LogLevel | None = None,
+        *,
+        target_logger: str | None = None,
+    ) -> None:
         """Add a shared FileHandler to all luna-bench loggers.
 
         New loggers created via :meth:`get_logger` get this handler automatically.
@@ -162,6 +167,11 @@ class BenchLogger:
         level : int | str | LogLevel | None
             Logging level for the file handler.  ``None`` (default) uses the
             current global log level from :meth:`get_level`.
+        target_logger : str | None
+            If set, the handler is added only to the logger with this name and
+            ``_file_handler`` is **not** updated — use this when you want a
+            targeted handler (e.g. the consumer subprocess writing startup logs
+            to ``main.txt`` without affecting worker loggers).
         """
         level = BenchLogger.get_level() if level is None else LogLevel.coerce(level)
 
@@ -176,6 +186,10 @@ class BenchLogger:
                 datefmt="%Y-%m-%d %H:%M:%S",
             )
         )
+
+        if target_logger is not None:
+            BenchLogger._add_handler_if_missing(logging.getLogger(target_logger), handler)
+            return
 
         BenchLogger._file_handler = handler
 

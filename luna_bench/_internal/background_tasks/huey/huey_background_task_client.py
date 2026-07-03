@@ -144,10 +144,13 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
 
     @staticmethod
     def _run_consumer() -> None:  # pragma: no cover # another process, hart/impossible to measure coverage
-        # Set up file logging in the consumer subprocess (config has been
-        # deserialised from the parent process before this runs).
+        # Only the consumer's own startup logs go to main.txt — worker task
+        # logs belong in their per-worker files, not here.
         if config.LB_LOG_DIR:
-            BenchLogger.setup_file_logging(config.LB_LOG_DIR)
+            BenchLogger.setup_file_logging(
+                config.LB_LOG_DIR,
+                target_logger="luna_bench._internal.background_tasks.huey.huey_background_task_client",
+            )
 
         worker_type = HueyBackgroundTaskClient._get_worker_type()
         HueyBackgroundTaskClient._logger.debug(
