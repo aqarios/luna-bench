@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from luna_quantum import Logging
 from peewee import Database, _transaction
 
 from luna_bench._internal.dao.protocols import (
@@ -12,6 +11,7 @@ from luna_bench._internal.dao.protocols import (
     MetricDao,
     PlotDao,
 )
+from luna_bench.logging import Logging
 
 if TYPE_CHECKING:
     from logging import Logger

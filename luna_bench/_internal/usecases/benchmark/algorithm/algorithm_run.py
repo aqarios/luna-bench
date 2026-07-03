@@ -1,5 +1,4 @@
 from dependency_injector.wiring import Provide
-from luna_quantum import Logging
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -17,6 +16,7 @@ from luna_bench._internal.usecases.benchmark.protocols import (
 from luna_bench.entities import AlgorithmEntity, BenchmarkEntity
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
+from luna_bench.logging import Logging
 
 
 class AlgorithmRunUcImpl(AlgorithmRunUc):

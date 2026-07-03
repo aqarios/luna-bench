@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from luna_quantum import Logging
 from peewee import DoesNotExist, IntegrityError
 from returns.result import Failure, Result, Success
 
@@ -10,6 +9,7 @@ from luna_bench._internal.domain_models import ModelMetadataDomain
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.logging import Logging
 
 from .protocols import ModelDao
 from .tables import ModelMetadataTable, ModelTable

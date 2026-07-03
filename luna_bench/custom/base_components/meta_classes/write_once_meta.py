@@ -2,10 +2,10 @@ from abc import ABCMeta
 from logging import Logger
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from luna_quantum import Logging
 from pydantic import BaseModel
 
 from luna_bench.errors.write_once_error import WriteOnceError
+from luna_bench.logging import Logging
 
 if TYPE_CHECKING:
     from pydantic._internal._model_construction import ModelMetaclass

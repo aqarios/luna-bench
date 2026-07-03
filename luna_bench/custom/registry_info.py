@@ -1,5 +1,4 @@
 from dependency_injector.wiring import Provide, inject
-from luna_quantum import Logging
 from pydantic import BaseModel
 
 from luna_bench._internal.registries.protocols import Registry
@@ -9,6 +8,7 @@ from luna_bench.custom.base_components.base_algorithm_sync import BaseAlgorithmS
 from luna_bench.custom.base_components.base_feature import BaseFeature
 from luna_bench.custom.base_components.base_metric import BaseMetric
 from luna_bench.custom.base_components.base_plot import BasePlot
+from luna_bench.logging import Logging
 
 
 class RegistryInfo:

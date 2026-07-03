@@ -2,7 +2,6 @@ import time
 from typing import TYPE_CHECKING
 
 from dependency_injector.wiring import Provide, inject
-from luna_quantum import Logging
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -24,6 +23,7 @@ from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMis
 from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.logging import Logging
 
 if TYPE_CHECKING:
     from luna_bench.custom.base_results.metric_result import MetricResult

@@ -2,13 +2,13 @@ from collections.abc import Mapping
 from logging import Logger
 from threading import RLock
 
-from luna_quantum import Logging
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.registries.protocols import Registry
 from luna_bench.errors.registry.already_registerd_id_error import AlreadyRegisteredIdError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
+from luna_bench.logging import Logging
 
 
 class BaseRegistry[T](Registry[T]):

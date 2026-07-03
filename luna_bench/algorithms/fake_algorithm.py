@@ -4,9 +4,9 @@ from time import sleep
 from typing import ClassVar
 
 from luna_model import Model, Solution, Timer
-from luna_quantum import Logging
 
 from luna_bench.custom import BaseAlgorithmSync, algorithm
+from luna_bench.logging import Logging
 
 
 @algorithm()

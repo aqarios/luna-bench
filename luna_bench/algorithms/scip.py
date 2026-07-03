@@ -5,11 +5,11 @@ from typing import ClassVar
 
 from luna_model import Model, Solution, Timer
 from luna_model.translator import LpTranslator
-from luna_quantum import Logging
 
 from luna_bench.custom import BaseAlgorithmSync, algorithm
 from luna_bench.errors.infeasible_model_error import InfeasibleModelError
 from luna_bench.helpers.optional_dependencies import check_optional_dependency
+from luna_bench.logging import Logging
 
 SCIP_QUAD_VAR_DUMMY = "quadobjvar"
 

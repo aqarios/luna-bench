@@ -2,8 +2,6 @@ import inspect
 from collections.abc import Callable
 from typing import Any, get_type_hints
 
-from luna_quantum import Logging
-
 from luna_bench._internal.registries.protocols import Registry
 from luna_bench.custom.base_components.base_feature import BaseFeature
 from luna_bench.custom.base_components.base_metric import BaseMetric
@@ -11,6 +9,7 @@ from luna_bench.custom.base_components.registerable_component import Registerabl
 from luna_bench.errors.decorators.invalid_parameter_type_error import InvalidParameterTypeError
 from luna_bench.errors.decorators.invalid_signature_error import InvalidSignatureError
 from luna_bench.errors.incompatible_class_error import IncompatibleClassError
+from luna_bench.logging import Logging
 
 
 class DecoratorUtilities:

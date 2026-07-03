@@ -27,6 +27,9 @@ class Config(BaseSettings):
 
     LB_ASYNC_WORKER_COUNT: int = 2
 
+    LB_LOG_DEFAULT_LEVEL: str = "INFO"
+    LB_LOG_DISABLE_SPINNER: bool = True
+
     LB_HUEY_WORKER_TYPE: Literal["process", "thread", "greenlet"] | None = None
     LB_HUEY_JOIN_TIMEOUT: int = 10
 

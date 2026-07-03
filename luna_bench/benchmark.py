@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
 
 import pandas as pd
 from dependency_injector.wiring import Provide, inject
-from luna_quantum import Logging
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from returns.pipeline import is_successful
@@ -22,6 +21,7 @@ from luna_bench.entities.enums import ResetLevel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.logging import Logging
 from luna_bench.model_set import ModelSet
 
 if TYPE_CHECKING:

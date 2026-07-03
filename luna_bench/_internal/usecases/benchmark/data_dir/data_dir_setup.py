@@ -5,11 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from luna_quantum import Logging
 from returns.result import Result, Success
 
 from luna_bench._internal.usecases.benchmark.protocols import DataDirSetupUc
 from luna_bench.configs.config import config
+from luna_bench.logging import Logging
 
 if TYPE_CHECKING:
     from luna_bench.entities import BenchmarkEntity

@@ -1,4 +1,3 @@
-from luna_quantum import Logging
 from pydantic import BaseModel, ValidationError
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
@@ -9,6 +8,7 @@ from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.base_registry import BaseRegistry
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
+from luna_bench.logging import Logging
 
 
 class ArbitraryDataRegistry[USER_MODEL: BaseModel](

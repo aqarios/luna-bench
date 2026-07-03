@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 
 from dependency_injector.wiring import Provide, inject
 from luna_model import Model
-from luna_quantum import Logging
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -23,6 +22,7 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.logging import Logging
 
 if TYPE_CHECKING:
     from luna_bench.custom.base_results.feature_result import FeatureResult
