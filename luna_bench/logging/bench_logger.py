@@ -33,18 +33,13 @@ class BenchLogger:
     @staticmethod
     def _luna_bench_loggers() -> list[Logger]:
         """Return all existing loggers whose name starts with ``"luna_bench"``."""
-        return [
-            logging.getLogger(name)
-            for name in logging.root.manager.loggerDict  # type: ignore[attr-defined]
-            if name.startswith("luna_bench")
-        ]
+        return [logging.getLogger(name) for name in logging.root.manager.loggerDict if name.startswith("luna_bench")]
 
     @staticmethod
     def _add_handler_if_missing(logger: Logger, handler: logging.FileHandler) -> None:
         """Add a FileHandler to a logger, skipping if one for the same path exists."""
         if not any(
-            isinstance(h, logging.FileHandler) and h.baseFilename == handler.baseFilename  # type: ignore[attr-defined]
-            for h in logger.handlers
+            isinstance(h, logging.FileHandler) and h.baseFilename == handler.baseFilename for h in logger.handlers
         ):
             logger.addHandler(handler)
 

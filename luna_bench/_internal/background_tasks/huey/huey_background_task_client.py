@@ -133,11 +133,11 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
         )
 
         # Add to every existing luna-bench logger (idempotent by path).
-        for logger_name in logging.root.manager.loggerDict:  # type: ignore[attr-defined]
+        for logger_name in logging.root.manager.loggerDict:
             if logger_name.startswith("luna_bench"):
                 logger = logging.getLogger(logger_name)
                 if not any(
-                    isinstance(h, logging.FileHandler) and h.baseFilename == handler.baseFilename  # type: ignore[attr-defined]
+                    isinstance(h, logging.FileHandler) and h.baseFilename == handler.baseFilename
                     for h in logger.handlers
                 ):
                     logger.addHandler(handler)

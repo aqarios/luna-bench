@@ -34,7 +34,7 @@ class LogLevel(IntEnum):
 
         Raises
         ------
-        ValueError
+        KeyError
             If the name does not match any ``LogLevel`` member.
         """
         if isinstance(level, cls):

@@ -43,9 +43,12 @@ class Config(BaseSettings):
     @field_validator("LB_LOG_DEFAULT_LEVEL", mode="before")
     @classmethod
     def _coerce_log_level(cls, v: object) -> object:
-        """Allow env-var strings like ``"DEBUG"`` to be resolved by name."""
+        """Allow env-var strings like "DEBUG" to be resolved by name."""
         if isinstance(v, str):
-            return LogLevel[v.upper()]
+            try:
+                return LogLevel[v.upper()]
+            except KeyError as e:
+                raise ValueError(v) from e
         return v
 
     @property
