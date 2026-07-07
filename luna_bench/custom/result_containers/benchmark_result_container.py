@@ -1,13 +1,32 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+from typing import Any
 
-from pydantic import BaseModel
+from luna_model import Solution
+from pydantic import BaseModel, ConfigDict, Field, SkipValidation
 
+from luna_bench.custom.base_components.base_algorithm_async import BaseAlgorithmAsync
+from luna_bench.custom.base_components.base_algorithm_sync import BaseAlgorithmSync
 from luna_bench.custom.base_results.metric_result import MetricResult
 from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
 from luna_bench.custom.result_containers.metric_result_container import MetricResultContainer
 from luna_bench.custom.types import AlgorithmName, MetricClass, ModelName
+
+
+class AlgorithmRunResult(BaseModel):
+    """Outcome of a single algorithm run for one (model, algorithm) pair.
+
+    Bundles the (optional) solution, run metadata, and the configured
+    algorithm instance that produced it, so consumers such as exporters can
+    access results without depending on the entity layer.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    solution: Solution | None = None
+    meta_data: dict[str, Any] | None = None
+    algorithm: SkipValidation[BaseAlgorithmSync | BaseAlgorithmAsync[Any]]
 
 
 class BenchmarkResultContainer(BaseModel):
@@ -15,6 +34,20 @@ class BenchmarkResultContainer(BaseModel):
 
     features: dict[ModelName, FeatureResultContainer]
     metrics: dict[ModelName, dict[AlgorithmName, MetricResultContainer]]
+    algorithms: dict[ModelName, dict[AlgorithmName, AlgorithmRunResult]] = Field(default_factory=dict)
+
+    def get_all_algorithms(self) -> Generator[tuple[ModelName, AlgorithmName, AlgorithmRunResult]]:
+        """Yield all algorithm run results across models and algorithms.
+
+        Yields
+        ------
+        tuple[ModelName, AlgorithmName, AlgorithmRunResult]
+            A tuple containing the model name, algorithm name, and
+            corresponding algorithm run result.
+        """
+        for model_name, algorithms in self.algorithms.items():
+            for algorithm_name, run_result in algorithms.items():
+                yield model_name, algorithm_name, run_result
 
     def get_all_metrics(self) -> Generator[tuple[ModelName, AlgorithmName, MetricResultContainer]]:
         """Yield all metric result groups across models and algorithms.

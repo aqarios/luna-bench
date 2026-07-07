@@ -1,5 +1,6 @@
 from .base_components.base_algorithm_async import BaseAlgorithmAsync
 from .base_components.base_algorithm_sync import BaseAlgorithmSync
+from .base_components.base_exporter import Exporter
 from .base_components.base_feature import BaseFeature
 from .base_components.base_metric import BaseMetric
 from .base_components.base_plot import BasePlot
@@ -11,7 +12,7 @@ from .decorators.feature import feature
 from .decorators.metric import metric
 from .decorators.plot import plot
 from .registry_info import RegistryInfo
-from .result_containers.benchmark_result_container import BenchmarkResultContainer
+from .result_containers.benchmark_result_container import AlgorithmRunResult, BenchmarkResultContainer
 from .result_containers.feature_result_container import FeatureResultContainer
 from .result_containers.metric_result_container import MetricResultContainer
 from .types import (
@@ -28,6 +29,7 @@ from .types import (
 
 __all__ = [
     "AlgorithmName",
+    "AlgorithmRunResult",
     "BaseAlgorithmAsync",
     "BaseAlgorithmSync",
     "BaseFeature",
@@ -35,6 +37,7 @@ __all__ = [
     "BasePlot",
     "BenchmarkName",
     "BenchmarkResultContainer",
+    "Exporter",
     "FeatureComputed",
     "FeatureName",
     "FeatureResult",

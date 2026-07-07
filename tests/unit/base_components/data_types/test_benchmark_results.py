@@ -13,6 +13,31 @@ class TestBenchmarkResults:
         assert results.features == {}
         assert results.metrics == {}
 
+    def test_algorithms_default_to_empty(self) -> None:
+        """Test that the algorithms field defaults to an empty dict."""
+        results = BenchmarkResultContainer(features={}, metrics={})
+        assert results.algorithms == {}
+        assert list(results.get_all_algorithms()) == []
+
+    def test_get_all_algorithms(self) -> None:
+        """Test get_all_algorithms across models and algorithms."""
+        run1: Any = MagicMock()
+        run2: Any = MagicMock()
+        run3: Any = MagicMock()
+        results = BenchmarkResultContainer.model_construct(
+            features={},
+            metrics={},
+            algorithms={
+                "model1": {"algo1": run1, "algo2": run2},
+                "model2": {"algo1": run3},
+            },
+        )
+        algorithm_list = list(results.get_all_algorithms())
+        assert len(algorithm_list) == 3
+        assert ("model1", "algo1", run1) in algorithm_list
+        assert ("model1", "algo2", run2) in algorithm_list
+        assert ("model2", "algo1", run3) in algorithm_list
+
         feature_results: Any = MagicMock()
         metric_results: Any = MagicMock()
         features: dict[str, Any] = {"model1": feature_results}
