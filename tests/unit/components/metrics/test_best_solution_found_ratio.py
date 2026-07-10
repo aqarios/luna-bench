@@ -115,6 +115,30 @@ class TestBestSolutionFoundRatio:
         result = metric_small_tol.run(solution, mock_feature_results)
         assert result.best_solution_found == 5.0 / 1e-4
 
+    @pytest.mark.parametrize("mock_feature_results", [3.0], indirect=True)
+    def test_ratio_slightly_below_one_snaps_to_bound(
+        self, create_solution: SolutionFactory, mock_feature_results: MagicMock
+    ) -> None:
+        """Test that a ratio just below the ge=1.0 bound is snapped to 1.0."""
+        solution = create_solution(obj_values=[3.0 - 1e-9], sense=Sense.MIN)
+
+        result = BestSolutionFoundRatio().run(solution, mock_feature_results)
+
+        assert isinstance(result, BestSolutionFoundRatioResult)
+        assert result.best_solution_found == 1.0
+
+    @pytest.mark.parametrize("mock_feature_results", [3.0], indirect=True)
+    def test_snapping_disabled_raises_validation_error(
+        self, create_solution: SolutionFactory, mock_feature_results: MagicMock
+    ) -> None:
+        """Test that disabling snapping surfaces the raw out-of-bound ratio."""
+        solution = create_solution(obj_values=[3.0 - 1e-9], sense=Sense.MIN)
+
+        metric = BestSolutionFoundRatio(snap_abs_tol=None)
+
+        with pytest.raises(ValidationError):
+            metric.run(solution, mock_feature_results)
+
     @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
     def test_none_solution_raises_value_error(self, mock_feature_results: MagicMock) -> None:
         """Test that passing None as the solution raises ValueError."""

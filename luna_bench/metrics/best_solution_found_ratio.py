@@ -9,6 +9,7 @@ from pydantic import Field
 from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
 from luna_bench.features import OptSolFeature
 from luna_bench.helpers import get_ratio
+from luna_bench.helpers.divider_helper import snap_to_bounds
 
 
 class BestSolutionFoundRatioResult(MetricResult):
@@ -60,6 +61,9 @@ class BestSolutionFoundRatio(BaseMetric[BestSolutionFoundRatioResult]):
     abs_tol : float
         Absolute tolerance for considering a value as zero. Used to prevent
         division by zero errors. Default is 1e-3.
+    snap_abs_tol : float | None
+        Absolute tolerance within which the ratio is snapped to the result
+        field's bounds. If None, no snapping is performed. Default is 1e-9.
 
     Examples
     --------
@@ -77,6 +81,7 @@ class BestSolutionFoundRatio(BaseMetric[BestSolutionFoundRatioResult]):
     """
 
     abs_tol: float = 1e-3
+    snap_abs_tol: float | None = 1e-9
 
     def run(self, solution: Solution, feature_results: FeatureResultContainer) -> BestSolutionFoundRatioResult:
         """Calculate the Best Solution Found ratio for the given solution.
@@ -122,4 +127,7 @@ class BestSolutionFoundRatio(BaseMetric[BestSolutionFoundRatioResult]):
         else:
             bsf = get_ratio(nominator=opt_sol.global_best_sol, denominator=best_value, abt_diff=self.abs_tol)
 
+        if self.snap_abs_tol is not None:
+            field_info = BestSolutionFoundRatioResult.model_fields["best_solution_found"]
+            bsf = snap_to_bounds(bsf, field_info, abs_tol=self.snap_abs_tol)
         return BestSolutionFoundRatioResult(best_solution_found=bsf)
