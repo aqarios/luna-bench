@@ -150,7 +150,9 @@ class AlgorithmSqlDao(AlgorithmDao):
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)
-            AlgorithmResultTable.delete().where(AlgorithmResultTable.algorithm == algorithm).execute()
+            # peewee stubs leave `execute` untyped; `unused-ignore` keeps environments where mypy
+            # does not flag the call (with `warn_unused_ignores`) passing as well.
+            AlgorithmResultTable.delete().where(AlgorithmResultTable.algorithm == algorithm).execute()  # type: ignore[no-untyped-call, unused-ignore]
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())

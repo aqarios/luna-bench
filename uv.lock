@@ -938,7 +938,7 @@ requires-dist = [
     { name = "peewee", specifier = ">=4.0.0" },
     { name = "pydantic-settings", specifier = ">=2.11.0" },
     { name = "pyscipopt", marker = "extra == 'pre-defined'", specifier = ">=6.0.1" },
-    { name = "returns", extras = ["compatible-mypy"], specifier = ">=0.27.0" },
+    { name = "returns", extras = ["compatible-mypy"], specifier = ">=0.28.0" },
     { name = "rich", specifier = ">=14.1.0" },
     { name = "scipy", marker = "extra == 'pre-defined'", specifier = ">=1.17.0" },
     { name = "seaborn", marker = "extra == 'pre-defined'", specifier = ">=0.13.0" },
@@ -948,7 +948,7 @@ provides-extras = ["pre-defined"]
 [package.metadata.requires-dev]
 dev = [
     { name = "matplotlib", specifier = ">=3.10.8" },
-    { name = "mypy", specifier = ">=1.20.2" },
+    { name = "mypy", specifier = ">=2.1.0" },
     { name = "networkx", specifier = ">=3.6.1" },
     { name = "pandas-stubs", specifier = ">=3.0.0.260204" },
     { name = "pip-licenses", specifier = ">=5.5.1" },
