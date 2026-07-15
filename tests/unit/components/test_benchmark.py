@@ -794,6 +794,7 @@ class TestExport:
 
     def test_to_csv(self) -> None:
         csv_str = self._default_benchmark().to_csv()
+        assert csv_str is not None
         header, row = csv_str.strip().split("\n")
 
         assert header == "algorithm,model,meta_data,algorithm_config,accuracy/score,num_vars/count"
@@ -801,11 +802,14 @@ class TestExport:
 
     def test_to_csv_with_options(self) -> None:
         csv_str = self._default_benchmark().to_csv(delimiter=";", quoting="all")
+        assert csv_str is not None
 
         assert csv_str.startswith('"algorithm";"model";')
 
     def test_to_json(self) -> None:
-        records = json.loads(self._default_benchmark().to_json())
+        json_str = self._default_benchmark().to_json()
+        assert json_str is not None
+        records = json.loads(json_str)
 
         assert records == [
             {
