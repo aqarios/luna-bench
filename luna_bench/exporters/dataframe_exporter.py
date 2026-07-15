@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel
-
+from luna_bench.custom.base_components.base_exporter import BaseExporter
 from luna_bench.helpers.optional_dependencies import check_optional_dependency
 
 if TYPE_CHECKING:
@@ -13,7 +12,7 @@ if TYPE_CHECKING:
     from luna_bench.custom.types import AlgorithmName, FeatureName, MetricName
 
 
-class DataFrameExporter(BaseModel):
+class DataFrameExporter(BaseExporter["pd.DataFrame"]):
     """Export benchmark results as a single pandas DataFrame.
 
     Algorithm run results form the row spine (one row per ``(algorithm, model)``

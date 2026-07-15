@@ -3,8 +3,7 @@ from __future__ import annotations
 import base64
 from typing import TYPE_CHECKING, Literal
 
-from pydantic import BaseModel
-
+from luna_bench.custom.base_components.base_exporter import BaseExporter
 from luna_bench.exporters.dataframe_exporter import DataFrameExporter
 
 if TYPE_CHECKING:
@@ -13,7 +12,7 @@ if TYPE_CHECKING:
 type JsonOrient = Literal["records", "columns", "index", "split", "table", "values"]
 
 
-class JsonExporter(BaseModel):
+class JsonExporter(BaseExporter[str]):
     """Export benchmark results as a JSON string.
 
     Thin configuration layer over ``DataFrameExporter``: the merged results

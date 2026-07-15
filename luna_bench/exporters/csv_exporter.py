@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import base64
 import csv
 from typing import TYPE_CHECKING, Literal
 
-from pydantic import BaseModel
-
+from luna_bench.custom.base_components.base_exporter import BaseExporter
 from luna_bench.exporters.dataframe_exporter import DataFrameExporter
 
 if TYPE_CHECKING:
@@ -20,11 +20,12 @@ _QUOTING_MAP: dict[CsvQuoting, Literal[0, 1, 2, 3]] = {
 }
 
 
-class CsvExporter(BaseModel):
+class CsvExporter(BaseExporter[str]):
     """Export benchmark results as a CSV string.
 
     Thin configuration layer over ``DataFrameExporter``: the merged results
-    DataFrame is rendered with ``DataFrame.to_csv``.
+    DataFrame is rendered with ``DataFrame.to_csv``. Serialized solutions
+    (bytes) are encoded as base64 strings to stay CSV-compatible.
 
     Attributes
     ----------
@@ -56,4 +57,8 @@ class CsvExporter(BaseModel):
             The results DataFrame rendered as CSV (without index column).
         """
         df = DataFrameExporter(include_solution=self.include_solution).export(benchmark_results)
+        if self.include_solution:
+            df["solution"] = df["solution"].map(
+                lambda value: base64.b64encode(value).decode("ascii") if isinstance(value, bytes) else value
+            )
         return df.to_csv(sep=self.delimiter, quoting=_QUOTING_MAP[self.quoting], index=False)

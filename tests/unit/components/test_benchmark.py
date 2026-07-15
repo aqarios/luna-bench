@@ -1,6 +1,7 @@
 import json
 from collections.abc import Generator
 from contextlib import ExitStack
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pandas as pd
@@ -664,7 +665,7 @@ class TestBenchmark:
         mocked_usecases["benchmark_add_feature_uc"].assert_called_once()
 
 
-class TestResultsToDataframe:
+class TestToDataframe:
     @staticmethod
     def _make_benchmark(
         features: list[FeatureEntity] | None = None,
@@ -683,14 +684,14 @@ class TestResultsToDataframe:
     def test_empty_benchmark_raises_error(self) -> None:
         benchmark = self._make_benchmark()
         with pytest.raises(ValueError, match="no algorithm results available"):
-            benchmark.results_to_dataframe()
+            benchmark.to_dataframe()
 
     def test_features_and_metrics(self) -> None:
         feature = make_feature_entity("num_vars", ("model1", {"count": 42}))
         metric = make_metric_entity("accuracy", ("algo1", "model1", {"score": 0.95}))
         algo = make_algo_entity("algo1", ["model1"])
         benchmark = self._make_benchmark(features=[feature], metrics=[metric], algorithms=[algo])
-        df = benchmark.results_to_dataframe()
+        df = benchmark.to_dataframe()
 
         assert len(df) == 1
         assert df.iloc[0]["algorithm"] == "algo1"
@@ -708,7 +709,7 @@ class TestResultsToDataframe:
         algo1 = make_algo_entity("algo1", ["model1"])
         algo2 = make_algo_entity("algo2", ["model1"])
         benchmark = self._make_benchmark(metrics=[metric_success, metric_fail], algorithms=[algo1, algo2])
-        df = benchmark.results_to_dataframe()
+        df = benchmark.to_dataframe()
         assert len(df) == 2
         assert df.iloc[0]["accuracy/score"] == 0.95
         assert pd.isna(df.iloc[1]["accuracy/score"])
@@ -718,7 +719,7 @@ class TestResultsToDataframe:
         metric2 = make_metric_entity("runtime", ("algo1", "model1", {"seconds": 1.23}))
         algo = make_algo_entity("algo1", ["model1"])
         benchmark = self._make_benchmark(metrics=[metric1, metric2], algorithms=[algo])
-        df = benchmark.results_to_dataframe()
+        df = benchmark.to_dataframe()
 
         assert len(df) == 1
         assert df.iloc[0]["accuracy/score"] == 0.95
@@ -734,7 +735,7 @@ class TestResultsToDataframe:
         algo1 = make_algo_entity("algo1", ["model1"])
         algo2 = make_algo_entity("algo2", ["model1"])
         benchmark = self._make_benchmark(features=[feature], metrics=[metric], algorithms=[algo1, algo2])
-        df = benchmark.results_to_dataframe()
+        df = benchmark.to_dataframe()
 
         assert len(df) == 2
         assert df.iloc[0]["size/value"] == 10
@@ -783,11 +784,11 @@ class TestExport:
         assert set(container.metrics["model1"]) == {"algo1"}
         assert set(container.algorithms["model1"]) == {"algo1"}
 
-    def test_export_with_dataframe_exporter_matches_results_to_dataframe(self) -> None:
+    def test_export_with_dataframe_exporter_matches_to_dataframe(self) -> None:
         benchmark = self._default_benchmark()
 
         via_export = benchmark.export(DataFrameExporter())
-        via_method = benchmark.results_to_dataframe()
+        via_method = benchmark.to_dataframe()
 
         pd.testing.assert_frame_equal(via_export, via_method)
 
@@ -816,6 +817,24 @@ class TestExport:
                 "num_vars/count": 42,
             }
         ]
+
+    def test_to_csv_writes_file_when_path_given(self, tmp_path: Path) -> None:
+        benchmark = self._default_benchmark()
+        target = tmp_path / "results.csv"
+
+        result = benchmark.to_csv(target)
+
+        assert result is None
+        assert target.read_text(encoding="utf-8") == benchmark.to_csv()
+
+    def test_to_json_writes_file_when_path_given(self, tmp_path: Path) -> None:
+        benchmark = self._default_benchmark()
+        target = tmp_path / "results.json"
+
+        result = benchmark.to_json(str(target))
+
+        assert result is None
+        assert target.read_text(encoding="utf-8") == benchmark.to_json()
 
     def test_export_empty_benchmark_raises_for_dataframe_exporter(self) -> None:
         with pytest.raises(ValueError, match="no algorithm results available"):

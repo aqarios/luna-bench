@@ -1,32 +1,25 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import Any
+from typing import TYPE_CHECKING
 
-from luna_model import Solution
-from pydantic import BaseModel, ConfigDict, Field, SkipValidation
+from pydantic import BaseModel, Field
 
-from luna_bench.custom.base_components.base_algorithm_async import BaseAlgorithmAsync
-from luna_bench.custom.base_components.base_algorithm_sync import BaseAlgorithmSync
 from luna_bench.custom.base_results.metric_result import MetricResult
+from luna_bench.custom.result_containers.algorithm_result_container import AlgorithmResultContainer
 from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
 from luna_bench.custom.result_containers.metric_result_container import MetricResultContainer
 from luna_bench.custom.types import AlgorithmName, MetricClass, ModelName
 
-
-class AlgorithmRunResult(BaseModel):
-    """Outcome of a single algorithm run for one (model, algorithm) pair.
-
-    Bundles the (optional) solution, run metadata, and the configured
-    algorithm instance that produced it, so consumers such as exporters can
-    access results without depending on the entity layer.
-    """
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    solution: Solution | None = None
-    meta_data: dict[str, Any] | None = None
-    algorithm: SkipValidation[BaseAlgorithmSync | BaseAlgorithmAsync[Any]]
+if TYPE_CHECKING:
+    from luna_bench.custom.types import (
+        FeatureClass,
+        FeatureComputed,
+        FeatureName,
+        MetricComputed,
+        MetricName,
+    )
+    from luna_bench.entities import BenchmarkEntity
 
 
 class BenchmarkResultContainer(BaseModel):
@@ -34,16 +27,77 @@ class BenchmarkResultContainer(BaseModel):
 
     features: dict[ModelName, FeatureResultContainer]
     metrics: dict[ModelName, dict[AlgorithmName, MetricResultContainer]]
-    algorithms: dict[ModelName, dict[AlgorithmName, AlgorithmRunResult]] = Field(default_factory=dict)
+    algorithms: dict[ModelName, dict[AlgorithmName, AlgorithmResultContainer]] = Field(default_factory=dict)
 
-    def get_all_algorithms(self) -> Generator[tuple[ModelName, AlgorithmName, AlgorithmRunResult]]:
+    @classmethod
+    def from_benchmark(cls, benchmark: BenchmarkEntity) -> BenchmarkResultContainer:
+        """Build a container with every result present on a benchmark.
+
+        Unlike the per-plot builders (``FeatureResultBuilder``/``MetricResultBuilder``),
+        which validate a list of *required* component classes, this collects
+        everything that is available: all successful feature and metric results,
+        and all algorithm run results (including failed runs, whose solution is
+        ``None``).
+
+        Parameters
+        ----------
+        benchmark : BenchmarkEntity
+            The benchmark containing features, metrics, algorithms, and their results.
+
+        Returns
+        -------
+        BenchmarkResultContainer
+            Container holding all feature, metric, and algorithm results of the benchmark.
+        """
+        features: dict[ModelName, dict[FeatureClass, dict[FeatureName, FeatureComputed]]] = {}
+        for f in benchmark.features:
+            for model_name, result_entity in f.results.items():
+                if result_entity.result is not None:
+                    features.setdefault(model_name, {}).setdefault(type(f.feature), {})[f.name] = (
+                        result_entity.result,
+                        f.feature,
+                    )
+
+        metrics: dict[ModelName, dict[AlgorithmName, dict[MetricClass, dict[MetricName, MetricComputed]]]] = {}
+        for m in benchmark.metrics:
+            for model_name, algo_results in m.results.items():
+                for algorithm_name, metric_result_entity in algo_results.items():
+                    if metric_result_entity.result is not None:
+                        metrics.setdefault(model_name, {}).setdefault(algorithm_name, {}).setdefault(
+                            type(m.metric), {}
+                        )[m.name] = (metric_result_entity.result, m.metric)
+
+        algorithms: dict[ModelName, dict[AlgorithmName, AlgorithmResultContainer]] = {}
+        for a in benchmark.algorithms:
+            for model_name, algo_result_entity in a.results.items():
+                algorithms.setdefault(model_name, {})[a.name] = AlgorithmResultContainer(
+                    solution=algo_result_entity.solution,
+                    meta_data=algo_result_entity.meta_data.model_dump() if algo_result_entity.meta_data else None,
+                    algorithm=a.algorithm,
+                )
+
+        return cls(
+            features={
+                model_name: FeatureResultContainer.model_construct(data=data) for model_name, data in features.items()
+            },
+            metrics={
+                model_name: {
+                    algorithm_name: MetricResultContainer.model_construct(data=data)
+                    for algorithm_name, data in algo_data.items()
+                }
+                for model_name, algo_data in metrics.items()
+            },
+            algorithms=algorithms,
+        )
+
+    def get_all_algorithms(self) -> Generator[tuple[ModelName, AlgorithmName, AlgorithmResultContainer]]:
         """Yield all algorithm run results across models and algorithms.
 
         Yields
         ------
-        tuple[ModelName, AlgorithmName, AlgorithmRunResult]
+        tuple[ModelName, AlgorithmName, AlgorithmResultContainer]
             A tuple containing the model name, algorithm name, and
-            corresponding algorithm run result.
+            corresponding algorithm result container.
         """
         for model_name, algorithms in self.algorithms.items():
             for algorithm_name, run_result in algorithms.items():

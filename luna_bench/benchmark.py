@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from dependency_injector.wiring import Provide, inject
@@ -8,7 +9,6 @@ from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from returns.pipeline import is_successful
 
-from luna_bench._internal.usecases.benchmark.helper import BenchmarkResultContainerBuilder
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
 from luna_bench._internal.wrappers import LunaAlgorithmWrapper
 from luna_bench.entities import (
@@ -35,6 +35,7 @@ if TYPE_CHECKING:
         AlgorithmRemoveUc,
         AlgorithmRunUc,
         BenchmarkCreateUc,
+        BenchmarkExportUc,
         BenchmarkLoadAllUc,
         BenchmarkLoadUc,
         BenchmarkRemoveModelsetUc,
@@ -85,6 +86,13 @@ class Benchmark(BenchmarkEntity):
         benchmark_setup: DataDirSetupUc = Provide[UsecaseContainer.benchmark_setup_data_dir_uc],
     ) -> DataDirSetupUc:
         return benchmark_setup
+
+    @staticmethod
+    @inject
+    def __export_uc(
+        benchmark_export: BenchmarkExportUc = Provide[UsecaseContainer.benchmark_export_uc],
+    ) -> BenchmarkExportUc:
+        return benchmark_export
 
     @staticmethod
     @inject
@@ -1029,54 +1037,75 @@ class Benchmark(BenchmarkEntity):
             ``pd.DataFrame`` for the DataFrame exporter.
 
         """
-        return exporter.export(BenchmarkResultContainerBuilder(self).build())
+        export_uc = self.__export_uc()
+        return export_uc(self, exporter)
 
     def to_csv(
         self,
+        path: str | Path | None = None,
         *,
         delimiter: str = ",",
         quoting: CsvQuoting = "minimal",
         include_solution: bool = False,
-    ) -> str:
+    ) -> str | None:
         """
-        Return all benchmark results as a CSV string.
+        Render all benchmark results as CSV.
 
-        Convenience wrapper for ``self.export(CsvExporter(...))``.
+        Convenience wrapper for ``self.export(CsvExporter(...))``. Mirrors
+        ``pandas.DataFrame.to_csv``: if ``path`` is given, the CSV is written
+        to that file and ``None`` is returned; otherwise the CSV is returned
+        as a string.
 
         Parameters
         ----------
+        path: str | Path | None
+            File path to write the CSV to. If None, the CSV is returned as a
+            string instead. Defaults to None.
         delimiter: str
             Field delimiter. Defaults to ``","``.
         quoting: CsvQuoting
             Quoting style: ``"minimal"``, ``"all"``, ``"nonnumeric"``, or ``"none"``.
             Defaults to ``"minimal"``.
         include_solution: bool
-            Whether to include the serialized solution column. Defaults to False.
+            Whether to include the serialized solution column (base64-encoded).
+            Defaults to False.
 
         Returns
         -------
-        str
-            The benchmark results rendered as CSV.
+        str | None
+            The benchmark results rendered as CSV, or ``None`` if written to
+            ``path``.
 
         """
-        from luna_bench.exporters import CsvExporter as _CsvExporter  # noqa: PLC0415
+        from luna_bench.exporters import CsvExporter  # noqa: PLC0415
 
-        return self.export(_CsvExporter(delimiter=delimiter, quoting=quoting, include_solution=include_solution))
+        payload = self.export(CsvExporter(delimiter=delimiter, quoting=quoting, include_solution=include_solution))
+        if path is None:
+            return payload
+        Path(path).write_text(payload, encoding="utf-8")
+        return None
 
     def to_json(
         self,
+        path: str | Path | None = None,
         *,
         indent: int | None = None,
         orient: JsonOrient = "records",
         include_solution: bool = False,
-    ) -> str:
+    ) -> str | None:
         """
-        Return all benchmark results as a JSON string.
+        Render all benchmark results as JSON.
 
-        Convenience wrapper for ``self.export(JsonExporter(...))``.
+        Convenience wrapper for ``self.export(JsonExporter(...))``. Mirrors
+        ``pandas.DataFrame.to_json``: if ``path`` is given, the JSON is
+        written to that file and ``None`` is returned; otherwise the JSON is
+        returned as a string.
 
         Parameters
         ----------
+        path: str | Path | None
+            File path to write the JSON to. If None, the JSON is returned as
+            a string instead. Defaults to None.
         indent: int | None
             Indentation width for pretty-printing; ``None`` for compact output.
             Defaults to ``None``.
@@ -1088,15 +1117,20 @@ class Benchmark(BenchmarkEntity):
 
         Returns
         -------
-        str
-            The benchmark results rendered as JSON.
+        str | None
+            The benchmark results rendered as JSON, or ``None`` if written to
+            ``path``.
 
         """
-        from luna_bench.exporters import JsonExporter as _JsonExporter  # noqa: PLC0415
+        from luna_bench.exporters import JsonExporter  # noqa: PLC0415
 
-        return self.export(_JsonExporter(indent=indent, orient=orient, include_solution=include_solution))
+        payload = self.export(JsonExporter(indent=indent, orient=orient, include_solution=include_solution))
+        if path is None:
+            return payload
+        Path(path).write_text(payload, encoding="utf-8")
+        return None
 
-    def results_to_dataframe(self, *, inlcude_solution: bool = False) -> pd.DataFrame:
+    def to_dataframe(self, *, include_solution: bool = False) -> pd.DataFrame:
         """
         Return all benchmark results as a single DataFrame.
 
@@ -1106,6 +1140,12 @@ class Benchmark(BenchmarkEntity):
         values are repeated across algorithms for the same model since features
         are model-level.
 
+        Parameters
+        ----------
+        include_solution: bool
+            Whether to include the serialized solution as a ``solution`` column.
+            Defaults to False.
+
         Returns
         -------
         pd.DataFrame
@@ -1113,9 +1153,9 @@ class Benchmark(BenchmarkEntity):
             result field of each feature and metric.
 
         """
-        from luna_bench.exporters import DataFrameExporter as _DataFrameExporter  # noqa: PLC0415
+        from luna_bench.exporters import DataFrameExporter  # noqa: PLC0415
 
-        return self.export(_DataFrameExporter(include_solution=inlcude_solution))
+        return self.export(DataFrameExporter(include_solution=include_solution))
 
     def list_feature_classes(self) -> list[type[BaseFeature]]:
         """Return the feature classes registered on this benchmark."""

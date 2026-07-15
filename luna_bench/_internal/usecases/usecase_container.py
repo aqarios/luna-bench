@@ -28,6 +28,7 @@ from luna_bench._internal.usecases.benchmark.algorithm.algorithm_remove import A
 from luna_bench._internal.usecases.benchmark.algorithm.algorithm_run import AlgorithmRunUcImpl
 from luna_bench._internal.usecases.benchmark.benchmark_create import BenchmarkCreateUcImpl
 from luna_bench._internal.usecases.benchmark.benchmark_delete import BenchmarkDeleteUcImpl
+from luna_bench._internal.usecases.benchmark.benchmark_export import BenchmarkExportUcImpl
 from luna_bench._internal.usecases.benchmark.benchmark_load import BenchmarkLoadUcImpl
 from luna_bench._internal.usecases.benchmark.benchmark_load_all import BenchmarkLoadAllUcImpl
 from luna_bench._internal.usecases.benchmark.benchmark_remove_modelset import BenchmarkRemoveModelsetUcImpl
@@ -58,6 +59,7 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     BackgroundRunAlgorithmSyncUc,
     BenchmarkCreateUc,
     BenchmarkDeleteUc,
+    BenchmarkExportUc,
     BenchmarkLoadAllUc,
     BenchmarkLoadUc,
     BenchmarkRemoveModelsetUc,
@@ -258,3 +260,5 @@ class UsecaseContainer(containers.DeclarativeContainer):
     )
 
     benchmark_setup_data_dir_uc: Provider[DataDirSetupUc] = providers.ThreadSafeSingleton(DataDirSetupUcImpl)
+
+    benchmark_export_uc: Provider[BenchmarkExportUc] = providers.ThreadSafeSingleton(BenchmarkExportUcImpl)

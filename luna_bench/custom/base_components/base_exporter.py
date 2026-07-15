@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
+
+from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
@@ -36,3 +39,29 @@ class Exporter[T_co](Protocol):
             The exported payload.
         """
         ...
+
+
+class BaseExporter[T](BaseModel, ABC):
+    """Abstract base class for exporters implementing the ``Exporter`` protocol.
+
+    Subclassing is not required to satisfy ``Exporter`` (structural typing),
+    but it makes the relationship explicit: IDEs and type checkers immediately
+    flag subclasses that fall out of sync when the protocol changes. All
+    built-in exporters extend this class.
+    """
+
+    @abstractmethod
+    def export(self, benchmark_results: BenchmarkResultContainer) -> T:
+        """Export benchmark results into the target format.
+
+        Parameters
+        ----------
+        benchmark_results : BenchmarkResultContainer
+            Aggregated benchmark data (features, metrics, and algorithm run
+            results) to export.
+
+        Returns
+        -------
+        T
+            The exported payload.
+        """

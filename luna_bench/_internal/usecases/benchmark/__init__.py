@@ -16,6 +16,7 @@ from .algorithm.algorithm_run import AlgorithmRunUcImpl
 from .algorithm.algorithm_run_as_background_tasks import AlgorithmRunAsBackgroundTasksUcImpl
 from .benchmark_create import BenchmarkCreateUcImpl
 from .benchmark_delete import BenchmarkDeleteUcImpl
+from .benchmark_export import BenchmarkExportUcImpl
 from .benchmark_load import BenchmarkLoadUcImpl
 from .benchmark_load_all import BenchmarkLoadAllUcImpl
 from .benchmark_remove_modelset import BenchmarkRemoveModelsetUcImpl
@@ -32,6 +33,7 @@ __all__ = [
     "AlgorithmRunUcImpl",
     "BenchmarkCreateUcImpl",
     "BenchmarkDeleteUcImpl",
+    "BenchmarkExportUcImpl",
     "BenchmarkLoadAllUcImpl",
     "BenchmarkLoadUcImpl",
     "BenchmarkRemoveModelsetUcImpl",

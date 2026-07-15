@@ -7,10 +7,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 import pytest
 
-from luna_bench._internal.usecases.benchmark.helper.benchmark_result_container_builder import (
-    BenchmarkResultContainerBuilder,
-)
-from luna_bench.custom import BenchmarkResultContainer, Exporter
+from luna_bench.custom import BaseExporter, BenchmarkResultContainer, Exporter
 from luna_bench.entities import (
     AlgorithmEntity,
     AlgorithmResultEntity,
@@ -40,7 +37,7 @@ def _make_container(
         metrics=metrics or [],
         plots=[],
     )
-    return BenchmarkResultContainerBuilder(benchmark).build()
+    return BenchmarkResultContainer.from_benchmark(benchmark)
 
 
 def _default_container() -> BenchmarkResultContainer:
@@ -48,6 +45,24 @@ def _default_container() -> BenchmarkResultContainer:
         features=[make_feature_entity("num_vars", ("model1", {"count": 42}))],
         metrics=[make_metric_entity("accuracy", ("algo1", "model1", {"score": 0.95}))],
         algorithms=[make_algo_entity("algo1", ["model1"])],
+    )
+
+
+def _algo_with_solution(solution: Solution) -> AlgorithmEntity:
+    return AlgorithmEntity(
+        name="algo1",
+        algorithm=MockAlgorithm(),
+        results={
+            "model1": AlgorithmResultEntity(
+                meta_data=None,
+                status=JobStatus.DONE,
+                error=None,
+                solution=solution,
+                task_id=None,
+                retrival_data=None,
+                model_id=1,
+            )
+        },
     )
 
 
@@ -64,6 +79,18 @@ class TestExporterProtocol:
 
         assert isinstance(RowCountExporter(), Exporter)
         assert RowCountExporter().export(_default_container()) == 1
+
+    def test_builtin_exporters_extend_base_exporter(self) -> None:
+        assert issubclass(DataFrameExporter, BaseExporter)
+        assert issubclass(CsvExporter, BaseExporter)
+        assert issubclass(JsonExporter, BaseExporter)
+
+    def test_base_exporter_requires_export_implementation(self) -> None:
+        class IncompleteExporter(BaseExporter[str]):
+            pass
+
+        with pytest.raises(TypeError, match="abstract"):
+            IncompleteExporter()  # type: ignore[abstract]
 
 
 class TestDataFrameExporter:
@@ -130,21 +157,7 @@ class TestDataFrameExporter:
         assert "solution" not in df.columns
 
     def test_solution_included_and_serialized(self, solution: Solution) -> None:
-        algo = AlgorithmEntity(
-            name="algo1",
-            algorithm=MockAlgorithm(),
-            results={
-                "model1": AlgorithmResultEntity(
-                    meta_data=None,
-                    status=JobStatus.DONE,
-                    error=None,
-                    solution=solution,
-                    task_id=None,
-                    retrival_data=None,
-                    model_id=1,
-                )
-            },
-        )
+        algo = _algo_with_solution(solution)
         df = DataFrameExporter(include_solution=True).export(_make_container(algorithms=[algo]))
 
         assert list(df.columns) == ["algorithm", "model", "meta_data", "solution", "algorithm_config"]
@@ -173,6 +186,13 @@ class TestCsvExporter:
         csv_str = CsvExporter(quoting="all").export(_default_container())
 
         assert csv_str.startswith('"algorithm","model",')
+
+    def test_solution_is_base64_encoded(self, solution: Solution) -> None:
+        algo = _algo_with_solution(solution)
+        csv_str = CsvExporter(include_solution=True).export(_make_container(algorithms=[algo]))
+
+        expected = base64.b64encode(solution.serialize()).decode("ascii")
+        assert expected in csv_str
 
     def test_empty_container_raises_error(self) -> None:
         with pytest.raises(ValueError, match="no algorithm results available"):
@@ -211,21 +231,7 @@ class TestJsonExporter:
         assert "\n" in json_str
 
     def test_solution_is_base64_encoded(self, solution: Solution) -> None:
-        algo = AlgorithmEntity(
-            name="algo1",
-            algorithm=MockAlgorithm(),
-            results={
-                "model1": AlgorithmResultEntity(
-                    meta_data=None,
-                    status=JobStatus.DONE,
-                    error=None,
-                    solution=solution,
-                    task_id=None,
-                    retrival_data=None,
-                    model_id=1,
-                )
-            },
-        )
+        algo = _algo_with_solution(solution)
         records = json.loads(JsonExporter(include_solution=True).export(_make_container(algorithms=[algo])))
 
         assert base64.b64decode(records[0]["solution"]) == solution.serialize()
