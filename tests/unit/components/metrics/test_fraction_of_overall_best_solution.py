@@ -50,6 +50,15 @@ class TestFractionOfOverallBestSolution:
         assert result.fraction_of_overall_best_solution == 1.0
 
     @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
+    def test_snapping_can_be_disabled(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
+        """Test that the metric accepts snap_abs_tol=None and still computes correctly."""
+        solution = create_solution(obj_values=[5.0, 10.0], sense=Sense.MIN)
+
+        result = FractionOfOverallBestSolution(snap_abs_tol=None).run(solution, mock_feature_results)
+
+        assert result.fraction_of_overall_best_solution == 0.5
+
+    @pytest.mark.parametrize("mock_feature_results", [5.0], indirect=True)
     def test_some_optimal_minimization(self, create_solution: SolutionFactory, mock_feature_results: MagicMock) -> None:
         """Test FOB when some samples equal optimal (minimization)."""
         solution = create_solution(obj_values=[5.0, 10.0, 5.0, 15.0], sense=Sense.MIN)
