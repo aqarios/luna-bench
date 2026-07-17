@@ -9,6 +9,7 @@ from pydantic import Field
 
 from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
 from luna_bench.features import OptSolFeature
+from luna_bench.helpers.divider_helper import snap_to_bounds
 
 
 class FractionOfOverallBestSolutionResult(MetricResult):
@@ -57,6 +58,9 @@ class FractionOfOverallBestSolution(BaseMetric[FractionOfOverallBestSolutionResu
     ----------
     abs_tol : float
         Absolute tolerance for considering two values as equal. Default is 1e-6.
+    snap_abs_tol : float | None
+        Absolute tolerance within which the fraction is snapped to the result
+        field's bounds. If None, no snapping is performed. Default is 1e-9.
 
     Examples
     --------
@@ -76,6 +80,7 @@ class FractionOfOverallBestSolution(BaseMetric[FractionOfOverallBestSolutionResu
     """
 
     abs_tol: float = 1e-6
+    snap_abs_tol: float | None = 1e-9
 
     def run(self, solution: Solution, feature_results: FeatureResultContainer) -> FractionOfOverallBestSolutionResult:
         """Calculate the Fraction of Overall Best Solution for the given solution.
@@ -107,4 +112,7 @@ class FractionOfOverallBestSolution(BaseMetric[FractionOfOverallBestSolutionResu
 
         # Return fraction of all samples that are optimal and feasible
         fob = num_optimal_found / solution.counts.sum()
+        if self.snap_abs_tol is not None:
+            field_info = FractionOfOverallBestSolutionResult.model_fields["fraction_of_overall_best_solution"]
+            fob = snap_to_bounds(fob, field_info, abs_tol=self.snap_abs_tol)
         return FractionOfOverallBestSolutionResult(fraction_of_overall_best_solution=fob)
