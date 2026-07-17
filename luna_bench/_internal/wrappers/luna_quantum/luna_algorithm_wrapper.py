@@ -89,7 +89,7 @@ class LunaAlgorithmWrapper:
         if not issubclass(cls, LunaAlgorithm):
             raise AlgorithmSubTypeError("LunaAlgorithm")
 
-        x = cls.model_construct(**algorithm.model_dump())
+        x = cls.model_validate(algorithm.model_dump())
 
         if isinstance(algorithm, LunaQuantumAlgorithm):
             x.backend = algorithm.backend
