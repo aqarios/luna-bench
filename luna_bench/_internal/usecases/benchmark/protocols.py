@@ -6,7 +6,7 @@ from returns.maybe import Maybe
 from returns.result import Result
 
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
-from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
+from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot, Exporter
 from luna_bench.entities import (
     AlgorithmEntity,
     BenchmarkEntity,
@@ -107,6 +107,27 @@ class BenchmarkLoadAllUc(Protocol):
             A list of all benchmark entities on success, or an error if a registry
             ID is unknown, validation fails, or an unexpected error occurs.
         """
+
+
+class BenchmarkExportUc(Protocol):
+    """Protocol for exporting benchmark results via an exporter strategy."""
+
+    def __call__[T](self, benchmark: BenchmarkEntity, exporter: Exporter[T]) -> T:
+        """Build a result container from the benchmark and delegate to the exporter.
+
+        Parameters
+        ----------
+        benchmark : BenchmarkEntity
+            The benchmark whose results to export.
+        exporter : Exporter[T]
+            The exporter strategy that converts results into the target format.
+
+        Returns
+        -------
+        T
+            The exported payload.
+        """
+        ...
 
 
 class MetricAddUc(Protocol):

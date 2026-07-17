@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
-import pandas as pd
 from dependency_injector.wiring import Provide, inject
 from luna_quantum import Logging
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
@@ -25,9 +25,9 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.model_set import ModelSet
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from logging import Logger
 
+    import pandas as pd
     from returns.result import Result
 
     from luna_bench._internal.usecases.benchmark.protocols import (
@@ -35,6 +35,7 @@ if TYPE_CHECKING:
         AlgorithmRemoveUc,
         AlgorithmRunUc,
         BenchmarkCreateUc,
+        BenchmarkExportUc,
         BenchmarkLoadAllUc,
         BenchmarkLoadUc,
         BenchmarkRemoveModelsetUc,
@@ -52,15 +53,14 @@ if TYPE_CHECKING:
         PlotsRunUc,
     )
     from luna_bench._internal.usecases.modelset.protocols import ModelSetLoadUc
-    from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
+    from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot, Exporter
     from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
     from luna_bench.errors.registry.unknown_id_error import UnknownIdError
     from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
     from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
     from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
     from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
-
-ResultEntityT = TypeVar("ResultEntityT", MetricEntity, FeatureEntity)
+    from luna_bench.exporters import CsvQuoting, JsonOrient
 
 
 class Benchmark(BenchmarkEntity):
@@ -86,6 +86,13 @@ class Benchmark(BenchmarkEntity):
         benchmark_setup: DataDirSetupUc = Provide[UsecaseContainer.benchmark_setup_data_dir_uc],
     ) -> DataDirSetupUc:
         return benchmark_setup
+
+    @staticmethod
+    @inject
+    def __export_uc(
+        benchmark_export: BenchmarkExportUc = Provide[UsecaseContainer.benchmark_export_uc],
+    ) -> BenchmarkExportUc:
+        return benchmark_export
 
     @staticmethod
     @inject
@@ -1005,15 +1012,139 @@ class Benchmark(BenchmarkEntity):
         self.run_metrics()
         self.run_plots()
 
-    def results_to_dataframe(self, *, inlcude_solution: bool = False) -> pd.DataFrame:
+    def export[T](self, exporter: Exporter[T]) -> T:
+        """
+        Export all benchmark results using the given exporter strategy.
+
+        Builds a full ``BenchmarkResultContainer`` (all feature, metric, and
+        algorithm results of this benchmark) and hands it to the exporter. Any
+        object implementing the ``Exporter`` protocol can be used, so custom
+        export formats do not require changes to this class::
+
+            benchmark.export(CsvExporter(delimiter=";"))  # built-in exporter
+            benchmark.export(MyArrowExporter())  # custom exporter
+
+        Parameters
+        ----------
+        exporter: Exporter[T]
+            The exporter strategy that converts benchmark results into the
+            target format.
+
+        Returns
+        -------
+        T
+            The exported payload, e.g. ``str`` for CSV/JSON or a
+            ``pd.DataFrame`` for the DataFrame exporter.
+
+        """
+        export_uc = self.__export_uc()
+        return export_uc(self, exporter)
+
+    def to_csv(
+        self,
+        path: str | Path | None = None,
+        *,
+        delimiter: str = ",",
+        quoting: CsvQuoting = "minimal",
+        include_solution: bool = False,
+    ) -> str | None:
+        """
+        Render all benchmark results as CSV.
+
+        Convenience wrapper for ``self.export(CsvExporter(...))``. Mirrors
+        ``pandas.DataFrame.to_csv``: if ``path`` is given, the CSV is written
+        to that file and ``None`` is returned; otherwise the CSV is returned
+        as a string.
+
+        Parameters
+        ----------
+        path: str | Path | None
+            File path to write the CSV to. If None, the CSV is returned as a
+            string instead. Defaults to None.
+        delimiter: str
+            Field delimiter. Defaults to ``","``.
+        quoting: CsvQuoting
+            Quoting style: ``"minimal"``, ``"all"``, ``"nonnumeric"``, or ``"none"``.
+            Defaults to ``"minimal"``.
+        include_solution: bool
+            Whether to include the serialized solution column (base64-encoded).
+            Defaults to False.
+
+        Returns
+        -------
+        str | None
+            The benchmark results rendered as CSV, or ``None`` if written to
+            ``path``.
+
+        """
+        from luna_bench.exporters import CsvExporter  # noqa: PLC0415
+
+        payload = self.export(CsvExporter(delimiter=delimiter, quoting=quoting, include_solution=include_solution))
+        if path is None:
+            return payload
+        Path(path).write_text(payload, encoding="utf-8")
+        return None
+
+    def to_json(
+        self,
+        path: str | Path | None = None,
+        *,
+        indent: int | None = None,
+        orient: JsonOrient = "records",
+        include_solution: bool = False,
+    ) -> str | None:
+        """
+        Render all benchmark results as JSON.
+
+        Convenience wrapper for ``self.export(JsonExporter(...))``. Mirrors
+        ``pandas.DataFrame.to_json``: if ``path`` is given, the JSON is
+        written to that file and ``None`` is returned; otherwise the JSON is
+        returned as a string.
+
+        Parameters
+        ----------
+        path: str | Path | None
+            File path to write the JSON to. If None, the JSON is returned as
+            a string instead. Defaults to None.
+        indent: int | None
+            Indentation width for pretty-printing; ``None`` for compact output.
+            Defaults to ``None``.
+        orient: JsonOrient
+            JSON layout passed to ``DataFrame.to_json``. Defaults to ``"records"``.
+        include_solution: bool
+            Whether to include the serialized solution column (base64-encoded).
+            Defaults to False.
+
+        Returns
+        -------
+        str | None
+            The benchmark results rendered as JSON, or ``None`` if written to
+            ``path``.
+
+        """
+        from luna_bench.exporters import JsonExporter  # noqa: PLC0415
+
+        payload = self.export(JsonExporter(indent=indent, orient=orient, include_solution=include_solution))
+        if path is None:
+            return payload
+        Path(path).write_text(payload, encoding="utf-8")
+        return None
+
+    def to_dataframe(self, *, include_solution: bool = False) -> pd.DataFrame:
         """
         Return all benchmark results as a single DataFrame.
 
-        Builds individual DataFrames for each feature (see ``.features_to_dataframe()``), algorithm
-        (see ``.algorithms_to_dataframe``), and metric entity (see ``.metrics_to_dataframe()``),
-        then merges them. Features merge on ``model``, metrics merge on
-        ``(algorithm, model)``. Feature values are repeated across algorithms for the
-        same model since features are model-level.
+        Convenience wrapper for ``self.export(DataFrameExporter(...))``: algorithm
+        results form the row spine (one row per ``(algorithm, model)``), metrics
+        merge on ``(algorithm, model)``, and features merge on ``model``. Feature
+        values are repeated across algorithms for the same model since features
+        are model-level.
+
+        Parameters
+        ----------
+        include_solution: bool
+            Whether to include the serialized solution as a ``solution`` column.
+            Defaults to False.
 
         Returns
         -------
@@ -1022,87 +1153,9 @@ class Benchmark(BenchmarkEntity):
             result field of each feature and metric.
 
         """
-        if len(self.algorithms) == 0:
-            msg = "Cannot build results DataFrame: no algorithm results available."
-            raise ValueError(msg)
-        exclude_cols = set() if inlcude_solution else {"solution"}
-        algorithms_df = self.algorithms_to_dataframe(exclude=exclude_cols)
+        from luna_bench.exporters import DataFrameExporter  # noqa: PLC0415
 
-        features_df = self.all_features_to_dataframe()
-        metrics_df = self.all_metrics_to_dataframe()
-
-        return algorithms_df.merge(right=metrics_df, on=["algorithm", "model"], how="left").merge(
-            right=features_df, on="model", how="left"
-        )
-
-    def _merge_result_entity(
-        self,
-        result_entities: list[ResultEntityT],
-        on: list[str],
-        entity_to_metric: Callable[[ResultEntityT], pd.DataFrame],
-    ) -> pd.DataFrame:
-        """Return all entity results merged into a single DataFrame on `defined on.."""
-        result = pd.DataFrame(columns=on)
-        for entity in result_entities:
-            result = result.merge(
-                entity_to_metric(entity),
-                on=on,
-                how="outer",
-            )
-        return result
-
-    def features_to_dataframe(self, feature_entity: FeatureEntity) -> pd.DataFrame:
-        """Return results for a single feature entity as a DataFrame with one row per model."""
-        rows: list[dict[str, Any]] = []
-        for model_name, result_entity in feature_entity.results.items():
-            row = {"model": model_name}
-            if result_entity.result is not None:
-                for field_name, value in result_entity.result.model_dump().items():
-                    row[f"{feature_entity.name}/{field_name}"] = value
-            rows.append(row)
-        return pd.DataFrame(rows)
-
-    def all_features_to_dataframe(self) -> pd.DataFrame:
-        """Return all feature results merged into a single DataFrame on ``model``."""
-        return self._merge_result_entity(
-            result_entities=self.features, on=["model"], entity_to_metric=self.features_to_dataframe
-        )
-
-    def metrics_to_dataframe(self, metric_entity: MetricEntity) -> pd.DataFrame:
-        """Return results for a single metric entity as a DataFrame with one row per (algorithm, model)."""
-        rows: list[dict[str, Any]] = []
-        for model_name, algo_results in metric_entity.results.items():
-            for algorithm_name, result_entity in algo_results.items():
-                row = {"algorithm": algorithm_name, "model": model_name}
-                if result_entity.result is not None:
-                    for field_name, value in result_entity.result.model_dump().items():
-                        row[f"{metric_entity.name}/{field_name}"] = value
-                rows.append(row)
-        return pd.DataFrame(rows)
-
-    def all_metrics_to_dataframe(self) -> pd.DataFrame:
-        """Return all metric results merged into a single DataFrame on ``(algorithm, model)``."""
-        return self._merge_result_entity(
-            result_entities=self.metrics, on=["algorithm", "model"], entity_to_metric=self.metrics_to_dataframe
-        )
-
-    def algorithms_to_dataframe(self, exclude: set[str] | None = None) -> pd.DataFrame:
-        """Return all algorithm (algorithm, model) combinations as a DataFrame."""
-        if exclude is None:
-            exclude = set()
-        rows: list[dict[str, Any]] = []
-        for algo_entity in self.algorithms:
-            for model_name, result_entity in algo_entity.results.items():
-                row: dict[str, Any] = {
-                    "algorithm": algo_entity.name,
-                    "model": model_name,
-                    **result_entity.result_dump(
-                        exclude={"task_id", "status", "retrival_data", "error", "model_id", *exclude}
-                    ),
-                    "algorithm_config": algo_entity.algorithm.model_dump(),
-                }
-                rows.append(row)
-        return pd.DataFrame(rows)
+        return self.export(DataFrameExporter(include_solution=include_solution))
 
     def list_feature_classes(self) -> list[type[BaseFeature]]:
         """Return the feature classes registered on this benchmark."""
