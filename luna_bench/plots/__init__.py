@@ -10,7 +10,9 @@ from luna_bench.plots.performance import (
     AverageBestSolutionFoundRatioPlot,
     AverageFeasibilityRatioPlot,
     AverageFoBRatioPlot,
+    AverageFractionOfOverallBestSolutionPlot,
     AverageRuntimePlot,
+    AverageTimeToSolutionPlot,
     RuntimePerModelPlot,
 )
 from luna_bench.plots.properties import VarNumberBarChartPlot
@@ -21,8 +23,10 @@ __all__ = [
     "AverageBestSolutionFoundRatioPlot",
     "AverageFeasibilityRatioPlot",
     "AverageFoBRatioPlot",
+    "AverageFractionOfOverallBestSolutionPlot",
     # Performance plots
     "AverageRuntimePlot",
+    "AverageTimeToSolutionPlot",
     "FeasibilityRatioVsVarNumberPlot",
     "RuntimePerModelPlot",
     # Analysis plots
