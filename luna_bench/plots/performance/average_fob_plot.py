@@ -13,16 +13,16 @@ if TYPE_CHECKING:
 
 
 @plot(FractionOfOverallBestSolution)
-class AverageBestSolutionFoundRatioPlot(BarPlot):
+class AverageFractionOfOverallBestSolutionPlot(BarPlot):
     """Bar chart showing average best solution found ratio per algorithm.
 
     Examples
     --------
     >>> bench.add_metric(name="best_found", metric=FractionOfOverallBestSolution())
-    >>> bench.add_plot(name="avg_best", plot=AverageBestSolutionFoundRatioPlot())
+    >>> bench.add_plot(name="avg_best", plot=AverageFractionOfOverallBestSolutionPlot())
     """
 
-    figure_filename: str = "average_best_solution_found_ratio"
+    figure_filename: str = "average_fraction_of_overall_best_solution"
 
     def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Generate plot output from benchmark results.
