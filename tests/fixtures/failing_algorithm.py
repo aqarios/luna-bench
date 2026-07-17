@@ -4,9 +4,9 @@ from time import sleep
 from typing import ClassVar
 
 from luna_model import Model, Solution
-from luna_quantum import Logging
 
 from luna_bench.custom import BaseAlgorithmSync, algorithm
+from luna_bench.logging import BenchLogger
 
 
 class _CustomError(Exception):
@@ -24,7 +24,7 @@ class FailingAlgorithm(BaseAlgorithmSync):
     This algorithm is used in the development process. After that it will be deleted.
     """
 
-    _logger: ClassVar[Logger] = Logging.get_logger(__name__)
+    _logger: ClassVar[Logger] = BenchLogger.get_logger(__name__)
 
     time_to_sleep: float = random.uniform(0, 2.0)
 
@@ -43,7 +43,7 @@ class FailingArbitraryErrorAlgorithm(BaseAlgorithmSync):
     This algorithm is used in the development process. After that it will be deleted.
     """
 
-    _logger: ClassVar[Logger] = Logging.get_logger(__name__)
+    _logger: ClassVar[Logger] = BenchLogger.get_logger(__name__)
 
     time_to_sleep: float = random.uniform(0, 0.1)
 

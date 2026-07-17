@@ -1,20 +1,23 @@
 from __future__ import annotations
 
+import logging
 import multiprocessing
+import os
 import platform
 import subprocess
 import sys
+import threading
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 from huey import MemoryHuey, SqliteHuey
 from huey.consumer import WORKER_GREENLET, WORKER_PROCESS, WORKER_THREAD, Consumer
-from luna_quantum import Logging
 
 from luna_bench._internal.background_tasks.protocols import BackgroundTaskClient
 from luna_bench.configs.config import config
 from luna_bench.errors.invalid_worker_type_error import InvalidWorkerTypeError
+from luna_bench.logging import BenchLogger
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -23,7 +26,7 @@ if TYPE_CHECKING:
 class HueyBackgroundTaskClient(BackgroundTaskClient):
     _process: subprocess.Popen[bytes] | None = None
     _huey: SqliteHuey | MemoryHuey | None = None
-    _logger = Logging.get_logger(__name__)
+    _logger = BenchLogger.get_logger(__name__)
 
     @staticmethod
     def huey() -> SqliteHuey | MemoryHuey:
@@ -47,18 +50,17 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
 
     @staticmethod
     def _get_worker_type() -> str:
-        """
-        Determine the appropriate worker type for Huey based on OS or environment override.
+        """Pick the Huey worker type from the OS or ``LB_HUEY_WORKER_TYPE``.
 
         Returns
         -------
         str
-            The worker type to use: 'process', 'thread', or 'greenlet'
+            One of ``'process'``, ``'thread'``, or ``'greenlet'``.
 
         Raises
         ------
         InvalidWorkerTypeError
-            If LB_HUEY_WORKER_TYPE is set to an invalid value
+            If ``LB_HUEY_WORKER_TYPE`` is set to an invalid value.
         """
         if config.LB_HUEY_WORKER_TYPE is not None:
             HueyBackgroundTaskClient._logger.debug(
@@ -95,7 +97,61 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
                 return cast("str", WORKER_THREAD)
 
     @staticmethod
+    def _setup_worker_logging() -> None:
+        """Create a per-worker FileHandler in the consumer subprocess.
+
+        Each worker thread or process gets its own log file (``worker-01.txt``,
+        ``worker-02.txt``, …).  Greenlet workers share a thread and fall back
+        to the PID.
+        """
+        if not config.LB_LOG_DIR:
+            return
+
+        # Huey assigns names "Worker-1", "Worker-2", … to every
+        # thread- or process-based worker.  Greenlet workers all share
+        # one thread — fall back to PID for those.
+        thread = threading.current_thread()
+        proc = multiprocessing.current_process()
+
+        if thread.name.startswith("Worker-"):
+            num = int(thread.name[len("Worker-") :])
+            slug = f"worker-{num:02d}"
+        elif proc.name.startswith("Worker-"):
+            num = int(proc.name[len("Worker-") :])
+            slug = f"worker-{num:02d}"
+        else:
+            slug = f"worker-{os.getpid()}"
+
+        log_path = Path(config.LB_LOG_DIR) / f"{slug}.txt"
+        handler = logging.FileHandler(str(log_path), mode="a")
+        handler.setLevel(BenchLogger.get_level())
+        handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+        )
+
+        # Add to every existing luna-bench logger (idempotent by path).
+        for logger_name in logging.root.manager.loggerDict:
+            if logger_name.startswith("luna_bench"):
+                logger = logging.getLogger(logger_name)
+                if not any(
+                    isinstance(h, logging.FileHandler) and h.baseFilename == handler.baseFilename
+                    for h in logger.handlers
+                ):
+                    logger.addHandler(handler)
+
+    @staticmethod
     def _run_consumer() -> None:  # pragma: no cover # another process, hart/impossible to measure coverage
+        # Only the consumer's own startup logs go to main.txt — worker task
+        # logs belong in their per-worker files, not here.
+        if config.LB_LOG_DIR:
+            BenchLogger.setup_file_logging(
+                config.LB_LOG_DIR,
+                target_logger="luna_bench._internal.background_tasks.huey.huey_background_task_client",
+            )
+
         worker_type = HueyBackgroundTaskClient._get_worker_type()
         HueyBackgroundTaskClient._logger.debug(
             f"Initializing {config.resolved_jobs_db_connection_string} huey consumer with worker type: {worker_type}."
@@ -110,6 +166,12 @@ class HueyBackgroundTaskClient(BackgroundTaskClient):
 
         huey = HueyBackgroundTaskClient.huey()
         HueyAlgorithmRunner.register_tasks(huey)
+
+        # Register a startup hook so each worker thread/process gets its own
+        # log file (worker-1.txt, worker-2.txt, …). Huey names workers via
+        # threading.Thread(name=…) or multiprocessing.Process(name=…).
+
+        huey.on_startup("worker_logging")(HueyBackgroundTaskClient._setup_worker_logging)
 
         consumer = Consumer(
             HueyBackgroundTaskClient.huey(),

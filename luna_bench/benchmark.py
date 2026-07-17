@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from dependency_injector.wiring import Provide, inject
-from luna_quantum import Logging
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from returns.pipeline import is_successful
@@ -22,6 +21,7 @@ from luna_bench.entities.enums import ResetLevel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.logging import BenchLogger
 from luna_bench.model_set import ModelSet
 
 if TYPE_CHECKING:
@@ -71,7 +71,7 @@ class Benchmark(BenchmarkEntity):
     It provides methods for interacting with the benchmark data and executing benchmark runs.
     """
 
-    _logger: ClassVar[Logger] = Logging.get_logger(__name__)
+    _logger: ClassVar[Logger] = BenchLogger.get_logger(__name__)
 
     @staticmethod
     @inject
@@ -235,6 +235,9 @@ class Benchmark(BenchmarkEntity):
         result = setup_uc(benchmark)
         if not is_successful(result):
             Benchmark._logger.warning("Output setup failed: %s", result.failure())
+        # Set up file logging to the benchmark's logs directory.
+        elif benchmark.data_dir_logs:
+            BenchLogger.setup_file_logging(benchmark.data_dir_logs)
 
     @staticmethod
     def create(

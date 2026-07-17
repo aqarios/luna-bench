@@ -4,9 +4,9 @@ from time import sleep
 from typing import ClassVar
 
 from luna_model import Model, Solution, Timer
-from luna_quantum import Logging
 
 from luna_bench.custom import BaseAlgorithmSync, algorithm
+from luna_bench.logging import BenchLogger
 
 
 @algorithm()
@@ -19,7 +19,7 @@ class FakeAlgorithm(BaseAlgorithmSync):
 
     time_to_sleep: float = random.uniform(0, 0.5)  # noqa: S311
 
-    _logger: ClassVar[Logger] = Logging.get_logger(__name__)
+    _logger: ClassVar[Logger] = BenchLogger.get_logger(__name__)
 
     def run(self, model: Model) -> Solution:
         """Run a fake algorithm, which will sleep for a random amount of time."""

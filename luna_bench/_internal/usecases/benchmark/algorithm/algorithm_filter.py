@@ -1,4 +1,3 @@
-from luna_quantum import Logging
 from returns.result import Failure, Result, Success
 
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
@@ -6,10 +5,11 @@ from luna_bench._internal.usecases.benchmark.protocols import AlgorithmFilterUc
 from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync
 from luna_bench.entities import AlgorithmEntity, BenchmarkEntity
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
+from luna_bench.logging import BenchLogger
 
 
 class AlgorithmFilterUcImpl(AlgorithmFilterUc):
-    _logger = Logging.get_logger(__name__)
+    _logger = BenchLogger.get_logger(__name__)
 
     def __call__(
         self, benchmark: BenchmarkEntity, algorithm_type: AlgorithmType, algorithm: AlgorithmEntity | None = None

@@ -1,5 +1,4 @@
 from dependency_injector.wiring import Provide
-from luna_quantum import Logging
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -14,13 +13,15 @@ from luna_bench._internal.usecases.benchmark.protocols import (
     AlgorithmRunAsBackgroundTasksUc,
     AlgorithmRunUc,
 )
+from luna_bench.configs.config import config
 from luna_bench.entities import AlgorithmEntity, BenchmarkEntity
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
+from luna_bench.logging import BenchLogger
 
 
 class AlgorithmRunUcImpl(AlgorithmRunUc):
-    _logger = Logging.get_logger(__name__)
+    _logger = BenchLogger.get_logger(__name__)
     _algorithm_filter: AlgorithmFilterUc
     _retrieve_sync: AlgorithmRetrieveSyncSolutionsUc
     _retrieve_async_retrieval_data: AlgorithmRetrieveAsyncRetrivalDataUc
@@ -83,6 +84,9 @@ class AlgorithmRunUcImpl(AlgorithmRunUc):
         #### RUN SUNC AND ASYNC algos
         self._start_tasks(benchmark.name, benchmark.modelset.models, algorithms_async)
         self._start_tasks(benchmark.name, benchmark.modelset.models, algorithms_sync)
+
+        # Tell the (upcoming) consumer subprocess where to write its log files.
+        config.LB_LOG_DIR = benchmark.data_dir_logs or ""
 
         with self._bg_task_client.consumer():
             self._retrieve_sync(benchmark=benchmark)

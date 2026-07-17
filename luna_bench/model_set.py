@@ -4,12 +4,12 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING, ClassVar
 
 from dependency_injector.wiring import Provide, inject
-from luna_quantum import Logging
 from returns.pipeline import is_successful
 
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
 from luna_bench.entities import ModelSetEntity
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
+from luna_bench.logging import BenchLogger
 from luna_bench.model_metadata import ModelMetadata
 
 if TYPE_CHECKING:
@@ -49,7 +49,7 @@ class ModelSet(ModelSetEntity):
         A list of ModelData objects representing the models in this set.
     """
 
-    _logger: ClassVar[Logger] = Logging.get_logger(__name__)
+    _logger: ClassVar[Logger] = BenchLogger.get_logger(__name__)
 
     @staticmethod
     @inject

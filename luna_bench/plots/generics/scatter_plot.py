@@ -2,10 +2,10 @@ from abc import ABC
 from logging import Logger
 from typing import Any, ClassVar
 
-from luna_quantum import Logging
 from pandas import DataFrame
 
 from luna_bench.helpers.optional_dependencies import check_optional_dependency
+from luna_bench.logging import BenchLogger
 from luna_bench.plots.utils import AqariosColours
 
 from .seaborn_plot import SeabornPlot
@@ -19,7 +19,7 @@ class ScatterPlot(SeabornPlot, ABC):
     Install the 'pre-defined' extra: ``pip install luna-bench[pre-defined]``
     """
 
-    logger: ClassVar[Logger] = Logging.get_logger(__name__)
+    logger: ClassVar[Logger] = BenchLogger.get_logger(__name__)
 
     def create(  # noqa: PLR0913 # There are no good alternatives to just have all parameters listed here.
         self,

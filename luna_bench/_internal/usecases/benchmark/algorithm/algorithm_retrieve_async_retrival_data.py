@@ -4,7 +4,6 @@ from time import sleep
 from typing import TYPE_CHECKING
 
 from dependency_injector.wiring import Provide, inject
-from luna_quantum import Logging
 from pydantic import BaseModel, ValidationError
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
@@ -24,6 +23,7 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.logging import BenchLogger
 
 if TYPE_CHECKING:
     from returns.maybe import Maybe
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 class AlgorithmRetrieveAsyncRetrivalDataUcImpl(AlgorithmRetrieveAsyncRetrivalDataUc):
     _transaction: DaoTransaction
-    _logger = Logging.get_logger(__name__)
+    _logger = BenchLogger.get_logger(__name__)
     _background_retrieve_async: BackgroundRetrieveAlgorithmAsyncUc
 
     @inject

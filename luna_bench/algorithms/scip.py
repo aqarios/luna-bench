@@ -5,11 +5,11 @@ from typing import ClassVar
 
 from luna_model import Model, Solution, Timer
 from luna_model.translator import LpTranslator
-from luna_quantum import Logging
 
 from luna_bench.custom import BaseAlgorithmSync, algorithm
 from luna_bench.errors.infeasible_model_error import InfeasibleModelError
 from luna_bench.helpers.optional_dependencies import check_optional_dependency
+from luna_bench.logging import BenchLogger
 
 SCIP_QUAD_VAR_DUMMY = "quadobjvar"
 
@@ -42,7 +42,7 @@ class ScipAlgorithm(BaseAlgorithmSync):
     max_runtime: int | None = 60 * 60
     quiet_output: bool = True
 
-    _logger: ClassVar[Logger] = Logging.get_logger(__name__)
+    _logger: ClassVar[Logger] = BenchLogger.get_logger(__name__)
 
     def run(self, model: Model) -> Solution:
         """

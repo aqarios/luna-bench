@@ -2,10 +2,10 @@ from abc import ABCMeta
 from logging import Logger
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from luna_quantum import Logging
 from pydantic import BaseModel
 
 from luna_bench.errors.write_once_error import WriteOnceError
+from luna_bench.logging import BenchLogger
 
 if TYPE_CHECKING:
     from pydantic._internal._model_construction import ModelMetaclass
@@ -23,7 +23,7 @@ class WriteOnceMeta(PydanticModelMetaclass, ABCMeta):
     Each field listed there will be protected from being overwritten/changed after the value is set onetime.
     """
 
-    _logger: ClassVar[Logger] = Logging.get_logger(__name__)
+    _logger: ClassVar[Logger] = BenchLogger.get_logger(__name__)
     write_once_fields: ClassVar[dict[str, Any]] = {}
 
     def __new__(cls, name: str, bases: tuple[type, ...], namespace: dict[str, Any], **kwargs: Any) -> type:

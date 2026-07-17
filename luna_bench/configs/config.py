@@ -3,7 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
+
+from luna_bench.logging.log_level import LogLevel
 
 
 class Config(BaseSettings):
@@ -27,10 +30,26 @@ class Config(BaseSettings):
 
     LB_ASYNC_WORKER_COUNT: int = 2
 
+    LB_LOG_DEFAULT_LEVEL: LogLevel = LogLevel.INFO
+    LB_LOG_DISABLE_SPINNER: bool = False
+    LB_LOG_DIR: str = ""
+    LB_LOG_FILE: str = "main.txt"
+
     LB_HUEY_WORKER_TYPE: Literal["process", "thread", "greenlet"] | None = None
     LB_HUEY_JOIN_TIMEOUT: int = 10
 
     LB_DATA_DIR: str = "./benchmark_data"
+
+    @field_validator("LB_LOG_DEFAULT_LEVEL", mode="before")
+    @classmethod
+    def _coerce_log_level(cls, v: object) -> object:
+        """Allow env-var strings like "DEBUG" to be resolved by name."""
+        if isinstance(v, str):
+            try:
+                return LogLevel[v.upper()]
+            except KeyError as e:
+                raise ValueError(v) from e
+        return v
 
     @property
     def resolved_db_connection_string(self) -> str:

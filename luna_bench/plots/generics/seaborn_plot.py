@@ -6,10 +6,9 @@ from abc import ABC
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
-from luna_quantum import Logging
-
 from luna_bench.custom import BasePlot
 from luna_bench.helpers.optional_dependencies import check_optional_dependency
+from luna_bench.logging import BenchLogger
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -30,7 +29,7 @@ class SeabornPlot(BasePlot, ABC):
 
     figure_filename: str = "seaborn_plot.png"
 
-    logger: ClassVar[Logger] = Logging.get_logger(__name__)
+    logger: ClassVar[Logger] = BenchLogger.get_logger(__name__)
 
     def setup_figure(self) -> None:
         """Create a matplotlib figure."""

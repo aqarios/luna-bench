@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from luna_quantum import Logging
 from peewee import DoesNotExist, ForeignKeyField, IntegrityError
 from returns.result import Failure, Result, Success
 
@@ -10,6 +9,7 @@ from luna_bench._internal.domain_models import ModelMetadataDomain, ModelSetDoma
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.logging import BenchLogger
 
 from .model_sql_dao import ModelSqlDao
 from .protocols import ModelSetDao
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class ModelSetSqlDao(ModelSetDao):
-    _logger: Logger = Logging.get_logger(__name__)
+    _logger: Logger = BenchLogger.get_logger(__name__)
 
     @staticmethod
     def create(modelset_name: str) -> Result[ModelSetDomain, DataNotUniqueError | UnknownLunaBenchError]:
