@@ -1,7 +1,7 @@
 """Solver performance metric plots."""
 
 from .average_approximation_ratio_plot import AverageApproximationRatioPlot
-from .average_best_solution_found_ratio import AverageBestSolutionFoundRatioPlot
+from .average_best_solution_found_ratio_plot import AverageBestSolutionFoundRatioPlot
 from .average_feasibility_ratio_plot import AverageFeasibilityRatioPlot
 from .average_fob_plot import AverageFractionOfOverallBestSolutionPlot
 from .average_fob_ratio_plot import AverageFoBRatioPlot
