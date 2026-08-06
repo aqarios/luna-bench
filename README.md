@@ -133,6 +133,53 @@ class MyFeature(BaseFeature):
         return MyFeatureResult(num_variables=model.num_variables)
 ```
 
+### Attach hand-assigned values to models
+
+Some properties cannot be derived from a model — a problem category, a source dataset, a difficulty rating, a known
+optimum. `BaseValueLookupFeature` turns a model → value mapping into a regular feature, so those values reach metrics
+and plots through the same channel as computed ones. A concrete lookup feature is a class body with nothing in it; the
+type parameter fixes the value type and drives validation.
+
+```python
+from enum import StrEnum
+
+from luna_bench.custom import BaseValueLookupFeature, feature
+
+
+class ProblemCategory(StrEnum):
+    GRAPH = "graph"
+    COMBINATORIAL = "combinatorial"
+    ROUTING = "routing"
+
+
+@feature
+class ProblemCategoryFeature(BaseValueLookupFeature[ProblemCategory]):
+    """Maps each model to a hand-assigned problem category."""
+
+
+categories = ProblemCategoryFeature()
+categories.add_model(max_cut_model, ProblemCategory.GRAPH)
+categories.add_models({knapsack_model: ProblemCategory.COMBINATORIAL, tsp_model: ProblemCategory.ROUTING})
+
+benchmark.add_feature(name="category", feature=categories)  # populate BEFORE this call
+```
+
+A metric reads the value like any other feature result:
+
+```python
+category = feature_results.first(ProblemCategoryFeature).value
+```
+
+Notes:
+
+- Models are keyed by `hash(model)` — the same hash luna-bench already stores per model — so you never hash by hand.
+- A model with no entry raises `ModelLookupMissError`, recorded as a failed feature result for that model only. Check
+  coverage up front with `categories.covers(model)`.
+- Populate the feature *before* `add_feature`: the benchmark serializes its configuration at that point and rebuilds it
+  from the database at run time.
+- Need a richer result than a bare value, or a computed fallback on a miss? Subclass `BaseModelLookupFeature[TValue,
+  TFeatureResult]` and implement `to_result`, optionally overriding `on_miss`.
+
 ### Write your own metric
 
 Metrics evaluate solutions. They can depend on features for reference data like optimal solutions.

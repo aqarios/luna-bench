@@ -2,10 +2,12 @@ from .base_components.base_algorithm_async import BaseAlgorithmAsync
 from .base_components.base_algorithm_sync import BaseAlgorithmSync
 from .base_components.base_exporter import BaseExporter, Exporter
 from .base_components.base_feature import BaseFeature
+from .base_components.base_lookup_feature import BaseModelLookupFeature, BaseValueLookupFeature
 from .base_components.base_metric import BaseMetric
 from .base_components.base_plot import BasePlot
 from .base_results.feature_result import FeatureResult
 from .base_results.feature_result_enum import FeatureResultEnum
+from .base_results.lookup_feature_result import LookupFeatureResult
 from .base_results.metric_result import MetricResult
 from .decorators.algorithm import algorithm
 from .decorators.feature import feature
@@ -36,7 +38,9 @@ __all__ = [
     "BaseExporter",
     "BaseFeature",
     "BaseMetric",
+    "BaseModelLookupFeature",
     "BasePlot",
+    "BaseValueLookupFeature",
     "BenchmarkName",
     "BenchmarkResultContainer",
     "Exporter",
@@ -45,12 +49,12 @@ __all__ = [
     "FeatureResult",
     "FeatureResultContainer",
     "FeatureResultEnum",
+    "LookupFeatureResult",
     "MetricComputed",
     "MetricName",
     "MetricResult",
     "MetricResultContainer",
     "ModelName",
-    "ModelSetName",
     "ModelSetName",
     "PlotName",
     "RegistryInfo",
