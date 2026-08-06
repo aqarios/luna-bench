@@ -52,7 +52,6 @@ if TYPE_CHECKING:
         PlotRemoveUc,
         PlotsRunUc,
     )
-    from luna_bench._internal.usecases.modelset.protocols import ModelSetLoadUc
     from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot, Exporter
     from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
     from luna_bench.errors.registry.unknown_id_error import UnknownIdError
@@ -142,13 +141,6 @@ class Benchmark(BenchmarkEntity):
         benchmark_set_modelset: BenchmarkSetModelsetUc = Provide[UsecaseContainer.benchmark_set_modelset_uc],
     ) -> BenchmarkSetModelsetUc:
         return benchmark_set_modelset
-
-    @staticmethod
-    @inject
-    def __modelset_load_uc(
-        modelset_load: ModelSetLoadUc = Provide[UsecaseContainer.modelset_load_uc],
-    ) -> ModelSetLoadUc:
-        return modelset_load
 
     @staticmethod
     @inject
@@ -503,7 +495,7 @@ class Benchmark(BenchmarkEntity):
     def add_feature(
         self,
         name: str,
-        feature: BaseFeature,
+        feature: BaseFeature[Any],
     ) -> FeatureEntity:
         """
         Add a feature to the benchmark with a given name.

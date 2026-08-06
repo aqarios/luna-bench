@@ -218,7 +218,7 @@ class TestAbstractness:
 
     def test_the_value_lookup_base_cannot_be_instantiated(self) -> None:
         with pytest.raises(TypeError):
-            BaseValueLookupFeature()  # type: ignore[abstract]
+            BaseValueLookupFeature()
 
 
 class TestRegistration:

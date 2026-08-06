@@ -30,7 +30,7 @@ class PeeweeTransaction(_transaction, DaoTransaction):
     _solvejob_dao: AlgorithmDao
     _plot_dao: PlotDao
 
-    def __init__(  # noqa: PLR0913 # Excluded because we need to add all dao's in this init function
+    def __init__(  # noqa: PLR0913, PLR0917 # Excluded because we need to add all dao's in this init function
         self,
         database: Database,
         modelset_dao: ModelSetDao,

@@ -39,7 +39,12 @@ class TestModelData:
                 Success(ModelSetDomain(id=1, name="Test", models=[])),
                 nullcontext(ModelSet(id=1, name="Test", models=[])),
             ),
+            (
+                Failure(UnknownLunaBenchError(RuntimeError("boom"))),
+                pytest.raises(RuntimeError),
+            ),
         ],
+        ids=["success", "unexpected_failure"],
     )
     def test_create(
         self,

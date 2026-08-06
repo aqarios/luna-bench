@@ -51,7 +51,7 @@ class MetricRunUcImpl(MetricRunUc):
         self._transaction = transaction
         self._registry = registry
 
-    def _run(  # noqa: PLR0913
+    def _run(  # noqa: PLR0913, PLR0917
         self,
         benchmark_name: str,
         algorithm_name: str,

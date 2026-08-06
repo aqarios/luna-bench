@@ -137,8 +137,7 @@ class MyFeature(BaseFeature):
 
 Some properties cannot be derived from a model — a problem category, a source dataset, a difficulty rating, a known
 optimum. `BaseValueLookupFeature` turns a model → value mapping into a regular feature, so those values reach metrics
-and plots through the same channel as computed ones. A concrete lookup feature is a class body with nothing in it; the
-type parameter fixes the value type and drives validation.
+and plots through the same channel as computed ones. The type parameter fixes the value type and drives validation.
 
 ```python
 from enum import StrEnum

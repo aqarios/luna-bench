@@ -47,9 +47,12 @@ class WriteOnceMeta(PydanticModelMetaclass, ABCMeta):
                         get_annotate_from_class_namespace,
                     )
 
-                    if annotate := get_annotate_from_class_namespace(namespace):
+                    # Exactly one of the two branches below is reachable per interpreter, so
+                    # neither can be covered by a single test run: on 3.14+ the import
+                    # succeeds and the handler is dead, on <3.14 the reverse.
+                    if annotate := get_annotate_from_class_namespace(namespace):  # pragma: no cover
                         existing = call_annotate_function(annotate, format=Format.FORWARDREF)
-                except ImportError:
+                except ImportError:  # pragma: no cover
                     pass
 
                 namespace["__annotations__"] = {**existing, field_name: type_hint}

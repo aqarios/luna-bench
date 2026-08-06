@@ -7,8 +7,7 @@ features.
 
 `BaseModelLookupFeature` is the generic base for that: a mapping from ``hash(model)`` to
 a value of the subclass' choosing. Subclasses fix the value type (and, if needed, the
-result type) via type parameters, so a concrete lookup feature is usually a class body
-with nothing in it.
+result type) via type parameters.
 """
 
 from abc import ABC, abstractmethod
