@@ -51,7 +51,6 @@ __all__ = [
     "MetricResultContainer",
     "ModelName",
     "ModelSetName",
-    "ModelSetName",
     "PlotName",
     "RegistryInfo",
     "algorithm",

@@ -1,4 +1,4 @@
-"""Average feasibility ratio per solver bar chart."""
+"""Share of models for which an algorithm found at least one feasible solution."""
 
 from __future__ import annotations
 
@@ -11,38 +11,38 @@ from luna_bench.plots.generics.bar_plot import BarPlot
 if TYPE_CHECKING:
     from luna_bench.custom import BenchmarkResultContainer
 
+PERCENT = 100.0
+
 
 @plot(FeasibilityRatio)
-class AverageFeasibilityRatioPlot(BarPlot):
-    """Bar chart of the mean share of feasible samples per algorithm.
+class FeasibleSolutionFoundPlot(BarPlot):
+    """Bar chart showing the percentage of models solved feasibly per algorithm.
 
-    Counts how many of the samples an algorithm returned satisfy all constraints,
-    averaged over every model, with the spread across those models as the error bar.
-    ``1.0`` means every sample was feasible.
-
-    Requires the ``FeasibilityRatio`` metric.
+    A model counts as solved when at least one sample was feasible, i.e. when the
+    ``FeasibilityRatio`` is greater than zero. Averaging that indicator over all
+    models gives the share of the benchmark an algorithm could handle at all,
+    independent of how many of its samples were feasible.
 
     Every display option is inherited and can be set when the plot is constructed,
-    e.g. ``AverageFeasibilityRatioPlot(annotate=False, file_formats=("pgf", "png"))``.
+    e.g. ``FeasibleSolutionFoundPlot(annotate=False, file_formats=("pgf", "png"))``.
     `BarPlot` documents the colours, error bars, value annotations and grouping by a
     feature; `SeabornPlot` the figure size and the output formats.
 
     Attributes
     ----------
     figure_filename : str
-        Stem of the written figure files, by default ``"average_feasibility_ratio"``.
+        Stem of the written figure files, by default ``"feasible_solution_found"``.
+    annotate_format : str
+        Format of the value written above each bar, by default ``"{:.1f}%"``.
 
     Examples
     --------
     >>> bench.add_metric(name="feasibility", metric=FeasibilityRatio())
-    >>> bench.add_plot(name="avg_feasibility", plot=AverageFeasibilityRatioPlot())
-
-    See Also
-    --------
-    FeasibleSolutionFoundPlot : Whether *any* feasible sample was found, per model.
+    >>> bench.add_plot(name="feasible_found", plot=FeasibleSolutionFoundPlot())
     """
 
-    figure_filename: str = "average_feasibility_ratio"
+    figure_filename: str = "feasible_solution_found"
+    annotate_format: str = "{:.1f}%"
 
     def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
         """Generate plot output from benchmark results.
@@ -56,7 +56,7 @@ class AverageFeasibilityRatioPlot(BarPlot):
             {
                 "algorithm": algorithm_name,
                 "model": model_name,
-                "feasibility_ratio": metric_result.feasibility_ratio,
+                "feasible_found": PERCENT if metric_result.feasibility_ratio > 0 else 0.0,
             }
             for model_name, algorithm_name, metric_result in benchmark_results.get_all_metrics_of_type(FeasibilityRatio)
         ]
@@ -65,12 +65,10 @@ class AverageFeasibilityRatioPlot(BarPlot):
             save_dir=save_dir,
             rows=rows,
             x="algorithm",
-            y="feasibility_ratio",
+            y="feasible_found",
             xlabel="Algorithm",
-            title="Average Feasibility Ratio per Solver",
-            ylabel="Feasibility Ratio",
-            ylim=(0, 1.15),
-            hline=1.0,
-            hline_label="Upper Limit (1.0)",
+            ylabel="Feasible solution found [% of models]",
+            title="Models with a Feasible Solution per Algorithm",
+            ylim=(0, 105),
             **self.apply_grouping(benchmark_results, rows),
         )

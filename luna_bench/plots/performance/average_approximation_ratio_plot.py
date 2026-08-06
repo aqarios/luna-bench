@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from luna_bench.custom import plot
 from luna_bench.metrics import ApproximationRatio
@@ -14,12 +14,33 @@ if TYPE_CHECKING:
 
 @plot(ApproximationRatio)
 class AverageApproximationRatioPlot(BarPlot):
-    """Bar chart showing average approximation ratio per algorithm.
+    """Bar chart of the mean approximation ratio per algorithm.
+
+    The approximation ratio compares an algorithm's objective value against the known
+    optimum, so ``1.0`` - marked by the reference line - means the optimum was reached.
+    One bar per algorithm, averaged over every model, with the spread across those
+    models as the error bar.
+
+    Requires the ``ApproximationRatio`` metric.
+
+    Every display option is inherited and can be set when the plot is constructed,
+    e.g. ``AverageApproximationRatioPlot(annotate=False, file_formats=("pgf", "png"))``.
+    `BarPlot` documents the colours, error bars, value annotations and grouping by a
+    feature; `SeabornPlot` the figure size and the output formats.
+
+    Attributes
+    ----------
+    figure_filename : str
+        Stem of the written figure files, by default ``"average_approximation_ratio"``.
 
     Examples
     --------
     >>> bench.add_metric(name="approx_ratio", metric=ApproximationRatio())
     >>> bench.add_plot(name="avg_approx", plot=AverageApproximationRatioPlot())
+
+    See Also
+    --------
+    ApproximationRatioVsVarNumberPlot : The same ratio against model size.
     """
 
     figure_filename: str = "average_approximation_ratio"
@@ -32,7 +53,7 @@ class AverageApproximationRatioPlot(BarPlot):
         benchmark_results : BenchmarkResultContainer
             Aggregated benchmark data consumed by the plot implementation.
         """
-        rows = [
+        rows: list[dict[str, Any]] = [
             {
                 "algorithm": algorithm_name,
                 "model": model_name,
@@ -53,4 +74,5 @@ class AverageApproximationRatioPlot(BarPlot):
             title="Average Approximation Ratio per Solver (1.0 = optimal)",
             hline=1.0,
             hline_label="Optimal (1.0)",
+            **self.apply_grouping(benchmark_results, rows),
         )

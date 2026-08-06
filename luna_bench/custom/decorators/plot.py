@@ -1,6 +1,6 @@
 import functools
 from collections.abc import Callable
-from typing import Any, cast, overload
+from typing import Any, Protocol, cast, overload
 
 from dependency_injector.wiring import Provide, inject
 
@@ -16,6 +16,23 @@ from .decorator_utilities import DecoratorUtilities
 _REQUIRED_TYPES = BaseFeature[Any] | BaseMetric[Any]
 
 
+class PlotDecorator(Protocol):
+    """The decorator `plot` returns once dependencies have been declared.
+
+    Decorating a class hands back *that* class rather than ``BasePlot``, which is what
+    keeps a plot's own configuration visible afterwards: without it, IDEs and type
+    checkers resolve a decorated ``AverageRuntimePlot`` to ``BasePlot`` and lose every
+    field, so ``AverageRuntimePlot(annotate=False)`` offers no completion and reports a
+    spurious error.
+    """
+
+    @overload
+    def __call__[TPlot: BasePlot](self, target: type[TPlot], /) -> type[TPlot]: ...
+
+    @overload
+    def __call__(self, target: Callable[[BenchmarkResultContainer], None], /) -> type[BasePlot]: ...
+
+
 def _resolve_components(
     required_components: type[_REQUIRED_TYPES] | list[type[_REQUIRED_TYPES]] | tuple[type[_REQUIRED_TYPES], ...] | None,
 ) -> tuple[list[type[BaseFeature[Any]]], list[type[BaseMetric[Any]]]]:
@@ -25,12 +42,12 @@ def _resolve_components(
 
 
 @overload
-def plot(
-    required_components: type[BasePlot],
+def plot[TPlot: BasePlot](
+    required_components: type[TPlot],
     *,
     plot_id: str | None = None,
     plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
-) -> type[BasePlot]: ...
+) -> type[TPlot]: ...
 
 
 @overload
@@ -48,7 +65,7 @@ def plot(
     *,
     plot_id: str | None = None,
     plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
-) -> Callable[[type[BasePlot] | Callable[[BenchmarkResultContainer], None]], type[BasePlot]]: ...
+) -> PlotDecorator: ...
 
 
 @overload
@@ -57,7 +74,7 @@ def plot(
     *,
     plot_id: str | None = None,
     plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
-) -> Callable[[type[BasePlot] | Callable[[BenchmarkResultContainer], None]], type[BasePlot]]: ...
+) -> PlotDecorator: ...
 
 
 @overload
@@ -66,7 +83,7 @@ def plot(
     *,
     plot_id: str | None = None,
     plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
-) -> Callable[[type[BasePlot] | Callable[[BenchmarkResultContainer], None]], type[BasePlot]]: ...
+) -> PlotDecorator: ...
 
 
 @inject
@@ -80,7 +97,7 @@ def plot(
     *,
     plot_id: str | None = None,
     plot_registry: Registry[BasePlot] = Provide[RegistryContainer.plot_registry],
-) -> Callable[[type[BasePlot] | Callable[[BenchmarkResultContainer], None]], type[BasePlot]] | type[BasePlot]:
+) -> PlotDecorator | type[BasePlot]:
     """
     Register a class or function as a plot component.
 
@@ -213,4 +230,6 @@ def plot(
     if target is not None:
         return _do_register(target)
 
-    return _do_register
+    # `_do_register` hands back exactly the class it was given, which is what the protocol
+    # promises but cannot be expressed in the inner function's own signature.
+    return cast("PlotDecorator", _do_register)

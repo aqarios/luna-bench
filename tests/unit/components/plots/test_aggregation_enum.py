@@ -8,7 +8,7 @@ class TestAggregation:
         ("aggregation", "estimator", "errorbar"),
         [
             (Aggregation.MEAN_SD, "mean", "sd"),
-            (Aggregation.MEAN, "mean", None),
+            (Aggregation.MEAN, "mean", "sd"),
             (Aggregation.MAX, "max", None),
             (Aggregation.MIN, "min", None),
         ],

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from luna_bench.custom import plot
 from luna_bench.features import VarNumberFeature
@@ -15,6 +15,16 @@ if TYPE_CHECKING:
 @plot(VarNumberFeature)
 class VarNumberBarChartPlot(BarPlot):
     """Bar chart showing the number of variables per model.
+
+    Every display option is inherited and can be set when the plot is constructed,
+    e.g. ``VarNumberBarChartPlot(annotate=False, file_formats=("pgf", "png"))``.
+    `BarPlot` documents the colours, error bars, value annotations and grouping by a
+    feature; `SeabornPlot` the figure size and the output formats.
+
+    Attributes
+    ----------
+    figure_filename : str
+        Stem of the written figure files, by default ``"var_number_bar_chart"``.
 
     Examples
     --------
@@ -32,7 +42,7 @@ class VarNumberBarChartPlot(BarPlot):
         benchmark_results : BenchmarkResultContainer
             Aggregated benchmark data consumed by the plot implementation.
         """
-        rows = [
+        rows: list[dict[str, Any]] = [
             {
                 "model": model_name,
                 "var_number": benchmark_results.features[model_name].first(VarNumberFeature).var_number,

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from enum import StrEnum
 
+from .errorbar import ErrorBar
+
 
 class Aggregation(StrEnum):
     """Aggregation strategy for metric bar charts.
@@ -23,8 +25,12 @@ class Aggregation(StrEnum):
         return self.value
 
     @property
-    def errorbar(self) -> str | None:
-        """Seaborn ``errorbar`` parameter (``"sd"`` or ``None``)."""
-        if self is Aggregation.MEAN_SD:
+    def errorbar(self) -> ErrorBar:
+        """Default seaborn ``errorbar`` parameter for this aggregation.
+
+        Means carry the spread of the underlying samples (``"sd"``); extrema are
+        single observations, so they get no error bar.
+        """
+        if self in (Aggregation.MEAN, Aggregation.MEAN_SD):
             return "sd"
         return None

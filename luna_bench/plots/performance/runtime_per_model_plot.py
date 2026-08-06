@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from luna_bench.custom import plot
 from luna_bench.metrics import Runtime
@@ -14,12 +14,32 @@ if TYPE_CHECKING:
 
 @plot(Runtime)
 class RuntimePerModelPlot(BarPlot):
-    """Bar chart showing runtime per model grouped by algorithm.
+    """Bar chart of runtime per model, with one bar per algorithm inside each model.
+
+    Keeps the models apart instead of averaging over them, which shows where a
+    single hard instance drives an algorithm's average runtime up.
+
+    Requires the ``Runtime`` metric.
+
+    Every display option is inherited and can be set when the plot is constructed,
+    e.g. ``RuntimePerModelPlot(annotate=False, file_formats=("pgf", "png"))``.
+    `BarPlot` documents the colours, error bars and value annotations; `SeabornPlot` the
+    figure size and the output formats. ``group_by`` does not apply here - this plot
+    already uses the hue channel for the algorithm.
+
+    Attributes
+    ----------
+    figure_filename : str
+        Stem of the written figure files, by default ``"runtime_per_model"``.
 
     Examples
     --------
     >>> bench.add_metric(name="runtime", metric=Runtime())
     >>> bench.add_plot(name="runtime_per_model", plot=RuntimePerModelPlot())
+
+    See Also
+    --------
+    AverageRuntimePlot : The same numbers averaged over all models.
     """
 
     figure_filename: str = "runtime_per_model"
@@ -32,7 +52,7 @@ class RuntimePerModelPlot(BarPlot):
         benchmark_results : BenchmarkResultContainer
             Aggregated benchmark data consumed by the plot implementation.
         """
-        rows = [
+        rows: list[dict[str, Any]] = [
             {
                 "model": model_name,
                 "algorithm": algorithm_name,

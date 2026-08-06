@@ -7,6 +7,7 @@ from .average_fob_plot import AverageFractionOfOverallBestSolutionPlot
 from .average_fob_ratio_plot import AverageFoBRatioPlot
 from .average_runtime_plot import AverageRuntimePlot
 from .average_time_to_solution_plot import AverageTimeToSolutionPlot
+from .feasible_solution_found_plot import FeasibleSolutionFoundPlot
 from .runtime_per_model_plot import RuntimePerModelPlot
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "AverageFractionOfOverallBestSolutionPlot",
     "AverageRuntimePlot",
     "AverageTimeToSolutionPlot",
+    "FeasibleSolutionFoundPlot",
     "RuntimePerModelPlot",
 ]

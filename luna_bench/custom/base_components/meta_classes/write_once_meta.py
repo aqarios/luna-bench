@@ -1,8 +1,9 @@
 from abc import ABCMeta
 from logging import Logger
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, dataclass_transform
 
 from pydantic import BaseModel
+from pydantic.fields import Field, PrivateAttr
 
 from luna_bench.errors.write_once_error import WriteOnceError
 from luna_bench.logging import BenchLogger
@@ -15,12 +16,21 @@ else:
     PydanticModelMetaclass = type(BaseModel)
 
 
+@dataclass_transform(kw_only_default=True, field_specifiers=(Field, PrivateAttr))
 class WriteOnceMeta(PydanticModelMetaclass, ABCMeta):
     """
     Metaclass for write-once fields.
 
     Write once field must be written in the write_once_fields dict.
     Each field listed there will be protected from being overwritten/changed after the value is set onetime.
+
+    Notes
+    -----
+    The `dataclass_transform` marker repeats what pydantic already declares on its own
+    metaclass. Type checkers do not carry it through this subclass on their own, and
+    without it every model built on this metaclass loses its generated ``__init__``:
+    IDEs stop completing and start flagging field arguments such as
+    ``AverageRuntimePlot(annotate=False)``.
     """
 
     _logger: ClassVar[Logger] = BenchLogger.get_logger(__name__)

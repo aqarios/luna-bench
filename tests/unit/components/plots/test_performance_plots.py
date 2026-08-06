@@ -30,6 +30,7 @@ from luna_bench.plots.performance import (
     AverageFractionOfOverallBestSolutionPlot,
     AverageRuntimePlot,
     AverageTimeToSolutionPlot,
+    FeasibleSolutionFoundPlot,
     RuntimePerModelPlot,
 )
 
@@ -84,13 +85,13 @@ RUN_CASES = [
         AverageBestSolutionFoundRatioPlot,
         BestSolutionFoundRatio,
         BestSolutionFoundRatioResult(best_solution_found=1.2),
-        {"algorithm": "algo_1", "model": "model_a", "time_to_solution": 1.2},
+        {"algorithm": "algo_1", "model": "model_a", "best_solution_found_ratio": 1.2},
         {
             "x": "algorithm",
-            "y": "time_to_solution",
+            "y": "best_solution_found_ratio",
             "xlabel": "Algorithm",
             "ylabel": "Best Solution Found Ratio",
-            "title": "Average Time to Solution per Algorithm (higher is better)",
+            "title": "Average Best Solution Found Ratio per Algorithm (higher is better)",
         },
         id="average_best_solution_found_ratio",
     ),
@@ -110,6 +111,21 @@ RUN_CASES = [
             "hline_label": "Upper Limit (1.0)",
         },
         id="average_feasibility_ratio",
+    ),
+    pytest.param(
+        FeasibleSolutionFoundPlot,
+        FeasibilityRatio,
+        FeasibilityRatioResult(feasibility_ratio=0.75),
+        {"algorithm": "algo_1", "model": "model_a", "feasible_found": 100.0},
+        {
+            "x": "algorithm",
+            "y": "feasible_found",
+            "xlabel": "Algorithm",
+            "ylabel": "Feasible solution found [% of models]",
+            "title": "Models with a Feasible Solution per Algorithm",
+            "ylim": (0, 105),
+        },
+        id="feasible_solution_found",
     ),
     pytest.param(
         AverageFractionOfOverallBestSolutionPlot,
@@ -203,3 +219,22 @@ class TestPerformancePlotRun:
 
         benchmark_results.get_all_metrics_of_type.assert_called_once_with(metric_cls)
         mock_create.assert_called_once_with(save_dir=None, rows=[], **expected_kwargs)
+
+
+class TestFeasibleSolutionFoundPlot:
+    """Test the feasibility indicator derived from the feasibility ratio."""
+
+    @pytest.mark.parametrize(("feasibility_ratio", "expected"), [(0.0, 0.0), (0.01, 100.0), (1.0, 100.0)])
+    def test_run_maps_any_feasible_sample_to_full_percent(self, feasibility_ratio: float, expected: float) -> None:
+        """Test a model counts fully when at least one sample was feasible."""
+        benchmark_results = MagicMock(spec=BenchmarkResultContainer)
+        benchmark_results.get_all_metrics_of_type.return_value = [
+            ("model_a", "algo_1", FeasibilityRatioResult(feasibility_ratio=feasibility_ratio))
+        ]
+
+        with patch.object(FeasibleSolutionFoundPlot, "create") as mock_create:
+            FeasibleSolutionFoundPlot().run(benchmark_results)
+
+        assert mock_create.call_args.kwargs["rows"] == [
+            {"algorithm": "algo_1", "model": "model_a", "feasible_found": expected}
+        ]

@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 
 from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
 from luna_bench.plots.generics.scatter_plot import ScatterPlot
-from luna_bench.plots.utils.style import AqariosColours
+from luna_bench.plots.utils.style import LunaColours
 
 
 class ConcreteScatterPlot(ScatterPlot):
@@ -239,5 +239,5 @@ class TestScatterPlot:
             )
 
             call_kwargs = mock_axhline.call_args[1]
-            assert call_kwargs["color"] == AqariosColours.SUCCESS
+            assert call_kwargs["color"] == LunaColours.LUNA_MODEL
         _ = mock_check_dep

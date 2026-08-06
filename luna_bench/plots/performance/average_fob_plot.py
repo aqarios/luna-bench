@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from luna_bench.custom import plot
 from luna_bench.metrics.fraction_of_overall_best_solution import FractionOfOverallBestSolution
@@ -14,7 +14,24 @@ if TYPE_CHECKING:
 
 @plot(FractionOfOverallBestSolution)
 class AverageFractionOfOverallBestSolutionPlot(BarPlot):
-    """Bar chart showing average best solution found ratio per algorithm.
+    """Bar chart of the mean fraction of the overall best solution per algorithm.
+
+    Each algorithm's objective value is measured against the best value *any*
+    algorithm in the benchmark reached for that model, so ``1.0`` - marked by the
+    reference line - means it was the best of the field. Useful when no optimum is
+    known. Averaged over every model, with the spread across models as the error bar.
+
+    Requires the ``FractionOfOverallBestSolution`` metric.
+
+    Every display option is inherited and can be set when the plot is constructed,
+    e.g. ``AverageFractionOfOverallBestSolutionPlot(annotate=False, file_formats=("pgf", "png"))``.
+    `BarPlot` documents the colours, error bars, value annotations and grouping by a
+    feature; `SeabornPlot` the figure size and the output formats.
+
+    Attributes
+    ----------
+    figure_filename : str
+        Stem of the written figure files, by default ``"average_fraction_of_overall_best_solution"``.
 
     Examples
     --------
@@ -32,7 +49,7 @@ class AverageFractionOfOverallBestSolutionPlot(BarPlot):
         benchmark_results : BenchmarkResultContainer
             Aggregated benchmark data consumed by the plot implementation.
         """
-        rows = [
+        rows: list[dict[str, Any]] = [
             {
                 "algorithm": algorithm_name,
                 "model": model_name,
@@ -53,4 +70,5 @@ class AverageFractionOfOverallBestSolutionPlot(BarPlot):
             title="Average best solution found per Solver (1.0 = optimal)",
             hline=1.0,
             hline_label="Optimal (1.0)",
+            **self.apply_grouping(benchmark_results, rows),
         )

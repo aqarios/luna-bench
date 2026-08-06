@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from luna_bench.custom import plot
 from luna_bench.metrics import TimeToSolution
@@ -14,7 +14,24 @@ if TYPE_CHECKING:
 
 @plot(TimeToSolution)
 class AverageTimeToSolutionPlot(BarPlot):
-    """Bar chart showing average time to solution per algorithm.
+    """Bar chart of the mean time to solution (TTS) per algorithm.
+
+    TTS is the runtime an algorithm needs to reach its target solution with a given
+    confidence, so it weighs speed against success rate. One bar per algorithm,
+    averaged over every model, with the spread across those models as the error bar.
+    Lower is better.
+
+    Requires the ``TimeToSolution`` metric.
+
+    Every display option is inherited and can be set when the plot is constructed,
+    e.g. ``AverageTimeToSolutionPlot(annotate=False, file_formats=("pgf", "png"))``.
+    `BarPlot` documents the colours, error bars, value annotations and grouping by a
+    feature; `SeabornPlot` the figure size and the output formats.
+
+    Attributes
+    ----------
+    figure_filename : str
+        Stem of the written figure files, by default ``"average_time_to_solution"``.
 
     Examples
     --------
@@ -32,7 +49,7 @@ class AverageTimeToSolutionPlot(BarPlot):
         benchmark_results : BenchmarkResultContainer
             Aggregated benchmark data consumed by the plot implementation.
         """
-        rows = [
+        rows: list[dict[str, Any]] = [
             {
                 "algorithm": algorithm_name,
                 "model": model_name,
@@ -49,4 +66,5 @@ class AverageTimeToSolutionPlot(BarPlot):
             xlabel="Algorithm",
             ylabel="Time to Solution (TTS)",
             title="Average Time to Solution per Algorithm (lower is better)",
+            **self.apply_grouping(benchmark_results, rows),
         )

@@ -272,13 +272,13 @@ class TestFakePlot:
 
     @patch("luna_bench.plots.fake_plot.check_optional_dependency")
     def test_fake_plot_run_uses_palette(self, mock_check_dep: MagicMock) -> None:
-        """Test that FakePlot.run uses AqariosColours palette."""
+        """Test that FakePlot.run uses the Luna palette."""
         _ = mock_check_dep
         with (
             patch("matplotlib.pyplot.figure"),
             patch("seaborn.barplot") as mock_barplot,
             patch("matplotlib.pyplot.show"),
-            patch("luna_bench.plots.fake_plot.AqariosColours.palette") as mock_palette,
+            patch("luna_bench.plots.fake_plot.LunaColours.palette") as mock_palette,
         ):
             mock_palette.return_value = ["red", "blue"]
 

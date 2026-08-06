@@ -1,7 +1,9 @@
 """Tests for SeabornPlot base class."""
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import matplotlib as mpl
 from matplotlib import pyplot as plt
 
 from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
@@ -153,7 +155,53 @@ class TestSeabornPlot:
         assert plot.height == 6
         assert plot.dpi == 100
         assert plot.show is True
-        assert plot.figure_filename == "seaborn_plot.png"
+        assert plot.figure_filename == "seaborn_plot"
+        assert plot.file_formats == ("png",)
+
+    def test_save_figure_writes_one_file_per_format(self, tmp_path: Path) -> None:
+        """Test save_figure writes every configured format next to each other."""
+        plot = ConcreteSeabornPlot()
+        plot.show = False
+        plot.figure_filename = "figure.png"
+        plot.file_formats = ("png", "svg")
+        plot.setup_figure()
+
+        saved = plot.save_figure(str(tmp_path))
+
+        assert saved == [tmp_path / "figure.png", tmp_path / "figure.svg"]
+        assert all(path.exists() for path in saved)
+
+    def test_save_figure_keeps_going_when_a_format_fails(self, tmp_path: Path) -> None:
+        """Test a format that cannot be written (e.g. pgf without LaTeX) is logged, not raised."""
+        plot = ConcreteSeabornPlot()
+        plot.show = False
+        plot.figure_filename = "figure"
+        plot.file_formats = ("broken", "png")
+        plot.setup_figure()
+
+        with patch.object(ConcreteSeabornPlot.logger, "exception") as mock_exception:
+            saved = plot.save_figure(str(tmp_path))
+
+        mock_exception.assert_called_once()
+        assert saved == [tmp_path / "figure.png"]
+
+    def test_save_figure_configures_pgf_backend(self, tmp_path: Path) -> None:
+        """Test requesting pgf points matplotlib at the configured TeX engine."""
+        plot = ConcreteSeabornPlot()
+        plot.show = False
+        plot.file_formats = ("pgf",)
+        plot.pgf_texsystem = "lualatex"
+        plot.setup_figure()
+
+        with (
+            patch("matplotlib.pyplot.savefig") as mock_savefig,
+            patch("shutil.which", return_value="/usr/bin/lualatex"),
+        ):
+            plot.save_figure(str(tmp_path))
+
+        assert mpl.rcParams["pgf.texsystem"] == "lualatex"
+        assert mpl.rcParams["pgf.rcfonts"] is False
+        assert mock_savefig.call_args[0][0] == str(tmp_path / "seaborn_plot.pgf")
 
     @patch("luna_bench.plots.generics.seaborn_plot.check_optional_dependency")
     def test_finalize_plot_with_save_dir(self, mock_check_dep: MagicMock) -> None:
@@ -179,3 +227,20 @@ class TestSeabornPlot:
             mock_savefig.assert_called_once()
             mock_logger.assert_called_once()
             mock_show.assert_called_once()
+
+    def test_save_figure_explains_a_missing_tex_installation(self, tmp_path: Path) -> None:
+        """Test pgf is skipped with an actionable warning when no TeX engine is installed."""
+        plot = ConcreteSeabornPlot()
+        plot.show = False
+        plot.figure_filename = "figure"
+        plot.file_formats = ("pgf", "png")
+        plot.setup_figure()
+
+        with (
+            patch("shutil.which", return_value=None),
+            patch.object(ConcreteSeabornPlot.logger, "warning") as mock_warning,
+        ):
+            saved = plot.save_figure(str(tmp_path))
+
+        assert saved == [tmp_path / "figure.png"]
+        assert "LaTeX" in mock_warning.call_args[0][0]

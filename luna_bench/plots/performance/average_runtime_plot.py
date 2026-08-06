@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from luna_bench.custom import plot
 from luna_bench.metrics.runtime import Runtime
@@ -14,12 +14,31 @@ if TYPE_CHECKING:
 
 @plot(Runtime)
 class AverageRuntimePlot(BarPlot):
-    """Bar chart showing average runtime per algorithm.
+    """Bar chart of the mean wall-clock runtime each algorithm needed.
+
+    One bar per algorithm, averaged over every model in the benchmark, with the
+    spread across those models as the error bar. Lower is better.
+
+    Requires the ``Runtime`` metric.
+
+    Every display option is inherited and can be set when the plot is constructed,
+    e.g. ``AverageRuntimePlot(annotate=False, file_formats=("pgf", "png"))``.
+    `BarPlot` documents the colours, error bars, value annotations and grouping by a
+    feature; `SeabornPlot` the figure size and the output formats.
+
+    Attributes
+    ----------
+    figure_filename : str
+        Stem of the written figure files, by default ``"average_runtime"``.
 
     Examples
     --------
     >>> bench.add_metric(name="runtime", metric=Runtime())
     >>> bench.add_plot(name="avg_runtime", plot=AverageRuntimePlot())
+
+    See Also
+    --------
+    RuntimePerModelPlot : The same numbers broken down per model.
     """
 
     figure_filename: str = "average_runtime"
@@ -32,7 +51,7 @@ class AverageRuntimePlot(BarPlot):
         benchmark_results : BenchmarkResultContainer
             Aggregated benchmark data consumed by the plot implementation.
         """
-        rows = [
+        rows: list[dict[str, Any]] = [
             {
                 "algorithm": algorithm_name,
                 "model": model_name,
@@ -49,4 +68,5 @@ class AverageRuntimePlot(BarPlot):
             title="Average Runtime per Solver",
             xlabel="Algorithm",
             ylabel="Runtime (s)",
+            **self.apply_grouping(benchmark_results, rows),
         )

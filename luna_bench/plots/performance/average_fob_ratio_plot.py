@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from luna_bench.custom import plot
 from luna_bench.metrics import FractionOfOverallBestSolution
@@ -14,7 +14,22 @@ if TYPE_CHECKING:
 
 @plot(FractionOfOverallBestSolution)
 class AverageFoBRatioPlot(BarPlot):
-    """Bar chart showing average fraction of overall best per algorithm.
+    """Bar chart of the mean fraction of the overall best solution per algorithm.
+
+    Same metric as `AverageFractionOfOverallBestSolutionPlot`, written to its own file
+    under the ``fraction_of_overall_best`` column name.
+
+    Requires the ``FractionOfOverallBestSolution`` metric.
+
+    Every display option is inherited and can be set when the plot is constructed,
+    e.g. ``AverageFoBRatioPlot(annotate=False, file_formats=("pgf", "png"))``.
+    `BarPlot` documents the colours, error bars, value annotations and grouping by a
+    feature; `SeabornPlot` the figure size and the output formats.
+
+    Attributes
+    ----------
+    figure_filename : str
+        Stem of the written figure files, by default ``"average_fob_ratio"``.
 
     Examples
     --------
@@ -32,7 +47,7 @@ class AverageFoBRatioPlot(BarPlot):
         benchmark_results : BenchmarkResultContainer
             Aggregated benchmark data consumed by the plot implementation.
         """
-        rows = [
+        rows: list[dict[str, Any]] = [
             {
                 "algorithm": algorithm_name,
                 "model": model_name,
@@ -53,4 +68,5 @@ class AverageFoBRatioPlot(BarPlot):
             title="Average Fraction of overall best Ratio per Solver (1.0 = optimal)",
             hline=1.0,
             hline_label="Optimal (1.0)",
+            **self.apply_grouping(benchmark_results, rows),
         )
