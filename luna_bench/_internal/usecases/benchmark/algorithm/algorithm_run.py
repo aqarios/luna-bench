@@ -29,7 +29,7 @@ class AlgorithmRunUcImpl(AlgorithmRunUc):
     _start_tasks: AlgorithmRunAsBackgroundTasksUc
     _bg_task_client: BackgroundTaskClient
 
-    def __init__(  # noqa: PLR0913, PLR0917 # Will need to inject the values differently in the future to reduce the complexity
+    def __init__(  # noqa: PLR0913, PLR0917 # Will need to inject the values differently in the future to reduce complexity
         self,
         algorithm_filter: AlgorithmFilterUc,
         start_tasks: AlgorithmRunAsBackgroundTasksUc,

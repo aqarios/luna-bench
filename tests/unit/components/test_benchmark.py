@@ -2,13 +2,15 @@ import json
 from collections.abc import Generator
 from contextlib import ExitStack
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
+from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
 from returns.result import Failure, Success
 
 from luna_bench import Benchmark, ModelSet
+from luna_bench._internal.wrappers import LunaAlgorithmWrapper
 from luna_bench.custom import BenchmarkResultContainer
 from luna_bench.entities import (
     AlgorithmEntity,
@@ -208,6 +210,51 @@ class TestBenchmark:
         empty_benchmark.set_modelset(modelset)
         assert empty_benchmark.modelset == modelset
         mock_set.assert_called_once_with(empty_benchmark.name, "test_modelset")
+
+    def test_set_modelset_by_name_loads_it_first(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        mocked_usecases["benchmark_set_modelset_uc"].return_value = Success(None)
+        loaded = MagicMock(spec=ModelSet)
+        loaded.name = "by_name"
+
+        with patch.object(ModelSet, "load", return_value=loaded) as mock_load:
+            empty_benchmark.set_modelset("by_name")
+
+        mock_load.assert_called_once_with("by_name")
+        assert empty_benchmark.modelset == loaded
+
+    def test_reset_failure_raises(self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark) -> None:
+        error = DataNotExistError()
+        mocked_usecases["benchmark_reset_uc"].return_value = Failure(error)
+
+        with pytest.raises(DataNotExistError) as exc_info:
+            empty_benchmark.reset(mode="All")
+
+        assert exc_info.value is error
+
+    def test_reset_unwraps_an_unknown_error(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        inner = RuntimeError("boom")
+        mocked_usecases["benchmark_reset_uc"].return_value = Failure(UnknownLunaBenchError(exception=inner))
+
+        with pytest.raises(RuntimeError) as exc_info:
+            empty_benchmark.reset(mode="All")
+
+        assert exc_info.value is inner
+
+    def test_add_algorithm_wraps_a_luna_quantum_algorithm(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        algo_entity = AlgorithmEntity(name="wrapped", algorithm=MockAlgorithm(), results={})
+        mocked_usecases["benchmark_add_algorithm_uc"].return_value = Success(algo_entity)
+        raw = MagicMock(spec=IAlgorithm)
+
+        with patch.object(LunaAlgorithmWrapper, "wrap", return_value=MockAlgorithm()) as mock_wrap:
+            empty_benchmark.add_algorithm(name="wrapped", algorithm=raw)
+
+        mock_wrap.assert_called_once_with(raw)
 
     def test_remove_modelset_success(self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark) -> None:
         empty_benchmark.modelset = MagicMock(spec=ModelSet)

@@ -503,7 +503,7 @@ class Benchmark(BenchmarkEntity):
     def add_feature(
         self,
         name: str,
-        feature: BaseFeature,
+        feature: BaseFeature[Any],
     ) -> FeatureEntity:
         """
         Add a feature to the benchmark with a given name.
