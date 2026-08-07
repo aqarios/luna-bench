@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 import pandas as pd
+from pydantic import field_serializer, field_validator
 
 from luna_bench.custom.types import FeatureClass
 from luna_bench.helpers.optional_dependencies import check_optional_dependency
@@ -136,6 +137,29 @@ class BarPlot(SeabornPlot, ABC):
 
     group_attribute: str = "value"
     """Attribute read off the feature result. ``"value"`` is what the lookup features expose."""
+
+    @field_serializer("group_by")
+    def _serialize_group_by(self, value: FeatureClass | None) -> str | None:
+        """Store the grouping feature by id, since a class is not JSON.
+
+        The plot configuration is persisted with the benchmark, so ``group_by`` has to
+        survive a round trip through the database as the id the feature is registered
+        under.
+        """
+        if value is None:
+            return None
+        return getattr(value, "registered_id", None) or f"{value.__module__}.{value.__qualname__}"
+
+    @field_validator("group_by", mode="before")
+    @classmethod
+    def _resolve_group_by(cls, value: Any) -> Any:  # noqa: ANN401
+        """Turn the id a stored configuration carries back into the feature class."""
+        if not isinstance(value, str):
+            return value
+
+        from luna_bench.custom.registry_info import RegistryInfo  # noqa: PLC0415
+
+        return RegistryInfo.get_feature_by_id(value)
 
     def apply_grouping(self, benchmark_results: BenchmarkResultContainer, rows: list[dict[str, Any]]) -> dict[str, Any]:
         """Split *rows* into groups along the :attr:`group_by` feature.
