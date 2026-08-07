@@ -121,7 +121,7 @@ class TestMetricDecorator:
     def test_metric_required_features(
         self,
         registry: Registry[BaseMetric],
-        required_features: None | type[BaseFeature] | list[type[BaseFeature]] | tuple[type[BaseFeature], ...],
+        required_features: type[BaseFeature] | list[type[BaseFeature]] | tuple[type[BaseFeature], ...] | None,
         expected_features: list[type[BaseFeature]],
     ) -> None:
         @metric(required_features, metric_registry=registry)

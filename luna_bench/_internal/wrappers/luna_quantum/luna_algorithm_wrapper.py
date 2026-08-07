@@ -1,6 +1,6 @@
 import inspect
 import sys
-from typing import Any
+from typing import Any, cast
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum.solve.domain.abstract.luna_algorithm import LunaAlgorithm as LunaQuantumAlgorithm
@@ -45,7 +45,8 @@ class LunaAlgorithmWrapper:
         for name in exported_names:
             obj = getattr(algos_module, name)
             if inspect.isclass(obj):
-                classes.append(obj)
+                # The real check is the issubclass filter below; isclass only narrows to type.
+                classes.append(cast("type[IAlgorithm[Any]]", obj))
 
         for cls in classes:
             if issubclass(cls, LunaQuantumAlgorithm):

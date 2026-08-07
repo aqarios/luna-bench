@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
 
 import pytest
 from returns.pipeline import is_successful
+from returns.result import Failure
 
 from luna_bench._internal.domain_models import AlgorithmResultDomain, FeatureResultDomain, MetricResultDomain
 from luna_bench._internal.usecases.benchmark.benchmark_reset import BenchmarkResetUcImpl
@@ -12,6 +15,7 @@ from luna_bench.entities.algorithm_result_entity import AlgorithmResultEntity
 from luna_bench.entities.enums import JobStatus, ResetLevel
 from luna_bench.entities.feature_result_entity import FeatureResultEntity
 from luna_bench.entities.metric_result_entity import MetricResultEntity
+from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockFeature, MockMetric
 
 if TYPE_CHECKING:
@@ -531,3 +535,47 @@ class TestGetResetComponentNames:
         assert algos == exp_algos
         assert feats == exp_feats
         assert mets == exp_metrics
+
+
+class TestBenchmarkResetFailures:
+    """A failing removal is logged per component and reported as the last error."""
+
+    @staticmethod
+    def _uc_with_failing_transaction(failure: DataNotExistError) -> BenchmarkResetUcImpl:
+        dao = MagicMock()
+        dao.algorithm.remove_result.return_value = Failure(failure)
+        dao.metric.remove_result.return_value = Failure(failure)
+        dao.feature.remove_result.return_value = Failure(failure)
+
+        transaction = MagicMock()
+        transaction.__enter__.return_value = dao
+        transaction.__exit__.return_value = False
+
+        return BenchmarkResetUcImpl(transaction=transaction)
+
+    def test_failures_in_every_component_are_reported(self, caplog: pytest.LogCaptureFixture) -> None:
+        failure = DataNotExistError()
+        uc = self._uc_with_failing_transaction(failure)
+        entity = BenchmarkEntity(
+            name="test",
+            modelset=None,
+            algorithms=[_algo("a", JobStatus.FAILED)],
+            features=[_feature("f", JobStatus.FAILED)],
+            metrics=[_metric("m", JobStatus.FAILED)],
+            plots=[],
+        )
+
+        with caplog.at_level(logging.WARNING):
+            result = uc(entity, mode=ResetLevel.ALL)
+
+        assert not is_successful(result)
+        assert result.failure() is failure
+        assert "Failed to reset algorithm 'a'" in caplog.text
+        assert "Failed to reset metric 'm'" in caplog.text
+        assert "Failed to reset feature 'f'" in caplog.text
+
+    def test_nothing_to_reset_succeeds_without_touching_the_transaction(self) -> None:
+        uc = self._uc_with_failing_transaction(DataNotExistError())
+        entity = BenchmarkEntity(name="test", modelset=None, algorithms=[], features=[], metrics=[], plots=[])
+
+        assert is_successful(uc(entity, mode=ResetLevel.ALL))

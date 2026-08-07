@@ -63,7 +63,9 @@ class LunaAlgorithm(BaseAlgorithmAsync[LunaData], LunaQuantumAlgorithm[IBackend]
 
             backend = self.backend_validator(algo_dict.pop("backend")) if algo_dict.get("backend") else None
 
-            solve_job: SolveJob = self.run(model, backend=backend)
+            # luna_quantum types its Model as luna_quantum.lm_overwrites.model.Model, which mypy
+            # sees as distinct from luna_model.Model even though they are the same at runtime.
+            solve_job: SolveJob = self.run(model, backend=backend)  # type: ignore[arg-type, unused-ignore]
 
             return LunaData(luna_id=solve_job.id)
         except Exception as e:
@@ -78,7 +80,8 @@ class LunaAlgorithm(BaseAlgorithmAsync[LunaData], LunaQuantumAlgorithm[IBackend]
             return Failure("No solve job ID was provided.")
 
         solve_job: SolveJob = SolveJob.get_by_id(retrieval_data.luna_id)
-        solve_job._model = model  # noqa: SLF001 # need to access private member so luna quantum does not raise a warning
+        # See run_async: luna_quantum's Model is a distinct type to mypy but identical at runtime.
+        solve_job._model = model  # type: ignore[assignment, unused-ignore] # noqa: SLF001 # need to access private member so luna quantum does not raise a warning
         solution: Solution | None = solve_job.result()
 
         if solution:

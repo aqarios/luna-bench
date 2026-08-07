@@ -7,6 +7,7 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
+from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from tests.utils.luna_model import simple_model
 
 if TYPE_CHECKING:
@@ -112,3 +113,14 @@ class TestModelDAO:
         fetch_failed = setup_transaction.model.load(model_id=-1)
 
         TestModelDAO._check_exception(fetch_failed.failure(), DataNotExistError())
+
+    def test_get_or_create_reports_a_reused_name_as_not_unique(self, setup_transaction: DaoTransaction) -> None:
+        """A different model reusing a stored name violates the unique name column."""
+        clashing = simple_model("M1")
+        clashing.constraints += clashing.variables()[0] <= 3  # change the contents, keep the name
+
+        result = setup_transaction.model.get_or_create(
+            model_name=clashing.name, model_hash=clashing.__hash__(), binary=clashing.encode()
+        )
+
+        TestModelDAO._check_exception(result.failure(), DataNotUniqueError())
