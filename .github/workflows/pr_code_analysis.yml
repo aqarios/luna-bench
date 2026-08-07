@@ -44,6 +44,11 @@ jobs:
       - name: "Mypy (Type checking)"
         run: uv run mypy --config-file .mypy.ini ./
 
+      # The built-in components carry a generated __init__ so IDEs can show their
+      # options; it has to stay in sync with the pydantic fields. See issue #259.
+      - name: "Component __init__ signatures"
+        run: uv run python scripts/type_hints.py --check
+
       - name: "Run tox"
         run: uv run tox run-parallel
 

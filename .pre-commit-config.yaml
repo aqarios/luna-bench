@@ -27,6 +27,15 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+  # Generated __init__ signatures of the built-in components, see issue #259.
+  - repo: local
+    hooks:
+      - id: component-type-hints
+        name: "Component __init__ signatures"
+        entry: python scripts/type_hints.py --check
+        language: system
+        pass_filenames: false
+        always_run: true
   # mypy config
   - repo: local
     hooks:
