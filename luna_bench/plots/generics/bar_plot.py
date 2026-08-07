@@ -9,7 +9,14 @@ import pandas as pd
 
 from luna_bench.custom.types import FeatureClass
 from luna_bench.helpers.optional_dependencies import check_optional_dependency
-from luna_bench.plots.utils import AUTO_ERRORBAR, Aggregation, ErrorBar, LunaColours, errorbar_label
+from luna_bench.plots.utils import (
+    AUTO_ERRORBAR,
+    REFERENCE_LINE_COLOUR,
+    Aggregation,
+    ErrorBar,
+    LunaColours,
+    errorbar_label,
+)
 
 from .seaborn_plot import SeabornPlot
 
@@ -39,16 +46,19 @@ class BarPlot(SeabornPlot, ABC):
     Attributes
     ----------
     color : str | None
-        Single colour for all bars. ``None`` (the default) spreads the Luna gradient
-        from blue over green to yellow across the bars.
+        Single colour for ungrouped bars, by default the Aqarios blue. Ignored once
+        :attr:`group_by` splits the bars, where the Luna gradient encodes the group.
     errorbar_color : str
         Colour of the error bars, by default ``LunaColours.SKY``.
+    errorbar_capsize : float
+        Width of the caps that turn an error bar into a T, as a share of the bar
+        width, by default ``0.2``. ``0.0`` leaves a plain line.
     annotate : bool
         Write the aggregated value above each bar, by default ``True``.
     annotate_format : str
         Format applied to an annotated value, by default ``"{:.3g}"``.
     annotate_rotation : int
-        Rotation of the annotations in degrees, by default ``90``.
+        Rotation of the annotations in degrees, by default ``0``.
     annotate_headroom : float
         Share of the y range added above the bars so the annotations fit, by default ``0.3``.
     group_by : FeatureClass | None
@@ -85,13 +95,21 @@ class BarPlot(SeabornPlot, ABC):
     logger: ClassVar[Logger] = logging.getLogger(__name__)
 
     color: str | None = None
-    """Single colour for all bars.
+    """Single colour for ungrouped bars.
 
-    ``None`` spreads the Luna gradient from blue over green to yellow across the bars.
+    ``None`` uses the Aqarios blue. Grouped bars ignore this and take the Luna gradient
+    from blue over green to yellow, spread across the groups.
     """
 
     errorbar_color: str = LunaColours.SKY
     """Colour of the error bars drawn on top of the bars."""
+
+    errorbar_capsize: float = 0.2
+    """Width of the error bar caps as a share of the bar width.
+
+    The caps give the bar its T shape, which reads as a range rather than as a stray
+    vertical line. ``0.0`` draws a plain line without caps.
+    """
 
     annotate: bool = True
     """Write the aggregated value above each bar, clear of its error bar."""
@@ -99,8 +117,8 @@ class BarPlot(SeabornPlot, ABC):
     annotate_format: str = "{:.3g}"
     """Format applied to an annotated value, e.g. ``"{:.1f}%"`` for percentages."""
 
-    annotate_rotation: int = 90
-    """Rotation of the annotations in degrees. Vertical labels stay readable when bars are narrow."""
+    annotate_rotation: int = 0
+    """Rotation of the annotations in degrees. Set to ``90`` when narrow bars make the labels collide."""
 
     annotate_headroom: float = 0.3
     """Share of the y range added above the bars so the annotations fit."""
@@ -184,7 +202,8 @@ class BarPlot(SeabornPlot, ABC):
         hue: str | None = None,
         hline: float | None = None,
         hline_label: str | None = None,
-        hcolor: str = LunaColours.LUNA_MODEL,
+        hcolor: str = REFERENCE_LINE_COLOUR,
+        baseline: float | None = None,
         ylim: tuple[float, float] | None = None,
         legend: bool = False,
         save_dir: str | None = None,
@@ -219,7 +238,11 @@ class BarPlot(SeabornPlot, ABC):
         hline_label : str | None, optional
             Legend label for the horizontal reference line, by default ``None``.
         hcolor : str, optional
-            Colour of the horizontal reference line, by default ``LunaColours.LUNA_MODEL``.
+            Colour of the horizontal reference line, by default black.
+        baseline : float | None, optional
+            Height of a solid black baseline marking where the bars start, by default
+            ``None``. Unlike *hline* it carries no label and stays out of the legend -
+            it says where zero is, it does not name a target.
         ylim : tuple[float, float] | None, optional
             Lower and upper y-axis limits, by default ``None``.
         legend : bool, optional
@@ -254,8 +277,9 @@ class BarPlot(SeabornPlot, ABC):
             "estimator": aggregation.estimator,
             "errorbar": resolved_errorbar,
             "err_kws": {"color": str(self.errorbar_color), "linewidth": 1.5},
+            "capsize": self.errorbar_capsize,
             "legend": legend,
-            **self._color_kwargs(df, x=x, hue=hue),
+            **self._color_kwargs(df, hue=hue),
         }
         barplot_kwargs.update(kwargs)
 
@@ -278,6 +302,11 @@ class BarPlot(SeabornPlot, ABC):
             if hline_label:
                 handles.append(line)
                 labels.append(hline_label)
+
+        if baseline is not None:
+            # Solid and unlabelled, so it reads as the floor of the bars rather than as
+            # a second target competing with the dashed reference line.
+            plt.axhline(y=baseline, color=REFERENCE_LINE_COLOUR, linewidth=1.0)
 
         if resolved_errorbar is not None:
             handles.append(Line2D([], [], color=str(self.errorbar_color), marker="|", markersize=8, linestyle="none"))
@@ -324,11 +353,13 @@ class BarPlot(SeabornPlot, ABC):
 
     @staticmethod
     def _errorbar_tops(ax: Axes) -> list[tuple[float, float]]:
-        """Return the ``(x, upper end)`` of every error bar seaborn drew.
+        """Return the ``(x centre, upper end)`` of every error bar seaborn drew.
 
-        Seaborn draws them as standalone vertical lines rather than attaching them to
-        the bar containers, so they have to be picked back off the axes to know how
-        much room a bar's annotation needs.
+        Seaborn draws them as standalone lines rather than attaching them to the bar
+        containers, so they have to be picked back off the axes to know how much room a
+        bar's annotation needs. A capped error bar is one line covering both the stem
+        and the two caps, so the centre comes from the x range rather than from a single
+        point.
 
         Parameters
         ----------
@@ -338,15 +369,24 @@ class BarPlot(SeabornPlot, ABC):
         Returns
         -------
         list[tuple[float, float]]
-            One entry per vertical line found on the axes.
+            One entry per error bar found on the axes.
         """
         tops = []
         for line in ax.lines:
             xdata = np.asarray(line.get_xdata(), dtype=float)
             ydata = np.asarray(line.get_ydata(), dtype=float)
-            if xdata.size < _MIN_LINE_POINTS or ydata.size < _MIN_LINE_POINTS or xdata.min() != xdata.max():
+            if xdata.size != ydata.size:
                 continue
-            tops.append((float(xdata[0]), float(ydata.max())))
+
+            # The caps and the stem are separated by NaN gaps that carry no coordinate.
+            drawn = np.isfinite(xdata) & np.isfinite(ydata)
+            xs, ys = xdata[drawn], ydata[drawn]
+
+            # An error bar rises; anything drawn at a constant height is a reference line.
+            if xs.size < _MIN_LINE_POINTS or ys.min() == ys.max():
+                continue
+
+            tops.append((float((xs.min() + xs.max()) / 2), float(ys.max())))
         return tops
 
     def _with_headroom(self, ylim: tuple[float, float] | None) -> tuple[float, float] | None:
@@ -373,15 +413,15 @@ class BarPlot(SeabornPlot, ABC):
         bottom, top = ylim
         return (bottom, top + (top - bottom) * self.annotate_headroom)
 
-    def _color_kwargs(self, df: pd.DataFrame, *, x: str, hue: str | None) -> dict[str, Any]:
+    def _color_kwargs(self, df: pd.DataFrame, *, hue: str | None) -> dict[str, Any]:
         """Return the seaborn colour arguments for the bars.
 
-        A fixed :attr:`color` wins for ungrouped bars; otherwise the Luna gradient is
-        spread across the groups (or across the x categories when there is no hue).
+        Ungrouped bars all share one colour - :attr:`color` when set, the Aqarios blue
+        otherwise - because a colour per x category would encode nothing the axis does
+        not already say. The Luna gradient is reserved for grouped bars, where the
+        colour carries the group.
         """
-        group = hue if hue is not None else x
-
-        if (hue is None and self.color is not None) or group not in df.columns:
+        if hue is None or hue not in df.columns:
             return {"color": str(self.color or LunaColours.LUNA_SOLVE)}
 
-        return {"hue": group, "palette": LunaColours.palette(df[group].nunique())}
+        return {"hue": hue, "palette": LunaColours.palette(df[hue].nunique())}

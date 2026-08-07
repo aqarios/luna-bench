@@ -13,6 +13,7 @@ from luna_bench.plots.performance import (
     AverageFractionOfOverallBestSolutionPlot,
     AverageRuntimePlot,
     AverageTimeToSolutionPlot,
+    FeasibleSampleRatioPlot,
     FeasibleSolutionFoundPlot,
     RuntimePerModelPlot,
 )
@@ -29,6 +30,7 @@ __all__ = [
     "AverageRuntimePlot",
     "AverageTimeToSolutionPlot",
     "FeasibilityRatioVsVarNumberPlot",
+    "FeasibleSampleRatioPlot",
     "FeasibleSolutionFoundPlot",
     "RuntimePerModelPlot",
     # Analysis plots

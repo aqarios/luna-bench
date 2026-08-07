@@ -11,6 +11,7 @@ from luna_bench.metrics import (
     ApproximationRatio,
     BestSolutionFoundRatio,
     FeasibilityRatio,
+    FeasibleSamples,
     FractionOfOverallBestSolution,
     Runtime,
     TimeToSolution,
@@ -18,6 +19,7 @@ from luna_bench.metrics import (
 from luna_bench.metrics.approximation_ratio import ApproximationRatioResult
 from luna_bench.metrics.best_solution_found_ratio import BestSolutionFoundRatioResult
 from luna_bench.metrics.feasbility_ratio import FeasibilityRatioResult
+from luna_bench.metrics.feasible_samples import FeasibleSamplesResult
 from luna_bench.metrics.fraction_of_overall_best_solution import FractionOfOverallBestSolutionResult
 from luna_bench.metrics.runtime import RuntimeResult
 from luna_bench.metrics.time_to_solution import TimeToSolutionResult
@@ -30,6 +32,7 @@ from luna_bench.plots.performance import (
     AverageFractionOfOverallBestSolutionPlot,
     AverageRuntimePlot,
     AverageTimeToSolutionPlot,
+    FeasibleSampleRatioPlot,
     FeasibleSolutionFoundPlot,
     RuntimePerModelPlot,
 )
@@ -124,8 +127,28 @@ RUN_CASES = [
             "ylabel": "Feasible solution found [% of models]",
             "title": "Models with a Feasible Solution per Algorithm",
             "ylim": (0, 105),
+            "hline": 100.0,
+            "hline_label": "Upper Limit (100%)",
         },
         id="feasible_solution_found",
+    ),
+    pytest.param(
+        FeasibleSampleRatioPlot,
+        FeasibleSamples,
+        FeasibleSamplesResult(num_feasible_samples=3, num_samples=4),
+        {"algorithm": "algo_1", "feasible_sample_ratio": 0.75},
+        {
+            "x": "algorithm",
+            "y": "feasible_sample_ratio",
+            "xlabel": "Algorithm",
+            "ylabel": "Feasible Samples / All Samples",
+            "title": "Share of Feasible Samples per Solver (pooled over models)",
+            "ylim": (0, 1.15),
+            "errorbar": None,
+            "hline": 1.0,
+            "hline_label": "Upper Limit (1.0)",
+        },
+        id="feasible_sample_ratio",
     ),
     pytest.param(
         AverageFractionOfOverallBestSolutionPlot,
@@ -140,22 +163,24 @@ RUN_CASES = [
             "title": "Average best solution found per Solver (1.0 = optimal)",
             "hline": 1.0,
             "hline_label": "Optimal (1.0)",
+            "baseline": 0.0,
         },
         id="average_fob",
     ),
     pytest.param(
         AverageFoBRatioPlot,
-        FractionOfOverallBestSolution,
-        FractionOfOverallBestSolutionResult(fraction_of_overall_best_solution=0.6),
-        {"algorithm": "algo_1", "model": "model_a", "fraction_of_overall_best": 0.6},
+        BestSolutionFoundRatio,
+        BestSolutionFoundRatioResult(best_solution_found=1.2),
+        {"algorithm": "algo_1", "model": "model_a", "best_solution_found_ratio": 1.2},
         {
             "x": "algorithm",
-            "y": "fraction_of_overall_best",
+            "y": "best_solution_found_ratio",
             "xlabel": "Algorithm",
-            "ylabel": "Fraction of overall best solution",
-            "title": "Average Fraction of overall best Ratio per Solver (1.0 = optimal)",
+            "ylabel": "Best Solution Found Ratio",
+            "title": "Average Best Solution Found Ratio per Solver (1.0 = optimal)",
             "hline": 1.0,
             "hline_label": "Optimal (1.0)",
+            "baseline": 0.0,
         },
         id="average_fob_ratio",
     ),
@@ -219,6 +244,65 @@ class TestPerformancePlotRun:
 
         benchmark_results.get_all_metrics_of_type.assert_called_once_with(metric_cls)
         mock_create.assert_called_once_with(save_dir=None, rows=[], **expected_kwargs)
+
+
+class TestFeasibleSampleRatioPlot:
+    """Test the pooling of the per-model sample counts into one ratio per bar."""
+
+    def test_run_pools_counts_across_models(self) -> None:
+        """Test the ratio divides summed feasible samples by summed total samples."""
+        benchmark_results = MagicMock(spec=BenchmarkResultContainer)
+        benchmark_results.get_all_metrics_of_type.return_value = [
+            ("model_a", "algo_1", FeasibleSamplesResult(num_feasible_samples=1, num_samples=10)),
+            ("model_b", "algo_1", FeasibleSamplesResult(num_feasible_samples=90, num_samples=90)),
+            ("model_a", "algo_2", FeasibleSamplesResult(num_feasible_samples=0, num_samples=10)),
+        ]
+
+        with patch.object(FeasibleSampleRatioPlot, "create") as mock_create:
+            FeasibleSampleRatioPlot().run(benchmark_results)
+
+        # Pooling weights samples, not models: 91/100 rather than the per-model mean of 0.55.
+        assert mock_create.call_args.kwargs["rows"] == [
+            {"algorithm": "algo_1", "feasible_sample_ratio": 0.91},
+            {"algorithm": "algo_2", "feasible_sample_ratio": 0.0},
+        ]
+
+    def test_run_reports_zero_when_no_samples_were_returned(self) -> None:
+        """Test an algorithm without any sample gets a zero bar instead of a division error."""
+        benchmark_results = MagicMock(spec=BenchmarkResultContainer)
+        benchmark_results.get_all_metrics_of_type.return_value = [
+            ("model_a", "algo_1", FeasibleSamplesResult(num_feasible_samples=0, num_samples=0))
+        ]
+
+        with patch.object(FeasibleSampleRatioPlot, "create") as mock_create:
+            FeasibleSampleRatioPlot().run(benchmark_results)
+
+        assert mock_create.call_args.kwargs["rows"] == [{"algorithm": "algo_1", "feasible_sample_ratio": 0.0}]
+
+    def test_run_pools_within_each_group(self) -> None:
+        """Test a grouped plot keeps one pooled bar per algorithm and group."""
+        benchmark_results = MagicMock(spec=BenchmarkResultContainer)
+        benchmark_results.get_all_metrics_of_type.return_value = [
+            ("model_a", "algo_1", FeasibleSamplesResult(num_feasible_samples=1, num_samples=4)),
+            ("model_b", "algo_1", FeasibleSamplesResult(num_feasible_samples=3, num_samples=4)),
+        ]
+
+        def group_by_model(_results: BenchmarkResultContainer, rows: list[dict[str, Any]]) -> dict[str, Any]:
+            for row in rows:
+                row["Use case"] = f"case_{row['model']}"
+            return {"hue": "Use case", "legend": True}
+
+        with (
+            patch.object(FeasibleSampleRatioPlot, "create") as mock_create,
+            patch.object(FeasibleSampleRatioPlot, "apply_grouping", side_effect=group_by_model),
+        ):
+            FeasibleSampleRatioPlot().run(benchmark_results)
+
+        assert mock_create.call_args.kwargs["rows"] == [
+            {"algorithm": "algo_1", "feasible_sample_ratio": 0.25, "Use case": "case_model_a"},
+            {"algorithm": "algo_1", "feasible_sample_ratio": 0.75, "Use case": "case_model_b"},
+        ]
+        assert mock_create.call_args.kwargs["hue"] == "Use case"
 
 
 class TestFeasibleSolutionFoundPlot:

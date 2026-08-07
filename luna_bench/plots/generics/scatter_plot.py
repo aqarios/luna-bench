@@ -6,7 +6,7 @@ from pandas import DataFrame
 
 from luna_bench.helpers.optional_dependencies import check_optional_dependency
 from luna_bench.logging import BenchLogger
-from luna_bench.plots.utils import LunaColours
+from luna_bench.plots.utils import REFERENCE_LINE_COLOUR, LunaColours
 
 from .seaborn_plot import SeabornPlot
 
@@ -33,7 +33,7 @@ class ScatterPlot(SeabornPlot, ABC):
         y: str = "y",
         hline: float | None = None,
         hline_label: str | None = None,
-        hcolor: str = LunaColours.LUNA_MODEL,
+        hcolor: str = REFERENCE_LINE_COLOUR,
         save_dir: str | None = None,
         **kwargs: Any,
     ) -> None:
@@ -60,7 +60,7 @@ class ScatterPlot(SeabornPlot, ABC):
         hline_label : str | None, optional
             Legend label for the horizontal reference line, by default ``None``.
         hcolor : str, optional
-            Color of the horizontal reference line, by default ``LunaColours.LUNA_MODEL``.
+            Color of the horizontal reference line, by default black.
         save_dir : str | None, optional
             Directory to save the figure into, by default ``None``.
         **kwargs : Any

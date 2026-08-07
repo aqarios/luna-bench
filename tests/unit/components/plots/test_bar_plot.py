@@ -9,7 +9,7 @@ from luna_bench.custom import BaseFeature, FeatureResult
 from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
 from luna_bench.plots.generics.bar_plot import UNGROUPED_LABEL, BarPlot
 from luna_bench.plots.utils.aggregation_enum import Aggregation
-from luna_bench.plots.utils.style import LunaColours
+from luna_bench.plots.utils.style import REFERENCE_LINE_COLOUR, LunaColours
 
 
 class FakeUseCaseResult(FeatureResult):
@@ -205,6 +205,37 @@ class TestBarPlot:
             assert texts == ["10.0%", "20.0%"]
 
     @patch("luna_bench.plots.generics.bar_plot.check_optional_dependency")
+    def test_create_draws_an_unlabelled_baseline(self, mock_check_dep: MagicMock) -> None:
+        """Test the baseline is a solid black line that stays out of the legend."""
+        _ = mock_check_dep
+        with (
+            patch("seaborn.barplot"),
+            patch("matplotlib.pyplot.show"),
+            patch("matplotlib.pyplot.axhline") as mock_axhline,
+            patch("matplotlib.pyplot.legend") as mock_legend,
+        ):
+            plot = ConcreteBarPlot()
+            rows = [{"algorithm": "Algo1", "value": 10}]
+
+            plot.create(rows=rows, xlabel="X", ylabel="Y", title="Test", baseline=0.0, errorbar=None)
+
+            mock_axhline.assert_called_once_with(y=0.0, color=REFERENCE_LINE_COLOUR, linewidth=1.0)
+            mock_legend.assert_not_called()
+
+    @patch("luna_bench.plots.generics.bar_plot.check_optional_dependency")
+    def test_create_caps_the_error_bars(self, mock_check_dep: MagicMock) -> None:
+        """Test the error bars are drawn with caps so they read as a T."""
+        _ = mock_check_dep
+        with patch("seaborn.barplot") as mock_barplot, patch("matplotlib.pyplot.show"):
+            plot = ConcreteBarPlot()
+            plot.errorbar_capsize = 0.3
+            rows = [{"algorithm": "Algo1", "value": 10}]
+
+            plot.create(rows=rows, xlabel="X", ylabel="Y", title="Test")
+
+            assert mock_barplot.call_args[1]["capsize"] == 0.3
+
+    @patch("luna_bench.plots.generics.bar_plot.check_optional_dependency")
     def test_create_places_annotations_above_the_error_bars(self, mock_check_dep: MagicMock) -> None:
         """Test an annotation clears the error bar of its own bar instead of overlapping it."""
         _ = mock_check_dep
@@ -256,8 +287,8 @@ class TestBarPlot:
             assert call_kwargs["legend"] is False
 
     @patch("luna_bench.plots.generics.bar_plot.check_optional_dependency")
-    def test_create_spreads_gradient_over_x_categories(self, mock_check_dep: MagicMock) -> None:
-        """Test bars without a hue are coloured by the Luna gradient."""
+    def test_create_colours_ungrouped_bars_uniformly(self, mock_check_dep: MagicMock) -> None:
+        """Test bars without a hue all share the default Aqarios blue."""
         _ = mock_check_dep
         with patch("seaborn.barplot") as mock_barplot, patch("matplotlib.pyplot.show"):
             plot = ConcreteBarPlot()
@@ -270,7 +301,27 @@ class TestBarPlot:
             plot.create(rows=rows, xlabel="X", ylabel="Y", title="Test", x="algorithm", y="value")
 
             call_kwargs = mock_barplot.call_args[1]
-            assert call_kwargs["hue"] == "algorithm"
+            assert call_kwargs["color"] == LunaColours.LUNA_SOLVE
+            assert "palette" not in call_kwargs
+
+    @patch("luna_bench.plots.generics.bar_plot.check_optional_dependency")
+    def test_create_spreads_gradient_over_groups(self, mock_check_dep: MagicMock) -> None:
+        """Test grouped bars are coloured by the Luna gradient across the groups."""
+        _ = mock_check_dep
+        with patch("seaborn.barplot") as mock_barplot, patch("matplotlib.pyplot.show"):
+            plot = ConcreteBarPlot()
+            rows = [
+                {"algorithm": "Algo1", "value": 10, "Use case": "knapsack"},
+                {"algorithm": "Algo2", "value": 20, "Use case": "maxcut"},
+                {"algorithm": "Algo3", "value": 30, "Use case": "tsp"},
+            ]
+
+            plot.create(
+                rows=rows, xlabel="X", ylabel="Y", title="Test", x="algorithm", y="value", hue="Use case", legend=True
+            )
+
+            call_kwargs = mock_barplot.call_args[1]
+            assert call_kwargs["hue"] == "Use case"
             assert call_kwargs["palette"] == LunaColours.palette(3)
 
     @patch("luna_bench.plots.generics.bar_plot.check_optional_dependency")

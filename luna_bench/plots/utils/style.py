@@ -10,14 +10,16 @@ if TYPE_CHECKING:
 
 _RGB_CHANNELS = 3
 
+#: Colour of the horizontal reference lines. Black reads as an annotation of the axes
+#: rather than as another series, which no brand colour manages next to coloured bars.
+REFERENCE_LINE_COLOUR = "black"
+
 
 class LunaColours(StrEnum):
     """Luna brand colours.
 
     The product colours form the default gradient ramp used by the plots,
     running ``LUNA_SOLVE`` (blue) -> ``LUNA_BENCH`` (sage) -> ``LUNA_Q`` (yellow).
-    ``LUNA_MODEL`` (purple) sits outside that ramp and is used as an accent for
-    reference lines so it stays distinguishable from the bars.
     """
 
     LUNA_SOLVE = "#4773FF"  # blue,   hue 226
