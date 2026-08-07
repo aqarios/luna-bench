@@ -1,8 +1,10 @@
 """Tests for BarPlot generic class."""
 
 from types import SimpleNamespace
+from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 from matplotlib import pyplot as plt
 
 from luna_bench.custom import BaseFeature, FeatureResult
@@ -10,6 +12,11 @@ from luna_bench.custom.result_containers.benchmark_result_container import Bench
 from luna_bench.plots.generics.bar_plot import UNGROUPED_LABEL, BarPlot
 from luna_bench.plots.utils.aggregation_enum import Aggregation
 from luna_bench.plots.utils.style import REFERENCE_LINE_COLOUR, LunaColours
+
+if TYPE_CHECKING:
+    from matplotlib.text import Annotation
+
+    from luna_bench.custom.types import FeatureClass
 
 
 class FakeUseCaseResult(FeatureResult):
@@ -249,8 +256,8 @@ class TestBarPlot:
             plot.create(rows=rows, xlabel="X", ylabel="Y", title="Test", x="algorithm", y="value")
 
             ax = plt.gca()
-            errorbar_top = max(max(line.get_ydata()) for line in ax.lines)
-            annotation_y = ax.texts[0].xy[1]
+            errorbar_top = max(max(np.asarray(line.get_ydata(), dtype=float).tolist()) for line in ax.lines)
+            annotation_y = cast("Annotation", ax.texts[0]).xy[1]
             assert annotation_y == errorbar_top
             assert annotation_y > 10.0  # above the mean, i.e. above the bar itself
 
@@ -435,7 +442,7 @@ class TestBarPlotGrouping:
     def test_apply_grouping_adds_column_and_hue(self) -> None:
         """Test each row is tagged with its model's feature value."""
         plot = ConcreteBarPlot()
-        plot.group_by = FakeUseCaseFeature
+        plot.group_by = cast("FeatureClass", FakeUseCaseFeature)
         plot.group_label = "Use case"
         rows = [
             {"algorithm": "Algo1", "model": "m1", "value": 10},
@@ -450,7 +457,7 @@ class TestBarPlotGrouping:
     def test_apply_grouping_labels_models_without_a_value(self) -> None:
         """Test models the feature has no result for stay visible as 'unknown'."""
         plot = ConcreteBarPlot()
-        plot.group_by = FakeUseCaseFeature
+        plot.group_by = cast("FeatureClass", FakeUseCaseFeature)
         rows = [
             {"algorithm": "Algo1", "model": "m1", "value": 10},
             {"algorithm": "Algo1", "model": "m2", "value": 20},
@@ -463,7 +470,7 @@ class TestBarPlotGrouping:
     def test_apply_grouping_falls_back_when_feature_is_missing(self) -> None:
         """Test a feature that produced no results leaves the plot ungrouped."""
         plot = ConcreteBarPlot()
-        plot.group_by = FakeUseCaseFeature
+        plot.group_by = cast("FeatureClass", FakeUseCaseFeature)
         rows = [{"algorithm": "Algo1", "model": "m1", "value": 10}]
 
         with patch.object(plot.logger, "warning") as mock_warning:
