@@ -99,9 +99,9 @@ class TestPlotDecorator:
         self,
         plot_registry: Registry[BasePlot],
         required_components: type[BaseFeature | BaseMetric]
-        | None
         | list[type[BaseFeature | BaseMetric]]
-        | tuple[type[BaseFeature | BaseMetric], ...],
+        | tuple[type[BaseFeature | BaseMetric], ...]
+        | None,
         expected_features: list[type[BaseFeature]],
         expected_metrics: list[type[BaseMetric]],
     ) -> None:

@@ -158,7 +158,7 @@ class SeabornPlot(BasePlot, ABC):
             }
         )
 
-    def finalize_plot(  # noqa: PLR0913
+    def finalize_plot(  # noqa: PLR0913, PLR0917 # Positional labels are part of the API custom plots call
         self,
         xlabel: str,
         ylabel: str,
