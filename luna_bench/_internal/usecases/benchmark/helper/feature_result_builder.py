@@ -71,8 +71,7 @@ class FeatureResultBuilder:
         model_name : ModelName
             The model name to retrieve features for.
         required_features : list[FeatureClass]
-            The features to collect. A model without one of them is a failure; whether
-            that matters is the caller's to decide.
+            The feature classes to collect results for.
 
         Returns
         -------
