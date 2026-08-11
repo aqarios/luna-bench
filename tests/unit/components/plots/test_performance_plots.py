@@ -25,32 +25,42 @@ from luna_bench.metrics.runtime import RuntimeResult
 from luna_bench.metrics.time_to_solution import TimeToSolutionResult
 from luna_bench.plots.generics.bar_plot import BarPlot
 from luna_bench.plots.performance import (
-    AverageApproximationRatioPlot,
-    AverageBestSolutionFoundRatioPlot,
-    AverageFeasibilityRatioPlot,
-    AverageFoBRatioPlot,
-    AverageFractionOfOverallBestSolutionPlot,
-    AverageRuntimePlot,
-    AverageTimeToSolutionPlot,
+    ApproximationRatioPlot,
+    BestSolutionFoundRatioPlot,
+    FeasibilityRatioPlot,
     FeasibleSampleRatioPlot,
     FeasibleSolutionFoundPlot,
+    FractionOfOverallBestSolutionPlot,
     RuntimePerModelPlot,
+    RuntimePlot,
+    TimeToSolutionPlot,
 )
+from luna_bench.plots.utils import AUTO_ERRORBAR, Aggregation
+
+#: The display configuration every metric bar plot passes on, unless it declares its own.
+BASE_KWARGS: dict[str, Any] = {
+    "x": "algorithm",
+    "xlabel": "Algorithm",
+    "aggregation": Aggregation.MEAN,
+    "errorbar": AUTO_ERRORBAR,
+    "hline": None,
+    "hline_label": None,
+    "baseline": None,
+    "ylim": None,
+}
 
 RUN_CASES = [
     pytest.param(
-        AverageRuntimePlot,
+        RuntimePlot,
         Runtime,
         RuntimeResult(runtime_seconds=1.5),
         {"algorithm": "algo_1", "model": "model_a", "runtime_seconds": 1.5},
         {
-            "x": "algorithm",
+            "title": "Runtime per Solver",
             "y": "runtime_seconds",
-            "title": "Average Runtime per Solver",
-            "xlabel": "Algorithm",
             "ylabel": "Runtime (s)",
         },
-        id="average_runtime",
+        id="runtime",
     ),
     pytest.param(
         RuntimePerModelPlot,
@@ -58,77 +68,72 @@ RUN_CASES = [
         RuntimeResult(runtime_seconds=1.5),
         {"model": "model_a", "algorithm": "algo_1", "runtime_seconds": 1.5},
         {
-            "x": "model",
-            "y": "runtime_seconds",
             "hue": "algorithm",
+            "x": "model",
             "xlabel": "Model",
-            "ylabel": "Runtime (s)",
             "title": "Runtime per Model by Algorithm",
             "legend": True,
+            "y": "runtime_seconds",
+            "ylabel": "Runtime (s)",
         },
         id="runtime_per_model",
     ),
     pytest.param(
-        AverageApproximationRatioPlot,
+        ApproximationRatioPlot,
         ApproximationRatio,
         ApproximationRatioResult(approximation_ratio=0.9),
         {"algorithm": "algo_1", "model": "model_a", "approximation_ratio": 0.9},
         {
-            "x": "algorithm",
-            "y": "approximation_ratio",
-            "xlabel": "Algorithm",
-            "ylabel": "Approximation Ratio",
-            "title": "Average Approximation Ratio per Solver (1.0 = optimal)",
+            "title": "Approximation Ratio per Solver (1.0 = optimal)",
             "hline": 1.0,
             "hline_label": "Optimal (1.0)",
+            "y": "approximation_ratio",
+            "ylabel": "Approximation Ratio",
         },
-        id="average_approximation_ratio",
+        id="approximation_ratio",
     ),
     pytest.param(
-        AverageBestSolutionFoundRatioPlot,
+        BestSolutionFoundRatioPlot,
         BestSolutionFoundRatio,
         BestSolutionFoundRatioResult(best_solution_found=1.2),
-        {"algorithm": "algo_1", "model": "model_a", "best_solution_found_ratio": 1.2},
+        {"algorithm": "algo_1", "model": "model_a", "best_solution_found": 1.2},
         {
-            "x": "algorithm",
-            "y": "best_solution_found_ratio",
-            "xlabel": "Algorithm",
+            "title": "Best Solution Found Ratio per Solver (1.0 = optimal)",
+            "hline": 1.0,
+            "hline_label": "Optimal (1.0)",
+            "baseline": 0.0,
+            "y": "best_solution_found",
             "ylabel": "Best Solution Found Ratio",
-            "title": "Average Best Solution Found Ratio per Algorithm (higher is better)",
         },
-        id="average_best_solution_found_ratio",
+        id="best_solution_found_ratio",
     ),
     pytest.param(
-        AverageFeasibilityRatioPlot,
+        FeasibilityRatioPlot,
         FeasibilityRatio,
         FeasibilityRatioResult(feasibility_ratio=0.75),
         {"algorithm": "algo_1", "model": "model_a", "feasibility_ratio": 0.75},
         {
-            "x": "algorithm",
-            "y": "feasibility_ratio",
-            "xlabel": "Algorithm",
-            "title": "Average Feasibility Ratio per Solver",
-            "ylabel": "Feasibility Ratio",
+            "title": "Feasibility Ratio per Solver",
             "ylim": (0, 1.15),
             "hline": 1.0,
             "hline_label": "Upper Limit (1.0)",
+            "y": "feasibility_ratio",
+            "ylabel": "Feasibility Ratio",
         },
-        id="average_feasibility_ratio",
+        id="feasibility_ratio",
     ),
     pytest.param(
         FeasibleSolutionFoundPlot,
         FeasibilityRatio,
         FeasibilityRatioResult(feasibility_ratio=0.75),
-        {"algorithm": "algo_1", "model": "model_a", "feasible_found": 100.0},
+        {"algorithm": "algo_1", "model": "model_a", "feasibility_ratio": 100.0},
         {
-            "x": "algorithm",
-            "y": "feasible_found",
-            "xlabel": "Algorithm",
-            "ylabel": "Feasible solution found [% of models]",
             "title": "Models with a Feasible Solution per Algorithm",
             "ylim": (0, 105),
             "hline": 100.0,
             "hline_label": "Upper Limit (100%)",
+            "y": "feasibility_ratio",
+            "ylabel": "Feasible solution found [% of models]",
         },
         id="feasible_solution_found",
     ),
@@ -138,65 +143,42 @@ RUN_CASES = [
         FeasibleSamplesResult(num_feasible_samples=3, num_samples=4),
         {"algorithm": "algo_1", "feasible_sample_ratio": 0.75},
         {
-            "x": "algorithm",
-            "y": "feasible_sample_ratio",
-            "xlabel": "Algorithm",
-            "ylabel": "Feasible Samples / All Samples",
             "title": "Share of Feasible Samples per Solver (pooled over models)",
             "ylim": (0, 1.15),
             "errorbar": None,
             "hline": 1.0,
             "hline_label": "Upper Limit (1.0)",
+            "y": "feasible_sample_ratio",
+            "ylabel": "Feasible Samples / All Samples",
         },
         id="feasible_sample_ratio",
     ),
     pytest.param(
-        AverageFractionOfOverallBestSolutionPlot,
+        FractionOfOverallBestSolutionPlot,
         FractionOfOverallBestSolution,
         FractionOfOverallBestSolutionResult(fraction_of_overall_best_solution=0.6),
-        {"algorithm": "algo_1", "model": "model_a", "best_solution_found": 0.6},
+        {"algorithm": "algo_1", "model": "model_a", "fraction_of_overall_best_solution": 0.6},
         {
-            "x": "algorithm",
-            "y": "best_solution_found",
-            "xlabel": "Algorithm",
-            "ylabel": "Best Solution Found",
-            "title": "Average best solution found per Solver (1.0 = optimal)",
+            "title": "Best Solution Found per Solver (1.0 = optimal)",
             "hline": 1.0,
             "hline_label": "Optimal (1.0)",
             "baseline": 0.0,
+            "y": "fraction_of_overall_best_solution",
+            "ylabel": "Best Solution Found",
         },
         id="average_fob",
     ),
     pytest.param(
-        AverageFoBRatioPlot,
-        BestSolutionFoundRatio,
-        BestSolutionFoundRatioResult(best_solution_found=1.2),
-        {"algorithm": "algo_1", "model": "model_a", "best_solution_found_ratio": 1.2},
-        {
-            "x": "algorithm",
-            "y": "best_solution_found_ratio",
-            "xlabel": "Algorithm",
-            "ylabel": "Best Solution Found Ratio",
-            "title": "Average Best Solution Found Ratio per Solver (1.0 = optimal)",
-            "hline": 1.0,
-            "hline_label": "Optimal (1.0)",
-            "baseline": 0.0,
-        },
-        id="average_fob_ratio",
-    ),
-    pytest.param(
-        AverageTimeToSolutionPlot,
+        TimeToSolutionPlot,
         TimeToSolution,
         TimeToSolutionResult(time_to_solution=2.5, probability_optimal=0.5, num_optimal_found=5, num_samples=10),
         {"algorithm": "algo_1", "model": "model_a", "time_to_solution": 2.5},
         {
-            "x": "algorithm",
+            "title": "Time to Solution per Algorithm (lower is better)",
             "y": "time_to_solution",
-            "xlabel": "Algorithm",
             "ylabel": "Time to Solution (TTS)",
-            "title": "Average Time to Solution per Algorithm (lower is better)",
         },
-        id="average_time_to_solution",
+        id="time_to_solution",
     ),
 ]
 
@@ -222,7 +204,7 @@ class TestPerformancePlotRun:
             plot_instance.run(benchmark_results, save_dir="out")
 
         benchmark_results.get_all_metrics_of_type.assert_called_once_with(metric_cls)
-        mock_create.assert_called_once_with(save_dir="out", rows=[expected_row], **expected_kwargs)
+        mock_create.assert_called_once_with(save_dir="out", rows=[expected_row], **{**BASE_KWARGS, **expected_kwargs})
 
     @pytest.mark.parametrize(("plot_cls", "metric_cls", "metric_result", "expected_row", "expected_kwargs"), RUN_CASES)
     def test_run_with_no_metric_results_passes_empty_rows(
@@ -242,8 +224,11 @@ class TestPerformancePlotRun:
         with patch.object(plot_cls, "create") as mock_create:
             plot_instance.run(benchmark_results, save_dir=None)
 
+        # Without rows there is nothing to split, so a grouped plot passes no hue either.
+        expected = {k: v for k, v in {**BASE_KWARGS, **expected_kwargs}.items() if k not in {"hue", "legend"}}
+
         benchmark_results.get_all_metrics_of_type.assert_called_once_with(metric_cls)
-        mock_create.assert_called_once_with(save_dir=None, rows=[], **expected_kwargs)
+        mock_create.assert_called_once_with(save_dir=None, rows=[], **expected)
 
 
 class TestFeasibleSampleRatioPlot:
@@ -320,5 +305,5 @@ class TestFeasibleSolutionFoundPlot:
             FeasibleSolutionFoundPlot().run(benchmark_results)
 
         assert mock_create.call_args.kwargs["rows"] == [
-            {"algorithm": "algo_1", "model": "model_a", "feasible_found": expected}
+            {"algorithm": "algo_1", "model": "model_a", "feasibility_ratio": expected}
         ]

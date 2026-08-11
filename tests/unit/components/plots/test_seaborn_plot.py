@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 
 from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
 from luna_bench.plots.generics.seaborn_plot import SeabornPlot
+from luna_bench.plots.plot_style import Figure
 
 
 class ConcreteSeabornPlot(SeabornPlot):
@@ -37,8 +38,8 @@ class TestSeabornPlot:
     def test_setup_figure_with_custom_dimensions(self) -> None:
         """Test setup_figure with custom width and height."""
         plot = ConcreteSeabornPlot()
-        plot.width = 12
-        plot.height = 8
+        plot.figure.width = 12
+        plot.figure.height = 8
         plot.setup_figure()
 
         fig = plt.gcf()
@@ -65,11 +66,11 @@ class TestSeabornPlot:
 
     @patch("luna_bench.plots.generics.seaborn_plot.check_optional_dependency")
     def test_finalize_plot_without_show(self, mock_check_dep: MagicMock) -> None:
-        """Test finalize_plot respects show=False."""
+        """Test finalize_plot respects figure=Figure(show=False)."""
         _ = mock_check_dep
         with patch("matplotlib.pyplot.show") as mock_show:
             plot = ConcreteSeabornPlot()
-            plot.show = False
+            plot.figure.show = False
             plot.setup_figure()
 
             plot.finalize_plot(
@@ -151,19 +152,19 @@ class TestSeabornPlot:
     def test_defaults_are_correct(self) -> None:
         """Test SeabornPlot has correct default values."""
         plot = ConcreteSeabornPlot()
-        assert plot.width == 8
-        assert plot.height == 6
-        assert plot.dpi == 100
-        assert plot.show is True
-        assert plot.figure_filename == "seaborn_plot"
-        assert plot.file_formats == ("png",)
+        assert plot.figure.width == 8
+        assert plot.figure.height == 6
+        assert plot.figure.dpi == 100
+        assert plot.figure.show is True
+        assert plot.figure.filename == "figure"
+        assert plot.figure.file_formats == ("png",)
 
     def test_save_figure_writes_one_file_per_format(self, tmp_path: Path) -> None:
         """Test save_figure writes every configured format next to each other."""
         plot = ConcreteSeabornPlot()
-        plot.show = False
-        plot.figure_filename = "figure.png"
-        plot.file_formats = ("png", "svg")
+        plot.figure.show = False
+        plot.figure.filename = "figure.png"
+        plot.figure.file_formats = ("png", "svg")
         plot.setup_figure()
 
         saved = plot.save_figure(str(tmp_path))
@@ -174,9 +175,9 @@ class TestSeabornPlot:
     def test_save_figure_keeps_going_when_a_format_fails(self, tmp_path: Path) -> None:
         """Test a format that cannot be written (e.g. pgf without LaTeX) is logged, not raised."""
         plot = ConcreteSeabornPlot()
-        plot.show = False
-        plot.figure_filename = "figure"
-        plot.file_formats = ("broken", "png")
+        plot.figure.show = False
+        plot.figure.filename = "figure"
+        plot.figure.file_formats = ("broken", "png")
         plot.setup_figure()
 
         with patch.object(ConcreteSeabornPlot.logger, "exception") as mock_exception:
@@ -188,9 +189,9 @@ class TestSeabornPlot:
     def test_save_figure_configures_pgf_backend(self, tmp_path: Path) -> None:
         """Test requesting pgf points matplotlib at the configured TeX engine."""
         plot = ConcreteSeabornPlot()
-        plot.show = False
-        plot.file_formats = ("pgf",)
-        plot.pgf_texsystem = "lualatex"
+        plot.figure.show = False
+        plot.figure.file_formats = ("pgf",)
+        plot.figure.pgf_texsystem = "lualatex"
         plot.setup_figure()
 
         with (
@@ -201,7 +202,7 @@ class TestSeabornPlot:
 
         assert mpl.rcParams["pgf.texsystem"] == "lualatex"
         assert mpl.rcParams["pgf.rcfonts"] is False
-        assert mock_savefig.call_args[0][0] == str(tmp_path / "seaborn_plot.pgf")
+        assert mock_savefig.call_args[0][0] == str(tmp_path / "figure.pgf")
 
     @patch("luna_bench.plots.generics.seaborn_plot.check_optional_dependency")
     def test_finalize_plot_with_save_dir(self, mock_check_dep: MagicMock) -> None:
@@ -231,9 +232,9 @@ class TestSeabornPlot:
     def test_save_figure_explains_a_missing_tex_installation(self, tmp_path: Path) -> None:
         """Test pgf is skipped with an actionable warning when no TeX engine is installed."""
         plot = ConcreteSeabornPlot()
-        plot.show = False
-        plot.figure_filename = "figure"
-        plot.file_formats = ("pgf", "png")
+        plot.figure.show = False
+        plot.figure.filename = "figure"
+        plot.figure.file_formats = ("pgf", "png")
         plot.setup_figure()
 
         with (
@@ -244,3 +245,44 @@ class TestSeabornPlot:
 
         assert saved == [tmp_path / "figure.png"]
         assert "LaTeX" in mock_warning.call_args[0][0]
+
+
+class TestFigureLifetime:
+    """Test that a plot does not leave its figure behind once it is done with it."""
+
+    def teardown_method(self) -> None:
+        """Clean up matplotlib figures after each test."""
+        plt.close("all")
+
+    def test_a_written_figure_is_closed(self, tmp_path: Path) -> None:
+        """Test a benchmark drawing many plots does not pile figures up in memory."""
+        plt.close("all")
+
+        for index in range(3):
+            plot = ConcreteSeabornPlot(figure=Figure(show=False, filename=f"figure_{index}"))
+            plot.setup_figure()
+            plot.finalize_plot("X", "Y", "Test", save_dir=str(tmp_path))
+
+        assert plt.get_fignums() == []
+
+    def test_a_shown_figure_is_closed(self) -> None:
+        """Test the window having been opened is enough to be done with the figure."""
+        plt.close("all")
+        plot = ConcreteSeabornPlot(figure=Figure(show=True))
+        plot.setup_figure()
+
+        with patch("matplotlib.pyplot.show"):
+            plot.finalize_plot("X", "Y", "Test")
+
+        assert plt.get_fignums() == []
+
+    def test_a_figure_that_is_neither_written_nor_shown_stays_open(self) -> None:
+        """Test the only copy is not thrown away from a caller who means to read it."""
+        plt.close("all")
+        plot = ConcreteSeabornPlot(figure=Figure(show=False))
+        plot.setup_figure()
+
+        plot.finalize_plot("X", "Y", "Test")
+
+        assert len(plt.get_fignums()) == 1
+        assert plt.gca().get_title() == "Test"

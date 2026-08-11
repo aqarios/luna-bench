@@ -1,22 +1,24 @@
 """Tests for BarPlot generic class."""
 
-from types import SimpleNamespace
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.colors import to_hex
+from matplotlib.patches import Rectangle
 
-from luna_bench.custom import BaseFeature, FeatureResult
+from luna_bench.custom import BaseFeature, FeatureResult, feature
 from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
-from luna_bench.plots.generics.bar_plot import UNGROUPED_LABEL, BarPlot
+from luna_bench.plots.dimensions import MetricDimension, ModelDimension
+from luna_bench.plots.generics.bar_plot import BarPlot
+from luna_bench.plots.plot_style import Annotation, ErrorBars, Figure
 from luna_bench.plots.utils.aggregation_enum import Aggregation
+from luna_bench.plots.utils.errorbar import AUTO_ERRORBAR
 from luna_bench.plots.utils.style import REFERENCE_LINE_COLOUR, LunaColours
 
 if TYPE_CHECKING:
-    from matplotlib.text import Annotation
-
-    from luna_bench.custom.types import FeatureClass
+    from matplotlib.text import Annotation as MatplotlibAnnotation
 
 
 class FakeUseCaseResult(FeatureResult):
@@ -27,6 +29,15 @@ class FakeUseCaseResult(FeatureResult):
 
 class FakeUseCaseFeature(BaseFeature[FakeUseCaseResult]):
     """Feature standing in for a per-model category assigned by the user."""
+
+    def run(self, model: object) -> FakeUseCaseResult:
+        """Unused; the results are provided directly in the tests."""
+        raise NotImplementedError
+
+
+@feature
+class RegisteredUseCaseFeature(BaseFeature[FakeUseCaseResult]):
+    """A registered stand-in, so a stored id can be resolved back into the class."""
 
     def run(self, model: object) -> FakeUseCaseResult:
         """Unused; the results are provided directly in the tests."""
@@ -147,7 +158,7 @@ class TestBarPlot:
                 {"algorithm": "Algo1", "value": 20},
             ]
 
-            for aggregation in [Aggregation.MEAN, Aggregation.MAX, Aggregation.MIN, Aggregation.MEAN_SD]:
+            for aggregation in [Aggregation.MEAN, Aggregation.MAX, Aggregation.MIN]:
                 plt.close("all")
                 plot.create(
                     rows=rows,
@@ -167,7 +178,6 @@ class TestBarPlot:
         _ = mock_check_dep
         with patch("seaborn.barplot"), patch("matplotlib.pyplot.show"), patch("matplotlib.pyplot.ylim") as mock_ylim:
             plot = ConcreteBarPlot()
-            plot.annotate = False
             rows = [{"algorithm": "Algo1", "value": 10}]
 
             plot.create(
@@ -185,9 +195,7 @@ class TestBarPlot:
         """Test annotated bars get extra room above the requested y limits."""
         _ = mock_check_dep
         with patch("seaborn.barplot"), patch("matplotlib.pyplot.show"), patch("matplotlib.pyplot.ylim") as mock_ylim:
-            plot = ConcreteBarPlot()
-            plot.annotate = True
-            plot.annotate_headroom = 0.5
+            plot = ConcreteBarPlot(annotation=Annotation(headroom=0.5))
             rows = [{"algorithm": "Algo1", "value": 10}]
 
             plot.create(rows=rows, xlabel="X", ylabel="Y", title="Test", ylim=(0, 100))
@@ -198,18 +206,17 @@ class TestBarPlot:
     def test_create_annotates_every_bar_with_the_formatted_value(self, mock_check_dep: MagicMock) -> None:
         """Test each bar carries its aggregated value, formatted as configured."""
         _ = mock_check_dep
-        with patch("matplotlib.pyplot.show"):
-            plot = ConcreteBarPlot()
-            plot.annotate_format = "{:.1f}%"
-            rows = [
-                {"algorithm": "Algo1", "value": 10.0},
-                {"algorithm": "Algo2", "value": 20.0},
-            ]
+        # Neither written nor shown, so the figure stays open to be read back.
+        plot = ConcreteBarPlot(figure=Figure(show=False), annotation=Annotation(format="{:.1f}%"))
+        rows = [
+            {"algorithm": "Algo1", "value": 10.0},
+            {"algorithm": "Algo2", "value": 20.0},
+        ]
 
-            plot.create(rows=rows, xlabel="X", ylabel="Y", title="Test", x="algorithm", y="value")
+        plot.create(rows=rows, xlabel="X", ylabel="Y", title="Test", x="algorithm", y="value")
 
-            texts = [text.get_text() for text in plt.gca().texts]
-            assert texts == ["10.0%", "20.0%"]
+        texts = [text.get_text() for text in plt.gca().texts]
+        assert texts == ["10.0%", "20.0%"]
 
     @patch("luna_bench.plots.generics.bar_plot.check_optional_dependency")
     def test_create_draws_an_unlabelled_baseline(self, mock_check_dep: MagicMock) -> None:
@@ -234,8 +241,7 @@ class TestBarPlot:
         """Test the error bars are drawn with caps so they read as a T."""
         _ = mock_check_dep
         with patch("seaborn.barplot") as mock_barplot, patch("matplotlib.pyplot.show"):
-            plot = ConcreteBarPlot()
-            plot.errorbar_capsize = 0.3
+            plot = ConcreteBarPlot(errorbars=ErrorBars(capsize=0.3))
             rows = [{"algorithm": "Algo1", "value": 10}]
 
             plot.create(rows=rows, xlabel="X", ylabel="Y", title="Test")
@@ -246,28 +252,27 @@ class TestBarPlot:
     def test_create_places_annotations_above_the_error_bars(self, mock_check_dep: MagicMock) -> None:
         """Test an annotation clears the error bar of its own bar instead of overlapping it."""
         _ = mock_check_dep
-        with patch("matplotlib.pyplot.show"):
-            plot = ConcreteBarPlot()
-            rows = [
-                {"algorithm": "Algo1", "value": 5.0},
-                {"algorithm": "Algo1", "value": 15.0},
-            ]
+        # Neither written nor shown, so the figure stays open to be read back.
+        plot = ConcreteBarPlot(figure=Figure(show=False), annotation=Annotation())
+        rows = [
+            {"algorithm": "Algo1", "value": 5.0},
+            {"algorithm": "Algo1", "value": 15.0},
+        ]
 
-            plot.create(rows=rows, xlabel="X", ylabel="Y", title="Test", x="algorithm", y="value")
+        plot.create(rows=rows, xlabel="X", ylabel="Y", title="Test", x="algorithm", y="value")
 
-            ax = plt.gca()
-            errorbar_top = max(max(np.asarray(line.get_ydata(), dtype=float).tolist()) for line in ax.lines)
-            annotation_y = cast("Annotation", ax.texts[0]).xy[1]
-            assert annotation_y == errorbar_top
-            assert annotation_y > 10.0  # above the mean, i.e. above the bar itself
+        ax = plt.gca()
+        errorbar_top = max(max(np.asarray(line.get_ydata(), dtype=float).tolist()) for line in ax.lines)
+        annotation_y = cast("MatplotlibAnnotation", ax.texts[0]).xy[1]
+        assert annotation_y == errorbar_top
+        assert annotation_y > 10.0  # above the mean, i.e. above the bar itself
 
     @patch("luna_bench.plots.generics.bar_plot.check_optional_dependency")
-    def test_create_skips_annotations_when_disabled(self, mock_check_dep: MagicMock) -> None:
-        """Test annotations can be turned off."""
+    def test_create_writes_no_annotations_by_default(self, mock_check_dep: MagicMock) -> None:
+        """Test a bar chart is read off its axis unless the exact values are the point."""
         _ = mock_check_dep
         with patch("matplotlib.pyplot.show"):
             plot = ConcreteBarPlot()
-            plot.annotate = False
             rows = [{"algorithm": "Algo1", "value": 10}]
 
             plot.create(rows=rows, xlabel="X", ylabel="Y", title="Test", x="algorithm", y="value")
@@ -337,7 +342,7 @@ class TestBarPlot:
         _ = mock_check_dep
         with patch("seaborn.barplot") as mock_barplot, patch("matplotlib.pyplot.show"):
             plot = ConcreteBarPlot()
-            plot.color = LunaColours.LUNA_SOLVE
+            plot.figure.color = LunaColours.LUNA_SOLVE
             rows = [{"algorithm": "Algo1", "value": 10}, {"algorithm": "Algo2", "value": 20}]
 
             plot.create(rows=rows, xlabel="X", ylabel="Y", title="Test", x="algorithm", y="value")
@@ -415,67 +420,137 @@ class TestBarPlot:
             assert call_kwargs["legend"] is True
 
 
-class TestBarPlotGrouping:
-    """Test splitting bars along a per-model feature."""
+class TestBarPlotDraw:
+    """Test that the declared display fields reach `create`."""
 
-    def _benchmark_results(self, values: dict[str, object]) -> MagicMock:
-        """Build benchmark results whose feature container serves *values* per model."""
-        benchmark_results = MagicMock(spec=BenchmarkResultContainer)
-        benchmark_results.features = {}
-        for model_name, value in values.items():
-            container = MagicMock()
-            if value is None:
-                container.first.side_effect = KeyError(model_name)
-            else:
-                container.first.return_value = SimpleNamespace(value=value)
-            benchmark_results.features[model_name] = container
-        return benchmark_results
+    def test_draw_forwards_the_declared_fields(self) -> None:
+        """Test the fields of the plot are what create is called with."""
+        plot = ConcreteBarPlot(
+            x=ModelDimension(),
+            y=MetricDimension(
+                "runtime",
+                "Runtime (s)",
+                limits=(0, 2),
+                reference=1.0,
+                reference_label="Optimal",
+                baseline=0.0,
+            ),
+            figure=Figure(title="Runtime"),
+            aggregation=Aggregation.MAX,
+        )
+        rows = [{"model": "m1", "runtime": 1.5}]
 
-    def test_apply_grouping_without_group_by_is_a_no_op(self) -> None:
-        """Test rows are untouched when no grouping feature is configured."""
-        plot = ConcreteBarPlot()
-        rows = [{"algorithm": "Algo1", "model": "m1", "value": 10}]
+        with patch.object(ConcreteBarPlot, "create") as mock_create:
+            plot.draw(benchmark_results=MagicMock(spec=BenchmarkResultContainer), rows=rows, save_dir="out")
 
-        assert plot.apply_grouping(self._benchmark_results({"m1": "Maxcut"}), rows) == {}
-        assert rows == [{"algorithm": "Algo1", "model": "m1", "value": 10}]
+        mock_create.assert_called_once_with(
+            save_dir="out",
+            rows=rows,
+            x="model",
+            y="runtime",
+            xlabel="Model",
+            ylabel="Runtime (s)",
+            title="Runtime",
+            aggregation=Aggregation.MAX,
+            errorbar=AUTO_ERRORBAR,
+            hline=1.0,
+            hline_label="Optimal",
+            baseline=0.0,
+            ylim=(0.0, 2.0),
+        )
 
-    def test_apply_grouping_adds_column_and_hue(self) -> None:
-        """Test each row is tagged with its model's feature value."""
-        plot = ConcreteBarPlot()
-        plot.group_by = cast("FeatureClass", FakeUseCaseFeature)
-        plot.group_label = "Use case"
-        rows = [
-            {"algorithm": "Algo1", "model": "m1", "value": 10},
-            {"algorithm": "Algo1", "model": "m2", "value": 20},
-        ]
+    def test_draw_overrides_win_over_the_fields(self) -> None:
+        """Test a caller can still override a declared value per call."""
+        plot = ConcreteBarPlot(figure=Figure(title="Declared"))
 
-        kwargs = plot.apply_grouping(self._benchmark_results({"m1": "Maxcut", "m2": "Mis"}), rows)
+        with patch.object(ConcreteBarPlot, "create") as mock_create:
+            plot.draw(
+                benchmark_results=MagicMock(spec=BenchmarkResultContainer),
+                rows=[{"algorithm": "Algo1", "value": 1}],
+                title="Overridden",
+            )
 
-        assert kwargs == {"hue": "Use case", "legend": True}
-        assert [row["Use case"] for row in rows] == ["Maxcut", "Mis"]
+        assert mock_create.call_args.kwargs["title"] == "Overridden"
 
-    def test_apply_grouping_labels_models_without_a_value(self) -> None:
-        """Test models the feature has no result for stay visible as 'unknown'."""
-        plot = ConcreteBarPlot()
-        plot.group_by = cast("FeatureClass", FakeUseCaseFeature)
-        rows = [
-            {"algorithm": "Algo1", "model": "m1", "value": 10},
-            {"algorithm": "Algo1", "model": "m2", "value": 20},
-        ]
+    def test_draw_applies_the_row_transformation(self) -> None:
+        """Test a subclass can reduce its rows without reimplementing run."""
 
-        plot.apply_grouping(self._benchmark_results({"m1": "Maxcut", "m2": None}), rows)
+        class PoolingBarPlot(ConcreteBarPlot):
+            def transform_rows(self, rows: list[dict[str, Any]], group_key: str | None) -> list[dict[str, Any]]:
+                _ = group_key
+                return [{"algorithm": "pooled", "value": sum(row["value"] for row in rows)}]
 
-        assert [row["FakeUseCase"] for row in rows] == ["Maxcut", UNGROUPED_LABEL]
+        plot = PoolingBarPlot()
 
-    def test_apply_grouping_falls_back_when_feature_is_missing(self) -> None:
-        """Test a feature that produced no results leaves the plot ungrouped."""
-        plot = ConcreteBarPlot()
-        plot.group_by = cast("FeatureClass", FakeUseCaseFeature)
-        rows = [{"algorithm": "Algo1", "model": "m1", "value": 10}]
+        with patch.object(PoolingBarPlot, "create") as mock_create:
+            plot.draw(
+                benchmark_results=MagicMock(spec=BenchmarkResultContainer),
+                rows=[{"algorithm": "Algo1", "value": 1}, {"algorithm": "Algo2", "value": 2}],
+            )
 
-        with patch.object(plot.logger, "warning") as mock_warning:
-            kwargs = plot.apply_grouping(self._benchmark_results({"m1": None}), rows)
+        assert mock_create.call_args.kwargs["rows"] == [{"algorithm": "pooled", "value": 3}]
 
-        assert kwargs == {}
-        assert rows == [{"algorithm": "Algo1", "model": "m1", "value": 10}]
-        mock_warning.assert_called_once()
+
+class TestBarPlotAnnotationText:
+    """Test how an annotated value is written."""
+
+    def test_the_format_decides_by_default(self) -> None:
+        """Test nothing changes for a plot that does not ask for plain decimals."""
+        assert ConcreteBarPlot().annotation_text(0.0000567) == "5.67e-05"
+
+    def test_decimals_replace_scientific_notation(self) -> None:
+        """Test a small value can be written plainly, which is what makes bars comparable."""
+        assert ConcreteBarPlot(annotation=Annotation(max_decimals=6)).annotation_text(0.0000567) == "0.000057"
+
+    def test_trailing_zeros_are_dropped(self) -> None:
+        """Test the setting is a limit, not a fixed width."""
+        assert ConcreteBarPlot(annotation=Annotation(max_decimals=6)).annotation_text(0.25) == "0.25"
+        assert ConcreteBarPlot(annotation=Annotation(max_decimals=6)).annotation_text(12.0) == "12"
+
+    def test_a_value_too_small_to_show_keeps_its_format(self) -> None:
+        """Test a value that would round to zero is written in scientific notation instead."""
+        assert ConcreteBarPlot(annotation=Annotation(max_decimals=3)).annotation_text(0.0000567) == "5.67e-05"
+
+    def test_zero_is_written_as_zero(self) -> None:
+        """Test an exact zero is not mistaken for a value too small to show."""
+        assert ConcreteBarPlot(annotation=Annotation(max_decimals=3)).annotation_text(0.0) == "0"
+
+    def test_the_font_size_reaches_the_annotations(self) -> None:
+        """Test the annotations can be made to fit a crowded axis."""
+        plot = ConcreteBarPlot(figure=Figure(show=False), annotation=Annotation(fontsize=6, max_decimals=4))
+
+        plot.create(
+            rows=[{"algorithm": "Algo1", "value": 0.25}], xlabel="X", ylabel="Y", title="T", x="algorithm", y="value"
+        )
+
+        annotation = plt.gca().texts[0]
+        assert annotation.get_fontsize() == 6
+        assert annotation.get_text() == "0.25"
+
+
+class TestBarPlotColours:
+    """Test that the bars are drawn in the colours the palette says."""
+
+    def teardown_method(self) -> None:
+        """Clean up matplotlib figures after each test."""
+        plt.close("all")
+
+    def test_the_bar_colour_is_the_brand_colour_exactly(self) -> None:
+        """Test seaborn does not dim the fill, which would miss the brand blue."""
+        plot = ConcreteBarPlot(figure=Figure(show=False))
+
+        plot.create(
+            rows=[{"algorithm": "Algo1", "value": 10}], xlabel="X", ylabel="Y", title="T", x="algorithm", y="value"
+        )
+
+        bars = [patch for patch in plt.gca().patches if isinstance(patch, Rectangle) and patch.get_height()]
+        assert to_hex(bars[0].get_facecolor()).upper() == LunaColours.LUNA_SOLVE
+
+    def test_the_saturation_can_still_be_tuned(self) -> None:
+        """Test the passthrough reaches an argument the plot sets itself."""
+        plot = ConcreteBarPlot(figure=Figure(show=False, seaborn_kwargs={"saturation": 0.5}))
+
+        with patch("seaborn.barplot") as mock_barplot:
+            plot.create(rows=[{"algorithm": "Algo1", "value": 10}], xlabel="X", ylabel="Y", title="T")
+
+        assert mock_barplot.call_args.kwargs["saturation"] == 0.5

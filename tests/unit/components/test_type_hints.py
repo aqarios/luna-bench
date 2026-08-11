@@ -50,4 +50,7 @@ def test_generated_init_matches_fields(component: type[BaseModel]) -> None:
 def test_signature_covers_every_field(component: type[BaseModel]) -> None:
     parameters = {parameter.name for parameter in generator.signature(component)}
 
-    assert parameters == set(component.model_fields)
+    # A plot also takes the bundles that stand for several of its fields at once.
+    bundles = set(getattr(component, "option_bundles", {}))
+
+    assert parameters == set(component.model_fields) | bundles
