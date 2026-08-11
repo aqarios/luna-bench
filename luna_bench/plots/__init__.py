@@ -12,6 +12,7 @@ from luna_bench.plots.dimensions import (
     BaseDimension,
     Dimension,
     FeatureDimension,
+    MetricDimension,
     ModelDimension,
     ParameterDimension,
 )
@@ -51,6 +52,7 @@ __all__ = [
     "FeatureDimension",
     "Figure",
     "FractionOfOverallBestSolutionPlot",
+    "MetricDimension",
     "ModelDimension",
     "OptionBundle",
     "ParameterDimension",

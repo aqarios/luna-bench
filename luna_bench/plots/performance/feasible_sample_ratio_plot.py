@@ -118,54 +118,52 @@ class FeasibleSampleRatioPlot(MetricBarPlot):
             for model_name, algorithm_name, metric_result in benchmark_results.get_all_metrics_of_type(FeasibleSamples)
         ]
 
-    def transform_rows(self, rows: list[dict[str, Any]], group_key: str | None) -> list[dict[str, Any]]:
+    def transform_rows(self, rows: list[dict[str, Any]], x: str | None, group: str | None) -> list[dict[str, Any]]:
         """Pool the per-model counts into one ratio per bar.
 
         Parameters
         ----------
         rows : list[dict[str, Any]]
             One row per model and algorithm, carrying both sample counts.
-        group_key : str | None
+        x : str | None
+            Column the bars are drawn per.
+        group : str | None
             Column the bars are split by, or ``None`` when they are ungrouped.
 
         Returns
         -------
         list[dict[str, Any]]
-            One row per bar, in the order the algorithms first appear.
+            One row per bar, in the order the bars first appear.
         """
-        return self._pool(rows, group_key)
+        return self._pool(rows, [column for column in (x, group) if column is not None])
 
     @staticmethod
-    def _pool(rows: list[dict[str, Any]], group_key: str | None) -> list[dict[str, Any]]:
-        """Sum the sample counts per algorithm and turn each pair of sums into a ratio.
+    def _pool(rows: list[dict[str, Any]], columns: list[str]) -> list[dict[str, Any]]:
+        """Sum the sample counts per bar and turn each pair of sums into a ratio.
 
         Parameters
         ----------
         rows : list[dict[str, Any]]
             One row per model and algorithm, carrying both sample counts.
-        group_key : str | None
-            Column the bars are split by, or ``None`` when they are ungrouped. Pooling
-            happens within a group so a grouped plot keeps one bar per group.
+        columns : list[str]
+            What tells one bar from another - the x-axis, and the grouping if there is
+            one. Everything else is pooled over, which is the point of this plot: the
+            samples of every model it pools enter the same sum.
 
         Returns
         -------
         list[dict[str, Any]]
-            One row per bar, in the order the algorithms first appear.
+            One row per bar, in the order the bars first appear.
         """
-        totals: dict[tuple[str, str | None], list[int]] = {}
+        totals: dict[tuple[Any, ...], list[int]] = {}
         for row in rows:
-            key = (row["algorithm"], row[group_key] if group_key is not None else None)
+            key = tuple(row.get(column) for column in columns)
             sums = totals.setdefault(key, [0, 0])
             sums[0] += row["num_feasible_samples"]
             sums[1] += row["num_samples"]
 
-        pooled: list[dict[str, Any]] = []
-        for (algorithm, group), (num_feasible, num_samples) in totals.items():
-            pooled_row: dict[str, Any] = {
-                "algorithm": algorithm,
-                "feasible_sample_ratio": num_feasible / num_samples if num_samples else 0.0,
-            }
-            if group_key is not None:
-                pooled_row[group_key] = group
-            pooled.append(pooled_row)
-        return pooled
+        return [
+            dict(zip(columns, key, strict=True))
+            | {"feasible_sample_ratio": num_feasible / num_samples if num_samples else 0.0}
+            for key, (num_feasible, num_samples) in totals.items()
+        ]

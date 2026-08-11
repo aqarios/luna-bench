@@ -201,7 +201,7 @@ class SeabornPlot(BasePlot, ABC):
                 cls._merge_bundle_field(data, name, bundle_cls, field.default, shared.get(name))
 
         # A style also carries options that are fields of their own, e.g. the aggregation.
-        return {key: value for key, value in shared.items() if key not in cls.model_fields or key not in data} | data
+        return {key: value for key, value in shared.items() if key in cls.model_fields and key not in data} | data
 
     @classmethod
     def _merge_bundle_field(

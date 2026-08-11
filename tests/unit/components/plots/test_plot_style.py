@@ -214,3 +214,24 @@ class TestInstalledStyle:
     def test_nothing_is_installed_by_default(self) -> None:
         """Test a plot is its own default until a style says otherwise."""
         assert PlotStyle.installed() is None
+
+
+class TestStyleReachesEveryOption:
+    """Test that a style is not quietly dropped on its way to the plot."""
+
+    def teardown_method(self) -> None:
+        """Leave no style installed for the next test."""
+        PlotStyle.clear()
+
+    def test_an_option_of_the_plot_itself_is_applied(self) -> None:
+        """Test what a style says about a plain field arrives, e.g. the aggregation."""
+        assert RuntimePlot(style=PlotStyle(aggregation=Aggregation.MAX)).aggregation is Aggregation.MAX
+
+    def test_the_figure_carries_the_colour_and_the_passthrough(self) -> None:
+        """Test the options that moved into the figure are set through it, not beside it."""
+        style = PlotStyle(figure=Figure(color="#FF0000", seaborn_kwargs={"saturation": 0.5}))
+
+        plot = RuntimePlot(style=style)
+
+        assert plot.figure.color == "#FF0000"
+        assert plot.figure.seaborn_kwargs == {"saturation": 0.5}

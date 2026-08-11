@@ -41,11 +41,12 @@ class PlotsRunUcImpl(PlotsRunUc):
         self._logger = BenchLogger.get_logger(__name__)
 
     @staticmethod
-    def _grouping_features(plot_entity: PlotEntity) -> "list[FeatureClass]":
-        """Return the feature a plot groups its data by, if it groups by one at all.
+    def _dimension_features(plot_entity: PlotEntity) -> "list[FeatureClass]":
+        """Return the features a plot organises its data by, if any of them is one.
 
-        Only a `FeatureDimension` needs one; the other groupers read the results rather
-        than the features.
+        A dimension can be given to either axis of a plot - the bars or the colours - so
+        both are asked. Only a `FeatureDimension` needs a feature; the others read the
+        results or the algorithm configurations.
 
         Parameters
         ----------
@@ -55,25 +56,28 @@ class PlotsRunUcImpl(PlotsRunUc):
         Returns
         -------
         list[FeatureClass]
-            The grouping feature, or an empty list.
+            The features the plot's dimensions look up, without duplicates.
         """
-        grouping = getattr(plot_entity.plot, "grouping", None)
-        feature = getattr(grouping, "feature", None)
-        return [feature] if isinstance(feature, type) else []
+        features: list[FeatureClass] = []
+        for name in ("x", "grouping"):
+            feature = getattr(getattr(plot_entity.plot, name, None), "feature", None)
+            if isinstance(feature, type) and feature not in features:
+                features.append(feature)
+        return features
 
     @staticmethod
     def _feature_results(
         builder: FeatureResultBuilder,
         model_name: str,
         required: "list[FeatureClass]",
-        grouping: "list[FeatureClass]",
+        dimensions: "list[FeatureClass]",
     ) -> "Result[FeatureResultContainer, RunFeatureMissingError]":
         """Collect the feature results one plot needs for one model.
 
-        The features a plot declares have to be there; the one it groups by does not -
-        a model without it is drawn ungrouped rather than not at all. Which of the two a
-        missing result is is the plot's business, so the builder is asked for both and
-        only the first failure is passed on.
+        The features a plot declares have to be there; the ones its dimensions look up do
+        not - a model without one is drawn ungrouped rather than not at all. Which of the
+        two a missing result is is the plot's business, so the builder is asked for both
+        and only the first failure is passed on.
 
         Parameters
         ----------
@@ -83,8 +87,8 @@ class PlotsRunUcImpl(PlotsRunUc):
             The model to collect for.
         required : list[FeatureClass]
             The features the plot declared it needs.
-        grouping : list[FeatureClass]
-            The feature the plot groups by, if it groups by one.
+        dimensions : list[FeatureClass]
+            The features the plot's dimensions look up, if any of them does.
 
         Returns
         -------
@@ -92,14 +96,16 @@ class PlotsRunUcImpl(PlotsRunUc):
             The results, or the failure of a feature the plot cannot do without.
         """
         results = builder.results(model_name, required)
-        if not is_successful(results) or not grouping:
+        if not is_successful(results) or not dimensions:
             return results
 
-        grouped = builder.results(model_name, grouping)
-        if not is_successful(grouped):
+        organised = builder.results(model_name, dimensions)
+        if not is_successful(organised):
             return results
 
-        return Success(FeatureResultContainer.model_construct(data={**results.unwrap().data, **grouped.unwrap().data}))
+        return Success(
+            FeatureResultContainer.model_construct(data={**results.unwrap().data, **organised.unwrap().data})
+        )
 
     def _run_plot(
         self, plot_entity: PlotEntity, benchmark: BenchmarkEntity
@@ -110,22 +116,22 @@ class PlotsRunUcImpl(PlotsRunUc):
             self._logger.warning(f"Modelset is missing for benchmark '{benchmark.name}'")
             return Success(None)
 
-        # A plot may group its data along a feature it does not otherwise need, so that
-        # one is collected as well - optionally, since a model without it is simply
+        # A plot may organise its data along a feature it does not otherwise need, so
+        # those are collected as well - optionally, since a model without one is simply
         # ungrouped rather than unplottable.
-        grouping_features = self._grouping_features(plot_entity)
+        dimension_features = self._dimension_features(plot_entity)
 
         # Built once rather than per model - each one indexes the whole benchmark - and
         # only when the plot has something to read, so a plot that needs neither touches
         # neither.
-        needs_features = bool(plot_entity.plot.required_features or grouping_features)
+        needs_features = bool(plot_entity.plot.required_features or dimension_features)
         feature_builder = FeatureResultBuilder(benchmark) if needs_features else None
         metric_builder = MetricResultBuilder(benchmark) if plot_entity.plot.required_metrics else None
 
         for m in benchmark.modelset.models:
             if feature_builder is not None:
                 f = self._feature_results(
-                    feature_builder, m.name, plot_entity.plot.required_features, grouping_features
+                    feature_builder, m.name, plot_entity.plot.required_features, dimension_features
                 )
                 if not is_successful(f):
                     return Failure(f.failure())

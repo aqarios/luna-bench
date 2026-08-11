@@ -23,6 +23,7 @@ from luna_bench.metrics.feasible_samples import FeasibleSamplesResult
 from luna_bench.metrics.fraction_of_overall_best_solution import FractionOfOverallBestSolutionResult
 from luna_bench.metrics.runtime import RuntimeResult
 from luna_bench.metrics.time_to_solution import TimeToSolutionResult
+from luna_bench.plots.dimensions import ModelDimension
 from luna_bench.plots.generics.bar_plot import BarPlot
 from luna_bench.plots.performance import (
     ApproximationRatioPlot,
@@ -306,4 +307,35 @@ class TestFeasibleSolutionFoundPlot:
 
         assert mock_create.call_args.kwargs["rows"] == [
             {"algorithm": "algo_1", "model": "model_a", "feasibility_ratio": expected}
+        ]
+
+
+class TestFeasibleSampleRatioPooling:
+    """Test what the pooled ratio is pooled over."""
+
+    @staticmethod
+    def _results() -> MagicMock:
+        benchmark_results = MagicMock(spec=BenchmarkResultContainer)
+        benchmark_results.get_all_metrics_of_type.return_value = [
+            ("model_a", "algo_1", FeasibleSamplesResult(num_feasible_samples=1, num_samples=10)),
+            ("model_b", "algo_1", FeasibleSamplesResult(num_feasible_samples=9, num_samples=10)),
+        ]
+        return benchmark_results
+
+    def test_the_models_are_pooled_into_one_bar_per_algorithm(self) -> None:
+        """Test the point of the plot: every sample counts the same, whichever model it is from."""
+        with patch.object(FeasibleSampleRatioPlot, "create") as mock_create:
+            FeasibleSampleRatioPlot().run(self._results())
+
+        assert mock_create.call_args.kwargs["rows"] == [{"algorithm": "algo_1", "feasible_sample_ratio": 0.5}]
+
+    def test_a_plot_drawn_per_model_pools_within_the_model(self) -> None:
+        """Test the bars keep what tells them apart, so any dimension can be the x-axis."""
+        with patch.object(FeasibleSampleRatioPlot, "create") as mock_create:
+            FeasibleSampleRatioPlot(x=ModelDimension()).run(self._results())
+
+        assert mock_create.call_args.kwargs["x"] == "model"
+        assert mock_create.call_args.kwargs["rows"] == [
+            {"model": "model_a", "feasible_sample_ratio": 0.1},
+            {"model": "model_b", "feasible_sample_ratio": 0.9},
         ]

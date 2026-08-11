@@ -167,13 +167,16 @@ class BarPlot(SeabornPlot, ABC):
             Keyword arguments forwarded to :meth:`create`, overriding the fields.
         """
         grouping = self.apply_grouping(benchmark_results, rows)
-        # After the grouping, which may drop rows the x-axis would otherwise show.
+
+        # After the grouping, which may drop rows the x-axis would otherwise show. A
+        # dimension that does not apply has said so; the bars then fall back to the column
+        # it stands for, or to the algorithm, which every row of a benchmark carries.
         x_column = self.x.resolve(benchmark_results, rows) if rows else None
 
         create_kwargs: dict[str, Any] = {
             "save_dir": save_dir,
-            "rows": self.transform_rows(rows, grouping.get("hue")),
-            "x": x_column or type(self).model_fields["x"].default.column,
+            "rows": self.transform_rows(rows, x_column, grouping.get("hue")),
+            "x": x_column or getattr(self.x, "column", AlgorithmDimension.column),
             "y": self.y.column,
             "xlabel": self.x.title,
             "ylabel": self.y.title,
@@ -190,18 +193,21 @@ class BarPlot(SeabornPlot, ABC):
 
         self.create(**create_kwargs)
 
-    def transform_rows(self, rows: list[dict[str, Any]], group_key: str | None) -> list[dict[str, Any]]:
+    def transform_rows(self, rows: list[dict[str, Any]], x: str | None, group: str | None) -> list[dict[str, Any]]:
         """Return the rows to plot, by default the rows as they are.
 
         A subclass that has to reduce its rows before they are drawn - pooling counts
         into a single ratio, say - overrides this rather than :meth:`run`, so it keeps
-        the shared grouping and display handling.
+        the shared grouping and display handling. It is told what the bars and the groups
+        turned out to be, since that is what a row has to keep to stay one of them.
 
         Parameters
         ----------
         rows : list[dict[str, Any]]
-            Row-oriented plot data, already annotated with the group column.
-        group_key : str | None
+            Row-oriented plot data, already annotated with the dimensions' columns.
+        x : str | None
+            Column the bars are drawn per, or ``None`` when the plot has no rows.
+        group : str | None
             Column the bars are split by, or ``None`` when they are ungrouped.
 
         Returns
@@ -209,7 +215,7 @@ class BarPlot(SeabornPlot, ABC):
         list[dict[str, Any]]
             The rows handed to :meth:`create`.
         """
-        _ = group_key
+        _ = x, group
         return rows
 
     def create(  # noqa: PLR0913 # There are no good alternatives to just have all parameters listed here.

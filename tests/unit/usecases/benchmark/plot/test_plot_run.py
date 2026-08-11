@@ -61,6 +61,7 @@ class TestPlotsRunUcImpl:
         plot.name = name
         plot.required_features = required_features or []
         plot.required_metrics = required_metrics or []
+        plot.x = SimpleNamespace()
         plot.grouping = SimpleNamespace(feature=group_by)
         plot.run = MagicMock()
 
@@ -257,3 +258,30 @@ class TestPlotsRunUcImpl:
             result = self.use_case._run_plot(plot_entity, benchmark)
 
         assert result == Success(None)
+
+    def test_run_plot_collects_the_feature_of_the_x_axis(self) -> None:
+        """Test a dimension needs its feature whichever axis it was given to."""
+        plot_entity = self.create_mock_plot()
+        plot_entity.plot.x = SimpleNamespace(feature=VarNumberFeature)
+        benchmark = self.create_mock_benchmark(plots=[plot_entity])
+
+        with patch("luna_bench._internal.usecases.benchmark.plot.plot_run.FeatureResultBuilder") as mock_builder:
+            mock_builder.return_value.results.return_value = Success(FeatureResultContainer(data={}))
+            self.use_case._run_plot(plot_entity, benchmark)
+
+        assert [call.args for call in mock_builder.return_value.results.call_args_list] == [
+            ("model1", []),
+            ("model1", [VarNumberFeature]),
+        ]
+
+    def test_run_plot_asks_for_one_feature_on_both_axes_once(self) -> None:
+        """Test the same feature on the bars and the colours is collected once."""
+        plot_entity = self.create_mock_plot(group_by=VarNumberFeature)
+        plot_entity.plot.x = SimpleNamespace(feature=VarNumberFeature)
+        benchmark = self.create_mock_benchmark(plots=[plot_entity])
+
+        with patch("luna_bench._internal.usecases.benchmark.plot.plot_run.FeatureResultBuilder") as mock_builder:
+            mock_builder.return_value.results.return_value = Success(FeatureResultContainer(data={}))
+            self.use_case._run_plot(plot_entity, benchmark)
+
+        assert mock_builder.return_value.results.call_args_list[-1].args == ("model1", [VarNumberFeature])

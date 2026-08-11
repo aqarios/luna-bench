@@ -476,8 +476,10 @@ class TestBarPlotDraw:
         """Test a subclass can reduce its rows without reimplementing run."""
 
         class PoolingBarPlot(ConcreteBarPlot):
-            def transform_rows(self, rows: list[dict[str, Any]], group_key: str | None) -> list[dict[str, Any]]:
-                _ = group_key
+            def transform_rows(
+                self, rows: list[dict[str, Any]], x: str | None, group: str | None
+            ) -> list[dict[str, Any]]:
+                _ = x, group
                 return [{"algorithm": "pooled", "value": sum(row["value"] for row in rows)}]
 
         plot = PoolingBarPlot()
