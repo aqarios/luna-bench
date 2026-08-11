@@ -956,3 +956,53 @@ class TestListClasses:
     def test_list_classes_empty(self, method: str) -> None:
         benchmark = self._make_benchmark()
         assert getattr(benchmark, method)() == []
+
+
+class TestPlotSummary:
+    """Test the convenience wrapper around the standalone summary function."""
+
+    @staticmethod
+    def _make_benchmark(data_dir_plots: str | None = "plots_dir") -> Benchmark:
+        return Benchmark.model_construct(
+            name="test",
+            modelset=None,
+            features=[],
+            algorithms=[],
+            metrics=[],
+            plots=[],
+            data_dir_plots=data_dir_plots,
+        )
+
+    def test_it_forwards_to_the_standalone_function(self) -> None:
+        benchmark = self._make_benchmark()
+
+        with patch("luna_bench.plots.plot_summary") as mock_summary:
+            result = benchmark.plot_summary(columns=3, rows=2, show=False, title="Run 3")
+
+        assert result is mock_summary.return_value
+        mock_summary.assert_called_once_with(
+            benchmark,
+            columns=3,
+            rows=2,
+            save_dir="plots_dir",
+            figure_filename="summary",
+            file_formats=("png",),
+            show=False,
+            title="Run 3",
+        )
+
+    def test_save_dir_defaults_to_the_benchmark_plots_directory(self) -> None:
+        benchmark = self._make_benchmark(data_dir_plots="/tmp/bench/plots")
+
+        with patch("luna_bench.plots.plot_summary") as mock_summary:
+            benchmark.plot_summary()
+
+        assert mock_summary.call_args.kwargs["save_dir"] == "/tmp/bench/plots"
+
+    def test_an_explicit_save_dir_wins(self) -> None:
+        benchmark = self._make_benchmark()
+
+        with patch("luna_bench.plots.plot_summary") as mock_summary:
+            benchmark.plot_summary(save_dir="elsewhere")
+
+        assert mock_summary.call_args.kwargs["save_dir"] == "elsewhere"
