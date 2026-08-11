@@ -122,22 +122,3 @@ class TestFeatureResultBuilder:
         result = builder.results(query, [MockFeature])
 
         assert is_successful(result) == should_succeed
-
-    def test_optional_features_are_included_when_the_model_has_them(self) -> None:
-        """Test a feature a plot only groups by reaches it alongside the ones it requires."""
-        feat = make_feature_entity("feat_a", ("model_1", {}))
-        builder = FeatureResultBuilder(self._make_benchmark([feat]))
-
-        results = builder.results("model_1", [], [MockFeature]).unwrap()
-
-        assert MockFeature in results.data
-
-    def test_optional_features_are_skipped_when_the_model_has_none(self) -> None:
-        """Test a missing grouping feature means ungrouped bars, not a failed plot."""
-        feat = make_feature_entity("feat_a", ("model_1", {}))
-        builder = FeatureResultBuilder(self._make_benchmark([feat]))
-
-        result = builder.results("model_2", [], [MockFeature])
-
-        assert is_successful(result)
-        assert result.unwrap().data == {}

@@ -172,7 +172,7 @@ class TestPlotsRunUcImpl:
             result = self.use_case._run_plot(plot_entity, benchmark)
 
         assert result == Success(None)
-        mock_builder.return_value.results.assert_called_once_with("model1", ["feature1"], [])
+        mock_builder.return_value.results.assert_called_once_with("model1", ["feature1"])
 
     def test_run_plot_collects_the_grouping_feature(self) -> None:
         """Test a feature a plot only groups by is collected, though it is not required."""
@@ -184,7 +184,10 @@ class TestPlotsRunUcImpl:
             result = self.use_case._run_plot(plot_entity, benchmark)
 
         assert result == Success(None)
-        mock_builder.return_value.results.assert_called_once_with("model1", [], [VarNumberFeature])
+        assert [call.args for call in mock_builder.return_value.results.call_args_list] == [
+            ("model1", []),
+            ("model1", [VarNumberFeature]),
+        ]
 
     def test_run_plot_ignores_a_grouping_that_is_not_a_feature(self) -> None:
         """Test grouping by a column or an algorithm parameter needs no feature results."""
@@ -195,7 +198,7 @@ class TestPlotsRunUcImpl:
             mock_builder.return_value.results.return_value = Success(FeatureResultContainer(data={}))
             self.use_case._run_plot(plot_entity, benchmark)
 
-        mock_builder.return_value.results.assert_called_once_with("model1", ["feature1"], [])
+        mock_builder.return_value.results.assert_called_once_with("model1", ["feature1"])
 
     def test_run_plot_with_successful_metrics(self) -> None:
         """Test _run_plot when all metrics build successfully."""
@@ -240,3 +243,17 @@ class TestPlotsRunUcImpl:
 
         assert result == Success(None)
         assert any("algo_fail" in str(call) for call in mock_logger.call_args_list)
+
+    def test_run_plot_draws_ungrouped_when_the_grouping_feature_is_missing(self) -> None:
+        """Test a model without the feature it is grouped by costs the grouping, not the plot."""
+        plot_entity = self.create_mock_plot(group_by=VarNumberFeature)
+        benchmark = self.create_mock_benchmark(plots=[plot_entity])
+
+        with patch("luna_bench._internal.usecases.benchmark.plot.plot_run.FeatureResultBuilder") as mock_builder:
+            mock_builder.return_value.results.side_effect = [
+                Success(FeatureResultContainer(data={})),
+                Failure(RunFeatureMissingError("VarNumberFeature", "test_benchmark")),
+            ]
+            result = self.use_case._run_plot(plot_entity, benchmark)
+
+        assert result == Success(None)

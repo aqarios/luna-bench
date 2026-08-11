@@ -96,7 +96,7 @@ class Figure(OptionBundle):
         Open the figure in a window after building it.
     file_formats : tuple[str, ...] | str
         Output formats written to the save directory, one file each. ``"pgf"`` writes a
-        figure to ``\\input{}`` into a LaTeX document and needs a TeX engine.
+        figure to ``\input{}`` into a LaTeX document and needs a TeX engine.
     pgf_texsystem : str
         TeX engine used for the ``"pgf"`` format.
     filename : str

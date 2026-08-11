@@ -6,6 +6,7 @@ from returns.result import Failure, Result, Success
 from luna_bench._internal.usecases.benchmark.helper import FeatureResultBuilder, MetricResultBuilder
 from luna_bench._internal.usecases.benchmark.protocols import PlotsRunUc
 from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
+from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
 from luna_bench.entities import PlotEntity
 from luna_bench.entities.benchmark_entity import BenchmarkEntity
 from luna_bench.errors.run_errors.plots_errors.plot_exectuion_error import PlotExecutionError
@@ -17,7 +18,6 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.logging import BenchLogger
 
 if TYPE_CHECKING:
-    from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
     from luna_bench.custom.result_containers.metric_result_container import MetricResultContainer
     from luna_bench.custom.types import AlgorithmName, FeatureClass, ModelName
 
@@ -61,6 +61,46 @@ class PlotsRunUcImpl(PlotsRunUc):
         feature = getattr(grouping, "feature", None)
         return [feature] if isinstance(feature, type) else []
 
+    @staticmethod
+    def _feature_results(
+        builder: FeatureResultBuilder,
+        model_name: str,
+        required: "list[FeatureClass]",
+        grouping: "list[FeatureClass]",
+    ) -> "Result[FeatureResultContainer, RunFeatureMissingError]":
+        """Collect the feature results one plot needs for one model.
+
+        The features a plot declares have to be there; the one it groups by does not -
+        a model without it is drawn ungrouped rather than not at all. Which of the two a
+        missing result is is the plot's business, so the builder is asked for both and
+        only the first failure is passed on.
+
+        Parameters
+        ----------
+        builder : FeatureResultBuilder
+            Builds the results of the benchmark.
+        model_name : str
+            The model to collect for.
+        required : list[FeatureClass]
+            The features the plot declared it needs.
+        grouping : list[FeatureClass]
+            The feature the plot groups by, if it groups by one.
+
+        Returns
+        -------
+        Result[FeatureResultContainer, RunFeatureMissingError]
+            The results, or the failure of a feature the plot cannot do without.
+        """
+        results = builder.results(model_name, required)
+        if not is_successful(results) or not grouping:
+            return results
+
+        grouped = builder.results(model_name, grouping)
+        if not is_successful(grouped):
+            return results
+
+        return Success(FeatureResultContainer.model_construct(data={**results.unwrap().data, **grouped.unwrap().data}))
+
     def _run_plot(
         self, plot_entity: PlotEntity, benchmark: BenchmarkEntity
     ) -> Result[None, RunFeatureMissingError | RunMetricMissingError | PlotExecutionError]:
@@ -84,7 +124,9 @@ class PlotsRunUcImpl(PlotsRunUc):
 
         for m in benchmark.modelset.models:
             if feature_builder is not None:
-                f = feature_builder.results(m.name, plot_entity.plot.required_features, grouping_features)
+                f = self._feature_results(
+                    feature_builder, m.name, plot_entity.plot.required_features, grouping_features
+                )
                 if not is_successful(f):
                     return Failure(f.failure())
                 features[m.name] = f.unwrap()
