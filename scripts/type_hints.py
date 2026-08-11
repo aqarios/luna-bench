@@ -61,13 +61,18 @@ def component_classes() -> list[type[BaseModel]]:
     """Return every public component that has fields to show on its constructor.
 
     That is the plots, metrics and features themselves, whose metaclass hides the
-    constructor pydantic builds, and the option bundles a plot is configured with. A class
-    that writes its own ``__init__`` - the dimensions, which take their subject
-    positionally - already has a signature to show, and one without fields has nothing to.
+    constructor pydantic builds, and the option bundles a plot is configured with. Their
+    results are left out: they are plain pydantic models, which IDEs already understand
+    and which the components build rather than the user. A class that writes its own
+    ``__init__`` - a dimension, which takes its subject positionally - already has a
+    signature to show, and one without fields has nothing to.
     """
     import importlib  # noqa: PLC0415
 
-    from pydantic import BaseModel as PydanticBaseModel  # noqa: PLC0415
+    from luna_bench.custom.base_components.registerable_component import RegisterableComponent  # noqa: PLC0415
+    from luna_bench.plots.plot_style import OptionBundle  # noqa: PLC0415
+
+    wanted = (RegisterableComponent, OptionBundle)
 
     classes: list[type[BaseModel]] = []
     for package in COMPONENT_PACKAGES:
@@ -76,7 +81,7 @@ def component_classes() -> list[type[BaseModel]]:
             candidate = getattr(module, name)
             if (
                 isinstance(candidate, type)
-                and issubclass(candidate, PydanticBaseModel)
+                and issubclass(candidate, wanted)
                 and candidate.model_fields
                 and not _declares_runtime_init(candidate)
             ):

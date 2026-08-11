@@ -30,7 +30,7 @@ class WriteOnceMeta(PydanticModelMetaclass, ABCMeta):
     metaclass. Type checkers do not carry it through this subclass on their own, and
     without it every model built on this metaclass loses its generated ``__init__``:
     IDEs stop completing and start flagging field arguments such as
-    ``AverageRuntimePlot(annotate=False)``.
+    ``RuntimePlot(width=12)``.
     """
 
     _logger: ClassVar[Logger] = BenchLogger.get_logger(__name__)

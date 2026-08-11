@@ -21,8 +21,8 @@ class PlotDecorator(Protocol):
 
     Decorating a class hands back *that* class rather than ``BasePlot``, which is what
     keeps a plot's own configuration visible afterwards: without it, IDEs and type
-    checkers resolve a decorated ``AverageRuntimePlot`` to ``BasePlot`` and lose every
-    field, so ``AverageRuntimePlot(annotate=False)`` offers no completion and reports a
+    checkers resolve a decorated ``RuntimePlot`` to ``BasePlot`` and lose every
+    field, so ``RuntimePlot(width=12)`` offers no completion and reports a
     spurious error.
     """
 
