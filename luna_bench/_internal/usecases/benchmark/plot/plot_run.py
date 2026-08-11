@@ -19,7 +19,7 @@ from luna_bench.logging import BenchLogger
 if TYPE_CHECKING:
     from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
     from luna_bench.custom.result_containers.metric_result_container import MetricResultContainer
-    from luna_bench.custom.types import AlgorithmName, ModelName
+    from luna_bench.custom.types import AlgorithmName, FeatureClass, ModelName
 
 
 class PlotsRunUcImpl(PlotsRunUc):
@@ -40,6 +40,27 @@ class PlotsRunUcImpl(PlotsRunUc):
     ) -> None:
         self._logger = BenchLogger.get_logger(__name__)
 
+    @staticmethod
+    def _grouping_features(plot_entity: PlotEntity) -> "list[FeatureClass]":
+        """Return the feature a plot groups its data by, if it groups by one at all.
+
+        Only a `FeatureDimension` needs one; the other groupers read the results rather
+        than the features.
+
+        Parameters
+        ----------
+        plot_entity : PlotEntity
+            The plot about to be drawn.
+
+        Returns
+        -------
+        list[FeatureClass]
+            The grouping feature, or an empty list.
+        """
+        grouping = getattr(plot_entity.plot, "grouping", None)
+        feature = getattr(grouping, "feature", None)
+        return [feature] if isinstance(feature, type) else []
+
     def _run_plot(
         self, plot_entity: PlotEntity, benchmark: BenchmarkEntity
     ) -> Result[None, RunFeatureMissingError | RunMetricMissingError | PlotExecutionError]:
@@ -49,17 +70,29 @@ class PlotsRunUcImpl(PlotsRunUc):
             self._logger.warning(f"Modelset is missing for benchmark '{benchmark.name}'")
             return Success(None)
 
+        # A plot may group its data along a feature it does not otherwise need, so that
+        # one is collected as well - optionally, since a model without it is simply
+        # ungrouped rather than unplottable.
+        grouping_features = self._grouping_features(plot_entity)
+
+        # Built once rather than per model - each one indexes the whole benchmark - and
+        # only when the plot has something to read, so a plot that needs neither touches
+        # neither.
+        needs_features = bool(plot_entity.plot.required_features or grouping_features)
+        feature_builder = FeatureResultBuilder(benchmark) if needs_features else None
+        metric_builder = MetricResultBuilder(benchmark) if plot_entity.plot.required_metrics else None
+
         for m in benchmark.modelset.models:
-            if plot_entity.plot.required_features:
-                f = FeatureResultBuilder(benchmark).results(m.name, plot_entity.plot.required_features)
+            if feature_builder is not None:
+                f = feature_builder.results(m.name, plot_entity.plot.required_features, grouping_features)
                 if not is_successful(f):
                     return Failure(f.failure())
                 features[m.name] = f.unwrap()
 
-            if plot_entity.plot.required_metrics:
+            if metric_builder is not None:
                 metrics[m.name] = {}
                 for a in benchmark.algorithms:
-                    me = MetricResultBuilder(benchmark).results(m.name, a.name, plot_entity.plot.required_metrics)
+                    me = metric_builder.results(m.name, a.name, plot_entity.plot.required_metrics)
                     if not is_successful(me):
                         self._logger.warning(
                             f"Algorithm '{a.name}' failed on model '{m.name}' "
@@ -72,6 +105,9 @@ class PlotsRunUcImpl(PlotsRunUc):
         benchmark_result: BenchmarkResultContainer = BenchmarkResultContainer(
             features=features,
             metrics=metrics,
+            # The configured algorithm instances, so a plot can read what an algorithm was
+            # run with - the layer count of a sweep, say - and not just what it produced.
+            algorithms=BenchmarkResultContainer.algorithm_results(benchmark),
         )
         try:
             plot_entity.plot.run(benchmark_result, save_dir=benchmark.data_dir_plots)

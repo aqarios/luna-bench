@@ -62,6 +62,7 @@ class FeatureResultBuilder:
         self,
         model_name: ModelName,
         required_features: list[FeatureClass],
+        optional_features: list[FeatureClass] | None = None,
     ) -> Result[FeatureResultContainer, RunFeatureMissingError]:
         """
         Build and validate feature results for a metric and model.
@@ -70,8 +71,12 @@ class FeatureResultBuilder:
         ----------
         model_name : ModelName
             The model name to retrieve features for.
-        metric : MetricEntity
-            The metric requiring specific features.
+        required_features : list[FeatureClass]
+            Features the consumer cannot do without. A missing one is a failure.
+        optional_features : list[FeatureClass] | None, optional
+            Features to include when the model has a result for them, and to skip
+            silently when it does not - the grouping feature of a bar plot, say, whose
+            absence means ungrouped bars rather than no plot.
 
         Returns
         -------
@@ -86,6 +91,11 @@ class FeatureResultBuilder:
             if key not in self._lookup_map:
                 return Failure(RunFeatureMissingError(f.__name__, self.benchmark.name))
             feature_data[f] = self._lookup_map[key].copy()
+
+        for f in optional_features or []:
+            optional_key: tuple[FeatureClass, ModelName] = (f, model_name)
+            if optional_key in self._lookup_map:
+                feature_data[f] = self._lookup_map[optional_key].copy()
 
         return Success(
             FeatureResultContainer.model_construct(
