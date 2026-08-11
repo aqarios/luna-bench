@@ -91,6 +91,7 @@ class ScatterPlot(SeabornPlot, ABC):
             "s": 60,
             "alpha": 0.8,
         }
+        scatterplot_kwargs.update(self.figure.seaborn_kwargs)
         scatterplot_kwargs.update(kwargs)
 
         scatterplot(**scatterplot_kwargs)

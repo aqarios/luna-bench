@@ -1,0 +1,367 @@
+"""Bundles of plot options, so a plot is configured by concern rather than by keyword.
+
+A plot carries every option as a field of its own, which is what makes a single tweak a
+single keyword - ``RuntimePlot(width=12)``. Configuring several at once that way
+turns into a wall of keywords, and sharing a look between plots means repeating it, so
+the options are also grouped into bundles by what they configure:
+
+.. code-block:: python
+
+    plot = RuntimePlot(
+        figure=Figure(width=12, dpi=200, show=False),
+        annotation=Annotation(fontsize=7, max_decimals=6),
+        grouping=FeatureDimension(feature=UseCaseFeature, label="Use case"),
+        title="Runtime per Solver",
+    )
+
+`PlotStyle` collects the bundles into one look to hand to every plot of a benchmark. A
+bundle carries only the options it was given, so anything it does not mention stays at
+the plot's default, and the more specific setting wins: a plain keyword over a bundle,
+and a bundle over the ``style`` it came with.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, ClassVar
+
+from pydantic import BaseModel, ConfigDict, field_validator
+
+from luna_bench.plots.dimensions import Dimension
+from luna_bench.plots.utils import AUTO_ERRORBAR, Aggregation, ErrorBar, LunaColours
+
+
+class OptionBundle(BaseModel):
+    """Base of a bundle of plot options, passed to a plot as one argument.
+
+    Only the options a bundle was given are handed to the plot - configure what you need,
+    the rest is left alone. Options a given plot does not have are ignored by it, so the
+    same bundle can be handed to bar plots, scatter plots and sweeps alike.
+
+    Attributes
+    ----------
+    option_names : ClassVar[dict[str, str]]
+        Bundle field to plot option, for the fields whose names differ. A field that is
+        not listed keeps its name.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    option_names: ClassVar[dict[str, str]] = {}
+
+    def given(self) -> dict[str, Any]:
+        """Return the options this bundle was given, under its own field names.
+
+        Returns
+        -------
+        dict[str, Any]
+            Field to value, in field order, for the fields that were passed. What was
+            not passed is left out, so merging a bundle over another overrides only what
+            it mentions.
+        """
+        return {name: getattr(self, name) for name in type(self).model_fields if name in self.model_fields_set}
+
+    @classmethod
+    def flat_names(cls) -> dict[str, str]:
+        """Return the flat option names this bundle replaced, mapped to its fields.
+
+        The options used to be one flat keyword each - ``annotate_fontsize`` rather than
+        ``annotation=Annotation(fontsize=...)`` - and a plot still accepts those, so a
+        configuration written or stored before the bundles keeps working.
+
+        Returns
+        -------
+        dict[str, str]
+            Flat option name to bundle field.
+        """
+        flat = {option: field for field, option in cls.option_names.items()}
+        flat.update({name: name for name in cls.model_fields if name not in cls.option_names})
+        return flat
+
+
+class Figure(OptionBundle):
+    r"""The figure a plot is drawn on and the files it is written to.
+
+    Every field is documented on `SeabornPlot` under the name it maps to, which is the
+    same name - ``Figure(width=12)`` sets ``width``.
+
+    Attributes
+    ----------
+    width : int
+        Figure width in inches.
+    height : int
+        Figure height in inches.
+    dpi : int
+        Resolution of the figure and of the raster files written from it.
+    show : bool
+        Open the figure in a window after building it.
+    file_formats : tuple[str, ...] | str
+        Output formats written to the save directory, one file each. ``"pgf"`` writes a
+        figure to ``\\input{}`` into a LaTeX document and needs a TeX engine.
+    pgf_texsystem : str
+        TeX engine used for the ``"pgf"`` format.
+    filename : str
+        Stem of the written files. The extension comes from *file_formats*.
+    title : str
+        Title above the figure.
+    color : str | None
+        Single colour for ungrouped bars, by default the Aqarios blue. Ignored once a
+        grouping splits them, where the Luna gradient encodes the group.
+    seaborn_kwargs : dict[str, Any]
+        Extra arguments passed straight to the seaborn call that draws the plot. They
+        override what the plot computed, so ``palette`` or ``estimator`` can be replaced
+        as well as extended.
+    """
+
+    option_names: ClassVar[dict[str, str]] = {"filename": "figure_filename"}
+
+    width: int = 8
+    height: int = 6
+    dpi: int = 100
+    show: bool = True
+    file_formats: tuple[str, ...] = ("png",)
+    pgf_texsystem: str = "pdflatex"
+    filename: str = "figure"
+    title: str = ""
+    color: str | None = None
+    seaborn_kwargs: dict[str, Any] = {}  # pydantic copies a mutable default per instance.
+
+    if TYPE_CHECKING:
+        # --- generated by scripts/type_hints.py, do not edit by hand ---
+        # Mirrors the pydantic fields so IDEs show every option on the constructor.
+        # Never executed: pydantic builds the real ``__init__``.
+        def __init__(  # noqa: PLR0913
+            self,
+            *,
+            width: int = 8,
+            height: int = 6,
+            dpi: int = 100,
+            show: bool = True,
+            file_formats: tuple[str, ...] = ("png",),
+            pgf_texsystem: str = "pdflatex",
+            filename: str = "figure",
+            title: str = "",
+            color: str | None = None,
+            seaborn_kwargs: dict[str, Any] = {},  # noqa: B006
+        ) -> None: ...
+
+    @field_validator("file_formats", mode="before")
+    @classmethod
+    def _accept_single_format(cls, value: Any) -> Any:  # noqa: ANN401
+        """Allow a plain string, so ``file_formats="pgf"`` works as well as ``("pgf",)``."""
+        return (value,) if isinstance(value, str) else value
+
+
+class ErrorBars(OptionBundle):
+    """The error bars drawn on top of the bars.
+
+    Every field maps to the plot option of the same name with an ``errorbar`` prefix, and
+    is documented on `BarPlot`.
+
+    Attributes
+    ----------
+    spec : ErrorBar
+        What the bar shows (``"sd"``, ``("ci", 95)``, ``None`` to draw none). By default
+        derived from the aggregation.
+    color : str
+        Colour of the error bars.
+    capsize : float
+        Width of the caps that turn an error bar into a T, as a share of the bar width.
+        ``0.0`` leaves a plain line.
+    """
+
+    option_names: ClassVar[dict[str, str]] = {
+        "spec": "errorbar",
+        "color": "errorbar_color",
+        "capsize": "errorbar_capsize",
+    }
+
+    spec: ErrorBar = AUTO_ERRORBAR
+    color: str = LunaColours.SKY
+    capsize: float = 0.2
+    if TYPE_CHECKING:
+        # --- generated by scripts/type_hints.py, do not edit by hand ---
+        # Mirrors the pydantic fields so IDEs show every option on the constructor.
+        # Never executed: pydantic builds the real ``__init__``.
+        def __init__(
+            self,
+            *,
+            spec: ErrorBar = AUTO_ERRORBAR,
+            color: str = LunaColours.SKY,
+            capsize: float = 0.2,
+        ) -> None: ...
+
+
+class Annotation(OptionBundle):
+    """The values written above the bars.
+
+    Passing no annotation at all is how a plot says it wants none - ``annotation=None``
+    rather than a flag inside the bundle, the same way ``grouping=None`` leaves the bars
+    ungrouped.
+
+    Every field maps to the plot option of the same name with an ``annotate`` prefix, and
+    is documented on `BarPlot` - `format` is ``annotate_format``, and so on.
+
+    Attributes
+    ----------
+    format : str
+        Format applied to an annotated value, e.g. ``"{:.1f}%"``.
+    max_decimals : int | None
+        Decimals an annotation may use before it switches to scientific notation.
+    fontsize : float | str
+        Font size in points, or a matplotlib size name.
+    rotation : int
+        Rotation of the annotations in degrees.
+    headroom : float
+        Share of the y range added above the bars so the annotations fit.
+    """
+
+    option_names: ClassVar[dict[str, str]] = {
+        "format": "annotate_format",
+        "max_decimals": "annotate_max_decimals",
+        "fontsize": "annotate_fontsize",
+        "rotation": "annotate_rotation",
+        "headroom": "annotate_headroom",
+    }
+
+    format: str = "{:.3g}"
+    max_decimals: int | None = None
+    fontsize: float | str = "small"
+    rotation: int = 0
+    headroom: float = 0.3
+    if TYPE_CHECKING:
+        # --- generated by scripts/type_hints.py, do not edit by hand ---
+        # Mirrors the pydantic fields so IDEs show every option on the constructor.
+        # Never executed: pydantic builds the real ``__init__``.
+        def __init__(
+            self,
+            *,
+            format: str = "{:.3g}",
+            max_decimals: int | None = None,
+            fontsize: float | str = "small",
+            rotation: int = 0,
+            headroom: float = 0.3,
+        ) -> None: ...
+
+
+class PlotStyle(OptionBundle):
+    """The look of a benchmark's figures, configured once and given to every plot.
+
+    .. code-block:: python
+
+        style = PlotStyle(
+            figure=Figure(width=12, dpi=200, show=False),
+            annotation=Annotation(fontsize=7, max_decimals=6),
+        )
+
+        bench.add_plot("runtime", RuntimePlot(style=style, title="Runtime"))
+        bench.add_plot("feasible", FeasibilityRatioPlot(style=style))
+        # One plot that differs: the bundle it is given wins over the shared style.
+        bench.add_plot("quality", BestSolutionFoundRatioPlot(style=style, annotation=None))
+
+    Only settings shared by plots are collected; what identifies a single plot - its
+    title, labels, limits, reference lines and filename - stays on the plot.
+
+    Attributes
+    ----------
+    figure : Figure | None
+        The figure and the files written from it.
+    errorbars : ErrorBars | None
+        The error bars drawn on top of the bars.
+    annotation : Annotation | None
+        The values written above the bars, or ``None`` to write none.
+    grouping : Dimension | None
+        What splits each bar into a group of bars.
+    aggregation : Aggregation
+        Aggregation applied per x category.
+
+    A benchmark that wants one look everywhere installs the style once instead of handing
+    it to every plot:
+
+    .. code-block:: python
+
+        PlotStyle(figure=Figure(width=12, show=False)).use()
+
+        bench.add_plot("runtime", RuntimePlot())  # picks the style up
+        bench.add_plot("quality", BestSolutionFoundRatioPlot(width=8))  # and can still differ
+
+    See Also
+    --------
+    Figure, ErrorBars, Annotation : The bundles it collects.
+    """
+
+    _default: ClassVar[PlotStyle | None] = None
+
+    if TYPE_CHECKING:
+        # --- generated by scripts/type_hints.py, do not edit by hand ---
+        # Mirrors the pydantic fields so IDEs show every option on the constructor.
+        # Never executed: pydantic builds the real ``__init__``.
+        def __init__(  # noqa: PLR0913
+            self,
+            *,
+            figure: Figure | None = None,
+            errorbars: ErrorBars | None = None,
+            annotation: Annotation | None = None,
+            grouping: Dimension | None = None,
+            aggregation: Aggregation = Aggregation.MEAN,
+            color: str | None = None,
+            seaborn_kwargs: dict[str, Any] = {},  # noqa: B006
+        ) -> None: ...
+
+    def use(self) -> _StyleContext:
+        """Make this the style every plot built from now on starts from.
+
+        The plots pick it up as they are constructed, so installing a style does not
+        change the ones that already exist - what a plot holds is always what it was
+        built with. A plot still wins over it, with a bundle or with a plain option.
+
+        Returns
+        -------
+        _StyleContext
+            A context manager that puts the previous default back, for a style that
+            should only apply to one block. Discard it to install the style for good.
+        """
+        previous = PlotStyle._default
+        PlotStyle._default = self
+        return _StyleContext(previous)
+
+    @classmethod
+    def installed(cls) -> PlotStyle | None:
+        """Return the style plots currently start from, if one was installed.
+
+        Returns
+        -------
+        PlotStyle | None
+            The installed style, or ``None``.
+        """
+        return cls._default
+
+    @classmethod
+    def clear(cls) -> None:
+        """Forget the installed style, so plots go back to their own defaults."""
+        cls._default = None
+
+    figure: Figure | None = None
+    errorbars: ErrorBars | None = None
+    annotation: Annotation | None = None
+    grouping: Dimension | None = None
+
+    aggregation: Aggregation = Aggregation.MEAN
+    color: str | None = None
+    seaborn_kwargs: dict[str, Any] = {}  # pydantic copies a mutable default per instance.
+
+
+class _StyleContext:
+    """Puts the previous default style back when the block that installed one ends."""
+
+    def __init__(self, previous: PlotStyle | None) -> None:
+        self._previous = previous
+
+    def __enter__(self) -> None:
+        """Enter the block; the style was installed when it was asked for."""
+
+    def __exit__(self, *exception: object) -> None:
+        """Leave the block, restoring the style that was installed before."""
+        if self._previous is None:
+            PlotStyle.clear()
+        else:
+            self._previous.use()

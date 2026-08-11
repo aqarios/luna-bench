@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 import pandas as pd
-from pydantic import field_serializer, field_validator
 
-from luna_bench.custom.types import FeatureClass
 from luna_bench.helpers.optional_dependencies import check_optional_dependency
+from luna_bench.plots.dimensions import AlgorithmDimension, Dimension, MetricDimension
+from luna_bench.plots.plot_style import Annotation, ErrorBars
 from luna_bench.plots.utils import (
     AUTO_ERRORBAR,
     REFERENCE_LINE_COLOUR,
@@ -27,10 +27,6 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
     from luna_bench.custom import BenchmarkResultContainer
-    from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
-
-#: Group used for models the ``group_by`` feature has no result for.
-UNGROUPED_LABEL = "unknown"
 
 #: A line needs at least this many points to be a candidate error bar.
 _MIN_LINE_POINTS = 2
@@ -40,47 +36,35 @@ class BarPlot(SeabornPlot, ABC):
     """Base helper for generating aggregated seaborn bar plots.
 
     Subclasses turn benchmark results into row dictionaries and hand them to
-    :meth:`create`; everything below is shared configuration a user can set on any
-    of them at construction time, e.g.
-    ``AverageRuntimePlot(annotate=False, file_formats=("pgf", "png"))``.
+    :meth:`create`; everything below is shared configuration a user can set on any of
+    them at construction time, grouped into bundles by what it configures, e.g.
+    ``RuntimePlot(annotation=Annotation(enabled=False))``. The flat spelling those
+    options used to have - ``annotate=False`` - is still accepted.
 
     Attributes
     ----------
-    color : str | None
-        Single colour for ungrouped bars, by default the Aqarios blue. Ignored once
-        :attr:`group_by` splits the bars, where the Luna gradient encodes the group.
-    errorbar_color : str
-        Colour of the error bars, by default ``LunaColours.SKY``.
-    errorbar_capsize : float
-        Width of the caps that turn an error bar into a T, as a share of the bar
-        width, by default ``0.2``. ``0.0`` leaves a plain line.
-    annotate : bool
-        Write the aggregated value above each bar, by default ``True``.
-    annotate_format : str
-        Format applied to an annotated value, by default ``"{:.3g}"``.
-    annotate_rotation : int
-        Rotation of the annotations in degrees, by default ``0``.
-    annotate_headroom : float
-        Share of the y range added above the bars so the annotations fit, by default ``0.3``.
-    group_by : FeatureClass | None
-        Feature whose per-model value splits each bar into a group of bars, e.g. a use
-        case or problem category assigned with a lookup feature. ``None`` (the default)
-        leaves the bars ungrouped.
-    group_label : str | None
-        Legend title for *group_by*, by default the feature's class name without its
-        ``"Feature"`` suffix.
-    group_attribute : str
-        Attribute read off the feature result, by default ``"value"`` - what the
-        lookup features expose.
+    x : Dimension
+        What the bars are - one per algorithm by default. Also titles the axis.
+    y : MetricDimension
+        What the bars measure - the attribute read off each result, and its axis title.
+    aggregation : Aggregation
+        Aggregation applied per x category, by default the mean over the models.
+    errorbars : ErrorBars
+        The error bars drawn on top of the bars: what they show, their colour, and the
+        caps that turn them into a T.
+    annotation : Annotation | None
+        The values written above the bars, by default ``None`` - none are written.
+    grouping : Dimension | None
+        What splits each bar into a group of bars: `ModelDimension`, `AlgorithmDimension`,
+        `FeatureDimension` or `ParameterDimension`.
 
     Examples
     --------
     Split the bars by a per-model category and write the figure for LaTeX:
 
-    >>> plot = AverageRuntimePlot(
-    ...     group_by=UseCaseFeature,
-    ...     group_label="Use case",
-    ...     file_formats=("pgf", "png"),
+    >>> plot = RuntimePlot(
+    ...     grouping=FeatureDimension(feature=UseCaseFeature, label="Use case"),
+    ...     figure=Figure(file_formats=("pgf", "png")),
     ... )
     >>> bench.add_plot(name="runtime", plot=plot)
 
@@ -95,84 +79,50 @@ class BarPlot(SeabornPlot, ABC):
 
     logger: ClassVar[Logger] = logging.getLogger(__name__)
 
-    color: str | None = None
-    """Single colour for ungrouped bars.
+    x: Dimension = AlgorithmDimension()
+    """What the bars are: one per value of this dimension, and its title on the axis."""
 
-    ``None`` uses the Aqarios blue. Grouped bars ignore this and take the Luna gradient
-    from blue over green to yellow, spread across the groups.
+    y: MetricDimension = MetricDimension("value")
+    """What the bars measure: the attribute read off each result, and its title on the axis."""
+
+    aggregation: Aggregation = Aggregation.MEAN
+    """Aggregation applied to the values of an x category, by default their mean."""
+
+    errorbars: ErrorBars | None = ErrorBars()
+    """The error bars drawn on top of the bars: what they show, their colour and caps.
+
+    ``None`` draws none, the same as ``ErrorBars(spec=None)``.
     """
 
-    errorbar_color: str = LunaColours.SKY
-    """Colour of the error bars drawn on top of the bars."""
+    annotation: Annotation | None = None
+    """The values written above the bars - how they are formatted and how large.
 
-    errorbar_capsize: float = 0.2
-    """Width of the error bar caps as a share of the bar width.
-
-    The caps give the bar its T shape, which reads as a range rather than as a stray
-    vertical line. ``0.0`` draws a plain line without caps.
+    ``None``, the default, writes none: a bar chart is read off its axis, and a number
+    above every bar is worth its clutter only when the exact value is the point. Pass an
+    `Annotation` to turn them on, empty for the defaults.
     """
 
-    annotate: bool = True
-    """Write the aggregated value above each bar, clear of its error bar."""
+    grouping: Dimension | None = None
+    """What splits each bar into a group of bars.
 
-    annotate_format: str = "{:.3g}"
-    """Format applied to an annotated value, e.g. ``"{:.1f}%"`` for percentages."""
-
-    annotate_rotation: int = 0
-    """Rotation of the annotations in degrees. Set to ``90`` when narrow bars make the labels collide."""
-
-    annotate_headroom: float = 0.3
-    """Share of the y range added above the bars so the annotations fit."""
-
-    group_by: FeatureClass | None = None
-    """Feature whose per-model value splits each bar into a group of bars.
-
-    Typically a use case or problem category assigned with a lookup feature. Models the
-    feature has no result for are grouped as ``"unknown"``; if no model has one, the
-    plot falls back to ungrouped bars. ``None`` leaves the bars ungrouped.
+    One of the groupers - `ModelDimension`, `AlgorithmDimension`, `FeatureDimension`,
+    `ParameterDimension` - or ``None``, which leaves the bars ungrouped.
     """
-
-    group_label: str | None = None
-    """Legend title for :attr:`group_by`, by default the feature's class name without its ``"Feature"`` suffix."""
-
-    group_attribute: str = "value"
-    """Attribute read off the feature result. ``"value"`` is what the lookup features expose."""
-
-    @field_serializer("group_by")
-    def _serialize_group_by(self, value: FeatureClass | None) -> str | None:
-        """Store the grouping feature by id, since a class is not JSON.
-
-        The plot configuration is persisted with the benchmark, so ``group_by`` has to
-        survive a round trip through the database as the id the feature is registered
-        under.
-        """
-        if value is None:
-            return None
-        return getattr(value, "registered_id", None) or f"{value.__module__}.{value.__qualname__}"
-
-    @field_validator("group_by", mode="before")
-    @classmethod
-    def _resolve_group_by(cls, value: Any) -> Any:  # noqa: ANN401
-        """Turn the id a stored configuration carries back into the feature class."""
-        if not isinstance(value, str):
-            return value
-
-        from luna_bench.custom.registry_info import RegistryInfo  # noqa: PLC0415
-
-        return RegistryInfo.get_feature_by_id(value)
 
     def apply_grouping(self, benchmark_results: BenchmarkResultContainer, rows: list[dict[str, Any]]) -> dict[str, Any]:
-        """Split *rows* into groups along the :attr:`group_by` feature.
+        """Split *rows* into groups along :attr:`grouping`.
 
-        Each row is expected to carry the model it belongs to under ``"model"``; the
-        group value looked up for that model is added to the row in place.
+        What that means is the grouper's business - a column of the plotted data, a value
+        looked up per model, or a setting the algorithms were configured with - and so is
+        deciding that it does not apply, in which case the bars stay ungrouped.
 
         Parameters
         ----------
         benchmark_results : BenchmarkResultContainer
-            Benchmark data the feature results are read from.
+            Benchmark data the feature results and algorithm configurations are read from.
         rows : list[dict[str, Any]]
-            Row-oriented plot data, annotated in place with the group column.
+            Row-oriented plot data, annotated - and, where a grouping applies to only part
+            of the data, reduced - in place.
 
         Returns
         -------
@@ -180,37 +130,87 @@ class BarPlot(SeabornPlot, ABC):
             Keyword arguments to forward to :meth:`create`. Empty when no grouping
             applies, so call sites can splat it unconditionally.
         """
-        if self.group_by is None or not rows:
+        if self.grouping is None or not rows:
             return {}
 
-        groups = {
-            model_name: self._group_value(container, self.group_by)
-            for model_name, container in benchmark_results.features.items()
+        column = self.grouping.resolve(benchmark_results, rows)
+        if column is None:
+            self.logger.warning("%s: plotting ungrouped", self.__class__.__name__)
+            return {}
+
+        return {"hue": column, "legend": True}
+
+    def draw(
+        self,
+        *,
+        benchmark_results: BenchmarkResultContainer,
+        rows: list[dict[str, Any]],
+        save_dir: str | None = None,
+        **overrides: Any,
+    ) -> None:
+        """Group *rows* and draw them with the display configuration of this plot.
+
+        This is what turns the declared fields - :attr:`x`, :attr:`title`, :attr:`hline`
+        and the rest - into a :meth:`create` call, so a subclass only has to say which
+        rows it plots. Doing it in one place is also what keeps :attr:`group_by` working
+        for every bar plot rather than for those that remember to apply it.
+
+        Parameters
+        ----------
+        benchmark_results : BenchmarkResultContainer
+            Benchmark data, used to look up the groups of a feature :attr:`group_by`.
+        rows : list[dict[str, Any]]
+            Row-oriented plot data.
+        save_dir : str | None, optional
+            Directory to save the figure into, by default ``None``.
+        **overrides : Any
+            Keyword arguments forwarded to :meth:`create`, overriding the fields.
+        """
+        grouping = self.apply_grouping(benchmark_results, rows)
+        # After the grouping, which may drop rows the x-axis would otherwise show.
+        x_column = self.x.resolve(benchmark_results, rows) if rows else None
+
+        create_kwargs: dict[str, Any] = {
+            "save_dir": save_dir,
+            "rows": self.transform_rows(rows, grouping.get("hue")),
+            "x": x_column or type(self).model_fields["x"].default.column,
+            "y": self.y.column,
+            "xlabel": self.x.title,
+            "ylabel": self.y.title,
+            "title": self.figure.title,
+            "aggregation": self.aggregation,
+            "errorbar": self.errorbars.spec if self.errorbars else None,
+            "hline": self.y.reference,
+            "hline_label": self.y.reference_label,
+            "baseline": self.y.baseline,
+            "ylim": self.y.limits,
         }
+        create_kwargs.update(grouping)
+        create_kwargs.update(overrides)
 
-        if all(value is None for value in groups.values()):
-            self.logger.warning(
-                "%s: no results for group feature %s, plotting ungrouped",
-                self.__class__.__name__,
-                self.group_by.__name__,
-            )
-            return {}
+        self.create(**create_kwargs)
 
-        label = self.group_label or self.group_by.__name__.removesuffix("Feature")
-        for row in rows:
-            row[label] = groups.get(str(row.get("model", ""))) or UNGROUPED_LABEL
+    def transform_rows(self, rows: list[dict[str, Any]], group_key: str | None) -> list[dict[str, Any]]:
+        """Return the rows to plot, by default the rows as they are.
 
-        return {"hue": label, "legend": True}
+        A subclass that has to reduce its rows before they are drawn - pooling counts
+        into a single ratio, say - overrides this rather than :meth:`run`, so it keeps
+        the shared grouping and display handling.
 
-    def _group_value(self, feature_results: FeatureResultContainer, feature_cls: FeatureClass) -> str | None:
-        """Read the group value of a single model, or ``None`` when it has none."""
-        try:
-            result = feature_results.first(feature_cls)
-        except Exception:  # A model without a result for the feature is simply ungrouped.
-            return None
+        Parameters
+        ----------
+        rows : list[dict[str, Any]]
+            Row-oriented plot data, already annotated with the group column.
+        group_key : str | None
+            Column the bars are split by, or ``None`` when they are ungrouped.
 
-        value = getattr(result, self.group_attribute, None)
-        return None if value is None else str(value)
+        Returns
+        -------
+        list[dict[str, Any]]
+            The rows handed to :meth:`create`.
+        """
+        _ = group_key
+        return rows
 
     def create(  # noqa: PLR0913 # There are no good alternatives to just have all parameters listed here.
         self,
@@ -290,6 +290,7 @@ class BarPlot(SeabornPlot, ABC):
             return
 
         df = pd.DataFrame(rows)
+        errorbars = self.errorbars or ErrorBars(spec=None)
         resolved_errorbar = aggregation.errorbar if errorbar == AUTO_ERRORBAR else errorbar
 
         self.setup_figure()
@@ -300,18 +301,22 @@ class BarPlot(SeabornPlot, ABC):
             "y": y,
             "estimator": aggregation.estimator,
             "errorbar": resolved_errorbar,
-            "err_kws": {"color": str(self.errorbar_color), "linewidth": 1.5},
-            "capsize": self.errorbar_capsize,
+            "err_kws": {"color": str(errorbars.color), "linewidth": 1.5},
+            # Seaborn dims a fill to 75% saturation by default, which turns the brand
+            # blue into a colour that is nearly it. The palette is chosen, so it is drawn.
+            "saturation": 1.0,
+            "capsize": errorbars.capsize,
             "legend": legend,
             **self._color_kwargs(df, hue=hue),
         }
+        barplot_kwargs.update(self.figure.seaborn_kwargs)
         barplot_kwargs.update(kwargs)
 
         sns.barplot(**barplot_kwargs)
 
         grouped = legend and hue is not None
 
-        if self.annotate:
+        if self.annotation is not None:
             self._annotate_bars(plt.gca())
             ylim = self._with_headroom(ylim)
 
@@ -333,7 +338,7 @@ class BarPlot(SeabornPlot, ABC):
             plt.axhline(y=baseline, color=REFERENCE_LINE_COLOUR, linewidth=1.0)
 
         if resolved_errorbar is not None:
-            handles.append(Line2D([], [], color=str(self.errorbar_color), marker="|", markersize=8, linestyle="none"))
+            handles.append(Line2D([], [], color=str(errorbars.color), marker="|", markersize=8, linestyle="none"))
             labels.append(errorbar_label(resolved_errorbar))
 
         if handles:
@@ -353,6 +358,7 @@ class BarPlot(SeabornPlot, ABC):
         """
         from matplotlib.container import BarContainer  # noqa: PLC0415
 
+        annotation = self.annotation or Annotation()
         error_tops = self._errorbar_tops(ax)
 
         for container in ax.containers:
@@ -365,15 +371,44 @@ class BarPlot(SeabornPlot, ABC):
                 covered = [top for x, top in error_tops if bar.get_x() <= x <= bar.get_x() + bar.get_width()]
 
                 ax.annotate(
-                    self.annotate_format.format(height),
+                    self.annotation_text(height),
                     xy=(center, max([height, *covered])),
                     xytext=(0, 4),
                     textcoords="offset points",
                     ha="center",
                     va="bottom",
-                    rotation=self.annotate_rotation,
-                    fontsize="small",
+                    rotation=annotation.rotation,
+                    fontsize=annotation.fontsize,
                 )
+
+    def annotation_text(self, value: float) -> str:
+        """Return the text written above a bar of *value*.
+
+        Applies :attr:`annotate_format`, unless :attr:`annotate_max_decimals` allows the
+        value to be written as a plain decimal instead of in scientific notation.
+
+        Parameters
+        ----------
+        value : float
+            The aggregated value of one bar.
+
+        Returns
+        -------
+        str
+            The annotation, e.g. ``"0.000057"`` rather than ``"5.67e-05"``.
+        """
+        annotation = self.annotation or Annotation()
+
+        if annotation.max_decimals is None:
+            return annotation.format.format(value)
+
+        rounded = round(value, annotation.max_decimals)
+        if rounded == 0 and value != 0:
+            # Invisible at that many decimals, so writing it plainly would say "0".
+            return annotation.format.format(value)
+
+        text = f"{rounded:.{annotation.max_decimals}f}"
+        return text.rstrip("0").rstrip(".") if "." in text else text
 
     @staticmethod
     def _errorbar_tops(ax: Axes) -> list[tuple[float, float]]:
@@ -430,12 +465,14 @@ class BarPlot(SeabornPlot, ABC):
         check_optional_dependency("matplotlib")
         from matplotlib import pyplot as plt  # noqa: PLC0415
 
+        headroom = (self.annotation or Annotation()).headroom
+
         if ylim is None:
-            plt.gca().margins(y=self.annotate_headroom)
+            plt.gca().margins(y=headroom)
             return None
 
         bottom, top = ylim
-        return (bottom, top + (top - bottom) * self.annotate_headroom)
+        return (bottom, top + (top - bottom) * headroom)
 
     def _color_kwargs(self, df: pd.DataFrame, *, hue: str | None) -> dict[str, Any]:
         """Return the seaborn colour arguments for the bars.
@@ -446,6 +483,6 @@ class BarPlot(SeabornPlot, ABC):
         colour carries the group.
         """
         if hue is None or hue not in df.columns:
-            return {"color": str(self.color or LunaColours.LUNA_SOLVE)}
+            return {"color": str(self.figure.color or LunaColours.LUNA_SOLVE)}
 
         return {"hue": hue, "palette": LunaColours.palette(df[hue].nunique())}

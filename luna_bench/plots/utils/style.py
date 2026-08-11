@@ -45,14 +45,17 @@ class LunaColours(StrEnum):
 
     @classmethod
     def palette(cls, num_colors: int = 6, *, anchors: Sequence[str] | None = None) -> list[str]:
-        """Return *num_colors* colours evenly sampled from the Luna gradient.
+        """Return *num_colors* colours along the Luna gradient, anchors included.
+
+        The product colours are always part of the palette; only the shades between them
+        are interpolated, so any number of categories gets a distinct colour without the
+        brand colours dropping out of the figure.
 
         Parameters
         ----------
         num_colors : int, optional
             Number of colours to return, by default ``6``. Unlike a fixed list of
-            brand colours this never runs out: the colours are interpolated, so any
-            number of categories gets a distinct shade.
+            brand colours this never runs out.
         anchors : Sequence[str] | None, optional
             Hex colours the gradient interpolates between, by default the Luna ramp
             (``LUNA_SOLVE`` -> ``LUNA_BENCH`` -> ``LUNA_Q``).
@@ -66,19 +69,27 @@ class LunaColours(StrEnum):
 
 
 def gradient(anchors: Sequence[str], num_colors: int) -> list[str]:
-    """Sample *num_colors* colours from a piecewise-linear gradient through *anchors*.
+    """Return *num_colors* colours along the gradient through *anchors*.
+
+    The anchors themselves are always among them - the brand colours are the point of the
+    palette, so a figure with four groups shows the blue, the sage and the yellow plus one
+    blend, rather than four samples that happen to miss two of the three. Only the colours
+    between them are interpolated, spread over the gaps as evenly as they divide.
+
+    Fewer colours than anchors keeps the ends and drops from the middle, so two colours
+    are the first and the last anchor rather than the first two.
 
     Parameters
     ----------
     anchors : Sequence[str]
         Hex colours (``"#RRGGBB"``) the gradient passes through, at least one.
     num_colors : int
-        Number of colours to sample. ``0`` or less yields an empty list.
+        Number of colours to return. ``0`` or less yields an empty list.
 
     Returns
     -------
     list[str]
-        Interpolated hex colour strings.
+        Hex colour strings, ordered from the first anchor to the last.
 
     Raises
     ------
@@ -93,20 +104,32 @@ def gradient(anchors: Sequence[str], num_colors: int) -> list[str]:
         return []
 
     stops = [_to_rgb(anchor) for anchor in anchors]
-    segments = len(stops) - 1
 
-    if segments == 0 or num_colors == 1:
+    if num_colors == 1 or len(stops) == 1:
         return [_to_hex(stops[0])] * num_colors
 
-    colors = []
-    for index in range(num_colors):
-        position = index / (num_colors - 1) * segments
-        segment = min(int(position), segments - 1)
-        weight = position - segment
-        start, end = stops[segment], stops[segment + 1]
-        colors.append(_to_hex(tuple(round(s + (e - s) * weight) for s, e in zip(start, end, strict=True))))
+    if num_colors <= len(stops):
+        picks = (round(index * (len(stops) - 1) / (num_colors - 1)) for index in range(num_colors))
+        return [_to_hex(stops[pick]) for pick in picks]
+
+    segments = len(stops) - 1
+    between = num_colors - len(stops)
+    # The remainder goes to the first gaps, so a palette that does not divide evenly is
+    # denser at the blue end than at the yellow one rather than at an arbitrary gap.
+    per_gap = [between // segments + (1 if gap < between % segments else 0) for gap in range(segments)]
+
+    colors: list[str] = []
+    for gap, count in enumerate(per_gap):
+        colors.append(_to_hex(stops[gap]))
+        colors.extend(_to_hex(_blend(stops[gap], stops[gap + 1], (step + 1) / (count + 1))) for step in range(count))
+    colors.append(_to_hex(stops[-1]))
 
     return colors
+
+
+def _blend(start: tuple[int, ...], end: tuple[int, ...], weight: float) -> tuple[int, ...]:
+    """Return the colour *weight* of the way from *start* to *end*."""
+    return tuple(round(s + (e - s) * weight) for s, e in zip(start, end, strict=True))
 
 
 def _to_rgb(hex_colour: str) -> tuple[int, ...]:
