@@ -24,6 +24,7 @@ from luna_bench.plots.analysis import (
     RuntimeVsVarNumberPlot,
 )
 from luna_bench.plots.properties import VarNumberBarChartPlot
+from luna_bench.plots.utils import AUTO_ERRORBAR, Aggregation
 
 VAR_NUMBER = 12
 
@@ -145,6 +146,12 @@ class TestVarNumberBarChartPlotRun:
             xlabel="Model",
             ylabel="Number of Variables",
             title="Variables per Model",
+            aggregation=Aggregation.MEAN,
+            errorbar=AUTO_ERRORBAR,
+            hline=None,
+            hline_label=None,
+            baseline=None,
+            ylim=None,
         )
 
     def test_run_with_no_models_passes_empty_rows(self) -> None:

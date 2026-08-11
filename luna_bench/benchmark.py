@@ -1133,6 +1133,67 @@ class Benchmark(BenchmarkEntity):
         Path(path).write_text(payload, encoding="utf-8")
         return None
 
+    def plot_summary(  # noqa: PLR0913
+        self,
+        *,
+        columns: int | None = None,
+        rows: int | None = None,
+        save_dir: str | None = None,
+        figure_filename: str = "summary",
+        file_formats: tuple[str, ...] | str = ("png",),
+        show: bool = True,
+        title: str | None = None,
+    ) -> list[Path]:
+        """
+        Draw every plot of this benchmark into a single figure, one panel each.
+
+        Convenience wrapper for ``luna_bench.plots.plot_summary(self, ...)``, which is
+        also usable on its own. Run the benchmark first: the panels are drawn from the
+        results it holds, and a plot that cannot be drawn is logged and left out rather
+        than stopping the figure.
+
+        Parameters
+        ----------
+        columns: int | None
+            Number of columns of the grid. By default derived from ``rows``, or from the
+            number of plots so the grid stays roughly square.
+        rows: int | None
+            Number of rows of the grid. By default as many as ``columns`` needs.
+        save_dir: str | None
+            Directory to write the figure into. Defaults to the benchmark's own plots
+            directory, and to nowhere if the benchmark has none.
+        figure_filename: str
+            Stem of the written files. Defaults to ``"summary"``.
+        file_formats: tuple[str, ...] | str
+            Output formats written to ``save_dir``, one file each. Defaults to ``("png",)``.
+        show: bool
+            Whether to open the figure in a window. Defaults to True.
+        title: str | None
+            Title above the grid. Defaults to the name of the benchmark.
+
+        Returns
+        -------
+        list[Path]
+            The files that were written.
+
+        Examples
+        --------
+        >>> bench.run()
+        >>> bench.plot_summary(columns=3, show=False)
+        """
+        from luna_bench.plots import plot_summary  # noqa: PLC0415
+
+        return plot_summary(
+            self,
+            columns=columns,
+            rows=rows,
+            save_dir=save_dir if save_dir is not None else self.data_dir_plots,
+            figure_filename=figure_filename,
+            file_formats=file_formats,
+            show=show,
+            title=title,
+        )
+
     def to_dataframe(self, *, include_solution: bool = False) -> pd.DataFrame:
         """
         Return all benchmark results as a single DataFrame.

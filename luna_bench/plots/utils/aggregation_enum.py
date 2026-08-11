@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from enum import StrEnum
 
+from .errorbar import ErrorBar
+
 
 class Aggregation(StrEnum):
     """Aggregation strategy for metric bar charts.
@@ -11,20 +13,20 @@ class Aggregation(StrEnum):
     """
 
     MEAN = "mean"
-    MEAN_SD = "mean_sd"
     MAX = "max"
     MIN = "min"
 
     @property
     def estimator(self) -> str:
         """Pandas aggregation function name passed to seaborn."""
-        if self is Aggregation.MEAN_SD:
-            return "mean"
         return self.value
 
     @property
-    def errorbar(self) -> str | None:
-        """Seaborn ``errorbar`` parameter (``"sd"`` or ``None``)."""
-        if self is Aggregation.MEAN_SD:
-            return "sd"
-        return None
+    def errorbar(self) -> ErrorBar:
+        """Default seaborn ``errorbar`` parameter for this aggregation.
+
+        Only what the error bar defaults to - an `ErrorBars` says what it actually shows.
+        A mean carries the spread of the values it averaged (``"sd"``); an extremum is a
+        single observation, so it gets none.
+        """
+        return "sd" if self is Aggregation.MEAN else None

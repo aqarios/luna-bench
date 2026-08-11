@@ -3,6 +3,7 @@ from .best_solution_found import BestSolutionFound, BestSolutionFoundResult
 from .best_solution_found_ratio import BestSolutionFoundRatio, BestSolutionFoundRatioResult
 from .fake_metric import FakeMetric, FakeMetricResult
 from .feasbility_ratio import FeasibilityRatio, FeasibilityRatioResult
+from .feasible_samples import FeasibleSamples, FeasibleSamplesResult
 from .fraction_of_overall_best_solution import (
     FractionOfOverallBestSolution,
     FractionOfOverallBestSolutionResult,
@@ -21,6 +22,8 @@ __all__ = [
     "FakeMetricResult",
     "FeasibilityRatio",
     "FeasibilityRatioResult",
+    "FeasibleSamples",
+    "FeasibleSamplesResult",
     "FractionOfOverallBestSolution",
     "FractionOfOverallBestSolutionResult",
     "Runtime",

@@ -1,5 +1,6 @@
 from dependency_injector.wiring import Provide, inject
 from pydantic import BaseModel
+from returns.pipeline import is_successful
 
 from luna_bench._internal.registries.protocols import Registry
 from luna_bench._internal.registries.registry_container import RegistryContainer
@@ -152,3 +153,36 @@ class RegistryInfo:
         """
         RegistryInfo._logger.info(f"PlotRegistry: {plot_registry.ids()}")
         return plot_registry.ids()
+
+    @inject
+    @staticmethod
+    def get_feature_by_id(
+        registered_id: str,
+        feature_registry: Registry[BaseFeature] = Provide[RegistryContainer.feature_registry],
+    ) -> type[BaseFeature]:
+        """
+        Look up a registered feature class by its id.
+
+        Used when a stored configuration references a feature class, which cannot be
+        persisted as such, e.g. the grouping feature of a bar plot.
+
+        Parameters
+        ----------
+        registered_id: str
+            The id the feature was registered under.
+        feature_registry: Registry[BaseFeature], injected
+
+        Returns
+        -------
+        type[BaseFeature]
+            The registered feature class.
+
+        Raises
+        ------
+        UnknownIdError
+            If no feature is registered under that id.
+        """
+        result = feature_registry.get_by_id(registered_id)
+        if not is_successful(result):
+            raise result.failure()
+        return result.unwrap()

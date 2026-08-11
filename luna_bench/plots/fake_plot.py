@@ -4,7 +4,7 @@ from luna_bench.custom import plot
 from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
 from luna_bench.helpers.optional_dependencies import check_optional_dependency
 from luna_bench.metrics.fake_metric import FakeMetric
-from luna_bench.plots.utils.style import AqariosColours
+from luna_bench.plots.utils.style import LunaColours
 
 
 @plot(FakeMetric)
@@ -39,7 +39,7 @@ def FakePlot(benchmark_results: BenchmarkResultContainer) -> None:  # noqa: N802
     df = pd.DataFrame(rows)
 
     unique_algorithms = df["algorithm"].nunique()
-    palette = AqariosColours.palette(num_colors=min(unique_algorithms, 6))
+    palette = LunaColours.palette(num_colors=unique_algorithms)
 
     plt.figure(figsize=(8, 5))
     sns.barplot(

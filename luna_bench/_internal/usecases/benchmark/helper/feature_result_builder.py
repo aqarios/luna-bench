@@ -70,8 +70,8 @@ class FeatureResultBuilder:
         ----------
         model_name : ModelName
             The model name to retrieve features for.
-        metric : MetricEntity
-            The metric requiring specific features.
+        required_features : list[FeatureClass]
+            The feature classes to collect results for.
 
         Returns
         -------

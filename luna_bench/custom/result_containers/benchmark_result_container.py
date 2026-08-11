@@ -67,15 +67,6 @@ class BenchmarkResultContainer(BaseModel):
                             type(m.metric), {}
                         )[m.name] = (metric_result_entity.result, m.metric)
 
-        algorithms: dict[ModelName, dict[AlgorithmName, AlgorithmResultContainer]] = {}
-        for a in benchmark.algorithms:
-            for model_name, algo_result_entity in a.results.items():
-                algorithms.setdefault(model_name, {})[a.name] = AlgorithmResultContainer(
-                    solution=algo_result_entity.solution,
-                    meta_data=algo_result_entity.meta_data.model_dump() if algo_result_entity.meta_data else None,
-                    algorithm=a.algorithm,
-                )
-
         return cls(
             features={
                 model_name: FeatureResultContainer.model_construct(data=data) for model_name, data in features.items()
@@ -87,8 +78,38 @@ class BenchmarkResultContainer(BaseModel):
                 }
                 for model_name, algo_data in metrics.items()
             },
-            algorithms=algorithms,
+            algorithms=cls.algorithm_results(benchmark),
         )
+
+    @staticmethod
+    def algorithm_results(benchmark: BenchmarkEntity) -> dict[ModelName, dict[AlgorithmName, AlgorithmResultContainer]]:
+        """Return every algorithm run of a benchmark, together with its configuration.
+
+        Split out of `from_benchmark` because a consumer may want the runs without
+        paying for the feature and metric results - the plot runner, which builds those
+        two from the *required* components of a plot, but still wants to know what each
+        algorithm was configured with.
+
+        Parameters
+        ----------
+        benchmark : BenchmarkEntity
+            The benchmark containing algorithms and their results.
+
+        Returns
+        -------
+        dict[ModelName, dict[AlgorithmName, AlgorithmResultContainer]]
+            Run results per model and algorithm, including failed runs, whose solution
+            is ``None``.
+        """
+        algorithms: dict[ModelName, dict[AlgorithmName, AlgorithmResultContainer]] = {}
+        for a in benchmark.algorithms:
+            for model_name, algo_result_entity in a.results.items():
+                algorithms.setdefault(model_name, {})[a.name] = AlgorithmResultContainer(
+                    solution=algo_result_entity.solution,
+                    meta_data=algo_result_entity.meta_data.model_dump() if algo_result_entity.meta_data else None,
+                    algorithm=a.algorithm,
+                )
+        return algorithms
 
     def get_all_algorithms(self) -> Generator[tuple[ModelName, AlgorithmName, AlgorithmResultContainer]]:
         """Yield all algorithm run results across models and algorithms.

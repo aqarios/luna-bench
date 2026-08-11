@@ -6,7 +6,7 @@ from pandas import DataFrame
 
 from luna_bench.helpers.optional_dependencies import check_optional_dependency
 from luna_bench.logging import BenchLogger
-from luna_bench.plots.utils import AqariosColours
+from luna_bench.plots.utils import REFERENCE_LINE_COLOUR, LunaColours
 
 from .seaborn_plot import SeabornPlot
 
@@ -33,8 +33,9 @@ class ScatterPlot(SeabornPlot, ABC):
         y: str = "y",
         hline: float | None = None,
         hline_label: str | None = None,
-        hcolor: str = AqariosColours.SUCCESS,
+        hcolor: str = REFERENCE_LINE_COLOUR,
         save_dir: str | None = None,
+        **kwargs: Any,
     ) -> None:
         """Create a scatter plot from row-oriented data.
 
@@ -59,7 +60,14 @@ class ScatterPlot(SeabornPlot, ABC):
         hline_label : str | None, optional
             Legend label for the horizontal reference line, by default ``None``.
         hcolor : str, optional
-            Color of the horizontal reference line, by default ``AqariosColours.SUCCESS``.
+            Color of the horizontal reference line, by default black.
+        save_dir : str | None, optional
+            Directory to save the figure into, by default ``None``.
+        **kwargs : Any
+            Additional keyword arguments forwarded to :func:`seaborn.scatterplot`.
+            They override the defaults computed here, so anything seaborn understands
+            (``palette``, ``style``, ``size``, ``markers``, ...) can be tuned from the
+            call site.
         """
         check_optional_dependency("matplotlib")
         check_optional_dependency("seaborn")
@@ -73,15 +81,20 @@ class ScatterPlot(SeabornPlot, ABC):
         df = DataFrame(rows)
 
         self.setup_figure()
-        scatterplot(
-            data=df,
-            x=x,
-            y=y,
-            hue=hue,
-            palette=AqariosColours.palette(df[hue].nunique()),
-            s=60,
-            alpha=0.8,
-        )
+
+        scatterplot_kwargs: dict[str, Any] = {
+            "data": df,
+            "x": x,
+            "y": y,
+            "hue": hue,
+            "palette": LunaColours.palette(df[hue].nunique()),
+            "s": 60,
+            "alpha": 0.8,
+        }
+        scatterplot_kwargs.update(self.figure.seaborn_kwargs)
+        scatterplot_kwargs.update(kwargs)
+
+        scatterplot(**scatterplot_kwargs)
 
         if hline:
             plt.axhline(y=hline, color=hcolor, linestyle="--", alpha=0.7, label=hline_label)

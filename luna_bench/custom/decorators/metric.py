@@ -1,6 +1,6 @@
 import functools
 from collections.abc import Callable
-from typing import Any, cast, overload
+from typing import Any, Protocol, cast, overload
 
 from dependency_injector.wiring import Provide, inject
 from luna_model import Solution
@@ -13,6 +13,25 @@ from luna_bench.custom.base_results.metric_result import MetricResult
 from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
 
 from .decorator_utilities import DecoratorUtilities
+
+
+class MetricDecorator(Protocol):
+    """The decorator `metric` returns once its feature dependencies have been declared.
+
+    Decorating a class hands back *that* class rather than ``BaseMetric``, which is what
+    keeps the metric's concrete result type visible. Without it a decorated
+    ``ApproximationRatio`` resolves to ``BaseMetric[Any]``, and every consumer that binds
+    the result type off the metric class - ``get_all_metrics_of_type`` above all - falls
+    back to a bare ``MetricResult`` with none of the metric's own fields on it.
+    """
+
+    @overload
+    def __call__[TMetric: BaseMetric[Any]](self, target: type[TMetric], /) -> type[TMetric]: ...
+
+    @overload
+    def __call__(
+        self, target: Callable[[Solution, FeatureResultContainer], MetricResult | float | int], /
+    ) -> type[BaseMetric[MetricResult]]: ...
 
 
 def _resolve_features(
@@ -48,10 +67,7 @@ def metric(
     *,
     metric_id: str | None = None,
     metric_registry: Registry[BaseMetric[Any]] = Provide[RegistryContainer.metric_registry],
-) -> Callable[
-    [type[BaseMetric[Any]] | Callable[[Solution, FeatureResultContainer], MetricResult | float | int]],
-    type[BaseMetric[Any]] | type[BaseMetric[MetricResult]],
-]: ...
+) -> MetricDecorator: ...
 
 
 @overload
@@ -60,26 +76,20 @@ def metric(
     *,
     metric_id: str | None = None,
     metric_registry: Registry[BaseMetric[Any]] = Provide[RegistryContainer.metric_registry],
-) -> Callable[
-    [type[BaseMetric[Any]] | Callable[[Solution, FeatureResultContainer], MetricResult | float | int]],
-    type[BaseMetric[Any]] | type[BaseMetric[MetricResult]],
-]: ...
+) -> MetricDecorator: ...
 
 
 @overload
-def metric[T: BaseMetric[Any]](
+def metric(
     _cls: None = None,
     *,
     metric_id: str | None = None,
     metric_registry: Registry[BaseMetric[Any]] = Provide[RegistryContainer.metric_registry],
-) -> Callable[
-    [type[T] | Callable[[Solution, FeatureResultContainer], MetricResult | float | int]],
-    type[T] | type[BaseMetric[MetricResult]],
-]: ...
+) -> MetricDecorator: ...
 
 
 @inject
-def metric[T: BaseMetric[Any]](
+def metric(
     _cls: type[BaseMetric[Any]]
     | Callable[[Solution, FeatureResultContainer], MetricResult | float | int]
     | list[type[BaseFeature[Any]]]
@@ -89,14 +99,7 @@ def metric[T: BaseMetric[Any]](
     *,
     metric_id: str | None = None,
     metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
-) -> (
-    Callable[
-        [type[T] | Callable[[Solution, FeatureResultContainer], MetricResult | float | int]],
-        type[T] | type[BaseMetric[MetricResult]],
-    ]
-    | type[T]
-    | type[BaseMetric[MetricResult]]
-):
+) -> MetricDecorator | type[BaseMetric[Any]] | type[BaseMetric[MetricResult]]:
     """
     Register a class or function as a metric component.
 
@@ -246,15 +249,15 @@ def metric[T: BaseMetric[Any]](
         return _metric_class(dynamic_class, pid=pid)
 
     def _do_register(
-        obj: type[T] | Callable[[Solution, FeatureResultContainer], MetricResult | float | int],
-    ) -> type[T] | type[BaseMetric[MetricResult]]:
+        obj: type[BaseMetric[Any]] | Callable[[Solution, FeatureResultContainer], MetricResult | float | int],
+    ) -> type[BaseMetric[Any]] | type[BaseMetric[MetricResult]]:
         if isinstance(obj, type):
             return _metric_class(obj)
         return _metric_function(obj)
 
     if target is not None:
-        return _do_register(
-            cast("type[T] | Callable[[Solution, FeatureResultContainer], MetricResult | float | int]", target)
-        )
+        return _do_register(target)
 
-    return _do_register
+    # `_do_register` hands back exactly the class it was given, which is what the protocol
+    # promises but cannot be expressed in the inner function's own signature.
+    return cast("MetricDecorator", _do_register)

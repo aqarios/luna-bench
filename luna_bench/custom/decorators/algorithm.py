@@ -1,6 +1,6 @@
 import functools
 from collections.abc import Callable
-from typing import Any, cast, overload
+from typing import Any, Protocol, cast, overload
 
 import cloudpickle
 from dependency_injector.wiring import Provide, inject
@@ -42,6 +42,24 @@ def _rebuild_algorithm(func_bytes: bytes) -> BaseAlgorithmSync:
     return cast("BaseAlgorithmSync", cls())
 
 
+class AlgorithmDecorator(Protocol):
+    """The decorator `algorithm` returns when it is called before being applied.
+
+    Decorating a class hands back *that* class rather than ``BaseAlgorithmSync``, which
+    is what keeps the algorithm's own configuration visible: without it a decorated
+    ``ScipAlgorithm`` widens to a union with the base, and IDEs and type checkers stop
+    offering its fields.
+    """
+
+    @overload
+    def __call__[TAlgorithm: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
+        self, target: type[TAlgorithm], /
+    ) -> type[TAlgorithm]: ...
+
+    @overload
+    def __call__(self, target: Callable[[Model], Solution], /) -> type[BaseAlgorithmSync]: ...
+
+
 @overload
 def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
     _cls: type[T],
@@ -59,11 +77,11 @@ def algorithm(
 
 
 @overload
-def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
+def algorithm(
     _cls: None = None,
     *,
     algorithm_id: str | None = None,
-) -> Callable[[type[T] | Callable[[Model], Solution]], type[T] | type[BaseAlgorithmSync]]: ...
+) -> AlgorithmDecorator: ...
 
 
 @inject
@@ -73,11 +91,7 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
     algorithm_id: str | None = None,
     algorithm_sync_registry: Registry[BaseAlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
     algorithm_async_registry: Registry[BaseAlgorithmAsync[Any]] = Provide[RegistryContainer.algorithm_async_registry],
-) -> (
-    Callable[[type[T] | Callable[[Model], Solution]], type[T] | type[BaseAlgorithmSync]]
-    | type[T]
-    | type[BaseAlgorithmSync]
-):
+) -> AlgorithmDecorator | type[T] | type[BaseAlgorithmSync]:
     """
     Register a class or function as an algorithm.
 
@@ -137,4 +151,6 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
     if _cls is not None:
         return _do_register(_cls)
 
-    return _do_register
+    # `_do_register` hands back exactly the class it was given, which is what the protocol
+    # promises but cannot be expressed in the inner function's own signature.
+    return cast("AlgorithmDecorator", _do_register)

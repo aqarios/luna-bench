@@ -83,6 +83,7 @@ allow-star-arg-any = true # At some point we should remove all args and kwargs
     "SLF",
     "PL"
 ]
+"scripts/*.py" = ["INP001"] # Developer scripts, not an importable package
 "luna_bench/entities/**/*.py" = ["TC001", "TC002"] # Disable Type checking block checks for pydantic objs
 "luna_bench/_internal/domain_models/**/*.py" = ["TC001"] # Disable Type checking block checks for pydantic objs
 "luna_bench/algorithms/**/*.py" = ["TC001"] # Disable Type checking block checks for pydantic objs
@@ -118,3 +119,23 @@ mark-parentheses = true
 [lint.flake8-tidy-imports]
 # Bans imports that reach up to parent directories (using the `..` notation).
 ban-relative-imports = "parents"
+
+[lint.flake8-builtins]
+# ``Annotation.format`` is the format of the annotation, read as ``annotation.format``
+# rather than as the builtin it shadows only inside its own signature.
+builtins-ignorelist = ["format"]
+
+[lint.flake8-bugbear]
+# The option bundles and dimensions are pydantic models, which are copied per instance
+# rather than shared, so having one as a field default is not the mutable-default trap
+# B006/B008 are about.
+extend-immutable-calls = [
+    "luna_bench.plots.dimensions.AlgorithmDimension",
+    "luna_bench.plots.dimensions.FeatureDimension",
+    "luna_bench.plots.dimensions.MetricDimension",
+    "luna_bench.plots.dimensions.ModelDimension",
+    "luna_bench.plots.dimensions.ParameterDimension",
+    "luna_bench.plots.plot_style.Annotation",
+    "luna_bench.plots.plot_style.ErrorBars",
+    "luna_bench.plots.plot_style.Figure",
+]

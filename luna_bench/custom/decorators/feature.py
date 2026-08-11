@@ -1,6 +1,6 @@
 import functools
 from collections.abc import Callable
-from typing import Any, overload
+from typing import Any, Protocol, cast, overload
 
 from dependency_injector.wiring import Provide, inject
 from luna_model import Model
@@ -12,6 +12,25 @@ from luna_bench.custom.base_components.base_feature import BaseFeature
 from luna_bench.custom.base_results.feature_result import FeatureResult
 
 from .decorator_utilities import DecoratorUtilities
+
+
+class FeatureDecorator(Protocol):
+    """The decorator `feature` returns when it is called before being applied.
+
+    Decorating a class hands back *that* class rather than ``BaseFeature``, which is what
+    keeps the feature's concrete result type visible. Without it a decorated
+    ``OptSolFeature`` widens to a union with ``BaseFeature[FeatureResult]``, and every
+    consumer that binds the result type off the feature class - ``FeatureResultContainer.first``
+    above all - loses the feature's own fields.
+    """
+
+    @overload
+    def __call__[TFeature: BaseFeature[Any]](self, target: type[TFeature], /) -> type[TFeature]: ...
+
+    @overload
+    def __call__(
+        self, target: Callable[[Model], FeatureResult | BaseModel | object], /
+    ) -> type[BaseFeature[FeatureResult]]: ...
 
 
 @overload
@@ -33,14 +52,12 @@ def feature[T: BaseFeature[Any]](
 
 
 @overload
-def feature[T: BaseFeature[Any]](
+def feature(
     _cls: None = None,
     *,
     feature_id: str | None = None,
     feature_registry: Registry[BaseFeature] = Provide[RegistryContainer.feature_registry],
-) -> Callable[
-    [type[T] | Callable[[Model], FeatureResult | BaseModel | object]], type[BaseFeature[FeatureResult]] | type[T]
-]: ...
+) -> FeatureDecorator: ...
 
 
 @inject
@@ -49,13 +66,7 @@ def feature[T: BaseFeature[Any]](
     *,
     feature_id: str | None = None,
     feature_registry: Registry[BaseFeature] = Provide[RegistryContainer.feature_registry],
-) -> (
-    Callable[
-        [type[T] | Callable[[Model], FeatureResult | BaseModel | object]], type[BaseFeature[FeatureResult]] | type[T]
-    ]
-    | type[BaseFeature[FeatureResult]]
-    | type[T]
-):
+) -> FeatureDecorator | type[BaseFeature[FeatureResult]] | type[T]:
     """
     Register a class or function as a feature.
 
@@ -106,7 +117,7 @@ def feature[T: BaseFeature[Any]](
 
     """
 
-    def _feature_class(cls: type[T], pid: str | None = None) -> type[T]:
+    def _feature_class[U: BaseFeature[Any]](cls: type[U], pid: str | None = None) -> type[U]:
         if pid is None:
             pid = feature_id or f"{cls.__module__}.{cls.__qualname__}"
         DecoratorUtilities.register_class(cls, base=BaseFeature, registered_class_id=pid, registry=feature_registry)
@@ -156,4 +167,6 @@ def feature[T: BaseFeature[Any]](
     if _cls is not None:
         return _do_register(_cls)
 
-    return _do_register
+    # `_do_register` hands back exactly the class it was given, which is what the protocol
+    # promises but cannot be expressed in the inner function's own signature.
+    return cast("FeatureDecorator", _do_register)
