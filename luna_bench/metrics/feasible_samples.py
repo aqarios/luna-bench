@@ -1,9 +1,11 @@
 """Feasible Samples metric counting the feasible and the total samples of a solution."""
 
+from typing import ClassVar
+
 from luna_model import Solution
 from pydantic import Field
 
-from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
+from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricDirection, MetricResult, metric
 
 
 class FeasibleSamplesResult(MetricResult):
@@ -31,6 +33,13 @@ class FeasibleSamples(BaseMetric[FeasibleSamplesResult]):
     whereas averaging per-model ratios weights a ten-sample model like a thousand-sample
     one.
 
+    Attributes
+    ----------
+    direction : ClassVar[MetricDirection]
+        ``INDIFFERENT``: neither count is a score on its own. More feasible samples is
+        only better at an equal sample count, and the sample count itself is a budget
+        rather than a result. Rank on ``FeasibilityRatio`` instead.
+
     Examples
     --------
     >>> from luna_bench.metrics import FeasibleSamples
@@ -47,6 +56,8 @@ class FeasibleSamples(BaseMetric[FeasibleSamplesResult]):
     --------
     FeasibilityRatio : The same information as a single ratio per run.
     """
+
+    direction: ClassVar[MetricDirection] = MetricDirection.INDIFFERENT
 
     def run(self, solution: Solution, feature_results: FeatureResultContainer) -> FeasibleSamplesResult:  # noqa: ARG002
         """Count the feasible and the total samples of the given solution.

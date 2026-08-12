@@ -7,6 +7,7 @@ from luna_bench.custom.base_results.metric_result import MetricResult
 from luna_bench.custom.types import FeatureClass
 
 from .meta_classes.metric_class_meta import MetricClassMeta
+from .metric_direction_enum import MetricDirection
 from .registerable_component import RegisterableComponent
 
 if TYPE_CHECKING:
@@ -21,9 +22,22 @@ class BaseMetric[TMetricResult: MetricResult = MetricResult](RegisterableCompone
     can be used plots to visualize it.
 
     A Metric must always be registered with the `@metric` decorator before it can be used in a benchmark.
+
+    Attributes
+    ----------
+    required_features: ClassVar[list[FeatureClass]]
+        The features this metric needs, set by the `@metric` decorator.
+    direction: ClassVar[MetricDirection]
+        Which end of this metric's scale is the better one, so that consumers that rank
+        or plot metrics know which values to prefer. A metric meant to be compared across
+        models should normalize the model away and declare an absolute direction, as the
+        ratio metrics do; one that reports a raw objective value can only declare
+        `MetricDirection.DEPENDS_ON_SENSE`. Defaults to `MetricDirection.INDIFFERENT`, so
+        a metric that declares nothing is never mistaken for one with a genuine direction.
     """
 
     required_features: ClassVar[list[FeatureClass]]
+    direction: ClassVar[MetricDirection] = MetricDirection.INDIFFERENT
 
     @abstractmethod
     def run(self, solution: Solution, feature_results: "FeatureResultContainer") -> TMetricResult:

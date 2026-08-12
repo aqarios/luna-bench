@@ -3,13 +3,13 @@
 Metric implemented from https://arxiv.org/pdf/2405.07624
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 from luna_model import Solution
 from pydantic import Field
 
-from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
+from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricDirection, MetricResult, metric
 from luna_bench.features import OptSolFeature
 from luna_bench.helpers.divider_helper import snap_to_bounds
 
@@ -58,6 +58,9 @@ class FractionOfOverallBestSolution(BaseMetric[FractionOfOverallBestSolutionResu
 
     Attributes
     ----------
+    direction : ClassVar[MetricDirection]
+        ``HIGHER_IS_BETTER``: the more samples match the best known solution, the better.
+        Already sense-agnostic, so it holds for maximization too.
     abs_tol : float
         Absolute tolerance for considering two values as equal. Default is 1e-6.
     snap_abs_tol : float | None
@@ -80,6 +83,8 @@ class FractionOfOverallBestSolution(BaseMetric[FractionOfOverallBestSolutionResu
 
     **Source**: https://arxiv.org/pdf/2405.07624
     """
+
+    direction: ClassVar[MetricDirection] = MetricDirection.HIGHER_IS_BETTER
 
     abs_tol: float = 1e-6
     snap_abs_tol: float | None = 1e-9

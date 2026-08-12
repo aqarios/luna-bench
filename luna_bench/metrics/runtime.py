@@ -1,9 +1,11 @@
 """Runtime metric for measuring solution computation time."""
 
+from typing import ClassVar
+
 from luna_model import Solution, Timing
 from pydantic import Field
 
-from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
+from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricDirection, MetricResult, metric
 
 
 class RuntimeResult(MetricResult):
@@ -25,6 +27,12 @@ class Runtime(BaseMetric[RuntimeResult]):
     This metric provides a simple way to track and compare the computational
     time required by different algorithms to produce their solutions.
 
+    Attributes
+    ----------
+    direction : ClassVar[MetricDirection]
+        ``LOWER_IS_BETTER``: computing a solution in less time is better. Independent
+        of the problem sense.
+
     Examples
     --------
     >>> from luna_bench.metrics import Runtime
@@ -32,6 +40,8 @@ class Runtime(BaseMetric[RuntimeResult]):
     >>> result = metric.run(solution, feature_results)
     >>> print(f"Runtime: {result.runtime_seconds} seconds")
     """
+
+    direction: ClassVar[MetricDirection] = MetricDirection.LOWER_IS_BETTER
 
     def run(self, solution: Solution, feature_results: FeatureResultContainer) -> RuntimeResult:  # noqa: ARG002
         """Retrieve the runtime from the given solution.

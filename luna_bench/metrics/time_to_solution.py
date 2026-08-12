@@ -3,13 +3,13 @@
 Metric implemented from https://arxiv.org/pdf/2405.07624
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 from luna_model import Solution
 from pydantic import Field
 
-from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
+from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricDirection, MetricResult, metric
 from luna_bench.features import OptSolFeature
 
 
@@ -62,6 +62,9 @@ class TimeToSolution(BaseMetric[TimeToSolutionResult]):
 
     Attributes
     ----------
+    direction : ClassVar[MetricDirection]
+        ``LOWER_IS_BETTER``: reaching the optimum in less time is better. Refers to
+        ``time_to_solution``, the metric's headline value. Already sense-agnostic.
     target_probability : float
         The target probability of finding the optimal solution. Default is 0.99.
     abs_tol : float
@@ -82,6 +85,8 @@ class TimeToSolution(BaseMetric[TimeToSolutionResult]):
 
     **Source**: https://arxiv.org/pdf/2405.07624
     """
+
+    direction: ClassVar[MetricDirection] = MetricDirection.LOWER_IS_BETTER
 
     target_probability: float = 0.99
     abs_tol: float = 1e-6

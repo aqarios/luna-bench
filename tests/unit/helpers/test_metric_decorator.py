@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import pytest
 
 from luna_bench._internal.registries.arbitrary_data_registry import ArbitraryDataRegistry
-from luna_bench.custom import BaseFeature, BaseMetric
+from luna_bench.custom import BaseFeature, BaseMetric, MetricDirection
 from luna_bench.custom.base_results.metric_result import MetricResult
 from luna_bench.custom.decorators.metric import metric
 
@@ -135,3 +135,70 @@ class TestMetricDecorator:
                 return MetricResult.model_construct(result=0.5)  # type: ignore[call-arg]
 
         assert FeaturedMetric.required_features == expected_features
+
+    def test_function_metric_defaults_to_indifferent(self, registry: Registry[BaseMetric]) -> None:
+        """A function-based metric declares no direction unless the decorator is given one."""
+
+        @metric(metric_registry=registry)
+        def plain_metric(solution: Solution, feature_results: FeatureResultContainer) -> float:
+            _ = solution, feature_results
+            return 0.5
+
+        assert plain_metric.direction is MetricDirection.INDIFFERENT
+
+    @pytest.mark.parametrize("direction", [MetricDirection.LOWER_IS_BETTER, MetricDirection.HIGHER_IS_BETTER])
+    def test_function_metric_direction(self, registry: Registry[BaseMetric], direction: MetricDirection) -> None:
+        """A function-based metric has no class body, so the decorator has to carry the direction."""
+
+        @metric(direction=direction, metric_registry=registry)
+        def directed_metric(solution: Solution, feature_results: FeatureResultContainer) -> float:
+            _ = solution, feature_results
+            return 0.5
+
+        assert directed_metric.direction is direction
+        assert BaseMetric.direction is MetricDirection.INDIFFERENT
+
+    def test_function_metric_direction_with_features(self, registry: Registry[BaseMetric]) -> None:
+        """The direction survives being combined with feature dependencies."""
+
+        @metric(MockFeature, direction=MetricDirection.HIGHER_IS_BETTER, metric_registry=registry)
+        def featured_metric(solution: Solution, feature_results: FeatureResultContainer) -> float:
+            _ = solution, feature_results
+            return 0.5
+
+        assert featured_metric.direction is MetricDirection.HIGHER_IS_BETTER
+        assert featured_metric.required_features == [MockFeature]
+
+    def test_class_metric_keeps_its_own_direction(self, registry: Registry[BaseMetric]) -> None:
+        """A class declaring its direction keeps it when the decorator passes none."""
+
+        @metric(metric_registry=registry)
+        class DirectedMetric(BaseMetric):
+            direction: ClassVar[MetricDirection] = MetricDirection.HIGHER_IS_BETTER
+
+            def run(
+                self,
+                solution: Solution,
+                feature_results: FeatureResultContainer,
+            ) -> MetricResult:
+                _ = solution, feature_results
+                return MetricResult.model_construct(result=0.5)  # type: ignore[call-arg]
+
+        assert DirectedMetric.direction is MetricDirection.HIGHER_IS_BETTER
+
+    def test_decorator_direction_overrides_the_class(self, registry: Registry[BaseMetric]) -> None:
+        """An explicit decorator direction wins over the one declared on the class."""
+
+        @metric(direction=MetricDirection.LOWER_IS_BETTER, metric_registry=registry)
+        class OverriddenMetric(BaseMetric):
+            direction: ClassVar[MetricDirection] = MetricDirection.HIGHER_IS_BETTER
+
+            def run(
+                self,
+                solution: Solution,
+                feature_results: FeatureResultContainer,
+            ) -> MetricResult:
+                _ = solution, feature_results
+                return MetricResult.model_construct(result=0.5)  # type: ignore[call-arg]
+
+        assert OverriddenMetric.direction is MetricDirection.LOWER_IS_BETTER

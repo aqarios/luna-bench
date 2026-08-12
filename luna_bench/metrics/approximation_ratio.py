@@ -1,12 +1,12 @@
 """Approximation Ratio metric for evaluating solution quality against optimal solutions."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from luna_model import Solution
 from luna_model.solution import ValueSource
 from pydantic import Field
 
-from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
+from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricDirection, MetricResult, metric
 from luna_bench.features import OptSolFeature
 from luna_bench.helpers import get_ratio
 
@@ -45,6 +45,9 @@ class ApproximationRatio(BaseMetric[ApproximationRatioResult]):
 
     Attributes
     ----------
+    direction : ClassVar[MetricDirection]
+        ``HIGHER_IS_BETTER``: the ratio is bounded by 1.0 and larger values are closer
+        to the optimum. Already sense-agnostic, so it holds for maximization too.
     abt_diff : float
         Absolute tolerance for considering a value as zero. Used to prevent
         division by zero errors. Default is 1e-3.
@@ -64,6 +67,8 @@ class ApproximationRatio(BaseMetric[ApproximationRatioResult]):
     This metric requires the OptSolFeature to be computed first, which provides
     the optimal solution value for comparison.
     """
+
+    direction: ClassVar[MetricDirection] = MetricDirection.HIGHER_IS_BETTER
 
     abt_diff: float = 1e-3
     value_source: ValueSource = ValueSource.OBJ
