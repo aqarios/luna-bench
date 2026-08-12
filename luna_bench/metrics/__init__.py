@@ -1,6 +1,7 @@
 from .approximation_ratio import ApproximationRatio, ApproximationRatioResult
 from .best_solution_found import BestSolutionFound, BestSolutionFoundResult
 from .best_solution_found_ratio import BestSolutionFoundRatio, BestSolutionFoundRatioResult
+from .expectation_value import ExpectationValue, ExpectationValueResult
 from .fake_metric import FakeMetric, FakeMetricResult
 from .feasbility_ratio import FeasibilityRatio, FeasibilityRatioResult
 from .feasible_samples import FeasibleSamples, FeasibleSamplesResult
@@ -18,6 +19,8 @@ __all__ = [
     "BestSolutionFoundRatio",
     "BestSolutionFoundRatioResult",
     "BestSolutionFoundResult",
+    "ExpectationValue",
+    "ExpectationValueResult",
     "FakeMetric",
     "FakeMetricResult",
     "FeasibilityRatio",
