@@ -1,12 +1,12 @@
 """Best Solution Found metric for extracting the best feasible objective value."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from luna_model import Solution
 from luna_model.solution import ValueSource
 from pydantic import Field
 
-from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
+from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricDirection, MetricResult, metric
 
 
 class BestSolutionFoundResult(MetricResult):
@@ -38,6 +38,10 @@ class BestSolutionFound(BaseMetric[BestSolutionFoundResult]):
 
     Attributes
     ----------
+    direction : ClassVar[MetricDirection]
+        ``DEPENDS_ON_SENSE``: this is the raw objective value, so the better one is the
+        lower when minimizing and the higher when maximizing. It cannot be ranked across
+        models of different senses.
     value_source : ValueSource
         Defines whether the objective values or the raw energy values from the
         algorithm should be used to determine the best solution. Default is
@@ -50,6 +54,8 @@ class BestSolutionFound(BaseMetric[BestSolutionFoundResult]):
     >>> result = metric.run(solution, feature_results)
     >>> print(f"Best Solution Found: {result.best_solution_found}")
     """
+
+    direction: ClassVar[MetricDirection] = MetricDirection.DEPENDS_ON_SENSE
 
     value_source: ValueSource = ValueSource.OBJ
 

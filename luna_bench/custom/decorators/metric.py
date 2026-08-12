@@ -9,6 +9,7 @@ from luna_bench._internal.registries.protocols import Registry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench.custom.base_components.base_feature import BaseFeature
 from luna_bench.custom.base_components.base_metric import BaseMetric
+from luna_bench.custom.base_components.metric_direction_enum import MetricDirection
 from luna_bench.custom.base_results.metric_result import MetricResult
 from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
 
@@ -48,6 +49,7 @@ def metric[T: BaseMetric[Any]](
     _cls: type[T],
     *,
     metric_id: str | None = None,
+    direction: MetricDirection | None = None,
     metric_registry: Registry[BaseMetric[Any]] = Provide[RegistryContainer.metric_registry],
 ) -> type[T]: ...
 
@@ -57,6 +59,7 @@ def metric(
     _cls: Callable[[Solution, FeatureResultContainer], MetricResult | float | int],
     *,
     metric_id: str | None = None,
+    direction: MetricDirection | None = None,
     metric_registry: Registry[BaseMetric[Any]] = Provide[RegistryContainer.metric_registry],
 ) -> type[BaseMetric[MetricResult]]: ...
 
@@ -66,6 +69,7 @@ def metric(
     _cls: type[BaseFeature[Any]],
     *,
     metric_id: str | None = None,
+    direction: MetricDirection | None = None,
     metric_registry: Registry[BaseMetric[Any]] = Provide[RegistryContainer.metric_registry],
 ) -> MetricDecorator: ...
 
@@ -75,6 +79,7 @@ def metric(
     _cls: list[type[BaseFeature[Any]]] | tuple[type[BaseFeature[Any]], ...],
     *,
     metric_id: str | None = None,
+    direction: MetricDirection | None = None,
     metric_registry: Registry[BaseMetric[Any]] = Provide[RegistryContainer.metric_registry],
 ) -> MetricDecorator: ...
 
@@ -84,6 +89,7 @@ def metric(
     _cls: None = None,
     *,
     metric_id: str | None = None,
+    direction: MetricDirection | None = None,
     metric_registry: Registry[BaseMetric[Any]] = Provide[RegistryContainer.metric_registry],
 ) -> MetricDecorator: ...
 
@@ -98,6 +104,7 @@ def metric(
     | None = None,
     *,
     metric_id: str | None = None,
+    direction: MetricDirection | None = None,
     metric_registry: Registry[BaseMetric] = Provide[RegistryContainer.metric_registry],
 ) -> MetricDecorator | type[BaseMetric[Any]] | type[BaseMetric[MetricResult]]:
     """
@@ -125,6 +132,12 @@ def metric(
     metric_id: str, optional
         Custom identifier for this metric in the registry. If omitted, an ID is
         auto-generated from the module and class/function name.
+    direction: MetricDirection, optional
+        Which end of the metric's scale is the better one. This is the only way to
+        declare it for a function-based metric, which has no class body to put it in.
+        For a class-based metric, prefer declaring ``direction`` on the class itself;
+        passing it here overrides that. If omitted, the class keeps whatever it declares,
+        which defaults to ``MetricDirection.INDIFFERENT``.
     metric_registry: Registry[BaseMetric]
         The registry where this metric will be stored. Injected by the container. You do not need to set it.
 
@@ -161,6 +174,14 @@ def metric(
     Basic metric from a function:
 
     >>> @metric
+    ... def solve_time(solution: Solution, feature_results: FeatureResultContainer) -> float:
+    ...     return 26.11
+
+    Function-based metric that declares which end of its scale is better:
+
+    >>> from luna_bench.custom import MetricDirection
+    >>>
+    >>> @metric(direction=MetricDirection.LOWER_IS_BETTER)
     ... def solve_time(solution: Solution, feature_results: FeatureResultContainer) -> float:
     ...     return 26.11
 
@@ -205,6 +226,8 @@ def metric(
         if pid is None:
             pid = metric_id or f"{cls.__module__}.{cls.__qualname__}"
         cls.required_features = resolved_features
+        if direction is not None:
+            cls.direction = direction
         DecoratorUtilities.register_class(cls, base=BaseMetric, registered_class_id=pid, registry=metric_registry)
         return cls
 

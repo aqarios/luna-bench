@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 from luna_model import Sense, ValueSource
 
+from luna_bench.custom import MetricDirection
 from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
 from luna_bench.metrics.expectation_value import ExpectationValue, ExpectationValueResult
 
@@ -66,13 +67,13 @@ class TestExpectationValue:
         assert result.expectation_value == 7.5
         mock_solution_config.expectation_value.assert_called_once()
 
-    def test_lower_is_better(self) -> None:
-        """Test that the metric is flagged as one where a lower value is better."""
-        assert ExpectationValue.higher_is_better is False
+    def test_direction_depends_on_the_problem(self) -> None:
+        """Test that the metric flags its direction as depending on the problem sense."""
+        assert ExpectationValue.direction is MetricDirection.DEPENDS_ON_SENSE
 
-    def test_higher_is_better_is_not_a_field(self) -> None:
+    def test_direction_is_not_a_field(self) -> None:
         """Test that the direction is class metadata rather than a constructor option."""
-        assert "higher_is_better" not in ExpectationValue.model_fields
+        assert "direction" not in ExpectationValue.model_fields
 
     def test_defaults_to_objective_value_source(self) -> None:
         """Test that the objective values are averaged unless configured otherwise."""

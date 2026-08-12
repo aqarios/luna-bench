@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, ClassVar
 from luna_model import Solution, ValueSource
 from pydantic import Field
 
-from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
+from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricDirection, MetricResult, metric
 
 
 class ExpectationValueResult(MetricResult):
@@ -37,11 +37,10 @@ class ExpectationValue(BaseMetric[ExpectationValueResult]):
         Which sample values to average: ``ValueSource.OBJ`` evaluates the model's
         objective function, ``ValueSource.RAW`` uses the raw values reported by the
         solver. Default is ``ValueSource.OBJ``.
-    higher_is_better : bool
-        Whether a larger metric value indicates a better result. ``False`` here:
-        given a minimization problem, the lower expectation value is the better
-        one. Class-level metadata for consumers that rank or plot metrics, not a
-        per-instance option.
+    direction : ClassVar[MetricDirection]
+        ``DEPENDS_ON_SENSE``: this averages objective values, so the better expectation
+        value is the lower one when minimizing and the higher one when maximizing. It
+        cannot be ranked across models of different senses.
 
     Examples
     --------
@@ -56,8 +55,7 @@ class ExpectationValue(BaseMetric[ExpectationValueResult]):
     >>> metric = ExpectationValue(value_source=ValueSource.RAW)
     """
 
-    #: Given a minimization problem, the lower expectation value is the better one.
-    higher_is_better: ClassVar[bool] = False
+    direction: ClassVar[MetricDirection] = MetricDirection.DEPENDS_ON_SENSE
 
     value_source: ValueSource = ValueSource.OBJ
 

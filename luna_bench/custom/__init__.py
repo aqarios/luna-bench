@@ -5,6 +5,7 @@ from .base_components.base_feature import BaseFeature
 from .base_components.base_lookup_feature import BaseModelLookupFeature, BaseValueLookupFeature
 from .base_components.base_metric import BaseMetric
 from .base_components.base_plot import BasePlot
+from .base_components.metric_direction_enum import MetricDirection
 from .base_results.feature_result import FeatureResult
 from .base_results.feature_result_enum import FeatureResultEnum
 from .base_results.lookup_feature_result import LookupFeatureResult
@@ -51,6 +52,7 @@ __all__ = [
     "FeatureResultEnum",
     "LookupFeatureResult",
     "MetricComputed",
+    "MetricDirection",
     "MetricName",
     "MetricResult",
     "MetricResultContainer",

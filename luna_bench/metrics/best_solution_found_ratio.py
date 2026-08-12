@@ -3,12 +3,12 @@
 Metric implemented from https://arxiv.org/pdf/2405.07624
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from luna_model import Sense, Solution
 from pydantic import Field
 
-from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
+from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricDirection, MetricResult, metric
 from luna_bench.features import OptSolFeature
 from luna_bench.helpers import get_ratio
 from luna_bench.helpers.divider_helper import snap_to_bounds
@@ -60,6 +60,9 @@ class BestSolutionFoundRatio(BaseMetric[BestSolutionFoundRatioResult]):
 
     Attributes
     ----------
+    direction : ClassVar[MetricDirection]
+        ``LOWER_IS_BETTER``: the ratio is bounded below by 1.0 and values further above
+        it are worse. Already sense-agnostic, so it holds for maximization too.
     abs_tol : float
         Absolute tolerance for considering a value as zero. Used to prevent
         division by zero errors. Default is 1e-3.
@@ -81,6 +84,8 @@ class BestSolutionFoundRatio(BaseMetric[BestSolutionFoundRatioResult]):
 
     **Source**: https://arxiv.org/pdf/2405.07624
     """
+
+    direction: ClassVar[MetricDirection] = MetricDirection.LOWER_IS_BETTER
 
     abs_tol: float = 1e-3
     snap_abs_tol: float | None = 1e-9

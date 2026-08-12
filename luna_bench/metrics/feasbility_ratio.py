@@ -1,9 +1,11 @@
 """Feasibility Ratio metric for measuring the proportion of feasible solutions."""
 
+from typing import ClassVar
+
 from luna_model import Solution
 from pydantic import Field
 
-from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricResult, metric
+from luna_bench.custom import BaseMetric, FeatureResultContainer, MetricDirection, MetricResult, metric
 
 
 class FeasibilityRatioResult(MetricResult):
@@ -32,6 +34,12 @@ class FeasibilityRatio(BaseMetric[FeasibilityRatioResult]):
     A feasibility ratio of 1.0 indicates all samples are feasible, while 0.0
     indicates none are feasible.
 
+    Attributes
+    ----------
+    direction : ClassVar[MetricDirection]
+        ``HIGHER_IS_BETTER``: a larger share of feasible samples is better. Independent
+        of the problem sense.
+
     Examples
     --------
     >>> from luna_bench.metrics import FeasibilityRatio
@@ -44,6 +52,8 @@ class FeasibilityRatio(BaseMetric[FeasibilityRatioResult]):
     This metric relies on the feasibility information stored in the Solution
     object, which is typically computed by the solver or model evaluation.
     """
+
+    direction: ClassVar[MetricDirection] = MetricDirection.HIGHER_IS_BETTER
 
     def run(self, solution: Solution, feature_results: FeatureResultContainer) -> FeasibilityRatioResult:  # noqa: ARG002
         """Calculate the feasibility ratio for the given solution.
