@@ -24,6 +24,7 @@ import argparse
 import ast
 import builtins
 import inspect
+import re
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple
@@ -32,6 +33,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from pydantic import BaseModel
+    from pydantic.fields import FieldInfo
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -132,13 +134,66 @@ def signature(cls: type[BaseModel]) -> list[Parameter]:
     The names and their order come from ``model_fields``, which is what pydantic itself
     builds the constructor from. The annotation and default are taken from the source of
     the class that declares the field, so a symbolic default such as ``LunaColours.SKY``
-    stays symbolic instead of being flattened into its value.
+    stays symbolic instead of being flattened into its value - except where the source
+    form does not apply to *cls*, which `_resolved` fills in from the field itself.
     """
     declared: dict[str, Parameter] = {}
+    type_params: set[str] = set()
     for base in reversed(cls.__mro__):
         declared.update(dict(_declarations(base)))
+        type_params.update(param.__name__ for param in getattr(base, "__type_params__", ()))
 
-    return _option_bundles(cls) + [declared[name] for name in cls.model_fields if name in declared]
+    return _option_bundles(cls) + [
+        _resolved(cls, declared[name], type_params) for name in cls.model_fields if name in declared
+    ]
+
+
+def _resolved(cls: type[BaseModel], parameter: Parameter, type_params: set[str]) -> Parameter:
+    """Return *parameter* with anything the declaring class left open filled in for *cls*.
+
+    A field inherited from a generic base is written in terms of that base's type
+    parameters - ``mapping: dict[int, TValue]`` - which say nothing on a subclass that
+    binds them and do not even exist as names in the subclass' module. A field given a
+    ``Field(...)`` default is written as that call, which is not what a caller passing the
+    argument sees. Both are read back off the built field instead, where pydantic has
+    already resolved the parametrization.
+    """
+    field = cls.model_fields[parameter.name]
+
+    annotation = parameter.annotation
+    if _names_in(annotation) & type_params:
+        annotation = _unqualify(str(field.annotation))
+
+    default = parameter.default
+    if default is not None and default.startswith("Field("):
+        default = _caller_default(field)
+
+    return Parameter(parameter.name, annotation, default)
+
+
+def _names_in(source: str) -> set[str]:
+    """Return the names an annotation refers to."""
+    return {node.id for node in ast.walk(ast.parse(source, mode="eval")) if isinstance(node, ast.Name)}
+
+
+def _unqualify(annotation: str) -> str:
+    """Strip module paths from a runtime annotation, leaving the names as source writes them."""
+    return re.sub(r"[\w.]*\.(\w+)", r"\1", annotation)
+
+
+def _caller_default(field: FieldInfo) -> str | None:
+    """Return the default a caller of the constructor sees, as source.
+
+    A ``default_factory`` has no source form of its own, so it is rendered as the literal
+    the factory builds - which is what `_render_parameter` already knows to exempt from
+    the mutable-default rule.
+    """
+    if field.default_factory is not None:
+        literals: dict[object, str] = {dict: "{}", list: "[]", set: "set()"}
+        return literals.get(field.default_factory, "...")
+    if field.is_required():
+        return None
+    return repr(field.default)
 
 
 def _option_bundles(cls: type[BaseModel]) -> list[Parameter]:

@@ -2,6 +2,7 @@ from enum import StrEnum
 
 from luna_bench import Benchmark, ModelSet
 from luna_bench.custom import BaseValueLookupFeature, feature
+from luna_bench.features import OptSolFeature, OptSolFeatureResult
 from tests.utils.luna_model import simple_model
 
 
@@ -59,3 +60,35 @@ class TestLookupFeatureInBenchmark:
 
         assert difficulties.covers(easy) is True
         assert difficulties.covers(hard) is False
+
+
+class TestPreComputedOptimaInBenchmark:
+    """The precomputed optima have to reach the run, without any custom encoding."""
+
+    def test_precomputed_optima_survive_the_benchmark_round_trip(self) -> None:
+        known = simple_model("known_model")
+        unknown = simple_model("unknown_model")
+
+        modelset: ModelSet = ModelSet.create("precomp_modelset")
+        modelset.add(known)
+        modelset.add(unknown)
+
+        optima = OptSolFeature()
+        optima.add_model(known, OptSolFeatureResult(global_best_sol=42.0, pre_terminated=True))
+
+        benchmark: Benchmark = Benchmark.create("precomp_benchmark")
+        benchmark.set_modelset(modelset)
+        benchmark.add_feature(name="optima", feature=optima)
+
+        reconstructed = Benchmark.load("precomp_benchmark").get_feature("optima").feature
+
+        assert isinstance(reconstructed, OptSolFeature)
+        assert reconstructed.mapping == optima.mapping
+
+        result = reconstructed.run(known)
+        assert result.global_best_sol == 42.0
+        assert result.pre_terminated is True
+        assert result.runtime == 0.0
+
+        assert reconstructed.covers(known) is True
+        assert reconstructed.covers(unknown) is False
