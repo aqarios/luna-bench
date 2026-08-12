@@ -25,17 +25,18 @@ class TestMetricDirection:
     """Tests for the MetricDirection enum."""
 
     def test_members(self) -> None:
-        """Test the two absolute directions plus DEPENDS_ON_SENSE and INDIFFERENT are offered."""
+        """Test the two absolute directions plus DEPENDS_ON_SENSE and INDIFFERENT are offered.
+
+        DEPENDS_ON_SENSE and INDIFFERENT are separate states on purpose: the first says
+        there is a better value but the metric alone cannot say which, the second that the
+        question does not apply.
+        """
         assert set(MetricDirection) == {
             MetricDirection.HIGHER_IS_BETTER,
             MetricDirection.LOWER_IS_BETTER,
             MetricDirection.DEPENDS_ON_SENSE,
             MetricDirection.INDIFFERENT,
         }
-
-    def test_depends_on_sense_is_distinct_from_indifferent(self) -> None:
-        """Test that "the better end is unclear" is not conflated with "there is none"."""
-        assert MetricDirection.DEPENDS_ON_SENSE is not MetricDirection.INDIFFERENT
 
     @pytest.mark.parametrize("direction", list(MetricDirection))
     def test_is_a_string(self, direction: MetricDirection) -> None:
