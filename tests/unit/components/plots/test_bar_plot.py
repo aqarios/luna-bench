@@ -776,7 +776,7 @@ class TestMissingValues:
         axes = plt.gca()
         assert sorted(text.get_text() for text in axes.texts) == ["1", "1"]
         # Anchored per group, so the two counts do not land on each other.
-        assert len({text.xy[0] for text in axes.texts}) == 2
+        assert len({cast("MatplotlibAnnotation", text).xy[0] for text in axes.texts}) == 2
 
 
 class TestLegendPlacement:
