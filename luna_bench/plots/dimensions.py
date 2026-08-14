@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Literal
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_serializer, field_validator
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from logging import Logger
 
     from luna_bench.custom import BenchmarkResultContainer
@@ -343,7 +344,7 @@ class ParameterDimension(BaseDimension):
         return self.parameter
 
     def resolve(self, benchmark_results: BenchmarkResultContainer, rows: list[dict[str, Any]]) -> str | None:
-        """Keep the algorithms configured with the parameter, and tag them with its value.
+        """Keep the algorithms configured with the parameter, and name their group by it.
 
         Parameters
         ----------
@@ -351,6 +352,54 @@ class ParameterDimension(BaseDimension):
             Benchmark data the algorithm configurations are read from.
         rows : list[dict[str, Any]]
             Row-oriented plot data, annotated and filtered in place.
+
+        Returns
+        -------
+        str | None
+            The column the settings were written to, or ``None`` when no algorithm carries
+            the parameter.
+        """
+        return self._resolve(benchmark_results, rows, lambda setting: f"{self.parameter}={setting:g}")
+
+    def resolve_values(self, benchmark_results: BenchmarkResultContainer, rows: list[dict[str, Any]]) -> str | None:
+        """Keep those algorithms too, but tag them with the setting as the number it is.
+
+        The counterpart of :meth:`resolve` for an axis that is continuous rather than a row
+        of categories: a sweep is read off the *distance* between its points, so ``reps``
+        of 1, 2 and 4 have to reach the axis as numbers and not as three equally wide
+        labels. What the parameter is called is on the axis title either way.
+
+        Parameters
+        ----------
+        benchmark_results : BenchmarkResultContainer
+            Benchmark data the algorithm configurations are read from.
+        rows : list[dict[str, Any]]
+            Row-oriented plot data, annotated and filtered in place.
+
+        Returns
+        -------
+        str | None
+            The column the settings were written to, or ``None`` when no algorithm carries
+            the parameter.
+        """
+        return self._resolve(benchmark_results, rows, float)
+
+    def _resolve(
+        self,
+        benchmark_results: BenchmarkResultContainer,
+        rows: list[dict[str, Any]],
+        as_value: Callable[[float], Any],
+    ) -> str | None:
+        """Filter the rows to the algorithms carrying the parameter and tag them with it.
+
+        Parameters
+        ----------
+        benchmark_results : BenchmarkResultContainer
+            Benchmark data the algorithm configurations are read from.
+        rows : list[dict[str, Any]]
+            Row-oriented plot data, annotated and filtered in place.
+        as_value : Callable[[float], Any]
+            What a setting is written to the row as - its own number, or a label naming it.
 
         Returns
         -------
@@ -369,7 +418,7 @@ class ParameterDimension(BaseDimension):
         rows[:] = kept
 
         for row in rows:
-            row[self.title] = f"{self.parameter}={settings[row['algorithm']]:g}"
+            row[self.title] = as_value(settings[row["algorithm"]])
 
         return self.title
 

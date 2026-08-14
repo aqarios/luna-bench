@@ -11,6 +11,7 @@ from luna_bench.plots.generics.parameter_sweep_plot import ParameterSweepPlot
 from luna_bench.plots.plot_style import Figure
 
 if TYPE_CHECKING:
+    from luna_bench.plots.dimensions import Dimension, ModelDimension, ParameterDimension
     from luna_bench.plots.plot_style import ErrorBars, Missing, PlotStyle, Theme
     from luna_bench.plots.utils import Aggregation
 
@@ -25,15 +26,15 @@ class ApproximationRatioVsParameterPlot(ParameterSweepPlot):
 
     Requires the ``ApproximationRatio`` metric.
 
-    Every display option is inherited and can be set when the plot is constructed,
-    e.g. ``ApproximationRatioVsParameterPlot(parameter="layers", hue=None)``.
+    Every display option is inherited and can be set when the plot is constructed, e.g.
+    ``ApproximationRatioVsParameterPlot(x=ParameterDimension("layers"), grouping=None)``.
     `ParameterSweepPlot` documents the sweep itself; `SeabornPlot` the figure size and
     the output formats.
 
     Attributes
     ----------
-    parameter : str
-        Attribute of the algorithm configuration that is swept, by default ``"reps"``.
+    x : ParameterDimension
+        The setting that is swept, by default ``ParameterDimension("reps")``.
     figure : Figure
         The figure, written to ``approximation_ratio_vs_parameter`` by default.
 
@@ -42,7 +43,8 @@ class ApproximationRatioVsParameterPlot(ParameterSweepPlot):
     >>> for layers in (1, 2, 3, 4):
     ...     bench.add_algorithm(f"qaoa_p{layers}", QAOA(reps=layers))
     >>> bench.add_metric(name="approx_ratio", metric=ApproximationRatio())
-    >>> bench.add_plot(name="layers", plot=ApproximationRatioVsParameterPlot(parameter="reps"))
+    >>> plot = ApproximationRatioVsParameterPlot(x=ParameterDimension("reps", label="QAOA layers (p)"))
+    >>> bench.add_plot(name="layers", plot=plot)
 
     See Also
     --------
@@ -74,7 +76,7 @@ class ApproximationRatioVsParameterPlot(ParameterSweepPlot):
                 title="Approximation Ratio over the Parameter Sweep (1.0 = optimal)",
             ),
             missing: Missing = Missing(),
-            parameter: str = "reps",
+            x: ParameterDimension = ParameterDimension("reps"),
             y: MetricDimension = MetricDimension(
                 "approximation_ratio",
                 "Approximation Ratio [%]",
@@ -82,8 +84,7 @@ class ApproximationRatioVsParameterPlot(ParameterSweepPlot):
                 reference=PERCENT,
                 reference_label="Optimal (100%)",
             ),
-            xlabel: str = "",
-            hue: str | None = "model",
+            grouping: Dimension | None = ModelDimension(),
             marker: str = "o",
             aggregation: Aggregation = Aggregation.MEAN,
             errorbars: ErrorBars | None = ErrorBars(),
@@ -103,15 +104,15 @@ class RuntimeVsParameterPlot(ParameterSweepPlot):
 
     Attributes
     ----------
-    parameter : str
-        Attribute of the algorithm configuration that is swept, by default ``"reps"``.
+    x : ParameterDimension
+        The setting that is swept, by default ``ParameterDimension("reps")``.
     figure : Figure
         The figure, written to ``runtime_vs_parameter`` by default.
 
     Examples
     --------
     >>> bench.add_metric(name="runtime", metric=Runtime())
-    >>> bench.add_plot(name="layer_cost", plot=RuntimeVsParameterPlot(parameter="reps"))
+    >>> bench.add_plot(name="layer_cost", plot=RuntimeVsParameterPlot(x=ParameterDimension("reps")))
     """
 
     figure: Figure = Figure(filename="runtime_vs_parameter", title="Runtime over the Parameter Sweep")
@@ -127,10 +128,9 @@ class RuntimeVsParameterPlot(ParameterSweepPlot):
             *,
             figure: Figure = Figure(filename="runtime_vs_parameter", title="Runtime over the Parameter Sweep"),
             missing: Missing = Missing(),
-            parameter: str = "reps",
+            x: ParameterDimension = ParameterDimension("reps"),
             y: MetricDimension = MetricDimension("runtime_seconds", "Runtime (s)"),
-            xlabel: str = "",
-            hue: str | None = "model",
+            grouping: Dimension | None = ModelDimension(),
             marker: str = "o",
             aggregation: Aggregation = Aggregation.MEAN,
             errorbars: ErrorBars | None = ErrorBars(),

@@ -10,7 +10,7 @@ import pandas as pd
 
 from luna_bench.errors.components.plots.plot_metric_undeclared_error import PlotMetricUndeclaredError
 from luna_bench.helpers.optional_dependencies import check_optional_dependency
-from luna_bench.plots.dimensions import MetricDimension
+from luna_bench.plots.dimensions import Dimension, MetricDimension, ModelDimension, ParameterDimension
 from luna_bench.plots.plot_style import ErrorBars
 from luna_bench.plots.utils import AUTO_ERRORBAR, REFERENCE_LINE_COLOUR, Aggregation, ErrorBar, LunaColours
 
@@ -37,20 +37,27 @@ class ParameterSweepPlot(SeabornPlot, ABC):
         for layers in (1, 2, 3, 4):
             bench.add_algorithm(f"qaoa_p{layers}", QAOA(reps=layers))
 
-        bench.add_plot("layers", ApproximationRatioVsParameterPlot(parameter="reps"))
+        bench.add_plot("layers", ApproximationRatioVsParameterPlot(x=ParameterDimension("reps")))
+
+    Both axes are dimensions, as they are on a bar plot: :attr:`x` says which setting is
+    swept, :attr:`y` what is measured against it, and each titles its own axis. The x is a
+    `ParameterDimension` specifically and not any dimension, since a sweep is read off the
+    *distance* between its points - there is no sweeping over a model.
 
     Algorithms whose configuration has no such attribute are left out, which is what
     keeps a classical baseline in the same benchmark from breaking the sweep.
 
     Attributes
     ----------
-    parameter : str
-        Attribute of the algorithm configuration that is swept, e.g. ``"reps"``.
+    x : ParameterDimension
+        The setting that is swept, e.g. ``ParameterDimension("reps")``. Also titles the
+        axis.
     y : MetricDimension
         What the lines measure - the attribute read off each result, and its axis title.
-    hue : str | None
-        Column drawn as its own line, by default one line per model. ``None`` draws a
-        single line, aggregated over the models.
+    grouping : Dimension | None
+        What is drawn as a line of its own: `ModelDimension` by default, or any other
+        dimension - `AlgorithmDimension`, `FeatureDimension`, `ParameterDimension`.
+        ``None`` draws a single line, aggregated over the models.
     marker : str
         Marker drawn at each sampled parameter value, by default ``"o"``.
     aggregation : Aggregation
@@ -69,21 +76,22 @@ class ParameterSweepPlot(SeabornPlot, ABC):
 
     logger: ClassVar[Logger] = logging.getLogger(__name__)
 
-    parameter: str = "reps"
-    """Attribute of the algorithm configuration that is swept.
+    x: ParameterDimension = ParameterDimension("reps")
+    """The setting that is swept: what the points are spaced by, and its title on the axis.
 
-    Name it as the algorithm does - ``"reps"``, ``"layers"``, ``"num_shots"``, ... An
-    algorithm without that attribute contributes no points.
+    Name the parameter as the algorithm does - ``"reps"``, ``"layers"``, ``"num_shots"``,
+    ... An algorithm without that attribute contributes no points.
     """
 
     y: MetricDimension = MetricDimension("value")
     """What the lines measure: the attribute read off each result, and its axis title."""
 
-    xlabel: str = ""
-    """Label of the x-axis, by default the name of :attr:`parameter`."""
+    grouping: Dimension | None = ModelDimension()
+    """What is drawn as a line of its own, by default one per model.
 
-    hue: str | None = "model"
-    """Column drawn as its own line. ``None`` aggregates the models into one line."""
+    Any of the dimensions - `ModelDimension`, `AlgorithmDimension`, `FeatureDimension`,
+    `ParameterDimension` - or ``None``, which aggregates them into a single line.
+    """
 
     marker: str = "o"
     """Marker drawn at each sampled parameter value, so single points stay visible."""
@@ -131,66 +139,36 @@ class ParameterSweepPlot(SeabornPlot, ABC):
         return self.y.of(metric_result)
 
     def rows(self, benchmark_results: BenchmarkResultContainer) -> list[dict[str, Any]]:
-        """Return one row per model and algorithm that carries the swept parameter.
+        """Return one row per measurement, tagged with the run it came from.
 
-        Parameters
-        ----------
-        benchmark_results : BenchmarkResultContainer
-            Aggregated benchmark data, including the algorithm configurations.
-
-        Returns
-        -------
-        list[dict[str, Any]]
-            Rows carrying the parameter value, the metric value, the model, and the
-            algorithm.
-        """
-        rows: list[dict[str, Any]] = []
-        for model_name, algorithm_name, metric_result in benchmark_results.get_all_metrics_of_type(self.metric_cls):
-            setting = self._parameter_value(benchmark_results, model_name, algorithm_name)
-            if setting is None:
-                continue
-            rows.append(
-                {
-                    self.parameter: setting,
-                    self.y.column: self.value(metric_result),
-                    "model": model_name,
-                    "algorithm": algorithm_name,
-                }
-            )
-        return rows
-
-    def _parameter_value(
-        self, benchmark_results: BenchmarkResultContainer, model_name: str, algorithm_name: str
-    ) -> float | None:
-        """Read the swept parameter off one algorithm configuration.
+        Which of them belong on the axis is :attr:`x`'s decision, so they are collected
+        without asking - the model and the algorithm are what the dimensions look the rest
+        up by.
 
         Parameters
         ----------
         benchmark_results : BenchmarkResultContainer
             Aggregated benchmark data.
-        model_name : str
-            Model the algorithm ran on.
-        algorithm_name : str
-            Name the algorithm is registered under in the benchmark.
 
         Returns
         -------
-        float | None
-            The parameter value, or ``None`` when this algorithm has no such setting or
-            it is not a number.
+        list[dict[str, Any]]
+            Rows carrying the metric value, the model, and the algorithm.
         """
-        run = benchmark_results.algorithms.get(model_name, {}).get(algorithm_name)
-        if run is None:
-            return None
-
-        setting = getattr(run.algorithm, self.parameter, None)
-        if isinstance(setting, bool) or not isinstance(setting, (int, float)):
-            # A bool is an int in Python but not a point on an axis.
-            return None
-        return float(setting)
+        return [
+            {
+                self.y.column: self.value(metric_result),
+                "model": model_name,
+                "algorithm": algorithm_name,
+            }
+            for model_name, algorithm_name, metric_result in benchmark_results.get_all_metrics_of_type(self.metric_cls)
+        ]
 
     def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
-        """Generate plot output from benchmark results.
+        """Resolve both dimensions onto the rows and draw what is left of them.
+
+        The x is resolved first: it drops the algorithms that were never configured with
+        the swept setting, and the grouping then only has to tell apart what remains.
 
         Parameters
         ----------
@@ -200,18 +178,48 @@ class ParameterSweepPlot(SeabornPlot, ABC):
             Directory to save the figure into, by default ``None``.
         """
         rows = self.rows(benchmark_results)
-        if not rows:
+
+        if not rows or self.x.resolve_values(benchmark_results, rows) is None:
             self.logger.warning(
                 "%s: no algorithm carries a numeric '%s', nothing to sweep over",
                 self.__class__.__name__,
-                self.parameter,
+                self.x.parameter,
             )
             return
 
-        self.create(rows=rows, save_dir=save_dir)
+        self.create(rows=rows, save_dir=save_dir, **self.apply_grouping(benchmark_results, rows))
+
+    def apply_grouping(self, benchmark_results: BenchmarkResultContainer, rows: list[dict[str, Any]]) -> dict[str, Any]:
+        """Split *rows* into a line each along :attr:`grouping`.
+
+        Parameters
+        ----------
+        benchmark_results : BenchmarkResultContainer
+            Benchmark data the feature results and algorithm configurations are read from.
+        rows : list[dict[str, Any]]
+            Row-oriented plot data, annotated in place.
+
+        Returns
+        -------
+        dict[str, Any]
+            Keyword arguments to forward to :meth:`create`. Empty when no grouping applies,
+            so call sites can splat it unconditionally.
+        """
+        if self.grouping is None:
+            return {}
+
+        column = self.grouping.resolve(benchmark_results, rows)
+        if column is None:
+            self.logger.warning("%s: drawing a single line", type(self).__name__)
+            return {}
+
+        return {"hue": column}
 
     def create(self, *, rows: list[dict[str, Any]], save_dir: str | None = None, **kwargs: Any) -> None:
-        """Draw the sweep as a line per :attr:`hue` with a marker at every sampled value.
+        """Draw the sweep as a line per group with a marker at every sampled value.
+
+        The rows are expected to carry both axes already, under the titles the dimensions
+        gave them; :meth:`run` is what puts them there.
 
         Parameters
         ----------
@@ -220,8 +228,8 @@ class ParameterSweepPlot(SeabornPlot, ABC):
         save_dir : str | None, optional
             Directory to save the figure into, by default ``None``.
         **kwargs : Any
-            Additional keyword arguments forwarded to :func:`seaborn.lineplot`. They
-            override the defaults computed here.
+            Additional keyword arguments forwarded to :func:`seaborn.lineplot`, including
+            the ``hue`` the grouping resolved to. They override the defaults computed here.
         """
         check_optional_dependency("matplotlib")
         check_optional_dependency("seaborn")
@@ -237,15 +245,15 @@ class ParameterSweepPlot(SeabornPlot, ABC):
 
         lineplot_kwargs: dict[str, Any] = {
             "data": df,
-            "x": self.parameter,
+            "x": self.x.title,
             "y": self.y.column,
             "marker": self.marker,
             "estimator": self.aggregation.estimator,
             "errorbar": self._errorbar(),
-            **self._color_kwargs(df),
         }
         lineplot_kwargs.update(self.figure.seaborn_kwargs)
         lineplot_kwargs.update(kwargs)
+        lineplot_kwargs.update(self._color_kwargs(df, lineplot_kwargs.get("hue")))
 
         sns.lineplot(**lineplot_kwargs)
 
@@ -264,10 +272,10 @@ class ParameterSweepPlot(SeabornPlot, ABC):
 
         # The swept values are the points that were measured, so label exactly those
         # rather than whatever ticks matplotlib would spread over the range.
-        plt.xticks(sorted(df[self.parameter].unique()))
+        plt.xticks(sorted(df[self.x.title].unique()))
 
         self.finalize_plot(
-            self.xlabel or self.parameter,
+            self.x.title,
             self.y.title,
             self.figure.title,
             self.y.limits,
@@ -287,9 +295,22 @@ class ParameterSweepPlot(SeabornPlot, ABC):
             return None
         return self.aggregation.errorbar if self.errorbars.spec == AUTO_ERRORBAR else self.errorbars.spec
 
-    def _color_kwargs(self, df: pd.DataFrame) -> dict[str, Any]:
-        """Return the seaborn colour arguments for the lines."""
-        if self.hue is None or self.hue not in df.columns:
+    def _color_kwargs(self, df: pd.DataFrame, hue: str | None) -> dict[str, Any]:
+        """Return the seaborn colour arguments for the lines.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            The data being drawn.
+        hue : str | None
+            The column the grouping resolved to, if any.
+
+        Returns
+        -------
+        dict[str, Any]
+            A palette wide enough for the groups, or the single colour one line is drawn in.
+        """
+        if hue is None or hue not in df.columns:
             return {"color": str(LunaColours.LUNA_SOLVE)}
 
-        return {"hue": self.hue, "palette": LunaColours.palette(df[self.hue].nunique())}
+        return {"palette": LunaColours.palette(df[hue].nunique())}

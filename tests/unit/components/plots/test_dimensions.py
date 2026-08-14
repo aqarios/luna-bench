@@ -247,6 +247,61 @@ class TestParameterDimension:
         mock_warning.assert_called_once()
 
 
+class TestParameterDimensionValues:
+    """Test reading the setting as the number it is, for a plot with a continuous axis."""
+
+    def test_the_rows_carry_the_setting_as_a_number(self) -> None:
+        """Test a sweep gets a value it can space its points by, not a label."""
+        rows = [
+            {"algorithm": "qaoa_p1", "model": "m1", "value": 1},
+            {"algorithm": "qaoa_p3", "model": "m1", "value": 3},
+        ]
+
+        column = ParameterDimension(parameter="reps").resolve_values(
+            _with_algorithms({"qaoa_p1": SimpleNamespace(reps=1), "qaoa_p3": SimpleNamespace(reps=3)}), rows
+        )
+
+        assert column == "reps"
+        assert [row["reps"] for row in rows] == [1.0, 3.0]
+
+    def test_only_the_algorithms_with_the_setting_are_plotted(self) -> None:
+        """Test a classical baseline contributes no point to the sweep."""
+        rows = [
+            {"algorithm": "scip", "model": "m1", "value": 0},
+            {"algorithm": "qaoa_p2", "model": "m1", "value": 2},
+        ]
+
+        ParameterDimension(parameter="reps").resolve_values(
+            _with_algorithms({"scip": SimpleNamespace(), "qaoa_p2": SimpleNamespace(reps=2)}), rows
+        )
+
+        assert [row["algorithm"] for row in rows] == ["qaoa_p2"]
+
+    def test_a_label_titles_the_axis(self) -> None:
+        """Test the sweep can be labelled in the terms of its algorithm."""
+        rows = [{"algorithm": "qaoa_p1", "model": "m1", "value": 1}]
+
+        column = ParameterDimension(parameter="reps", label="QAOA layers (p)").resolve_values(
+            _with_algorithms({"qaoa_p1": SimpleNamespace(reps=1)}), rows
+        )
+
+        assert column == "QAOA layers (p)"
+        assert rows[0]["QAOA layers (p)"] == 1.0
+
+    def test_nothing_configured_with_the_setting_is_no_sweep(self) -> None:
+        """Test the rows are left alone when there is nothing to sweep over."""
+        rows = [{"algorithm": "scip", "model": "m1", "value": 1}]
+
+        with patch("luna_bench.plots.dimensions.logger.warning") as mock_warning:
+            assert (
+                ParameterDimension(parameter="reps").resolve_values(_with_algorithms({"scip": SimpleNamespace()}), rows)
+                is None
+            )
+
+        assert rows == [{"algorithm": "scip", "model": "m1", "value": 1}]
+        mock_warning.assert_called_once()
+
+
 class TestDimensionEdges:
     """Test what the groupers do with data they cannot group."""
 
