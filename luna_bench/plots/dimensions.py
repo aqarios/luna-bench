@@ -43,6 +43,11 @@ else:
 #: Group used for models the grouping feature has no result for.
 UNGROUPED_LABEL = "unknown"
 
+#: Scale of a dimension read in percent, i.e. what a ratio of ``1.0`` is drawn as. Every
+#: ratio a benchmark plots goes on the axis this way, so two of them can be read against
+#: each other without checking which one is a share and which one a percentage.
+PERCENT = 100.0
+
 logger: Logger = logging.getLogger(__name__)
 
 
@@ -412,6 +417,12 @@ class MetricDimension(BaseModel):
         doubles as the column the value is plotted from.
     label : str | None
         What the y-axis is called, by default the attribute's own name.
+    scale : float
+        Factor the value is read in, by default ``1.0`` - the unit the metric reports.
+        `PERCENT` is what every built-in ratio uses, so a share of ``0.5`` reaches the
+        axis as ``50``; the limits, the reference and the baseline are then in percent
+        as well, since they are values on that same axis. An annotated percent axis
+        wants ``Annotation(format="{:.1f}%")`` to match.
     limits : tuple[float, float] | None
         Lower and upper limit of the axis, by default the data range.
     reference : float | None
@@ -427,6 +438,7 @@ class MetricDimension(BaseModel):
 
     attribute: str
     label: str | None = None
+    scale: float = 1.0
     limits: tuple[float, float] | None = None
     reference: float | None = None
     reference_label: str | None = None
@@ -461,7 +473,13 @@ class MetricDimension(BaseModel):
         return self.label or self.attribute
 
     def of(self, result: Any) -> float:  # noqa: ANN401
-        """Return the number *result* contributes.
+        """Return the number *result* contributes, or ``nan`` where it has none.
+
+        A metric reports nothing in more than one way: an attribute it never filled, or
+        one that came back from the database as ``None`` because the value was an infinity
+        and JSON has no word for that. Neither is a number, and neither is a reason to
+        stop drawing - what becomes of a value a plot cannot draw is `Missing`, which
+        reads a ``nan`` as exactly that.
 
         Parameters
         ----------
@@ -471,9 +489,11 @@ class MetricDimension(BaseModel):
         Returns
         -------
         float
-            The value plotted for it.
+            The value plotted for it, in the scale the axis is read in, or ``nan`` when
+            the result carries none.
         """
-        return float(getattr(result, self.attribute))
+        value = getattr(result, self.attribute, None)
+        return float("nan") if value is None else float(value) * self.scale
 
 
 #: The groupings a bar plot takes, told apart by their ``kind`` so that one survives being

@@ -13,7 +13,7 @@ from luna_bench.plots.plot_style import Figure
 if TYPE_CHECKING:
     from luna_bench.custom import BenchmarkResultContainer
     from luna_bench.plots.dimensions import Dimension
-    from luna_bench.plots.plot_style import Annotation, ErrorBars, PlotStyle
+    from luna_bench.plots.plot_style import Annotation, ErrorBars, Missing, PlotStyle, Theme
     from luna_bench.plots.utils import Aggregation
 
 
@@ -53,14 +53,16 @@ class VarNumberBarChartPlot(BarPlot):
         def __init__(  # noqa: PLR0913
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(filename="var_number_bar_chart", title="Variables per Model"),
+            missing: Missing = Missing(),
             x: Dimension = ModelDimension(),
             y: MetricDimension = MetricDimension("var_number", "Number of Variables"),
             aggregation: Aggregation = Aggregation.MEAN,
             errorbars: ErrorBars | None = ErrorBars(),
             annotation: Annotation | None = None,
             grouping: Dimension | None = None,
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...
 
     def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:

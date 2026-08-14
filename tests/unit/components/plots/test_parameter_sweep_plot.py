@@ -56,8 +56,8 @@ class TestParameterSweepRows:
 
         benchmark_results.get_all_metrics_of_type.assert_called_once_with(ApproximationRatio)
         assert rows == [
-            {"reps": 1.0, "approximation_ratio": 0.5, "model": "model_a", "algorithm": "qaoa_p1"},
-            {"reps": 3.0, "approximation_ratio": 0.9, "model": "model_a", "algorithm": "qaoa_p3"},
+            {"reps": 1.0, "approximation_ratio": 50.0, "model": "model_a", "algorithm": "qaoa_p1"},
+            {"reps": 3.0, "approximation_ratio": 90.0, "model": "model_a", "algorithm": "qaoa_p3"},
         ]
 
     @pytest.mark.parametrize(
@@ -110,7 +110,7 @@ class TestParameterSweepRows:
             plot_instance.run(benchmark_results, save_dir="out")
 
         mock_create.assert_called_once_with(
-            rows=[{"reps": 2.0, "approximation_ratio": 0.7, "model": "model_a", "algorithm": "qaoa_p2"}],
+            rows=[{"reps": 2.0, "approximation_ratio": 70.0, "model": "model_a", "algorithm": "qaoa_p2"}],
             save_dir="out",
         )
 
@@ -126,8 +126,8 @@ class TestParameterSweepCreate:
         """Test the x ticks are the measured values, not an arbitrary range."""
         plot_instance = ApproximationRatioVsParameterPlot(parameter="reps", figure=Figure(show=False))
         rows = [
-            {"reps": 1.0, "approximation_ratio": 0.5, "model": "model_a", "algorithm": "qaoa_p1"},
-            {"reps": 3.0, "approximation_ratio": 0.9, "model": "model_a", "algorithm": "qaoa_p3"},
+            {"reps": 1.0, "approximation_ratio": 50.0, "model": "model_a", "algorithm": "qaoa_p1"},
+            {"reps": 3.0, "approximation_ratio": 90.0, "model": "model_a", "algorithm": "qaoa_p3"},
         ]
 
         plot_instance.create(rows=rows)

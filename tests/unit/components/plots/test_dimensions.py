@@ -1,7 +1,8 @@
 """Tests for the groupings a bar plot can be split along."""
 
+import math
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, ClassVar
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -9,10 +10,21 @@ import pytest
 from luna_bench.custom import BaseFeature, FeatureResult, feature
 from luna_bench.custom.result_containers.algorithm_result_container import AlgorithmResultContainer
 from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
+from luna_bench.plots import (
+    ApproximationRatioPlot,
+    ApproximationRatioVsParameterPlot,
+    BestSolutionFoundRatioPlot,
+    FeasibilityRatioPlot,
+    FeasibleSampleRatioPlot,
+    FeasibleSolutionFoundPlot,
+    FractionOfOverallBestSolutionPlot,
+)
 from luna_bench.plots.dimensions import (
+    PERCENT,
     UNGROUPED_LABEL,
     AlgorithmDimension,
     FeatureDimension,
+    MetricDimension,
     ModelDimension,
     ParameterDimension,
 )
@@ -258,3 +270,63 @@ class TestDimensionEdges:
         line = SimpleNamespace(get_xdata=lambda: [0.0, 1.0], get_ydata=lambda: [0.0])
 
         assert BarPlot._errorbar_tops(MagicMock(lines=[line])) == []
+
+
+class TestScale:
+    """Test the scale a metric dimension is read in."""
+
+    def test_a_value_is_read_in_the_unit_the_metric_reports(self) -> None:
+        """Test the default leaves the value as it is."""
+        assert MetricDimension("ratio").of(SimpleNamespace(ratio=0.75)) == 0.75
+
+    def test_a_percent_dimension_reaches_the_axis_as_a_percentage(self) -> None:
+        """Test the scale is applied where the value is read, so the axis and it agree."""
+        assert MetricDimension("ratio", scale=PERCENT).of(SimpleNamespace(ratio=0.75)) == 75.0
+
+
+class TestRatiosAreConsistentlyPercent:
+    """Test every built-in ratio is drawn on the same scale."""
+
+    RATIO_PLOTS: ClassVar[list[type]] = [
+        ApproximationRatioPlot,
+        BestSolutionFoundRatioPlot,
+        FeasibilityRatioPlot,
+        FeasibleSampleRatioPlot,
+        FeasibleSolutionFoundPlot,
+        FractionOfOverallBestSolutionPlot,
+        ApproximationRatioVsParameterPlot,
+    ]
+
+    @pytest.mark.parametrize("plot_cls", RATIO_PLOTS)
+    def test_the_axis_is_a_percent_axis(self, plot_cls: type) -> None:
+        """Test the values, the label and the reference line all speak percent."""
+        plot = plot_cls()
+
+        assert plot.y.scale == PERCENT
+        assert "%" in plot.y.title
+        assert plot.y.reference == PERCENT
+        assert plot.y.reference_label is not None
+        assert "100%" in plot.y.reference_label
+
+
+class TestValuesTheResultDoesNotHave:
+    """Test a result with nothing to report reaches the plot as a missing value."""
+
+    def test_a_none_is_read_as_missing(self) -> None:
+        """Test an infinity that came back from the database as ``None`` does not crash.
+
+        JSON has no infinity, so a time to solution that was never reached is stored as
+        ``null`` and read back as ``None``. It is a value the plot cannot draw, which is
+        what ``nan`` says and what ``Missing`` then decides about.
+        """
+        value = MetricDimension("time_to_solution").of(SimpleNamespace(time_to_solution=None))
+
+        assert math.isnan(value)
+
+    def test_an_attribute_that_is_not_there_is_read_as_missing(self) -> None:
+        """Test a result that never carried the attribute is missing rather than an error."""
+        assert math.isnan(MetricDimension("time_to_solution").of(SimpleNamespace()))
+
+    def test_a_percent_dimension_keeps_a_missing_value_missing(self) -> None:
+        """Test the scale does not turn a nan into a number."""
+        assert math.isnan(MetricDimension("ratio", scale=PERCENT).of(SimpleNamespace(ratio=None)))

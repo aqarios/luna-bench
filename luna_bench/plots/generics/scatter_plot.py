@@ -78,7 +78,10 @@ class ScatterPlot(SeabornPlot, ABC):
             self.logger.warning(f"{self.__class__}: no data to plot")
             return
 
-        df = DataFrame(rows)
+        df, _ = self.resolve_missing(DataFrame(rows), y)
+        if df.empty:
+            self.logger.warning("%s: every value is missing or not finite, nothing to plot", type(self).__name__)
+            return
 
         self.setup_figure()
 
@@ -98,6 +101,8 @@ class ScatterPlot(SeabornPlot, ABC):
 
         if hline:
             plt.axhline(y=hline, color=hcolor, linestyle="--", alpha=0.7, label=hline_label)
+
+        self.place_legend(plt.gca())
 
         self.finalize_plot(
             xlabel=xlabel,

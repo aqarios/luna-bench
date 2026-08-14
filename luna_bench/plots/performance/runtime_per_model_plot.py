@@ -11,7 +11,7 @@ from luna_bench.plots.generics.metric_bar_plot import MetricBarPlot
 from luna_bench.plots.plot_style import Figure
 
 if TYPE_CHECKING:
-    from luna_bench.plots.plot_style import Annotation, ErrorBars, PlotStyle
+    from luna_bench.plots.plot_style import Annotation, ErrorBars, Missing, PlotStyle, Theme
     from luna_bench.plots.utils import Aggregation
 
 
@@ -52,7 +52,8 @@ class RuntimePerModelPlot(MetricBarPlot):
 
     x: Dimension = ModelDimension()
 
-    y: MetricDimension = MetricDimension("runtime_seconds", "Runtime (s)")
+    y: MetricDimension = MetricDimension("runtime_seconds", "Runtime (s)", baseline=0.0)
+    """Runtime in seconds, standing on a solid line at zero, as on `RuntimePlot`."""
 
     grouping: Dimension | None = AlgorithmDimension()
 
@@ -63,12 +64,14 @@ class RuntimePerModelPlot(MetricBarPlot):
         def __init__(  # noqa: PLR0913
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(filename="runtime_per_model", title="Runtime per Model by Algorithm"),
+            missing: Missing = Missing(),
             x: Dimension = ModelDimension(),
-            y: MetricDimension = MetricDimension("runtime_seconds", "Runtime (s)"),
+            y: MetricDimension = MetricDimension("runtime_seconds", "Runtime (s)", baseline=0.0),
             aggregation: Aggregation = Aggregation.MEAN,
             errorbars: ErrorBars | None = ErrorBars(),
             annotation: Annotation | None = None,
             grouping: Dimension | None = AlgorithmDimension(),
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...

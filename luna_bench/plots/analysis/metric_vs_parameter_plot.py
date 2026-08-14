@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 
 from luna_bench.custom import plot
 from luna_bench.metrics import ApproximationRatio, Runtime
-from luna_bench.plots.dimensions import MetricDimension
+from luna_bench.plots.dimensions import PERCENT, MetricDimension
 from luna_bench.plots.generics.parameter_sweep_plot import ParameterSweepPlot
 from luna_bench.plots.plot_style import Figure
 
 if TYPE_CHECKING:
-    from luna_bench.plots.plot_style import ErrorBars, PlotStyle
+    from luna_bench.plots.plot_style import ErrorBars, Missing, PlotStyle, Theme
     from luna_bench.plots.utils import Aggregation
 
 
@@ -21,7 +21,7 @@ class ApproximationRatioVsParameterPlot(ParameterSweepPlot):
 
     The plot for "does another QAOA layer buy anything": add one algorithm entry per
     value of the parameter, and the sweep shows how close to the optimum each of them
-    got. ``1.0`` - marked by the reference line - is the optimum.
+    got. ``100%`` - marked by the reference line - is the optimum.
 
     Requires the ``ApproximationRatio`` metric.
 
@@ -56,9 +56,10 @@ class ApproximationRatioVsParameterPlot(ParameterSweepPlot):
 
     y: MetricDimension = MetricDimension(
         "approximation_ratio",
-        "Approximation Ratio",
-        reference=1.0,
-        reference_label="Optimal (1.0)",
+        "Approximation Ratio [%]",
+        scale=PERCENT,
+        reference=PERCENT,
+        reference_label="Optimal (100%)",
     )
 
     if TYPE_CHECKING:
@@ -68,20 +69,26 @@ class ApproximationRatioVsParameterPlot(ParameterSweepPlot):
         def __init__(  # noqa: PLR0913
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(
                 filename="approximation_ratio_vs_parameter",
                 title="Approximation Ratio over the Parameter Sweep (1.0 = optimal)",
             ),
+            missing: Missing = Missing(),
             parameter: str = "reps",
             y: MetricDimension = MetricDimension(
-                "approximation_ratio", "Approximation Ratio", reference=1.0, reference_label="Optimal (1.0)"
+                "approximation_ratio",
+                "Approximation Ratio [%]",
+                scale=PERCENT,
+                reference=PERCENT,
+                reference_label="Optimal (100%)",
             ),
             xlabel: str = "",
             hue: str | None = "model",
             marker: str = "o",
             aggregation: Aggregation = Aggregation.MEAN,
             errorbars: ErrorBars | None = ErrorBars(),
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...
 
 
@@ -118,8 +125,8 @@ class RuntimeVsParameterPlot(ParameterSweepPlot):
         def __init__(  # noqa: PLR0913
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(filename="runtime_vs_parameter", title="Runtime over the Parameter Sweep"),
+            missing: Missing = Missing(),
             parameter: str = "reps",
             y: MetricDimension = MetricDimension("runtime_seconds", "Runtime (s)"),
             xlabel: str = "",
@@ -127,4 +134,6 @@ class RuntimeVsParameterPlot(ParameterSweepPlot):
             marker: str = "o",
             aggregation: Aggregation = Aggregation.MEAN,
             errorbars: ErrorBars | None = ErrorBars(),
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...

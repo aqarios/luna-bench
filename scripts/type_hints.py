@@ -37,6 +37,12 @@ if TYPE_CHECKING:
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+#: Parameters that are about the look every figure of a benchmark shares rather than about
+#: this plot, and how far back they are sorted. They are usually set once - installed as a
+#: `PlotStyle`, or handed to every plot - so they belong at the end of a signature, behind
+#: what makes this plot the plot it is.
+SHARED_LOOK = {"theme": 1, "style": 2}
+
 #: Packages whose public components are constructed by users, and so want a signature.
 COMPONENT_PACKAGES = ("luna_bench.plots", "luna_bench.metrics", "luna_bench.features")
 
@@ -129,13 +135,18 @@ def _declarations(cls: type) -> Iterator[tuple[str, Parameter]]:
 
 
 def signature(cls: type[BaseModel]) -> list[Parameter]:
-    """Return the constructor parameters of *cls*, base fields first.
+    """Return the constructor parameters of *cls*, what it is about first.
 
-    The names and their order come from ``model_fields``, which is what pydantic itself
-    builds the constructor from. The annotation and default are taken from the source of
-    the class that declares the field, so a symbolic default such as ``LunaColours.SKY``
-    stays symbolic instead of being flattened into its value - except where the source
-    form does not apply to *cls*, which `_resolved` fills in from the field itself.
+    The names come from ``model_fields``, which is what pydantic itself builds the
+    constructor from, in the order it declares them - except for the ones in
+    `SHARED_LOOK`, which go last. Those say how a whole benchmark's figures look and are
+    normally set once, away from the plot; what this plot measures and how it reads is
+    what someone opening the signature came for.
+
+    The annotation and default are taken from the source of the class that declares the
+    field, so a symbolic default such as ``LunaColours.SKY`` stays symbolic instead of
+    being flattened into its value - except where the source form does not apply to
+    *cls*, which `_resolved` fills in from the field itself.
     """
     declared: dict[str, Parameter] = {}
     type_params: set[str] = set()
@@ -143,9 +154,10 @@ def signature(cls: type[BaseModel]) -> list[Parameter]:
         declared.update(dict(_declarations(base)))
         type_params.update(param.__name__ for param in getattr(base, "__type_params__", ()))
 
-    return _option_bundles(cls) + [
-        _resolved(cls, declared[name], type_params) for name in cls.model_fields if name in declared
-    ]
+    fields = [_resolved(cls, declared[name], type_params) for name in cls.model_fields if name in declared]
+    parameters = fields + _option_bundles(cls)
+
+    return sorted(parameters, key=lambda parameter: SHARED_LOOK.get(parameter.name, 0))
 
 
 def _resolved(cls: type[BaseModel], parameter: Parameter, type_params: set[str]) -> Parameter:
@@ -202,8 +214,7 @@ def _option_bundles(cls: type[BaseModel]) -> list[Parameter]:
     A plot can be configured by concern rather than by keyword - ``annotation=Annotation(...)``
     instead of four ``annotate_*`` arguments - which a validator spreads into the fields.
     Those arguments are not fields, so they have to be read off ``option_bundles`` rather
-    than off ``model_fields``, and they come first: they are the shorter way to say the
-    same thing.
+    than off ``model_fields``.
     """
     bundles: dict[str, type] = getattr(cls, "option_bundles", {})
     return [Parameter(name, f"{bundle.__name__} | None", "None") for name, bundle in bundles.items()]

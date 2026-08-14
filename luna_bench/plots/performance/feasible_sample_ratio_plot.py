@@ -6,14 +6,14 @@ from typing import TYPE_CHECKING, Any
 
 from luna_bench.custom import plot
 from luna_bench.metrics import FeasibleSamples
-from luna_bench.plots.dimensions import MetricDimension
+from luna_bench.plots.dimensions import PERCENT, MetricDimension
 from luna_bench.plots.generics.metric_bar_plot import MetricBarPlot
 from luna_bench.plots.plot_style import ErrorBars, Figure
 
 if TYPE_CHECKING:
     from luna_bench.custom import BenchmarkResultContainer
     from luna_bench.plots.dimensions import AlgorithmDimension, Dimension
-    from luna_bench.plots.plot_style import Annotation, PlotStyle
+    from luna_bench.plots.plot_style import Annotation, Missing, PlotStyle, Theme
     from luna_bench.plots.utils import Aggregation
 
 
@@ -25,7 +25,7 @@ class FeasibleSampleRatioPlot(MetricBarPlot):
     sum, so an algorithm that returns a thousand samples on one model and ten on another
     is judged by its samples rather than by its models. That is the difference to
     `FeasibilityRatioPlot`, which averages the per-model ratios and therefore
-    weights both models equally. ``1.0`` - marked by the reference line - means every
+    weights both models equally. ``100%`` - marked by the reference line - means every
     sample was feasible.
 
     Because each bar is a single pooled number there is no spread to show, so the bars
@@ -61,10 +61,11 @@ class FeasibleSampleRatioPlot(MetricBarPlot):
 
     y: MetricDimension = MetricDimension(
         "feasible_sample_ratio",
-        "Feasible Samples / All Samples",
-        limits=(0, 1.15),
-        reference=1.0,
-        reference_label="Upper Limit (1.0)",
+        "Feasible Samples / All Samples [%]",
+        scale=PERCENT,
+        limits=(0, PERCENT),
+        reference=PERCENT,
+        reference_label="Upper Limit (100%)",
     )
 
     errorbars: ErrorBars | None = None
@@ -77,22 +78,25 @@ class FeasibleSampleRatioPlot(MetricBarPlot):
         def __init__(  # noqa: PLR0913
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(
                 filename="feasible_sample_ratio", title="Share of Feasible Samples per Solver (pooled over models)"
             ),
+            missing: Missing = Missing(),
             x: Dimension = AlgorithmDimension(),
             y: MetricDimension = MetricDimension(
                 "feasible_sample_ratio",
-                "Feasible Samples / All Samples",
-                limits=(0, 1.15),
-                reference=1.0,
-                reference_label="Upper Limit (1.0)",
+                "Feasible Samples / All Samples [%]",
+                scale=PERCENT,
+                limits=(0, PERCENT),
+                reference=PERCENT,
+                reference_label="Upper Limit (100%)",
             ),
             aggregation: Aggregation = Aggregation.MEAN,
             errorbars: ErrorBars | None = None,
             annotation: Annotation | None = None,
             grouping: Dimension | None = None,
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...
 
     def rows(self, benchmark_results: BenchmarkResultContainer) -> list[dict[str, Any]]:
@@ -135,10 +139,10 @@ class FeasibleSampleRatioPlot(MetricBarPlot):
         list[dict[str, Any]]
             One row per bar, in the order the bars first appear.
         """
-        return self._pool(rows, [column for column in (x, group) if column is not None])
+        return self._pool(rows, [column for column in (x, group) if column is not None], scale=self.y.scale)
 
     @staticmethod
-    def _pool(rows: list[dict[str, Any]], columns: list[str]) -> list[dict[str, Any]]:
+    def _pool(rows: list[dict[str, Any]], columns: list[str], *, scale: float = 1.0) -> list[dict[str, Any]]:
         """Sum the sample counts per bar and turn each pair of sums into a ratio.
 
         Parameters
@@ -149,6 +153,10 @@ class FeasibleSampleRatioPlot(MetricBarPlot):
             What tells one bar from another - the x-axis, and the grouping if there is
             one. Everything else is pooled over, which is the point of this plot: the
             samples of every model it pools enter the same sum.
+        scale : float, optional
+            Scale the pooled ratio is read in, by default ``1.0``. The ratio is computed
+            here rather than read off a result, so the scale of :attr:`y` - `PERCENT` -
+            has to be applied here as well.
 
         Returns
         -------
@@ -164,6 +172,6 @@ class FeasibleSampleRatioPlot(MetricBarPlot):
 
         return [
             dict(zip(columns, key, strict=True))
-            | {"feasible_sample_ratio": num_feasible / num_samples if num_samples else 0.0}
+            | {"feasible_sample_ratio": scale * num_feasible / num_samples if num_samples else 0.0}
             for key, (num_feasible, num_samples) in totals.items()
         ]

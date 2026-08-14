@@ -5,12 +5,13 @@ from typing import TYPE_CHECKING
 from luna_bench.custom import plot
 from luna_bench.features import VarNumberFeature
 from luna_bench.metrics import ApproximationRatio
+from luna_bench.plots.dimensions import PERCENT
 from luna_bench.plots.generics.scatter_plot import ScatterPlot
 from luna_bench.plots.plot_style import Figure
 
 if TYPE_CHECKING:
     from luna_bench.custom import BenchmarkResultContainer
-    from luna_bench.plots.plot_style import PlotStyle
+    from luna_bench.plots.plot_style import Missing, PlotStyle, Theme
 
 
 @plot([VarNumberFeature, ApproximationRatio])
@@ -33,8 +34,10 @@ class ApproximationRatioVsVarNumberPlot(ScatterPlot):
         def __init__(
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(filename="approximation_ratio_vs_var_number"),
+            missing: Missing = Missing(),
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...
 
     def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
@@ -50,7 +53,7 @@ class ApproximationRatioVsVarNumberPlot(ScatterPlot):
                 "algorithm": algorithm_name,
                 "model": model_name,
                 "x": benchmark_results.features[model_name].first(VarNumberFeature).var_number,
-                "y": metric_result.approximation_ratio,
+                "y": metric_result.approximation_ratio * PERCENT,
             }
             for model_name, algorithm_name, metric_result in benchmark_results.get_all_metrics_of_type(
                 ApproximationRatio
@@ -60,9 +63,9 @@ class ApproximationRatioVsVarNumberPlot(ScatterPlot):
             save_dir=save_dir,
             rows=rows,
             xlabel="Number of Variables",
-            ylabel="Approximation Ratio",
+            ylabel="Approximation Ratio [%]",
             title="Approximation Ratio vs Number of Variables",
             hue="algorithm",
-            hline=1.0,
-            hline_label="Optimal (1.0)",
+            hline=PERCENT,
+            hline_label="Optimal (100%)",
         )

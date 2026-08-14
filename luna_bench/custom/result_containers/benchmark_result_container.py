@@ -154,6 +154,11 @@ class BenchmarkResultContainer(BaseModel):
             non-null metric result of the requested type.
         """
         for model_name, algorithm_name, metric_results in self.get_all_metrics():
+            # A metric that failed for one model and algorithm leaves that pair without a
+            # result of this class. It contributes nothing, which is not the same as the
+            # caller asking for a metric the benchmark never computed.
+            if metric_cls not in metric_results:
+                continue
             for metric_result in metric_results.get_all(metric_cls).values():
                 if metric_result is not None:
                     yield model_name, algorithm_name, metric_result

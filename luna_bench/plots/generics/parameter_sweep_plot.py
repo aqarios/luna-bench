@@ -228,7 +228,10 @@ class ParameterSweepPlot(SeabornPlot, ABC):
         import seaborn as sns  # noqa: PLC0415
         from matplotlib import pyplot as plt  # noqa: PLC0415
 
-        df = pd.DataFrame(rows)
+        df, _ = self.resolve_missing(pd.DataFrame(rows), self.y.column)
+        if df.empty:
+            self.logger.warning("%s: every value is missing or not finite, nothing to plot", type(self).__name__)
+            return
 
         self.setup_figure()
 
@@ -252,6 +255,8 @@ class ParameterSweepPlot(SeabornPlot, ABC):
             )
             if self.y.reference_label:
                 plt.legend()
+
+        self.place_legend(plt.gca())
 
         # The swept values are the points that were measured, so label exactly those
         # rather than whatever ticks matplotlib would spread over the range.

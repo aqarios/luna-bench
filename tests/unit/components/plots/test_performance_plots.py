@@ -1,6 +1,6 @@
 """Tests for the concrete performance plot `run` implementations."""
 
-from typing import Any
+from typing import Any, ClassVar
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -58,6 +58,7 @@ RUN_CASES = [
         {"algorithm": "algo_1", "model": "model_a", "runtime_seconds": 1.5},
         {
             "title": "Runtime per Solver",
+            "baseline": 0.0,
             "y": "runtime_seconds",
             "ylabel": "Runtime (s)",
         },
@@ -74,6 +75,7 @@ RUN_CASES = [
             "xlabel": "Model",
             "title": "Runtime per Model by Algorithm",
             "legend": True,
+            "baseline": 0.0,
             "y": "runtime_seconds",
             "ylabel": "Runtime (s)",
         },
@@ -83,13 +85,13 @@ RUN_CASES = [
         ApproximationRatioPlot,
         ApproximationRatio,
         ApproximationRatioResult(approximation_ratio=0.9),
-        {"algorithm": "algo_1", "model": "model_a", "approximation_ratio": 0.9},
+        {"algorithm": "algo_1", "model": "model_a", "approximation_ratio": 90.0},
         {
             "title": "Approximation Ratio per Solver (1.0 = optimal)",
-            "hline": 1.0,
-            "hline_label": "Optimal (1.0)",
+            "hline": 100.0,
+            "hline_label": "Optimal (100%)",
             "y": "approximation_ratio",
-            "ylabel": "Approximation Ratio",
+            "ylabel": "Approximation Ratio [%]",
         },
         id="approximation_ratio",
     ),
@@ -97,14 +99,14 @@ RUN_CASES = [
         BestSolutionFoundRatioPlot,
         BestSolutionFoundRatio,
         BestSolutionFoundRatioResult(best_solution_found=1.2),
-        {"algorithm": "algo_1", "model": "model_a", "best_solution_found": 1.2},
+        {"algorithm": "algo_1", "model": "model_a", "best_solution_found": 120.0},
         {
-            "title": "Best Solution Found Ratio per Solver (1.0 = optimal)",
-            "hline": 1.0,
-            "hline_label": "Optimal (1.0)",
+            "title": "Best Solution Found Ratio per Solver (100% = optimal)",
+            "hline": 100.0,
+            "hline_label": "Optimal (100%)",
             "baseline": 0.0,
             "y": "best_solution_found",
-            "ylabel": "Best Solution Found Ratio",
+            "ylabel": "Best Solution Found Ratio [%]",
         },
         id="best_solution_found_ratio",
     ),
@@ -112,14 +114,14 @@ RUN_CASES = [
         FeasibilityRatioPlot,
         FeasibilityRatio,
         FeasibilityRatioResult(feasibility_ratio=0.75),
-        {"algorithm": "algo_1", "model": "model_a", "feasibility_ratio": 0.75},
+        {"algorithm": "algo_1", "model": "model_a", "feasibility_ratio": 75.0},
         {
             "title": "Feasibility Ratio per Solver",
-            "ylim": (0, 1.15),
-            "hline": 1.0,
-            "hline_label": "Upper Limit (1.0)",
+            "ylim": (0, 100.0),
+            "hline": 100.0,
+            "hline_label": "Upper Limit (100%)",
             "y": "feasibility_ratio",
-            "ylabel": "Feasibility Ratio",
+            "ylabel": "Feasibility Ratio [%]",
         },
         id="feasibility_ratio",
     ),
@@ -130,7 +132,7 @@ RUN_CASES = [
         {"algorithm": "algo_1", "model": "model_a", "feasibility_ratio": 100.0},
         {
             "title": "Models with a Feasible Solution per Algorithm",
-            "ylim": (0, 105),
+            "ylim": (0, 100.0),
             "hline": 100.0,
             "hline_label": "Upper Limit (100%)",
             "y": "feasibility_ratio",
@@ -142,15 +144,15 @@ RUN_CASES = [
         FeasibleSampleRatioPlot,
         FeasibleSamples,
         FeasibleSamplesResult(num_feasible_samples=3, num_samples=4),
-        {"algorithm": "algo_1", "feasible_sample_ratio": 0.75},
+        {"algorithm": "algo_1", "feasible_sample_ratio": 75.0},
         {
             "title": "Share of Feasible Samples per Solver (pooled over models)",
-            "ylim": (0, 1.15),
+            "ylim": (0, 100.0),
             "errorbar": None,
-            "hline": 1.0,
-            "hline_label": "Upper Limit (1.0)",
+            "hline": 100.0,
+            "hline_label": "Upper Limit (100%)",
             "y": "feasible_sample_ratio",
-            "ylabel": "Feasible Samples / All Samples",
+            "ylabel": "Feasible Samples / All Samples [%]",
         },
         id="feasible_sample_ratio",
     ),
@@ -158,14 +160,15 @@ RUN_CASES = [
         FractionOfOverallBestSolutionPlot,
         FractionOfOverallBestSolution,
         FractionOfOverallBestSolutionResult(fraction_of_overall_best_solution=0.6),
-        {"algorithm": "algo_1", "model": "model_a", "fraction_of_overall_best_solution": 0.6},
+        {"algorithm": "algo_1", "model": "model_a", "fraction_of_overall_best_solution": 60.0},
         {
-            "title": "Best Solution Found per Solver (1.0 = optimal)",
-            "hline": 1.0,
-            "hline_label": "Optimal (1.0)",
+            "title": "Best Solution Found per Solver (100% = optimal)",
+            "ylim": (0, 100.0),
+            "hline": 100.0,
+            "hline_label": "Optimal (100%)",
             "baseline": 0.0,
             "y": "fraction_of_overall_best_solution",
-            "ylabel": "Best Solution Found",
+            "ylabel": "Best Solution Found [%]",
         },
         id="average_fob",
     ),
@@ -176,6 +179,7 @@ RUN_CASES = [
         {"algorithm": "algo_1", "model": "model_a", "time_to_solution": 2.5},
         {
             "title": "Time to Solution per Algorithm (lower is better)",
+            "baseline": 0.0,
             "y": "time_to_solution",
             "ylabel": "Time to Solution (TTS)",
         },
@@ -247,9 +251,9 @@ class TestFeasibleSampleRatioPlot:
         with patch.object(FeasibleSampleRatioPlot, "create") as mock_create:
             FeasibleSampleRatioPlot().run(benchmark_results)
 
-        # Pooling weights samples, not models: 91/100 rather than the per-model mean of 0.55.
+        # Pooling weights samples, not models: 91/100 rather than the per-model mean of 55%.
         assert mock_create.call_args.kwargs["rows"] == [
-            {"algorithm": "algo_1", "feasible_sample_ratio": 0.91},
+            {"algorithm": "algo_1", "feasible_sample_ratio": 91.0},
             {"algorithm": "algo_2", "feasible_sample_ratio": 0.0},
         ]
 
@@ -285,8 +289,8 @@ class TestFeasibleSampleRatioPlot:
             FeasibleSampleRatioPlot().run(benchmark_results)
 
         assert mock_create.call_args.kwargs["rows"] == [
-            {"algorithm": "algo_1", "feasible_sample_ratio": 0.25, "Use case": "case_model_a"},
-            {"algorithm": "algo_1", "feasible_sample_ratio": 0.75, "Use case": "case_model_b"},
+            {"algorithm": "algo_1", "feasible_sample_ratio": 25.0, "Use case": "case_model_a"},
+            {"algorithm": "algo_1", "feasible_sample_ratio": 75.0, "Use case": "case_model_b"},
         ]
         assert mock_create.call_args.kwargs["hue"] == "Use case"
 
@@ -327,7 +331,7 @@ class TestFeasibleSampleRatioPooling:
         with patch.object(FeasibleSampleRatioPlot, "create") as mock_create:
             FeasibleSampleRatioPlot().run(self._results())
 
-        assert mock_create.call_args.kwargs["rows"] == [{"algorithm": "algo_1", "feasible_sample_ratio": 0.5}]
+        assert mock_create.call_args.kwargs["rows"] == [{"algorithm": "algo_1", "feasible_sample_ratio": 50.0}]
 
     def test_a_plot_drawn_per_model_pools_within_the_model(self) -> None:
         """Test the bars keep what tells them apart, so any dimension can be the x-axis."""
@@ -336,6 +340,25 @@ class TestFeasibleSampleRatioPooling:
 
         assert mock_create.call_args.kwargs["x"] == "model"
         assert mock_create.call_args.kwargs["rows"] == [
-            {"model": "model_a", "feasible_sample_ratio": 0.1},
-            {"model": "model_b", "feasible_sample_ratio": 0.9},
+            {"model": "model_a", "feasible_sample_ratio": 10.0},
+            {"model": "model_b", "feasible_sample_ratio": 90.0},
         ]
+
+
+class TestTimeBaselines:
+    """Test the line the bars of a plot measured in seconds stand on."""
+
+    TIME_PLOTS: ClassVar[list[type]] = [RuntimePlot, RuntimePerModelPlot, TimeToSolutionPlot]
+
+    @pytest.mark.parametrize("plot_cls", TIME_PLOTS)
+    def test_the_bars_stand_on_a_line_at_zero(self, plot_cls: type) -> None:
+        """Test a time has a floor, and the figure says where it is."""
+        assert plot_cls().y.baseline == 0.0
+
+    @pytest.mark.parametrize("plot_cls", TIME_PLOTS)
+    def test_the_line_carries_no_label(self, plot_cls: type) -> None:
+        """Test it reads as the floor of the bars, not as a target competing with one."""
+        plot = plot_cls()
+
+        assert plot.y.reference is None
+        assert plot.y.reference_label is None

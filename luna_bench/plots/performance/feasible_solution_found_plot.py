@@ -6,17 +6,15 @@ from typing import TYPE_CHECKING
 
 from luna_bench.custom import plot
 from luna_bench.metrics import FeasibilityRatio
-from luna_bench.plots.dimensions import MetricDimension
+from luna_bench.plots.dimensions import PERCENT, MetricDimension
 from luna_bench.plots.generics.metric_bar_plot import MetricBarPlot
 from luna_bench.plots.plot_style import Annotation, Figure
 
 if TYPE_CHECKING:
     from luna_bench.custom.base_results.metric_result import MetricResult
     from luna_bench.plots.dimensions import AlgorithmDimension, Dimension
-    from luna_bench.plots.plot_style import ErrorBars, PlotStyle
+    from luna_bench.plots.plot_style import ErrorBars, Missing, PlotStyle, Theme
     from luna_bench.plots.utils import Aggregation
-
-PERCENT = 100.0
 
 
 @plot(FeasibilityRatio)
@@ -50,12 +48,13 @@ class FeasibleSolutionFoundPlot(MetricBarPlot):
         filename="feasible_solution_found",
         title="Models with a Feasible Solution per Algorithm",
     )
-    annotation: Annotation | None = Annotation(format="{:.1f}%")
+    annotation: Annotation | None = Annotation()
 
     y: MetricDimension = MetricDimension(
         "feasibility_ratio",
         "Feasible solution found [% of models]",
-        limits=(0, 105),
+        scale=PERCENT,
+        limits=(0, PERCENT),
         reference=PERCENT,
         reference_label="Upper Limit (100%)",
     )
@@ -67,22 +66,25 @@ class FeasibleSolutionFoundPlot(MetricBarPlot):
         def __init__(  # noqa: PLR0913
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(
                 filename="feasible_solution_found", title="Models with a Feasible Solution per Algorithm"
             ),
+            missing: Missing = Missing(),
             x: Dimension = AlgorithmDimension(),
             y: MetricDimension = MetricDimension(
                 "feasibility_ratio",
                 "Feasible solution found [% of models]",
-                limits=(0, 105),
+                scale=PERCENT,
+                limits=(0, PERCENT),
                 reference=PERCENT,
                 reference_label="Upper Limit (100%)",
             ),
             aggregation: Aggregation = Aggregation.MEAN,
             errorbars: ErrorBars | None = ErrorBars(),
-            annotation: Annotation | None = Annotation(format="{:.1f}%"),
+            annotation: Annotation | None = Annotation(),
             grouping: Dimension | None = None,
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...
 
     def value(self, metric_result: MetricResult) -> float:
