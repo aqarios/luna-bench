@@ -220,7 +220,11 @@ class TestBarPlot:
 
     @patch("luna_bench.plots.generics.bar_plot.check_optional_dependency")
     def test_unannotated_limits_are_exactly_what_was_asked_for(self, mock_check_dep: MagicMock) -> None:
-        """Test a plot with nothing written above its bars needs no room for it."""
+        """Test a plot whose bars stay under its limits is given exactly those limits.
+
+        The room above is for what stands there - the labels, a cap, a reference line -
+        and a plot with none of them past the limit is not given any.
+        """
         _ = mock_check_dep
         with patch("seaborn.barplot"), patch("matplotlib.pyplot.show"), patch("matplotlib.pyplot.ylim") as mock_ylim:
             plot = ConcreteBarPlot(annotation=None)
@@ -228,6 +232,50 @@ class TestBarPlot:
             plot.create(rows=[{"algorithm": "Algo1", "value": 10}], xlabel="X", ylabel="Y", title="T", ylim=(0, 100))
 
             mock_ylim.assert_called_once_with(0, 100)
+
+    def test_limits_grow_to_cover_an_error_bar_that_passes_them(self) -> None:
+        """Test a spread reaching past a bounded axis is shown rather than cut off.
+
+        The cap of an error bar is a fact about the run: a share whose models scatter
+        around 100% has one above it, and an axis that stopped at the limit would hide it.
+        """
+        plot = ConcreteBarPlot(figure=Figure(show=False), annotation=None)
+
+        plot.create(
+            rows=[{"algorithm": "Algo1", "value": value} for value in (100.0, 100.0, 85.0)],
+            xlabel="X",
+            ylabel="Y",
+            title="T",
+            x="algorithm",
+            y="value",
+            errorbar="sd",
+            ylim=(0, 100),
+        )
+
+        axes = plt.gca()
+        cap = max(top for _, top in BarPlot._errorbar_tops(axes))
+        assert cap > 100.0
+        assert axes.get_ylim()[1] > cap
+        # Still the scale it was asked for: the room above the limit stays unlabelled.
+        assert max(axes.get_yticks()) == 100
+
+    def test_limits_grow_so_a_reference_line_is_not_drawn_onto_the_frame(self) -> None:
+        """Test the line an axis is bounded at stays readable as a line."""
+        plot = ConcreteBarPlot(figure=Figure(show=False), annotation=None)
+
+        plot.create(
+            rows=[{"algorithm": "Algo1", "value": 50.0}],
+            xlabel="X",
+            ylabel="Y",
+            title="T",
+            x="algorithm",
+            y="value",
+            errorbar=None,
+            hline=100.0,
+            ylim=(0, 100),
+        )
+
+        assert plt.gca().get_ylim()[1] > 100.0
 
     def test_headroom_grows_an_axis_that_was_left_to_the_data(self) -> None:
         """Test a plot without limits of its own still makes room for its labels."""
@@ -621,10 +669,23 @@ class TestMissingValues:
     def _draw(self, plot: ConcreteBarPlot) -> None:
         plot.create(rows=list(self.ROWS), xlabel="X", ylabel="Y", title="T", x="algorithm", y="value")
 
-    def test_a_missing_value_is_refused_by_default(self) -> None:
-        """Test the default says nothing rather than quietly changing what the bars mean."""
+    def test_a_missing_value_is_left_out_and_marked_by_default(self) -> None:
+        """Test the figure is drawn, and says what it could not draw.
+
+        The default carries on without changing what the bars mean - the values are as
+        absent as under ``"drop"`` - and puts what happened to them on the figure rather
+        than only in the log.
+        """
+        self._draw(ConcreteBarPlot(figure=Figure(show=False)))
+
+        axes = plt.gca()
+        assert [text.get_text() for text in axes.texts] == ["2"]
+        assert [patch.get_hatch() for patch in axes.patches if patch.get_hatch()] == ["//"]
+
+    def test_a_missing_value_is_refused_when_asked_for(self) -> None:
+        """Test a benchmark can still say a missing value means no figure at all."""
         with pytest.raises(PlotMissingValuesError, match="Algo2: 2"):
-            self._draw(ConcreteBarPlot(figure=Figure(show=False)))
+            self._draw(ConcreteBarPlot(figure=Figure(show=False), missing=Missing(policy="raise")))
 
     def test_dropping_leaves_the_drawable_values(self) -> None:
         """Test the bar of the algorithm that kept its values is unaffected by the other one."""
@@ -641,6 +702,19 @@ class TestMissingValues:
     def test_filling_draws_them_past_the_largest_value(self) -> None:
         """Test a pandas aggregate of what could be drawn, scaled by the factor."""
         plot = ConcreteBarPlot(figure=Figure(show=False), missing=Missing(policy="max", factor=1.1))
+
+        with patch("seaborn.barplot") as mock_barplot:
+            self._draw(plot)
+
+        assert list(mock_barplot.call_args.kwargs["data"]["value"]) == pytest.approx([1.0, 3.0, 3.3, 3.3])
+
+    def test_the_default_factor_puts_a_fill_past_the_bars_rather_than_on_them(self) -> None:
+        """Test ``"max"`` lands above the tallest bar without being asked to.
+
+        A fill exactly at the largest value is indistinguishable in height from a real
+        maximum, which is the one thing the factor exists to prevent.
+        """
+        plot = ConcreteBarPlot(figure=Figure(show=False), missing=Missing(policy="max"))
 
         with patch("seaborn.barplot") as mock_barplot:
             self._draw(plot)
@@ -831,3 +905,30 @@ class TestLegendPlacement:
         legend = axes.get_legend()
         assert legend is not None
         assert legend.get_title().get_text() == "use"
+
+    def test_a_panel_of_a_shared_figure_keeps_its_key_inside(self) -> None:
+        """Test the key of one panel is not drawn over the panel next to it.
+
+        The room beside a panel belongs to its neighbour, so the rule that keeps a legend
+        off the data would put this one on someone else's.
+        """
+        figure, panels = plt.subplots(1, 2)
+        plot = ConcreteBarPlot(figure=Figure(show=False))
+        plot._shared_axes = panels[0]
+        plt.sca(panels[0])
+
+        plot.create(
+            rows=[{"algorithm": "Algo1", "value": 10.0}, {"algorithm": "Algo1", "value": 20.0}],
+            xlabel="X",
+            ylabel="Y",
+            title="T",
+            x="algorithm",
+            y="value",
+            errorbar="sd",
+        )
+
+        # In figure coordinates, since what it must not run into is the other panel.
+        legend = panels[0].get_legend()
+        assert legend is not None
+        anchored = legend.get_bbox_to_anchor().transformed(figure.transFigure.inverted())
+        assert anchored.x1 <= panels[0].get_window_extent().transformed(figure.transFigure.inverted()).x1

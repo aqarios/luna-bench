@@ -23,6 +23,7 @@ from luna_bench.plots.dimensions import (
     ParameterDimension,
 )
 from luna_bench.plots.plot_style import Figure, Missing, OptionBundle, PlotStyle, Theme
+from luna_bench.plots.utils import LunaColours
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -34,8 +35,33 @@ if TYPE_CHECKING:
 #: Where the legend is anchored, in axes coordinates: just outside the right edge, top.
 _LEGEND_ANCHOR = (1.01, 1.0)
 
+#: How the values a figure could not draw are marked, in the colour they are marked in.
+MISSING_MARKER: dict[str, Any] = {
+    "color": str(LunaColours.ROCKET_FIRE),
+    "marker": "x",
+    "markersize": 8,
+    "markeredgewidth": 2.0,
+    "linestyle": "none",
+}
+
 #: Extensions stripped from ``figure_filename`` before the output format is appended.
 KNOWN_FILE_FORMATS = frozenset({"eps", "jpeg", "jpg", "pdf", "pgf", "png", "ps", "svg", "svgz", "tif", "tiff", "webp"})
+
+
+def missing_label(missing: dict[tuple[str, str], int]) -> str:
+    """Return the legend label for the values a figure could not draw.
+
+    Parameters
+    ----------
+    missing : dict[tuple[str, str], int]
+        Number of missing values per category and group.
+
+    Returns
+    -------
+    str
+        The label, e.g. ``"missing values (3)"``.
+    """
+    return f"missing values ({sum(missing.values())})"
 
 
 def _merge_styles(base: dict[str, Any], over: dict[str, Any]) -> dict[str, Any]:
@@ -257,7 +283,9 @@ class SeabornPlot(BasePlot, ABC):
             if bundle_cls is not None:
                 cls._merge_bundle_field(data, name, bundle_cls, field.default, shared.get(name))
 
-        # A style also carries options that are fields of their own, e.g. the aggregation.
+        # What the style says about a bundle the plot said nothing about, which is how a
+        # shared ``theme=None`` reaches a plot: there is no bundle to merge, so the
+        # decision itself is what carries over.
         return {key: value for key, value in shared.items() if key in cls.model_fields and key not in data} | data
 
     @classmethod
@@ -406,7 +434,7 @@ class SeabornPlot(BasePlot, ABC):
         Raises
         ------
         PlotMissingValuesError
-            If values are missing and the policy is ``"raise"``, the default.
+            If values are missing and the policy is ``"raise"``.
         """
         if column not in df:
             return df, {}
@@ -480,10 +508,14 @@ class SeabornPlot(BasePlot, ABC):
     def place_legend(self, axes: Axes, handles: list[Any] | None = None, labels: list[str] | None = None) -> None:
         """Put the legend beside the axes, whatever drew it.
 
-        Always outside: a legend inside the axes sits on top of the data, and which corner
-        is free depends on the run rather than on the plot - the figure would move its own
-        key around as the numbers change. Beside it, the key is always in the same place
-        and covers nothing.
+        Outside the axes for a figure of its own: a legend inside sits on top of the data,
+        and which corner is free depends on the run rather than on the plot - the figure
+        would move its own key around as the numbers change. Beside it, the key is always
+        in the same place and covers nothing.
+
+        A panel of someone else's figure is the exception. The room beside it belongs to
+        the panel next to it, so a key anchored there is drawn over a neighbour rather than
+        over the data; inside the panel it stays within the space the plot was given.
 
         Parameters
         ----------
@@ -505,15 +537,45 @@ class SeabornPlot(BasePlot, ABC):
         if not handles:
             return
 
+        beside: dict[str, Any] = {"loc": "upper left", "bbox_to_anchor": _LEGEND_ANCHOR}
+        inside: dict[str, Any] = {"loc": "best"}
+
         axes.legend(
             handles=handles,
             labels=labels,
             title=title,
-            loc="upper left",
-            bbox_to_anchor=_LEGEND_ANCHOR,
             # A handle made of several artists is one swatch, drawn on top of itself.
             handler_map={tuple: HandlerTuple(ndivide=None)},
+            **(inside if self._shared_axes is not None else beside),
         )
+
+    def note_missing(self, handles: list[Any], labels: list[str], missing: dict[tuple[str, str], int]) -> None:
+        """Add the legend entry that says how many values the figure could not draw.
+
+        What a plot can say beyond that depends on what it draws. A bar has a slot of its
+        own to put a cross under, so `BarPlot` marks the categories themselves; a point in
+        a cloud or a step of a sweep has no slot, and the count in the key is the whole
+        statement there - enough that a filled value is not read as a measured one.
+
+        Parameters
+        ----------
+        handles : list[Any]
+            Legend handles, extended in place.
+        labels : list[str]
+            Their labels, extended in place alongside *handles*.
+        missing : dict[tuple[str, str], int]
+            Number of missing values per category and group, as counted by
+            :meth:`resolve_missing`.
+        """
+        from matplotlib.lines import Line2D  # noqa: PLC0415
+
+        if not missing or not self.missing.mark or self.missing.policy == "drop":
+            # "drop" leaves them out and says nothing more on the figure; the warning in
+            # the log still names them.
+            return
+
+        handles.append(Line2D([], [], **MISSING_MARKER))
+        labels.append(missing_label(missing))
 
     def apply_theme(self) -> None:
         """Install the seaborn theme this plot is drawn under, unless it has none.

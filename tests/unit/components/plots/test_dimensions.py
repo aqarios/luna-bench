@@ -18,6 +18,7 @@ from luna_bench.plots import (
     FeasibleSampleRatioPlot,
     FeasibleSolutionFoundPlot,
     FractionOfOverallBestSolutionPlot,
+    dimensions,
 )
 from luna_bench.plots.dimensions import (
     PERCENT,
@@ -326,6 +327,37 @@ class TestValuesTheResultDoesNotHave:
     def test_an_attribute_that_is_not_there_is_read_as_missing(self) -> None:
         """Test a result that never carried the attribute is missing rather than an error."""
         assert math.isnan(MetricDimension("time_to_solution").of(SimpleNamespace()))
+
+    def test_an_attribute_that_is_not_there_names_itself_in_the_log(self) -> None:
+        """Test a misspelled attribute says so, rather than only that everything is missing.
+
+        A name no result carries is a typo far more often than a gap in the data, and the
+        figure would otherwise complain about the data.
+        """
+        dimension = MetricDimension("aproximation_ratio")
+
+        with patch.object(dimensions.logger, "warning") as mock_warning:
+            dimension.of(SimpleNamespace(approximation_ratio=0.5))
+
+        assert mock_warning.call_count == 1
+        assert "aproximation_ratio" in str(mock_warning.call_args)
+
+    def test_the_attribute_is_named_once_rather_than_once_per_result(self) -> None:
+        """Test every row of the plot hits this, and they would all say the same thing."""
+        dimension = MetricDimension("aproximation_ratio")
+
+        with patch.object(dimensions.logger, "warning") as mock_warning:
+            for _ in range(3):
+                dimension.of(SimpleNamespace(approximation_ratio=0.5))
+
+        assert mock_warning.call_count == 1
+
+    def test_a_result_that_reports_nothing_is_missing_quietly(self) -> None:
+        """Test a ``None`` is an expected answer, not a name to complain about."""
+        with patch.object(dimensions.logger, "warning") as mock_warning:
+            assert math.isnan(MetricDimension("time_to_solution").of(SimpleNamespace(time_to_solution=None)))
+
+        mock_warning.assert_not_called()
 
     def test_a_percent_dimension_keeps_a_missing_value_missing(self) -> None:
         """Test the scale does not turn a nan into a number."""

@@ -19,7 +19,7 @@ from luna_bench.plots.utils import (
     errorbar_label,
 )
 
-from .seaborn_plot import SeabornPlot
+from .seaborn_plot import MISSING_MARKER, SeabornPlot, missing_label
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -38,6 +38,11 @@ _FULL_SLOT_WIDTH = 0.8
 
 #: Height of the mark for the values that could not be drawn, as a share of the axes.
 _MISSING_MARK_HEIGHT = 0.02
+
+#: Room left above the tallest thing drawn when it reaches the limits the plot asked for,
+#: as a share of them: a cap or a reference line exactly at the top would otherwise be
+#: drawn onto the frame and read as part of it.
+_TOP_MARGIN = 0.05
 
 #: How a value read off a percent axis is annotated, unless a format was asked for.
 PERCENT_FORMAT = "{:.1f}%"
@@ -419,8 +424,9 @@ class BarPlot(SeabornPlot, ABC):
 
         if self.annotation is not None:
             self._annotate_bars(plt.gca())
-            # Grown last, so the range already covers the reference and the baseline.
-            ylim = self._with_headroom(ylim)
+
+        # Grown last, so the range already covers the reference and the baseline.
+        ylim = self._with_headroom(ylim, reference=hline)
 
         self.finalize_plot(xlabel, ylabel, title, ylim, save_dir=save_dir)
 
@@ -480,7 +486,7 @@ class BarPlot(SeabornPlot, ABC):
 
         if missing_handle is not None:
             handles.append(missing_handle)
-            labels.append(f"missing values ({sum(missing.values())})")
+            labels.append(missing_label(missing))
 
     def _mark_missing(
         self, ax: Axes, missing: dict[tuple[str, str], int], order: list[str], hue_order: list[str]
@@ -579,15 +585,7 @@ class BarPlot(SeabornPlot, ABC):
         if not marked:
             return None
 
-        cross = Line2D(
-            [],
-            [],
-            color=str(LunaColours.ROCKET_FIRE),
-            marker="x",
-            markersize=8,
-            markeredgewidth=2.0,
-            linestyle="none",
-        )
+        cross = Line2D([], [], **MISSING_MARKER)
 
         if not struck:
             return cross
@@ -772,34 +770,44 @@ class BarPlot(SeabornPlot, ABC):
             tops.append((float((xs.min() + xs.max()) / 2), float(ys.max())))
         return tops
 
-    def _with_headroom(self, ylim: tuple[float, float] | None) -> tuple[float, float] | None:
-        """Grow the upper y limit so the annotations fit above the tallest bar.
+    def _with_headroom(
+        self, ylim: tuple[float, float] | None, *, reference: float | None = None
+    ) -> tuple[float, float] | None:
+        """Grow the upper y limit so everything drawn above the bars is inside the frame.
 
-        Only the upper limit: the room is for the labels, which sit on top, while a margin
-        below the bars is empty axes saying a value could have been there.
+        Only the upper limit: the room is for what sits on top - the error bars, the
+        reference line, the annotations - while a margin below the bars is empty axes
+        saying a value could have been there.
 
         A plot with limits of its own keeps them as the *scale* - a ratio that cannot pass
         100% is not given ticks past it - and the room is added beyond the last tick, so
-        the labels sit inside the frame without the axis claiming a range the metric
-        cannot reach. Without limits the range matplotlib scaled to the data is grown
-        instead, read after everything is drawn so the reference line and the baseline are
-        inside it.
+        what stands above the limit is inside the frame without the axis claiming a range
+        the metric cannot reach. A share whose spread reaches past 100% is the usual case:
+        the cap of its error bar is a fact about the run, and an axis that stops at the
+        limit would cut it off. Without limits the range matplotlib scaled to the data is
+        grown instead, read after everything is drawn so the reference line and the
+        baseline are inside it.
 
         Parameters
         ----------
         ylim : tuple[float, float] | None
             The limits requested by the caller, or ``None`` to grow the data range.
+        reference : float | None, optional
+            Height of the reference line, by default ``None``. A line exactly at the
+            limit would be drawn onto the frame and read as part of it.
 
         Returns
         -------
         tuple[float, float] | None
-            The limits to apply, with :attr:`annotate_headroom` added on top.
+            The limits to apply, with the room above added on top.
         """
         check_optional_dependency("matplotlib")
         from matplotlib import pyplot as plt  # noqa: PLC0415
 
         axes = plt.gca()
-        headroom = (self.annotation or Annotation()).headroom
+        # No annotations means no labels to fit, and the room they need is theirs: what is
+        # added below is only what it takes to show what was drawn.
+        headroom = self.annotation.headroom if self.annotation is not None else 0.0
 
         if ylim is None:
             axes.autoscale_view()
@@ -808,11 +816,47 @@ class BarPlot(SeabornPlot, ABC):
 
         bottom, top = ylim
         # The ticks the requested range would have, fixed before the room above is added
-        # so that room stays unlabelled: the axis reads 0 to 100, and the labels have
-        # somewhere to be.
+        # so that room stays unlabelled: the axis reads 0 to 100, and what stands above it
+        # has somewhere to be.
         axes.set_ylim(bottom, top)
         axes.set_yticks([tick for tick in axes.get_yticks() if bottom <= tick <= top])
-        return (bottom, top + (top - bottom) * headroom)
+
+        span = top - bottom
+        drawn = self._drawn_top(axes, reference=reference)
+        if drawn is not None and drawn >= top:
+            top = drawn + span * _TOP_MARGIN
+
+        return (bottom, top + span * headroom)
+
+    def _drawn_top(self, axes: Axes, *, reference: float | None) -> float | None:
+        """Return the highest point the plot put on *axes*, or ``None`` if it drew nothing.
+
+        Parameters
+        ----------
+        axes : Axes
+            The axes seaborn drew the bars on.
+        reference : float | None
+            Height of the reference line, if there is one.
+
+        Returns
+        -------
+        float | None
+            The topmost of the bars, their error bars and the reference line.
+        """
+        from matplotlib.container import BarContainer  # noqa: PLC0415
+
+        tops = [top for _, top in self._errorbar_tops(axes)]
+        tops += [
+            bar.get_height()
+            for container in axes.containers
+            if isinstance(container, BarContainer)
+            for bar in container
+            if np.isfinite(bar.get_height())
+        ]
+        if reference is not None:
+            tops.append(reference)
+
+        return max(tops) if tops else None
 
     def _color_kwargs(self, df: pd.DataFrame, *, hue: str | None) -> dict[str, Any]:
         """Return the seaborn colour arguments for the bars.

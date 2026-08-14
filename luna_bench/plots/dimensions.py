@@ -23,7 +23,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_serializer, field_validator
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -444,6 +444,9 @@ class MetricDimension(BaseModel):
     reference_label: str | None = None
     baseline: float | None = None
 
+    #: Result classes already reported as not carrying :attr:`attribute`.
+    _warned_absent: set[str] = PrivateAttr(default_factory=set)
+
     def __init__(self, attribute: str | None = None, label: str | None = None, /, **data: Any) -> None:
         """Take the attribute and its title positionally, which is all there is to say.
 
@@ -481,6 +484,11 @@ class MetricDimension(BaseModel):
         stop drawing - what becomes of a value a plot cannot draw is `Missing`, which
         reads a ``nan`` as exactly that.
 
+        A result that does not carry the attribute at all is missing too, but it is also
+        the one case that is usually a misspelling rather than a gap in the data. It says
+        so in the log once, naming the result it looked at - otherwise a typo would reach
+        the user as a figure complaining that every value of it is missing.
+
         Parameters
         ----------
         result : Any
@@ -492,8 +500,35 @@ class MetricDimension(BaseModel):
             The value plotted for it, in the scale the axis is read in, or ``nan`` when
             the result carries none.
         """
-        value = getattr(result, self.attribute, None)
+        if not hasattr(result, self.attribute):
+            # Asked before reading rather than reading with a default: a result that
+            # reports nothing says so with a ``None``, and the two are not the same answer.
+            self._warn_absent(type(result).__name__)
+            return float("nan")
+
+        value = getattr(result, self.attribute)
         return float("nan") if value is None else float(value) * self.scale
+
+    def _warn_absent(self, result_type: str) -> None:
+        """Say once that *result_type* has no attribute of this name.
+
+        Parameters
+        ----------
+        result_type : str
+            Name of the result class the attribute was looked for on.
+        """
+        if result_type in self._warned_absent:
+            # One line per result class, not one per model and algorithm: every row of the
+            # plot hits this, and they would all say the same thing.
+            return
+
+        self._warned_absent.add(result_type)
+        logger.warning(
+            "%s has no attribute '%s', so every value of it is missing. Check the name the "
+            "dimension was given against the attributes the metric result carries.",
+            result_type,
+            self.attribute,
+        )
 
 
 #: The groupings a bar plot takes, told apart by their ``kind`` so that one survives being

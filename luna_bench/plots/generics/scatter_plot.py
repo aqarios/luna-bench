@@ -78,7 +78,7 @@ class ScatterPlot(SeabornPlot, ABC):
             self.logger.warning(f"{self.__class__}: no data to plot")
             return
 
-        df, _ = self.resolve_missing(DataFrame(rows), y)
+        df, missing = self.resolve_missing(DataFrame(rows), y)
         if df.empty:
             self.logger.warning("%s: every value is missing or not finite, nothing to plot", type(self).__name__)
             return
@@ -102,7 +102,11 @@ class ScatterPlot(SeabornPlot, ABC):
         if hline:
             plt.axhline(y=hline, color=hcolor, linestyle="--", alpha=0.7, label=hline_label)
 
-        self.place_legend(plt.gca())
+        handles, labels = plt.gca().get_legend_handles_labels()
+        # A point that was filled looks exactly like a measured one, and a cloud has no
+        # slot to put a cross under: the count in the key is what says it is there.
+        self.note_missing(handles, labels, missing)
+        self.place_legend(plt.gca(), handles, labels)
 
         self.finalize_plot(
             xlabel=xlabel,

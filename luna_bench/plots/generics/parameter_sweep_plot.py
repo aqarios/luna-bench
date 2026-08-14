@@ -228,7 +228,7 @@ class ParameterSweepPlot(SeabornPlot, ABC):
         import seaborn as sns  # noqa: PLC0415
         from matplotlib import pyplot as plt  # noqa: PLC0415
 
-        df, _ = self.resolve_missing(pd.DataFrame(rows), self.y.column)
+        df, missing = self.resolve_missing(pd.DataFrame(rows), self.y.column)
         if df.empty:
             self.logger.warning("%s: every value is missing or not finite, nothing to plot", type(self).__name__)
             return
@@ -256,7 +256,11 @@ class ParameterSweepPlot(SeabornPlot, ABC):
             if self.y.reference_label:
                 plt.legend()
 
-        self.place_legend(plt.gca())
+        handles, labels = plt.gca().get_legend_handles_labels()
+        # A filled step of the sweep is drawn as an ordinary point on the line, and the
+        # line has no slot to put a cross under: the count in the key is what says it.
+        self.note_missing(handles, labels, missing)
+        self.place_legend(plt.gca(), handles, labels)
 
         # The swept values are the points that were measured, so label exactly those
         # rather than whatever ticks matplotlib would spread over the range.

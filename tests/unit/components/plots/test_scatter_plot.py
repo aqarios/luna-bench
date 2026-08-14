@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 
 from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
 from luna_bench.plots.generics.scatter_plot import ScatterPlot
+from luna_bench.plots.plot_style import Figure, Missing
 from luna_bench.plots.utils.style import REFERENCE_LINE_COLOUR
 
 
@@ -241,3 +242,33 @@ class TestScatterPlot:
             call_kwargs = mock_axhline.call_args[1]
             assert call_kwargs["color"] == REFERENCE_LINE_COLOUR
         _ = mock_check_dep
+
+    def test_a_filled_point_is_counted_in_the_key(self) -> None:
+        """Test a fabricated point says so, since a cloud has no slot to put a cross under.
+
+        Drawn among the measured ones it is indistinguishable from them, so the count in
+        the key is what keeps the figure honest.
+        """
+        plot = ConcreteScatterPlot(figure=Figure(show=False), missing=Missing(policy="max"))
+        rows = [
+            {"algorithm": "Algo1", "x": 1, "y": 10.0},
+            {"algorithm": "Algo1", "x": 2, "y": float("nan")},
+        ]
+
+        plot.create(rows=rows, xlabel="X", ylabel="Y", title="Test", hue="algorithm")
+
+        legend = plt.gca().get_legend()
+        assert legend is not None
+        assert "missing values (1)" in [text.get_text() for text in legend.get_texts()]
+
+    def test_nothing_missing_leaves_the_key_alone(self) -> None:
+        """Test the entry is about what happened, not a fixture of every scatter."""
+        plot = ConcreteScatterPlot(figure=Figure(show=False))
+
+        plot.create(
+            rows=[{"algorithm": "Algo1", "x": 1, "y": 10.0}], xlabel="X", ylabel="Y", title="Test", hue="algorithm"
+        )
+
+        legend = plt.gca().get_legend()
+        assert legend is not None
+        assert not any("missing" in text.get_text() for text in legend.get_texts())

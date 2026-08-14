@@ -1,6 +1,8 @@
 """Tests for the concrete performance plot `run` implementations."""
 
-from typing import Any, ClassVar
+import math
+from types import SimpleNamespace
+from typing import Any, ClassVar, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -312,6 +314,16 @@ class TestFeasibleSolutionFoundPlot:
         assert mock_create.call_args.kwargs["rows"] == [
             {"algorithm": "algo_1", "model": "model_a", "feasibility_ratio": expected}
         ]
+
+    def test_a_result_with_no_ratio_stays_missing(self) -> None:
+        """Test a gap in the data is not counted as a solver that found nothing.
+
+        Both would be drawn as a bar of zero, and only one of them is a measurement. What
+        becomes of the other is `Missing`, which needs it to still be a missing value.
+        """
+        result = cast("MetricResult", SimpleNamespace(feasibility_ratio=None))
+
+        assert math.isnan(FeasibleSolutionFoundPlot().value(result))
 
 
 class TestFeasibleSampleRatioPooling:

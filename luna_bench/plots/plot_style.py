@@ -246,18 +246,19 @@ class Missing(OptionBundle):
     """What becomes of the values a plot cannot draw.
 
     Every benchmark produces some: a time to solution is infinite for a run that never
-    reached the optimum, a ratio is undefined where the metric failed. By default the plot
-    refuses to draw at all, because both ways of carrying on change what the figure says -
-    leaving them out shows a mean over fewer models than the axis claims, drawing them
-    somewhere puts a number there that no run produced. Either is fine once it is a
-    decision, which is what this makes it:
+    reached the optimum, a ratio is undefined where the metric failed. By default they are
+    left out of the figure and the figure says so, because carrying on quietly changes what
+    it means - leaving them out shows a mean over fewer models than the axis claims,
+    drawing them somewhere puts a number there that no run produced. Saying which of them
+    happened is what keeps the figure readable, and it is what this chooses:
 
     .. code-block:: python
 
+        TimeToSolutionPlot(missing=Missing(policy="mark"))  # the default: out, and said so
         TimeToSolutionPlot(missing=Missing(policy="drop"))  # leave them out, quietly
-        TimeToSolutionPlot(missing=Missing(policy="mark"))  # ... and say so on the figure
         TimeToSolutionPlot(missing=Missing(policy="max"))  # just past the tallest bar
         TimeToSolutionPlot(missing=Missing(policy=0.0))  # at a value of your own
+        TimeToSolutionPlot(missing=Missing(policy="raise"))  # no figure at all
 
     A fill is spelled the way pandas aggregates a column: a name it understands, applied
     to the values that *could* be drawn - ``"max"``, ``"min"``, ``"mean"``, ``"median"``
@@ -271,23 +272,35 @@ class Missing(OptionBundle):
     place on the axis, and the empty slot is the whole statement - for a figure that is
     about the algorithms that did report something.
 
-    ``"mark"`` says it plainly: the categories that lost values are struck through over
-    the full height of the axes and carry a red cross with the number behind it, so a
-    solver that reported nothing is not mistaken for one whose bar is merely short.
+    ``"mark"`` - the default - says it plainly: the categories that lost values are struck
+    through over the full height of the axes and carry a red cross with the number behind
+    it, so a solver that reported nothing is not mistaken for one whose bar is merely
+    short. It is the default because it is the only policy that changes nothing about what
+    the figure claims: the values are as absent as under ``"drop"``, and the figure carries
+    what happened to them instead of leaving it to the log.
+
+    ``"raise"`` refuses the figure. For a benchmark where a missing value means the run
+    itself went wrong rather than the solver having nothing to report - and where a page of
+    figures that quietly excludes it would be worse than no page.
 
     A fill is always marked, whatever else it does. A bar drawn at the fill looks exactly
     like a measured one, so the cross and its count are what keep it honest - the figure
     shows where the value would be without claiming a run produced it.
+
+    How much a figure can say depends on what it draws. A bar has a slot of its own to put
+    a cross under and a category to strike through; a point in a cloud or a step of a sweep
+    has neither, so there the mark is the count in the legend - enough that a filled value
+    is not read as a measured one.
 
     A warning names the categories in the log under every policy, including ``"drop"``.
 
     Attributes
     ----------
     policy : float | Literal["raise", "mark", "drop", "max", "min", "mean", "median"]
-        What happens to a value that cannot be drawn: ``"raise"`` - the default - refuses
-        the figure, ``"drop"`` leaves it out and leaves its slot empty, ``"mark"`` leaves
-        it out and strikes the category through, a pandas aggregate draws it relative to
-        the values that survived, and a float draws it there.
+        What happens to a value that cannot be drawn: ``"mark"`` - the default - leaves it
+        out and strikes the category through, ``"drop"`` leaves it out and leaves its slot
+        empty, a pandas aggregate draws it relative to the values that survived, a float
+        draws it there, and ``"raise"`` refuses the figure.
     factor : float
         Multiplier on an aggregate fill, so ``"max"`` lands past the bars rather than on
         them. Ignored by ``"raise"``, ``"drop"``, ``"mark"``, and a constant.
@@ -297,8 +310,8 @@ class Missing(OptionBundle):
         ``False`` leaves the log to say it all. ``"drop"`` says nothing either way.
     """
 
-    policy: float | Literal["raise", "mark", "drop", "max", "min", "mean", "median"] = "raise"
-    factor: float = 1.0
+    policy: float | Literal["raise", "mark", "drop", "max", "min", "mean", "median"] = "mark"
+    factor: float = 1.1
     mark: bool = True
 
     if TYPE_CHECKING:
@@ -308,8 +321,8 @@ class Missing(OptionBundle):
         def __init__(
             self,
             *,
-            policy: float | Literal["raise", "mark", "drop", "max", "min", "mean", "median"] = "raise",
-            factor: float = 1.0,
+            policy: float | Literal["raise", "mark", "drop", "max", "min", "mean", "median"] = "mark",
+            factor: float = 1.1,
             mark: bool = True,
         ) -> None: ...
 

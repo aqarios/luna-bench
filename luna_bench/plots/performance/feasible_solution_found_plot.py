@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 
 from luna_bench.custom import plot
@@ -90,6 +91,12 @@ class FeasibleSolutionFoundPlot(MetricBarPlot):
     def value(self, metric_result: MetricResult) -> float:
         """Return 100 when the algorithm found a feasible sample for this model, 0 otherwise.
 
+        A result that reports no ratio at all is neither: "the metric has nothing to say
+        about this model" is not the same statement as "this algorithm found nothing
+        feasible", and turning the first into the second would count a gap in the data as
+        a failure of the solver. It stays the missing value it is, for `Missing` to decide
+        about with the rest of them.
+
         Parameters
         ----------
         metric_result : MetricResult
@@ -99,6 +106,10 @@ class FeasibleSolutionFoundPlot(MetricBarPlot):
         -------
         float
             The indicator, in percent, so the bars average into the share of the
-            benchmark an algorithm could handle at all.
+            benchmark an algorithm could handle at all, or ``nan`` where there is none.
         """
-        return PERCENT if super().value(metric_result) > 0 else 0.0
+        ratio = super().value(metric_result)
+        if not math.isfinite(ratio):
+            return ratio
+
+        return PERCENT if ratio > 0 else 0.0

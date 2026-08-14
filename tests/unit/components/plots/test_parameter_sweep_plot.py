@@ -15,7 +15,7 @@ from luna_bench.metrics.approximation_ratio import ApproximationRatioResult
 from luna_bench.metrics.runtime import RuntimeResult
 from luna_bench.plots.analysis import ApproximationRatioVsParameterPlot, RuntimeVsParameterPlot
 from luna_bench.plots.generics.parameter_sweep_plot import ParameterSweepPlot
-from luna_bench.plots.plot_style import Figure
+from luna_bench.plots.plot_style import Figure, Missing
 
 
 def _benchmark_results(
@@ -156,6 +156,36 @@ class TestParameterSweepCreate:
         plot_instance.create(rows=rows)
 
         assert plt.gca().get_legend() is None
+
+    def test_a_filled_value_is_counted_in_the_key(self) -> None:
+        """Test a fabricated point says so, since a line has no slot to put a cross under.
+
+        Without it a filled step is drawn as an ordinary point on the line and reads as a
+        measurement, which is what the marks are for on a bar chart.
+        """
+        plot_instance = ApproximationRatioVsParameterPlot(
+            parameter="reps", figure=Figure(show=False), missing=Missing(policy="max")
+        )
+        rows = [
+            {"reps": 1.0, "approximation_ratio": 50.0, "model": "model_a", "algorithm": "qaoa_p1"},
+            {"reps": 3.0, "approximation_ratio": float("nan"), "model": "model_a", "algorithm": "qaoa_p3"},
+        ]
+
+        plot_instance.create(rows=rows)
+
+        legend = plt.gca().get_legend()
+        assert legend is not None
+        assert "missing values (1)" in [text.get_text() for text in legend.get_texts()]
+
+    def test_nothing_missing_leaves_the_key_alone(self) -> None:
+        """Test the entry is about what happened, not a fixture of every sweep."""
+        plot_instance = ApproximationRatioVsParameterPlot(parameter="reps", figure=Figure(show=False))
+
+        plot_instance.create(rows=[{"reps": 1.0, "approximation_ratio": 50.0, "model": "m", "algorithm": "a"}])
+
+        legend = plt.gca().get_legend()
+        assert legend is not None
+        assert not any("missing" in text.get_text() for text in legend.get_texts())
 
 
 class UndeclaredSweepPlot(ParameterSweepPlot):
