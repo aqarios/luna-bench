@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING
 
 from luna_bench.custom import plot
 from luna_bench.metrics import BestSolutionFoundRatio
-from luna_bench.plots.dimensions import MetricDimension
+from luna_bench.plots.dimensions import PERCENT, MetricDimension
 from luna_bench.plots.generics.metric_bar_plot import MetricBarPlot
 from luna_bench.plots.plot_style import Figure
 
 if TYPE_CHECKING:
     from luna_bench.plots.dimensions import AlgorithmDimension, Dimension
-    from luna_bench.plots.plot_style import Annotation, ErrorBars, PlotStyle
+    from luna_bench.plots.plot_style import Annotation, ErrorBars, Missing, PlotStyle, Theme
     from luna_bench.plots.utils import Aggregation
 
 
@@ -43,14 +43,15 @@ class BestSolutionFoundRatioPlot(MetricBarPlot):
 
     figure: Figure = Figure(
         filename="best_solution_found_ratio",
-        title="Best Solution Found Ratio per Solver (1.0 = optimal)",
+        title="Best Solution Found Ratio per Solver (100% = optimal)",
     )
 
     y: MetricDimension = MetricDimension(
         "best_solution_found",
-        "Best Solution Found Ratio",
-        reference=1.0,
-        reference_label="Optimal (1.0)",
+        "Best Solution Found Ratio [%]",
+        scale=PERCENT,
+        reference=PERCENT,
+        reference_label="Optimal (100%)",
         baseline=0.0,
     )
 
@@ -68,16 +69,17 @@ class BestSolutionFoundRatioPlot(MetricBarPlot):
         def __init__(  # noqa: PLR0913
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(
-                filename="best_solution_found_ratio", title="Best Solution Found Ratio per Solver (1.0 = optimal)"
+                filename="best_solution_found_ratio", title="Best Solution Found Ratio per Solver (100% = optimal)"
             ),
+            missing: Missing = Missing(),
             x: Dimension = AlgorithmDimension(),
             y: MetricDimension = MetricDimension(
                 "best_solution_found",
-                "Best Solution Found Ratio",
-                reference=1.0,
-                reference_label="Optimal (1.0)",
+                "Best Solution Found Ratio [%]",
+                scale=PERCENT,
+                reference=PERCENT,
+                reference_label="Optimal (100%)",
                 baseline=0.0,
             ),
             aggregation: Aggregation = Aggregation.MEAN,
@@ -85,4 +87,6 @@ class BestSolutionFoundRatioPlot(MetricBarPlot):
             annotation: Annotation | None = None,
             grouping: Dimension | None = None,
             baseline: float | None = 0.0,
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...

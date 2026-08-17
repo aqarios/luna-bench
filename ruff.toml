@@ -138,4 +138,6 @@ extend-immutable-calls = [
     "luna_bench.plots.plot_style.Annotation",
     "luna_bench.plots.plot_style.ErrorBars",
     "luna_bench.plots.plot_style.Figure",
+    "luna_bench.plots.plot_style.Missing",
+    "luna_bench.plots.plot_style.Theme",
 ]

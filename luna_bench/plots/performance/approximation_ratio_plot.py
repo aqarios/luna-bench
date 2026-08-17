@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING
 
 from luna_bench.custom import plot
 from luna_bench.metrics import ApproximationRatio
-from luna_bench.plots.dimensions import MetricDimension
+from luna_bench.plots.dimensions import PERCENT, MetricDimension
 from luna_bench.plots.generics.metric_bar_plot import MetricBarPlot
 from luna_bench.plots.plot_style import Figure
 
 if TYPE_CHECKING:
     from luna_bench.plots.dimensions import AlgorithmDimension, Dimension
-    from luna_bench.plots.plot_style import Annotation, ErrorBars, PlotStyle
+    from luna_bench.plots.plot_style import Annotation, ErrorBars, Missing, PlotStyle, Theme
     from luna_bench.plots.utils import Aggregation
 
 
@@ -21,7 +21,7 @@ class ApproximationRatioPlot(MetricBarPlot):
     """Bar chart of the approximation ratio per algorithm.
 
     The approximation ratio compares an algorithm's objective value against the known
-    optimum, so ``1.0`` - marked by the reference line - means the optimum was reached.
+    optimum, so ``100%`` - marked by the reference line - means the optimum was reached.
     One bar per algorithm, aggregated over every model - the mean by default, see
     :attr:`aggregation` - with the spread across those models as the error bar.
 
@@ -54,9 +54,10 @@ class ApproximationRatioPlot(MetricBarPlot):
 
     y: MetricDimension = MetricDimension(
         "approximation_ratio",
-        "Approximation Ratio",
-        reference=1.0,
-        reference_label="Optimal (1.0)",
+        "Approximation Ratio [%]",
+        scale=PERCENT,
+        reference=PERCENT,
+        reference_label="Optimal (100%)",
     )
 
     if TYPE_CHECKING:
@@ -66,16 +67,22 @@ class ApproximationRatioPlot(MetricBarPlot):
         def __init__(  # noqa: PLR0913
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(
                 filename="approximation_ratio", title="Approximation Ratio per Solver (1.0 = optimal)"
             ),
+            missing: Missing = Missing(),
             x: Dimension = AlgorithmDimension(),
             y: MetricDimension = MetricDimension(
-                "approximation_ratio", "Approximation Ratio", reference=1.0, reference_label="Optimal (1.0)"
+                "approximation_ratio",
+                "Approximation Ratio [%]",
+                scale=PERCENT,
+                reference=PERCENT,
+                reference_label="Optimal (100%)",
             ),
             aggregation: Aggregation = Aggregation.MEAN,
             errorbars: ErrorBars | None = ErrorBars(),
             annotation: Annotation | None = None,
             grouping: Dimension | None = None,
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...

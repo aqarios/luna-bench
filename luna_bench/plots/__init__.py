@@ -8,6 +8,7 @@ from luna_bench.plots.analysis import (
     RuntimeVsVarNumberPlot,
 )
 from luna_bench.plots.dimensions import (
+    PERCENT,
     AlgorithmDimension,
     BaseDimension,
     Dimension,
@@ -27,11 +28,13 @@ from luna_bench.plots.performance import (
     RuntimePlot,
     TimeToSolutionPlot,
 )
-from luna_bench.plots.plot_style import Annotation, ErrorBars, Figure, OptionBundle, PlotStyle
+from luna_bench.plots.plot_style import Annotation, ErrorBars, Figure, Missing, OptionBundle, PlotStyle, Theme
 from luna_bench.plots.properties import VarNumberBarChartPlot
 from luna_bench.plots.summary import plot_summary
 
 __all__ = [
+    # The scale every ratio is drawn in
+    "PERCENT",
     # What a plot organises its data by
     "AlgorithmDimension",
     # Bundles of plot options
@@ -53,6 +56,7 @@ __all__ = [
     "Figure",
     "FractionOfOverallBestSolutionPlot",
     "MetricDimension",
+    "Missing",
     "ModelDimension",
     "OptionBundle",
     "ParameterDimension",
@@ -61,6 +65,7 @@ __all__ = [
     "RuntimePlot",
     "RuntimeVsParameterPlot",
     "RuntimeVsVarNumberPlot",
+    "Theme",
     "TimeToSolutionPlot",
     # Property plots
     "VarNumberBarChartPlot",

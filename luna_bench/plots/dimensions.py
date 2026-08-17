@@ -23,9 +23,10 @@ import logging
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_serializer, field_validator
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from logging import Logger
 
     from luna_bench.custom import BenchmarkResultContainer
@@ -42,6 +43,11 @@ else:
 
 #: Group used for models the grouping feature has no result for.
 UNGROUPED_LABEL = "unknown"
+
+#: Scale of a dimension read in percent, i.e. what a ratio of ``1.0`` is drawn as. Every
+#: ratio a benchmark plots goes on the axis this way, so two of them can be read against
+#: each other without checking which one is a share and which one a percentage.
+PERCENT = 100.0
 
 logger: Logger = logging.getLogger(__name__)
 
@@ -338,7 +344,7 @@ class ParameterDimension(BaseDimension):
         return self.parameter
 
     def resolve(self, benchmark_results: BenchmarkResultContainer, rows: list[dict[str, Any]]) -> str | None:
-        """Keep the algorithms configured with the parameter, and tag them with its value.
+        """Keep the algorithms configured with the parameter, and name their group by it.
 
         Parameters
         ----------
@@ -346,6 +352,54 @@ class ParameterDimension(BaseDimension):
             Benchmark data the algorithm configurations are read from.
         rows : list[dict[str, Any]]
             Row-oriented plot data, annotated and filtered in place.
+
+        Returns
+        -------
+        str | None
+            The column the settings were written to, or ``None`` when no algorithm carries
+            the parameter.
+        """
+        return self._resolve(benchmark_results, rows, lambda setting: f"{self.parameter}={setting:g}")
+
+    def resolve_values(self, benchmark_results: BenchmarkResultContainer, rows: list[dict[str, Any]]) -> str | None:
+        """Keep those algorithms too, but tag them with the setting as the number it is.
+
+        The counterpart of :meth:`resolve` for an axis that is continuous rather than a row
+        of categories: a sweep is read off the *distance* between its points, so ``reps``
+        of 1, 2 and 4 have to reach the axis as numbers and not as three equally wide
+        labels. What the parameter is called is on the axis title either way.
+
+        Parameters
+        ----------
+        benchmark_results : BenchmarkResultContainer
+            Benchmark data the algorithm configurations are read from.
+        rows : list[dict[str, Any]]
+            Row-oriented plot data, annotated and filtered in place.
+
+        Returns
+        -------
+        str | None
+            The column the settings were written to, or ``None`` when no algorithm carries
+            the parameter.
+        """
+        return self._resolve(benchmark_results, rows, float)
+
+    def _resolve(
+        self,
+        benchmark_results: BenchmarkResultContainer,
+        rows: list[dict[str, Any]],
+        as_value: Callable[[float], Any],
+    ) -> str | None:
+        """Filter the rows to the algorithms carrying the parameter and tag them with it.
+
+        Parameters
+        ----------
+        benchmark_results : BenchmarkResultContainer
+            Benchmark data the algorithm configurations are read from.
+        rows : list[dict[str, Any]]
+            Row-oriented plot data, annotated and filtered in place.
+        as_value : Callable[[float], Any]
+            What a setting is written to the row as - its own number, or a label naming it.
 
         Returns
         -------
@@ -364,7 +418,7 @@ class ParameterDimension(BaseDimension):
         rows[:] = kept
 
         for row in rows:
-            row[self.title] = f"{self.parameter}={settings[row['algorithm']]:g}"
+            row[self.title] = as_value(settings[row["algorithm"]])
 
         return self.title
 
@@ -412,6 +466,12 @@ class MetricDimension(BaseModel):
         doubles as the column the value is plotted from.
     label : str | None
         What the y-axis is called, by default the attribute's own name.
+    scale : float
+        Factor the value is read in, by default ``1.0`` - the unit the metric reports.
+        `PERCENT` is what every built-in ratio uses, so a share of ``0.5`` reaches the
+        axis as ``50``; the limits, the reference and the baseline are then in percent
+        as well, since they are values on that same axis. An annotated percent axis
+        wants ``Annotation(format="{:.1f}%")`` to match.
     limits : tuple[float, float] | None
         Lower and upper limit of the axis, by default the data range.
     reference : float | None
@@ -427,10 +487,14 @@ class MetricDimension(BaseModel):
 
     attribute: str
     label: str | None = None
+    scale: float = 1.0
     limits: tuple[float, float] | None = None
     reference: float | None = None
     reference_label: str | None = None
     baseline: float | None = None
+
+    #: Result classes already reported as not carrying :attr:`attribute`.
+    _warned_absent: set[str] = PrivateAttr(default_factory=set)
 
     def __init__(self, attribute: str | None = None, label: str | None = None, /, **data: Any) -> None:
         """Take the attribute and its title positionally, which is all there is to say.
@@ -461,7 +525,18 @@ class MetricDimension(BaseModel):
         return self.label or self.attribute
 
     def of(self, result: Any) -> float:  # noqa: ANN401
-        """Return the number *result* contributes.
+        """Return the number *result* contributes, or ``nan`` where it has none.
+
+        A metric reports nothing in more than one way: an attribute it never filled, or
+        one that came back from the database as ``None`` because the value was an infinity
+        and JSON has no word for that. Neither is a number, and neither is a reason to
+        stop drawing - what becomes of a value a plot cannot draw is `Missing`, which
+        reads a ``nan`` as exactly that.
+
+        A result that does not carry the attribute at all is missing too, but it is also
+        the one case that is usually a misspelling rather than a gap in the data. It says
+        so in the log once, naming the result it looked at - otherwise a typo would reach
+        the user as a figure complaining that every value of it is missing.
 
         Parameters
         ----------
@@ -471,9 +546,38 @@ class MetricDimension(BaseModel):
         Returns
         -------
         float
-            The value plotted for it.
+            The value plotted for it, in the scale the axis is read in, or ``nan`` when
+            the result carries none.
         """
-        return float(getattr(result, self.attribute))
+        if not hasattr(result, self.attribute):
+            # Asked before reading rather than reading with a default: a result that
+            # reports nothing says so with a ``None``, and the two are not the same answer.
+            self._warn_absent(type(result).__name__)
+            return float("nan")
+
+        value = getattr(result, self.attribute)
+        return float("nan") if value is None else float(value) * self.scale
+
+    def _warn_absent(self, result_type: str) -> None:
+        """Say once that *result_type* has no attribute of this name.
+
+        Parameters
+        ----------
+        result_type : str
+            Name of the result class the attribute was looked for on.
+        """
+        if result_type in self._warned_absent:
+            # One line per result class, not one per model and algorithm: every row of the
+            # plot hits this, and they would all say the same thing.
+            return
+
+        self._warned_absent.add(result_type)
+        logger.warning(
+            "%s has no attribute '%s', so every value of it is missing. Check the name the "
+            "dimension was given against the attributes the metric result carries.",
+            result_type,
+            self.attribute,
+        )
 
 
 #: The groupings a bar plot takes, told apart by their ``kind`` so that one survives being

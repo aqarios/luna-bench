@@ -21,6 +21,26 @@ class MetricResultContainer(BaseModel):
 
     data: Mapping[MetricClass, Mapping[MetricName, MetricComputed]]
 
+    def __contains__(self, metric_cls: object) -> bool:
+        """Return whether this container holds any result of *metric_cls*.
+
+        A metric that failed on one model and algorithm leaves no result for that pair,
+        so a caller sweeping over every pair - a plot collecting its rows - asks before
+        reaching in rather than treating the gap as the programming error
+        :meth:`get_all_with_config` raises on.
+
+        Parameters
+        ----------
+        metric_cls : object
+            The metric class to look for.
+
+        Returns
+        -------
+        bool
+            Whether the container holds results of that class.
+        """
+        return metric_cls in self.data
+
     def get_all_with_config[TMetricResult: MetricResult](
         self, metric_cls: MetricClass[TMetricResult]
     ) -> Mapping[MetricName, tuple[TMetricResult, BaseMetric[TMetricResult]]]:

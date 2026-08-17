@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from luna_bench.helpers.optional_dependencies import check_optional_dependency
-from luna_bench.plots.dimensions import AlgorithmDimension, Dimension, MetricDimension
+from luna_bench.plots.dimensions import PERCENT, AlgorithmDimension, Dimension, MetricDimension
 from luna_bench.plots.plot_style import Annotation, ErrorBars
 from luna_bench.plots.utils import (
     AUTO_ERRORBAR,
@@ -19,17 +19,78 @@ from luna_bench.plots.utils import (
     errorbar_label,
 )
 
-from .seaborn_plot import SeabornPlot
+from .seaborn_plot import MISSING_MARKER, SeabornPlot, missing_label
 
 if TYPE_CHECKING:
     from logging import Logger
 
     from matplotlib.axes import Axes
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
 
     from luna_bench.custom import BenchmarkResultContainer
 
 #: A line needs at least this many points to be a candidate error bar.
 _MIN_LINE_POINTS = 2
+
+#: Width of an x slot with no bar in it to measure, in data coordinates.
+_FULL_SLOT_WIDTH = 0.8
+
+#: Height of the mark for the values that could not be drawn, as a share of the axes.
+_MISSING_MARK_HEIGHT = 0.02
+
+#: Room left above the tallest thing drawn when it reaches the limits the plot asked for,
+#: as a share of them: a cap or a reference line exactly at the top would otherwise be
+#: drawn onto the frame and read as part of it.
+_TOP_MARGIN = 0.05
+
+#: How a value read off a percent axis is annotated, unless a format was asked for.
+PERCENT_FORMAT = "{:.1f}%"
+
+
+def _distinct(df: pd.DataFrame, column: str | None) -> list[str]:
+    """Return the values of *column* as strings, once each, in the order they appear."""
+    if column is None or column not in df:
+        return []
+    return list(dict.fromkeys(df[column].astype(str)))
+
+
+def _categorical_order(
+    missing: dict[tuple[str, str], int], order: list[str], hue_order: list[str]
+) -> dict[str, list[str]]:
+    """Return the categories to name on the seaborn call, when something is missing.
+
+    A bar whose every value was dropped has no rows left to put it on the axis, and its
+    mark would land on whichever bar took its place. Naming the categories and the groups
+    keeps the slot - and the order the rows arrived in.
+
+    Parameters
+    ----------
+    missing : dict[tuple[str, str], int]
+        Number of missing values per category and group; nothing is named when it is empty.
+    order : list[str]
+        The x categories, in the order they appear in the data.
+    hue_order : list[str]
+        The groups, in the order they appear in the data. Empty when the bars are ungrouped.
+
+    Returns
+    -------
+    dict[str, list[str]]
+        The ``order`` and ``hue_order`` arguments, as far as they apply.
+    """
+    if not missing:
+        return {}
+    return {name: values for name, values in (("order", order), ("hue_order", hue_order)) if values}
+
+
+#: How a category that lost values is struck through, on the axes and in the legend.
+_STRIKE_STYLE: dict[str, Any] = {
+    "facecolor": str(LunaColours.ROCKET_FIRE),
+    "alpha": 0.12,
+    "hatch": "//",
+    "edgecolor": str(LunaColours.ROCKET_FIRE),
+    "linewidth": 0.0,
+}
 
 
 class BarPlot(SeabornPlot, ABC):
@@ -289,13 +350,17 @@ class BarPlot(SeabornPlot, ABC):
         check_optional_dependency("seaborn")
         import seaborn as sns  # noqa: PLC0415
         from matplotlib import pyplot as plt  # noqa: PLC0415
-        from matplotlib.lines import Line2D  # noqa: PLC0415
 
         if not rows:
             self.logger.warning(f"{self.__class__}: no data to plot")
             return
 
-        df = pd.DataFrame(rows)
+        full = pd.DataFrame(rows)
+        df, missing = self.resolve_missing(full, y, by=x, within=hue)
+        if df.empty:
+            self.logger.warning("%s: every value is missing or not finite, nothing to plot", type(self).__name__)
+            return
+
         errorbars = self.errorbars or ErrorBars(spec=None)
         resolved_errorbar = aggregation.errorbar if errorbar == AUTO_ERRORBAR else errorbar
 
@@ -313,18 +378,29 @@ class BarPlot(SeabornPlot, ABC):
             "saturation": 1.0,
             "capsize": errorbars.capsize,
             "legend": legend,
-            **self._color_kwargs(df, hue=hue),
+            # Coloured from the whole frame rather than the drawn one: the groups on the
+            # axis are the ones the rows arrived with, including any that lost every value.
+            **self._color_kwargs(full, hue=hue),
         }
+        order = _distinct(full, x)
+        hue_order = _distinct(full, hue)
+        for name, categories in _categorical_order(missing, order, hue_order).items():
+            barplot_kwargs.setdefault(name, categories)
+
         barplot_kwargs.update(self.figure.seaborn_kwargs)
         barplot_kwargs.update(kwargs)
 
         sns.barplot(**barplot_kwargs)
 
-        grouped = legend and hue is not None
+        if missing and order:
+            # A category with no bar has no artist either, and the x range would shrink
+            # around the ones that were drawn - taking the empty slot, which is the whole
+            # statement of "drop", out of the figure.
+            plt.gca().set_xlim(-0.5, len(order) - 0.5)
 
-        if self.annotation is not None:
-            self._annotate_bars(plt.gca())
-            ylim = self._with_headroom(ylim)
+        missing_handle = self._mark_missing(plt.gca(), missing, order, hue_order)
+
+        grouped = legend and hue is not None
 
         handles: list[Any] = []
         labels: list[str] = []
@@ -343,16 +419,243 @@ class BarPlot(SeabornPlot, ABC):
             # a second target competing with the dashed reference line.
             plt.axhline(y=baseline, color=REFERENCE_LINE_COLOUR, linewidth=1.0)
 
-        if resolved_errorbar is not None:
-            handles.append(Line2D([], [], color=str(errorbars.color), marker="|", markersize=8, linestyle="none"))
-            labels.append(errorbar_label(resolved_errorbar))
+        self._legend_extras(handles, labels, errorbars, resolved_errorbar, missing_handle, missing)
+        self._draw_legend(plt.gca(), handles, labels, title=hue if grouped else None)
 
-        if handles:
-            # A group legend needs room of its own; a lone error bar entry fits inside the axes.
-            placement = {"loc": "upper left", "bbox_to_anchor": (1.01, 1.0)} if grouped else {}
-            plt.legend(handles=handles, labels=labels, title=hue if grouped else None, **placement)
+        if self.annotation is not None:
+            self._annotate_bars(plt.gca())
+
+        # Grown last, so the range already covers the reference and the baseline.
+        ylim = self._with_headroom(ylim, reference=hline)
 
         self.finalize_plot(xlabel, ylabel, title, ylim, save_dir=save_dir)
+
+    def _draw_legend(self, axes: Axes, handles: list[Any], labels: list[str], *, title: str | None) -> None:
+        """Put the key beside the axes, titled by what splits the bars if anything does.
+
+        Parameters
+        ----------
+        axes : Axes
+            The axes the bars were drawn on.
+        handles : list[Any]
+            Legend handles; nothing is drawn when there are none.
+        labels : list[str]
+            Their labels.
+        title : str | None
+            What the groups are, for a grouped plot.
+        """
+        if not handles:
+            return
+
+        if title is not None:
+            axes.legend(handles=handles, labels=labels, title=title)
+
+        self.place_legend(axes, handles, labels)
+
+    @staticmethod
+    def _legend_extras(  # noqa: PLR0913, PLR0917
+        handles: list[Any],
+        labels: list[str],
+        errorbars: ErrorBars,
+        errorbar: ErrorBar,
+        missing_handle: Line2D | tuple[Patch, Line2D] | None,
+        missing: dict[tuple[str, str], int],
+    ) -> None:
+        """Add the entries that explain the marks seaborn did not draw itself.
+
+        Parameters
+        ----------
+        handles : list[Any]
+            Legend handles, extended in place.
+        labels : list[str]
+            Legend labels, extended in place alongside *handles*.
+        errorbars : ErrorBars
+            The error bar options, for the colour of its legend entry.
+        errorbar : ErrorBar
+            What the error bars show, or ``None`` when none were drawn.
+        missing_handle : Line2D | tuple[Patch, Line2D] | None
+            The mark for the values that could not be drawn, if any were.
+        missing : dict[tuple[str, str], int]
+            Number of missing values per category and group, for the count in the label.
+        """
+        from matplotlib.lines import Line2D  # noqa: PLC0415
+
+        if errorbar is not None:
+            handles.append(Line2D([], [], color=str(errorbars.color), marker="|", markersize=8, linestyle="none"))
+            labels.append(errorbar_label(errorbar))
+
+        if missing_handle is not None:
+            handles.append(missing_handle)
+            labels.append(missing_label(missing))
+
+    def _mark_missing(
+        self, ax: Axes, missing: dict[tuple[str, str], int], order: list[str], hue_order: list[str]
+    ) -> Line2D | tuple[Patch, Line2D] | None:
+        """Mark the categories whose values could not be drawn, and say how many.
+
+        A red cross on the axis under the category, with the number of values behind it
+        written above the cross. Where an algorithm lost every value, the cross stands on
+        its own with no bar next to it - which is the whole point of drawing it.
+
+        Under ``Missing(policy="mark")`` the category is struck through as well, over the
+        full height of the axes: an empty slot says "no bar here", a struck one says the
+        solver was asked and reported nothing. Under ``"drop"`` nothing is drawn at all -
+        the empty slot is the statement.
+
+        Parameters
+        ----------
+        ax : Axes
+            The axes seaborn drew the bars on.
+        missing : dict[tuple[str, str], int]
+            Number of missing values per category and group, as counted by
+            :meth:`SeabornPlot.resolve_missing`.
+        order : list[str]
+            The x categories, in the order they are drawn.
+        hue_order : list[str]
+            The groups within each category, in the order they are drawn. Empty when the
+            bars are ungrouped.
+
+        Returns
+        -------
+        Line2D | tuple[Patch, Line2D] | None
+            A legend handle for the mark - the cross, and the band behind it where the
+            category was struck through - or ``None`` when nothing was missing.
+        """
+        from matplotlib.lines import Line2D  # noqa: PLC0415
+        from matplotlib.patches import Patch  # noqa: PLC0415
+
+        if not missing or not self.missing.mark or self.missing.policy == "drop":
+            # "drop" leaves the slot empty and says nothing more: the values are out of
+            # the averages, and a figure about what the algorithms did report has no cross
+            # to carry. The warning in the log still names them.
+            return None
+
+        annotation = self.annotation or Annotation()
+        # x in data coordinates, y as a share of the axes height, so the marks sit just
+        # above the axis whatever the values turn out to be.
+        transform = ax.get_xaxis_transform()
+        struck = self.missing.policy == "mark"
+
+        marked = False
+        for (category, group), count in missing.items():
+            slot = self._slot_at(ax, order, hue_order, category, group)
+            if slot is None:
+                # Not on the axes at all: the warning already said how many values were
+                # lost, and a mark with nothing under it would only be misleading.
+                continue
+
+            position, width = slot
+
+            if struck:
+                # The slot's own width, so a group that kept its values is not struck
+                # through with the one next to it. Over the whole height rather than up
+                # to a value, since there is none.
+                ax.axvspan(position - width / 2, position + width / 2, zorder=0, **_STRIKE_STYLE)
+
+            ax.plot(
+                [position],
+                [_MISSING_MARK_HEIGHT],
+                marker="x",
+                markersize=9,
+                markeredgewidth=2.0,
+                linestyle="none",
+                color=str(LunaColours.ROCKET_FIRE),
+                transform=transform,
+                clip_on=False,
+                zorder=5,
+            )
+            ax.annotate(
+                str(count),
+                xy=(position, _MISSING_MARK_HEIGHT),
+                xycoords=transform,
+                xytext=(0, 9),
+                textcoords="offset points",
+                ha="center",
+                va="bottom",
+                color=str(LunaColours.ROCKET_FIRE),
+                fontsize=annotation.fontsize,
+                fontweight="bold",
+                # The count sits over a bar as often as not, and red on the brand blue is
+                # not a reading experience. A card behind it is.
+                bbox={"boxstyle": "round,pad=0.2", "facecolor": "white", "edgecolor": "none", "alpha": 0.8},
+                zorder=5,
+            )
+            marked = True
+
+        if not marked:
+            return None
+
+        cross = Line2D([], [], **MISSING_MARKER)
+
+        if not struck:
+            return cross
+
+        # The swatch carries the band as well, so the legend shows what a category that
+        # lost values looks like rather than only the cross standing on the axis.
+        return (Patch(**_STRIKE_STYLE), cross)
+
+    @staticmethod
+    def _slot_at(
+        ax: Axes, order: list[str], hue_order: list[str], category: str, group: str
+    ) -> tuple[float, float] | None:
+        """Return the centre and the width of the bar drawn for *category* and *group*.
+
+        Read off the bar itself where there is one: seaborn draws one container per group,
+        each holding the categories in the order both were given, which is why they are
+        named whenever something is missing. A category that lost *every* value keeps its
+        tick but gets no rectangle, and that is the one worth marking - so its slot is
+        reconstructed from the tick and the width of a bar that was drawn.
+
+        Parameters
+        ----------
+        ax : Axes
+            The axes seaborn drew the bars on.
+        order : list[str]
+            The x categories, in the order they are drawn.
+        hue_order : list[str]
+            The groups, in the order they are drawn. Empty when the bars are ungrouped.
+        category : str
+            The x category to find.
+        group : str
+            The group within it, or ``""`` when the bars are ungrouped.
+
+        Returns
+        -------
+        tuple[float, float] | None
+            The centre and width of the slot, or ``None`` when it is not on the axes.
+        """
+        from matplotlib.container import BarContainer  # noqa: PLC0415
+
+        containers = [container for container in ax.containers if isinstance(container, BarContainer)]
+        row = hue_order.index(group) if group in hue_order else 0
+        column = order.index(category) if category in order else -1
+
+        if column < 0:
+            return None
+
+        # Only when every slot was drawn does a container index mean the group it looks
+        # like: seaborn leaves out the bars it had no rows for, and then the containers
+        # have shifted under the groups that remain.
+        groups = len(hue_order) or 1
+        complete = len(containers) == groups and all(len(container) == len(order) for container in containers)
+
+        if complete:
+            bar = containers[row][column]
+            return bar.get_x() + bar.get_width() / 2, bar.get_width()
+
+        ticks = {
+            label.get_text(): float(tick) for tick, label in zip(ax.get_xticks(), ax.get_xticklabels(), strict=False)
+        }
+        tick = ticks.get(category)
+        if tick is None:
+            return None
+
+        width = next((bar.get_width() for container in containers for bar in container), _FULL_SLOT_WIDTH / groups)
+
+        # Seaborn dodges the groups across the slot without a gap, so the one that was not
+        # drawn sits where its neighbours leave room for it.
+        offset = (row - (groups - 1) / 2) * width if hue_order else 0.0
+        return tick + offset, width
 
     def _annotate_bars(self, ax: Axes) -> None:
         """Write the aggregated value above every bar, clear of its error bar.
@@ -373,6 +676,11 @@ class BarPlot(SeabornPlot, ABC):
 
             for bar in container:
                 height = bar.get_height()
+                if not np.isfinite(height):
+                    # A category that kept its slot without keeping a value: the cross
+                    # under it says what happened, an annotated "nan" would not.
+                    continue
+
                 center = bar.get_x() + bar.get_width() / 2
                 covered = [top for x, top in error_tops if bar.get_x() <= x <= bar.get_x() + bar.get_width()]
 
@@ -391,7 +699,9 @@ class BarPlot(SeabornPlot, ABC):
         """Return the text written above a bar of *value*.
 
         Applies :attr:`annotate_format`, unless :attr:`annotate_max_decimals` allows the
-        value to be written as a plain decimal instead of in scientific notation.
+        value to be written as a plain decimal instead of in scientific notation. A value
+        read off a percent axis is written as a percentage, so the annotation says the
+        same thing as the axis it stands on - unless a format was asked for, which wins.
 
         Parameters
         ----------
@@ -404,6 +714,12 @@ class BarPlot(SeabornPlot, ABC):
             The annotation, e.g. ``"0.000057"`` rather than ``"5.67e-05"``.
         """
         annotation = self.annotation or Annotation()
+
+        # Compared against the default rather than asking whether the field was set: a
+        # bundle merged over a plot's own default carries every field as set, so that
+        # would never be false for a plot that declares an annotation of its own.
+        if self.y.scale == PERCENT and annotation.format == Annotation.model_fields["format"].default:
+            return PERCENT_FORMAT.format(value)
 
         if annotation.max_decimals is None:
             return annotation.format.format(value)
@@ -454,31 +770,93 @@ class BarPlot(SeabornPlot, ABC):
             tops.append((float((xs.min() + xs.max()) / 2), float(ys.max())))
         return tops
 
-    def _with_headroom(self, ylim: tuple[float, float] | None) -> tuple[float, float] | None:
-        """Grow the upper y limit so the annotations fit above the tallest bar.
+    def _with_headroom(
+        self, ylim: tuple[float, float] | None, *, reference: float | None = None
+    ) -> tuple[float, float] | None:
+        """Grow the upper y limit so everything drawn above the bars is inside the frame.
+
+        Only the upper limit: the room is for what sits on top - the error bars, the
+        reference line, the annotations - while a margin below the bars is empty axes
+        saying a value could have been there.
+
+        A plot with limits of its own keeps them as the *scale* - a ratio that cannot pass
+        100% is not given ticks past it - and the room is added beyond the last tick, so
+        what stands above the limit is inside the frame without the axis claiming a range
+        the metric cannot reach. A share whose spread reaches past 100% is the usual case:
+        the cap of its error bar is a fact about the run, and an axis that stops at the
+        limit would cut it off. Without limits the range matplotlib scaled to the data is
+        grown instead, read after everything is drawn so the reference line and the
+        baseline are inside it.
 
         Parameters
         ----------
         ylim : tuple[float, float] | None
-            The limits requested by the caller, or ``None`` to keep the data range.
+            The limits requested by the caller, or ``None`` to grow the data range.
+        reference : float | None, optional
+            Height of the reference line, by default ``None``. A line exactly at the
+            limit would be drawn onto the frame and read as part of it.
 
         Returns
         -------
         tuple[float, float] | None
-            The limits with :attr:`annotate_headroom` added on top. ``None`` is passed
-            through; the data range is stretched with a matplotlib margin instead.
+            The limits to apply, with the room above added on top.
         """
         check_optional_dependency("matplotlib")
         from matplotlib import pyplot as plt  # noqa: PLC0415
 
-        headroom = (self.annotation or Annotation()).headroom
+        axes = plt.gca()
+        # No annotations means no labels to fit, and the room they need is theirs: what is
+        # added below is only what it takes to show what was drawn.
+        headroom = self.annotation.headroom if self.annotation is not None else 0.0
 
         if ylim is None:
-            plt.gca().margins(y=headroom)
-            return None
+            axes.autoscale_view()
+            bottom, top = axes.get_ylim()
+            return (bottom, top + (top - bottom) * headroom)
 
         bottom, top = ylim
-        return (bottom, top + (top - bottom) * headroom)
+        # The ticks the requested range would have, fixed before the room above is added
+        # so that room stays unlabelled: the axis reads 0 to 100, and what stands above it
+        # has somewhere to be.
+        axes.set_ylim(bottom, top)
+        axes.set_yticks([tick for tick in axes.get_yticks() if bottom <= tick <= top])
+
+        span = top - bottom
+        drawn = self._drawn_top(axes, reference=reference)
+        if drawn is not None and drawn >= top:
+            top = drawn + span * _TOP_MARGIN
+
+        return (bottom, top + span * headroom)
+
+    def _drawn_top(self, axes: Axes, *, reference: float | None) -> float | None:
+        """Return the highest point the plot put on *axes*, or ``None`` if it drew nothing.
+
+        Parameters
+        ----------
+        axes : Axes
+            The axes seaborn drew the bars on.
+        reference : float | None
+            Height of the reference line, if there is one.
+
+        Returns
+        -------
+        float | None
+            The topmost of the bars, their error bars and the reference line.
+        """
+        from matplotlib.container import BarContainer  # noqa: PLC0415
+
+        tops = [top for _, top in self._errorbar_tops(axes)]
+        tops += [
+            bar.get_height()
+            for container in axes.containers
+            if isinstance(container, BarContainer)
+            for bar in container
+            if np.isfinite(bar.get_height())
+        ]
+        if reference is not None:
+            tops.append(reference)
+
+        return max(tops) if tops else None
 
     def _color_kwargs(self, df: pd.DataFrame, *, hue: str | None) -> dict[str, Any]:
         """Return the seaborn colour arguments for the bars.

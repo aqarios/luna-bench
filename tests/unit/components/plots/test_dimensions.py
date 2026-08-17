@@ -1,7 +1,8 @@
 """Tests for the groupings a bar plot can be split along."""
 
+import math
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, ClassVar
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -9,10 +10,22 @@ import pytest
 from luna_bench.custom import BaseFeature, FeatureResult, feature
 from luna_bench.custom.result_containers.algorithm_result_container import AlgorithmResultContainer
 from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
+from luna_bench.plots import (
+    ApproximationRatioPlot,
+    ApproximationRatioVsParameterPlot,
+    BestSolutionFoundRatioPlot,
+    FeasibilityRatioPlot,
+    FeasibleSampleRatioPlot,
+    FeasibleSolutionFoundPlot,
+    FractionOfOverallBestSolutionPlot,
+    dimensions,
+)
 from luna_bench.plots.dimensions import (
+    PERCENT,
     UNGROUPED_LABEL,
     AlgorithmDimension,
     FeatureDimension,
+    MetricDimension,
     ModelDimension,
     ParameterDimension,
 )
@@ -234,6 +247,61 @@ class TestParameterDimension:
         mock_warning.assert_called_once()
 
 
+class TestParameterDimensionValues:
+    """Test reading the setting as the number it is, for a plot with a continuous axis."""
+
+    def test_the_rows_carry_the_setting_as_a_number(self) -> None:
+        """Test a sweep gets a value it can space its points by, not a label."""
+        rows = [
+            {"algorithm": "qaoa_p1", "model": "m1", "value": 1},
+            {"algorithm": "qaoa_p3", "model": "m1", "value": 3},
+        ]
+
+        column = ParameterDimension(parameter="reps").resolve_values(
+            _with_algorithms({"qaoa_p1": SimpleNamespace(reps=1), "qaoa_p3": SimpleNamespace(reps=3)}), rows
+        )
+
+        assert column == "reps"
+        assert [row["reps"] for row in rows] == [1.0, 3.0]
+
+    def test_only_the_algorithms_with_the_setting_are_plotted(self) -> None:
+        """Test a classical baseline contributes no point to the sweep."""
+        rows = [
+            {"algorithm": "scip", "model": "m1", "value": 0},
+            {"algorithm": "qaoa_p2", "model": "m1", "value": 2},
+        ]
+
+        ParameterDimension(parameter="reps").resolve_values(
+            _with_algorithms({"scip": SimpleNamespace(), "qaoa_p2": SimpleNamespace(reps=2)}), rows
+        )
+
+        assert [row["algorithm"] for row in rows] == ["qaoa_p2"]
+
+    def test_a_label_titles_the_axis(self) -> None:
+        """Test the sweep can be labelled in the terms of its algorithm."""
+        rows = [{"algorithm": "qaoa_p1", "model": "m1", "value": 1}]
+
+        column = ParameterDimension(parameter="reps", label="QAOA layers (p)").resolve_values(
+            _with_algorithms({"qaoa_p1": SimpleNamespace(reps=1)}), rows
+        )
+
+        assert column == "QAOA layers (p)"
+        assert rows[0]["QAOA layers (p)"] == 1.0
+
+    def test_nothing_configured_with_the_setting_is_no_sweep(self) -> None:
+        """Test the rows are left alone when there is nothing to sweep over."""
+        rows = [{"algorithm": "scip", "model": "m1", "value": 1}]
+
+        with patch("luna_bench.plots.dimensions.logger.warning") as mock_warning:
+            assert (
+                ParameterDimension(parameter="reps").resolve_values(_with_algorithms({"scip": SimpleNamespace()}), rows)
+                is None
+            )
+
+        assert rows == [{"algorithm": "scip", "model": "m1", "value": 1}]
+        mock_warning.assert_called_once()
+
+
 class TestDimensionEdges:
     """Test what the groupers do with data they cannot group."""
 
@@ -258,3 +326,94 @@ class TestDimensionEdges:
         line = SimpleNamespace(get_xdata=lambda: [0.0, 1.0], get_ydata=lambda: [0.0])
 
         assert BarPlot._errorbar_tops(MagicMock(lines=[line])) == []
+
+
+class TestScale:
+    """Test the scale a metric dimension is read in."""
+
+    def test_a_value_is_read_in_the_unit_the_metric_reports(self) -> None:
+        """Test the default leaves the value as it is."""
+        assert MetricDimension("ratio").of(SimpleNamespace(ratio=0.75)) == 0.75
+
+    def test_a_percent_dimension_reaches_the_axis_as_a_percentage(self) -> None:
+        """Test the scale is applied where the value is read, so the axis and it agree."""
+        assert MetricDimension("ratio", scale=PERCENT).of(SimpleNamespace(ratio=0.75)) == 75.0
+
+
+class TestRatiosAreConsistentlyPercent:
+    """Test every built-in ratio is drawn on the same scale."""
+
+    RATIO_PLOTS: ClassVar[list[type]] = [
+        ApproximationRatioPlot,
+        BestSolutionFoundRatioPlot,
+        FeasibilityRatioPlot,
+        FeasibleSampleRatioPlot,
+        FeasibleSolutionFoundPlot,
+        FractionOfOverallBestSolutionPlot,
+        ApproximationRatioVsParameterPlot,
+    ]
+
+    @pytest.mark.parametrize("plot_cls", RATIO_PLOTS)
+    def test_the_axis_is_a_percent_axis(self, plot_cls: type) -> None:
+        """Test the values, the label and the reference line all speak percent."""
+        plot = plot_cls()
+
+        assert plot.y.scale == PERCENT
+        assert "%" in plot.y.title
+        assert plot.y.reference == PERCENT
+        assert plot.y.reference_label is not None
+        assert "100%" in plot.y.reference_label
+
+
+class TestValuesTheResultDoesNotHave:
+    """Test a result with nothing to report reaches the plot as a missing value."""
+
+    def test_a_none_is_read_as_missing(self) -> None:
+        """Test an infinity that came back from the database as ``None`` does not crash.
+
+        JSON has no infinity, so a time to solution that was never reached is stored as
+        ``null`` and read back as ``None``. It is a value the plot cannot draw, which is
+        what ``nan`` says and what ``Missing`` then decides about.
+        """
+        value = MetricDimension("time_to_solution").of(SimpleNamespace(time_to_solution=None))
+
+        assert math.isnan(value)
+
+    def test_an_attribute_that_is_not_there_is_read_as_missing(self) -> None:
+        """Test a result that never carried the attribute is missing rather than an error."""
+        assert math.isnan(MetricDimension("time_to_solution").of(SimpleNamespace()))
+
+    def test_an_attribute_that_is_not_there_names_itself_in_the_log(self) -> None:
+        """Test a misspelled attribute says so, rather than only that everything is missing.
+
+        A name no result carries is a typo far more often than a gap in the data, and the
+        figure would otherwise complain about the data.
+        """
+        dimension = MetricDimension("aproximation_ratio")
+
+        with patch.object(dimensions.logger, "warning") as mock_warning:
+            dimension.of(SimpleNamespace(approximation_ratio=0.5))
+
+        assert mock_warning.call_count == 1
+        assert "aproximation_ratio" in str(mock_warning.call_args)
+
+    def test_the_attribute_is_named_once_rather_than_once_per_result(self) -> None:
+        """Test every row of the plot hits this, and they would all say the same thing."""
+        dimension = MetricDimension("aproximation_ratio")
+
+        with patch.object(dimensions.logger, "warning") as mock_warning:
+            for _ in range(3):
+                dimension.of(SimpleNamespace(approximation_ratio=0.5))
+
+        assert mock_warning.call_count == 1
+
+    def test_a_result_that_reports_nothing_is_missing_quietly(self) -> None:
+        """Test a ``None`` is an expected answer, not a name to complain about."""
+        with patch.object(dimensions.logger, "warning") as mock_warning:
+            assert math.isnan(MetricDimension("time_to_solution").of(SimpleNamespace(time_to_solution=None)))
+
+        mock_warning.assert_not_called()
+
+    def test_a_percent_dimension_keeps_a_missing_value_missing(self) -> None:
+        """Test the scale does not turn a nan into a number."""
+        assert math.isnan(MetricDimension("ratio", scale=PERCENT).of(SimpleNamespace(ratio=None)))

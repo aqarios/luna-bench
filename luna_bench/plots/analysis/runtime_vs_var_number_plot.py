@@ -16,7 +16,7 @@ from luna_bench.plots.plot_style import Figure
 
 if TYPE_CHECKING:
     from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
-    from luna_bench.plots.plot_style import PlotStyle
+    from luna_bench.plots.plot_style import Missing, PlotStyle, Theme
 
 
 @plot([VarNumberFeature, Runtime])
@@ -39,8 +39,10 @@ class RuntimeVsVarNumberPlot(ScatterPlot):
         def __init__(
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(filename="runtime_vs_var_number"),
+            missing: Missing = Missing(),
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...
 
     def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:

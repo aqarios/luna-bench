@@ -2,21 +2,20 @@
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 
 from luna_bench.custom import plot
 from luna_bench.metrics import FeasibilityRatio
-from luna_bench.plots.dimensions import MetricDimension
+from luna_bench.plots.dimensions import PERCENT, MetricDimension
 from luna_bench.plots.generics.metric_bar_plot import MetricBarPlot
 from luna_bench.plots.plot_style import Annotation, Figure
 
 if TYPE_CHECKING:
     from luna_bench.custom.base_results.metric_result import MetricResult
     from luna_bench.plots.dimensions import AlgorithmDimension, Dimension
-    from luna_bench.plots.plot_style import ErrorBars, PlotStyle
+    from luna_bench.plots.plot_style import ErrorBars, Missing, PlotStyle, Theme
     from luna_bench.plots.utils import Aggregation
-
-PERCENT = 100.0
 
 
 @plot(FeasibilityRatio)
@@ -50,12 +49,13 @@ class FeasibleSolutionFoundPlot(MetricBarPlot):
         filename="feasible_solution_found",
         title="Models with a Feasible Solution per Algorithm",
     )
-    annotation: Annotation | None = Annotation(format="{:.1f}%")
+    annotation: Annotation | None = Annotation()
 
     y: MetricDimension = MetricDimension(
         "feasibility_ratio",
         "Feasible solution found [% of models]",
-        limits=(0, 105),
+        scale=PERCENT,
+        limits=(0, PERCENT),
         reference=PERCENT,
         reference_label="Upper Limit (100%)",
     )
@@ -67,26 +67,35 @@ class FeasibleSolutionFoundPlot(MetricBarPlot):
         def __init__(  # noqa: PLR0913
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(
                 filename="feasible_solution_found", title="Models with a Feasible Solution per Algorithm"
             ),
+            missing: Missing = Missing(),
             x: Dimension = AlgorithmDimension(),
             y: MetricDimension = MetricDimension(
                 "feasibility_ratio",
                 "Feasible solution found [% of models]",
-                limits=(0, 105),
+                scale=PERCENT,
+                limits=(0, PERCENT),
                 reference=PERCENT,
                 reference_label="Upper Limit (100%)",
             ),
             aggregation: Aggregation = Aggregation.MEAN,
             errorbars: ErrorBars | None = ErrorBars(),
-            annotation: Annotation | None = Annotation(format="{:.1f}%"),
+            annotation: Annotation | None = Annotation(),
             grouping: Dimension | None = None,
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...
 
     def value(self, metric_result: MetricResult) -> float:
         """Return 100 when the algorithm found a feasible sample for this model, 0 otherwise.
+
+        A result that reports no ratio at all is neither: "the metric has nothing to say
+        about this model" is not the same statement as "this algorithm found nothing
+        feasible", and turning the first into the second would count a gap in the data as
+        a failure of the solver. It stays the missing value it is, for `Missing` to decide
+        about with the rest of them.
 
         Parameters
         ----------
@@ -97,6 +106,10 @@ class FeasibleSolutionFoundPlot(MetricBarPlot):
         -------
         float
             The indicator, in percent, so the bars average into the share of the
-            benchmark an algorithm could handle at all.
+            benchmark an algorithm could handle at all, or ``nan`` where there is none.
         """
-        return PERCENT if super().value(metric_result) > 0 else 0.0
+        ratio = super().value(metric_result)
+        if not math.isfinite(ratio):
+            return ratio
+
+        return PERCENT if ratio > 0 else 0.0

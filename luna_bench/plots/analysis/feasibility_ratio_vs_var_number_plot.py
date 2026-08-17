@@ -7,12 +7,13 @@ from typing import TYPE_CHECKING
 from luna_bench.custom import plot
 from luna_bench.features import VarNumberFeature
 from luna_bench.metrics import FeasibilityRatio
+from luna_bench.plots.dimensions import PERCENT
 from luna_bench.plots.generics.scatter_plot import ScatterPlot
 from luna_bench.plots.plot_style import Figure
 
 if TYPE_CHECKING:
     from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
-    from luna_bench.plots.plot_style import PlotStyle
+    from luna_bench.plots.plot_style import Missing, PlotStyle, Theme
 
 
 @plot([VarNumberFeature, FeasibilityRatio])
@@ -35,8 +36,10 @@ class FeasibilityRatioVsVarNumberPlot(ScatterPlot):
         def __init__(
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(filename="feasibility_ratio_vs_var_number"),
+            missing: Missing = Missing(),
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...
 
     def run(self, benchmark_results: BenchmarkResultContainer, save_dir: str | None = None) -> None:
@@ -52,7 +55,7 @@ class FeasibilityRatioVsVarNumberPlot(ScatterPlot):
                 "algorithm": algorithm_name,
                 "model": model_name,
                 "x": benchmark_results.features[model_name].first(VarNumberFeature).var_number,
-                "y": metric_result.feasibility_ratio,
+                "y": metric_result.feasibility_ratio * PERCENT,
             }
             for model_name, algorithm_name, metric_result in benchmark_results.get_all_metrics_of_type(FeasibilityRatio)
         ]
@@ -60,9 +63,9 @@ class FeasibilityRatioVsVarNumberPlot(ScatterPlot):
             save_dir=save_dir,
             rows=rows,
             xlabel="Number of Variables",
-            ylabel="Feasibility Ratio",
+            ylabel="Feasibility Ratio [%]",
             title="Feasibility Ratio vs Model Size",
             hue="algorithm",
-            hline=1.0,
-            hline_label="Upper Limit (1.0)",
+            hline=PERCENT,
+            hline_label="Upper Limit (100%)",
         )

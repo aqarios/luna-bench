@@ -192,6 +192,7 @@ class TestBenchmarkResults:
 
         mr: Any = MagicMock()
         metric_results_container: Any = MagicMock()
+        metric_results_container.__contains__.return_value = True
         metric_results_container.get_all.return_value = {"metric1": mr}
         metrics: dict[str, dict[str, Any]] = {"model1": {"algo1": metric_results_container}}
         results = BenchmarkResultContainer.model_construct(features={}, metrics=metrics)
@@ -202,10 +203,13 @@ class TestBenchmarkResults:
         mr2: Any = MagicMock()
         mr3: Any = MagicMock()
         mr1_container: Any = MagicMock()
+        mr1_container.__contains__.return_value = True
         mr1_container.get_all.return_value = {"metric1": mr}
         mr2_container: Any = MagicMock()
+        mr2_container.__contains__.return_value = True
         mr2_container.get_all.return_value = {"metric2": mr2}
         mr3_container: Any = MagicMock()
+        mr3_container.__contains__.return_value = True
         mr3_container.get_all.return_value = {"metric3": mr3}
         metrics = {
             "model1": {"algo1": mr1_container, "algo2": mr2_container},
@@ -217,6 +221,25 @@ class TestBenchmarkResults:
         assert ("model1", "algo1", mr) in metric_list
         assert ("model1", "algo2", mr2) in metric_list
         assert ("model2", "algo1", mr3) in metric_list
+
+    def test_get_all_metrics_of_type_skips_a_pair_without_that_metric(self) -> None:
+        """Test a metric that failed for one algorithm does not break the plots of another.
+
+        The pair simply contributes nothing: asking for a metric class the container does
+        not hold is a programming error, but a missing result is a benchmark outcome.
+        """
+        without: Any = MagicMock()
+        without.__contains__.return_value = False
+        with_result: Any = MagicMock()
+        with_result.__contains__.return_value = True
+        with_result.get_all.return_value = {"metric1": MagicMock()}
+
+        results = BenchmarkResultContainer.model_construct(
+            features={}, metrics={"model1": {"failed": without, "solved": with_result}}
+        )
+
+        assert [algorithm for _, algorithm, _ in results.get_all_metrics_of_type(MagicMock())] == ["solved"]
+        without.get_all.assert_not_called()
 
     def test_model_config_allows_arbitrary_types(self) -> None:
         """Test that BenchmarkResults allows arbitrary types."""

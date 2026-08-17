@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING
 
 from luna_bench.custom import plot
 from luna_bench.metrics import FeasibilityRatio
-from luna_bench.plots.dimensions import MetricDimension
+from luna_bench.plots.dimensions import PERCENT, MetricDimension
 from luna_bench.plots.generics.metric_bar_plot import MetricBarPlot
 from luna_bench.plots.plot_style import Figure
 
 if TYPE_CHECKING:
     from luna_bench.plots.dimensions import AlgorithmDimension, Dimension
-    from luna_bench.plots.plot_style import Annotation, ErrorBars, PlotStyle
+    from luna_bench.plots.plot_style import Annotation, ErrorBars, Missing, PlotStyle, Theme
     from luna_bench.plots.utils import Aggregation
 
 
@@ -53,10 +53,11 @@ class FeasibilityRatioPlot(MetricBarPlot):
 
     y: MetricDimension = MetricDimension(
         "feasibility_ratio",
-        "Feasibility Ratio",
-        limits=(0, 1.15),
-        reference=1.0,
-        reference_label="Upper Limit (1.0)",
+        "Feasibility Ratio [%]",
+        scale=PERCENT,
+        limits=(0, PERCENT),
+        reference=PERCENT,
+        reference_label="Upper Limit (100%)",
     )
 
     if TYPE_CHECKING:
@@ -66,18 +67,21 @@ class FeasibilityRatioPlot(MetricBarPlot):
         def __init__(  # noqa: PLR0913
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(filename="feasibility_ratio", title="Feasibility Ratio per Solver"),
+            missing: Missing = Missing(),
             x: Dimension = AlgorithmDimension(),
             y: MetricDimension = MetricDimension(
                 "feasibility_ratio",
-                "Feasibility Ratio",
-                limits=(0, 1.15),
-                reference=1.0,
-                reference_label="Upper Limit (1.0)",
+                "Feasibility Ratio [%]",
+                scale=PERCENT,
+                limits=(0, PERCENT),
+                reference=PERCENT,
+                reference_label="Upper Limit (100%)",
             ),
             aggregation: Aggregation = Aggregation.MEAN,
             errorbars: ErrorBars | None = ErrorBars(),
             annotation: Annotation | None = None,
             grouping: Dimension | None = None,
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...

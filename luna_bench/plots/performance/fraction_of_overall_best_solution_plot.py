@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING
 
 from luna_bench.custom import plot
 from luna_bench.metrics.fraction_of_overall_best_solution import FractionOfOverallBestSolution
-from luna_bench.plots.dimensions import MetricDimension
+from luna_bench.plots.dimensions import PERCENT, MetricDimension
 from luna_bench.plots.generics.metric_bar_plot import MetricBarPlot
 from luna_bench.plots.plot_style import Figure
 
 if TYPE_CHECKING:
     from luna_bench.plots.dimensions import AlgorithmDimension, Dimension
-    from luna_bench.plots.plot_style import Annotation, ErrorBars, PlotStyle
+    from luna_bench.plots.plot_style import Annotation, ErrorBars, Missing, PlotStyle, Theme
     from luna_bench.plots.utils import Aggregation
 
 
@@ -45,14 +45,16 @@ class FractionOfOverallBestSolutionPlot(MetricBarPlot):
 
     figure: Figure = Figure(
         filename="fraction_of_overall_best_solution",
-        title="Best Solution Found per Solver (1.0 = optimal)",
+        title="Best Solution Found per Solver (100% = optimal)",
     )
 
     y: MetricDimension = MetricDimension(
         "fraction_of_overall_best_solution",
-        "Best Solution Found",
-        reference=1.0,
-        reference_label="Optimal (1.0)",
+        "Best Solution Found [%]",
+        scale=PERCENT,
+        limits=(0, PERCENT),
+        reference=PERCENT,
+        reference_label="Optimal (100%)",
         baseline=0.0,
     )
 
@@ -63,20 +65,24 @@ class FractionOfOverallBestSolutionPlot(MetricBarPlot):
         def __init__(  # noqa: PLR0913
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(
-                filename="fraction_of_overall_best_solution", title="Best Solution Found per Solver (1.0 = optimal)"
+                filename="fraction_of_overall_best_solution", title="Best Solution Found per Solver (100% = optimal)"
             ),
+            missing: Missing = Missing(),
             x: Dimension = AlgorithmDimension(),
             y: MetricDimension = MetricDimension(
                 "fraction_of_overall_best_solution",
-                "Best Solution Found",
-                reference=1.0,
-                reference_label="Optimal (1.0)",
+                "Best Solution Found [%]",
+                scale=PERCENT,
+                limits=(0, PERCENT),
+                reference=PERCENT,
+                reference_label="Optimal (100%)",
                 baseline=0.0,
             ),
             aggregation: Aggregation = Aggregation.MEAN,
             errorbars: ErrorBars | None = ErrorBars(),
             annotation: Annotation | None = None,
             grouping: Dimension | None = None,
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...

@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 
 from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
 from luna_bench.plots.generics.seaborn_plot import SeabornPlot
-from luna_bench.plots.plot_style import Figure
+from luna_bench.plots.plot_style import Figure, Theme
 
 
 class ConcreteSeabornPlot(SeabornPlot):
@@ -286,3 +286,69 @@ class TestFigureLifetime:
 
         assert len(plt.get_fignums()) == 1
         assert plt.gca().get_title() == "Test"
+
+
+class TestTheme:
+    """Test the seaborn theme and the gridlines a plot is drawn under."""
+
+    def teardown_method(self) -> None:
+        """Clean up matplotlib figures and the global theme after each test."""
+        plt.close("all")
+        mpl.rcParams.update(mpl.rcParamsDefault)
+
+    def test_a_plot_is_themed_by_default(self) -> None:
+        """Test a figure comes with the lines it is meant to be read against."""
+        plot = ConcreteSeabornPlot(figure=Figure(show=False))
+
+        assert plot.theme is not None
+        assert (plot.theme.seaborn_style, plot.theme.grid) == ("whitegrid", "y")
+
+        plot.setup_figure()
+        plot.finalize_plot("X", "Y", "T")
+
+        assert plt.gca().yaxis.get_gridlines()[0].get_visible()
+
+    def test_no_theme_leaves_matplotlib_alone(self) -> None:
+        """Test a plot that says it wants none draws the way matplotlib would."""
+        plot = ConcreteSeabornPlot(figure=Figure(show=False), theme=None)
+
+        with patch("seaborn.set_theme") as mock_set_theme:
+            plot.setup_figure()
+        plot.finalize_plot("X", "Y", "T")
+
+        mock_set_theme.assert_not_called()
+        assert not plt.gca().yaxis.get_gridlines()[0].get_visible()
+
+    def test_the_theme_is_installed_before_the_figure(self) -> None:
+        """Test seaborn is told the style, the context and the scale that were asked for."""
+        theme = Theme(seaborn_style="ticks", context="talk", font_scale=1.4, rc={"axes.linewidth": 2.0})
+
+        with patch("seaborn.set_theme") as mock_set_theme:
+            ConcreteSeabornPlot(figure=Figure(show=False), theme=theme).setup_figure()
+
+        mock_set_theme.assert_called_once_with(
+            context="talk", style="ticks", font_scale=1.4, rc={"axes.linewidth": 2.0}
+        )
+
+    def test_the_gridlines_run_off_the_named_axis(self) -> None:
+        """Test the value axis gets the lines and the category axis does not."""
+        plot = ConcreteSeabornPlot(figure=Figure(show=False), theme=Theme(grid="y", grid_alpha=0.25))
+        plot.setup_figure()
+
+        plot.finalize_plot("X", "Y", "T")
+
+        axes = plt.gca()
+        assert axes.yaxis.get_gridlines()[0].get_visible()
+        assert not axes.xaxis.get_gridlines()[0].get_visible()
+        assert axes.yaxis.get_gridlines()[0].get_alpha() == 0.25
+        # Behind the bars, so they are read against rather than read.
+        assert axes.get_axisbelow()
+
+    def test_no_gridlines_takes_away_the_ones_the_style_drew(self) -> None:
+        """Test ``grid=None`` wins over a seaborn style that brings a grid of its own."""
+        plot = ConcreteSeabornPlot(figure=Figure(show=False), theme=Theme(seaborn_style="whitegrid", grid=None))
+        plot.setup_figure()
+
+        plot.finalize_plot("X", "Y", "T")
+
+        assert not plt.gca().yaxis.get_gridlines()[0].get_visible()

@@ -12,9 +12,10 @@ from luna_bench.plots import (
     PlotStyle,
     RuntimePlot,
     RuntimeVsVarNumberPlot,
+    Theme,
 )
 from luna_bench.plots.dimensions import FeatureDimension, ModelDimension
-from luna_bench.plots.utils import Aggregation, LunaColours
+from luna_bench.plots.utils import LunaColours
 
 
 @feature
@@ -39,17 +40,12 @@ class TestOptions:
         assert ErrorBars(spec=None, capsize=0.0).given() == {"spec": None, "capsize": 0.0}
 
     def test_a_style_carries_the_bundles_it_holds(self) -> None:
-        """Test one style can carry the whole look of a benchmark."""
-        style = PlotStyle(
-            figure=Figure(width=12, show=False),
-            annotation=Annotation(fontsize=7),
-            aggregation=Aggregation.MAX,
-        )
+        """Test one style can carry the look every figure of a benchmark shares."""
+        style = PlotStyle(figure=Figure(width=12, show=False), theme=Theme(grid="both"))
 
         assert style.given() == {
             "figure": Figure(width=12, show=False),
-            "annotation": Annotation(fontsize=7),
-            "aggregation": Aggregation.MAX,
+            "theme": Theme(grid="both"),
         }
 
     def test_a_bundle_rejects_an_unknown_option(self) -> None:
@@ -98,23 +94,22 @@ class TestPlotsTakeBundles:
 
     def test_a_bundle_wins_over_the_shared_style(self) -> None:
         """Test one plot can differ from the look the benchmark shares."""
-        style = PlotStyle(figure=Figure(width=12, show=False), annotation=Annotation(fontsize=7))
+        style = PlotStyle(figure=Figure(width=12, show=False), theme=Theme(grid_alpha=0.3))
 
-        plot = RuntimePlot(style=style, annotation=Annotation(rotation=90))
+        plot = RuntimePlot(style=style, theme=Theme(grid="both"))
 
         assert (plot.figure.width, plot.figure.show) == (12, False)
-        assert plot.annotation is not None
-        assert plot.annotation.rotation == 90
-        # Option by option, not bundle by bundle: what the plot's Annotation does not
-        # mention is still the style's.
-        assert plot.annotation is not None
-        assert plot.annotation.fontsize == 7
+        assert plot.theme is not None
+        assert plot.theme.grid == "both"
+        # Option by option, not bundle by bundle: what the plot's Theme does not mention
+        # is still the style's.
+        assert plot.theme.grid_alpha == 0.3
 
-    def test_no_annotation_at_all_wins_over_the_shared_style(self) -> None:
-        """Test a plot with too many bars to label says so with None, not with a flag."""
-        style = PlotStyle(annotation=Annotation(fontsize=7))
+    def test_no_theme_at_all_wins_over_the_shared_style(self) -> None:
+        """Test a plot that wants matplotlib's own look says so with None, not with a flag."""
+        style = PlotStyle(theme=Theme(grid="both"))
 
-        assert RuntimePlot(style=style, annotation=None).annotation is None
+        assert RuntimePlot(style=style, theme=None).theme is None
 
     def test_a_style_can_be_shared_between_plots(self) -> None:
         """Test the same style object configures any number of plots."""
@@ -123,13 +118,16 @@ class TestPlotsTakeBundles:
         assert RuntimePlot(style=style).figure.width == 12
         assert RuntimePlot(style=style, figure=Figure(title="Other")).figure.width == 12
 
-    def test_options_a_plot_does_not_have_are_ignored(self) -> None:
-        """Test one style can be spread over bar plots and scatter plots alike."""
-        style = PlotStyle(figure=Figure(width=12), annotation=Annotation(fontsize=7))
+    def test_a_style_is_spread_over_bar_plots_and_scatter_plots_alike(self) -> None:
+        """Test the shared look holds nothing that only one kind of plot has."""
+        style = PlotStyle(figure=Figure(width=12), theme=Theme(grid="x"))
 
         plot = RuntimeVsVarNumberPlot(style=style)
 
         assert plot.figure.width == 12
+        assert plot.theme is not None
+        assert plot.theme.grid == "x"
+        # What a bar means is a decision about a bar plot, so it is made there.
         assert not hasattr(plot, "annotation")
 
     def test_a_wrong_bundle_is_reported(self) -> None:
@@ -158,7 +156,9 @@ class TestPlotsTakeBundles:
 
         assert plot.annotation is not None
         assert plot.annotation.fontsize == 7
-        assert plot.annotation.format == "{:.1f}%"
+        # The percent format the plot reads its axis in survives the bundle as well: it
+        # comes from the scale of the dimension rather than from the annotation itself.
+        assert plot.annotation_text(75.0) == "75.0%"
 
 
 class TestInstalledStyle:
@@ -170,13 +170,13 @@ class TestInstalledStyle:
 
     def test_a_plot_starts_from_the_installed_style(self) -> None:
         """Test one look does not have to be handed to every plot."""
-        PlotStyle(figure=Figure(width=12, show=False), annotation=Annotation(fontsize=7)).use()
+        PlotStyle(figure=Figure(width=12, show=False), theme=Theme(grid="both")).use()
 
         plot = RuntimePlot()
 
         assert (plot.figure.width, plot.figure.show) == (12, False)
-        assert plot.annotation is not None
-        assert plot.annotation.fontsize == 7
+        assert plot.theme is not None
+        assert plot.theme.grid == "both"
 
     def test_a_plot_still_wins_over_it(self) -> None:
         """Test installing a style sets the starting point, not the outcome."""
@@ -222,10 +222,6 @@ class TestStyleReachesEveryOption:
     def teardown_method(self) -> None:
         """Leave no style installed for the next test."""
         PlotStyle.clear()
-
-    def test_an_option_of_the_plot_itself_is_applied(self) -> None:
-        """Test what a style says about a plain field arrives, e.g. the aggregation."""
-        assert RuntimePlot(style=PlotStyle(aggregation=Aggregation.MAX)).aggregation is Aggregation.MAX
 
     def test_the_figure_carries_the_colour_and_the_passthrough(self) -> None:
         """Test the options that moved into the figure are set through it, not beside it."""

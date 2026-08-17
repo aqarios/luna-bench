@@ -6,12 +6,13 @@ from typing import TYPE_CHECKING
 
 from luna_bench.custom import plot
 from luna_bench.metrics import ApproximationRatio, Runtime
-from luna_bench.plots.dimensions import MetricDimension
+from luna_bench.plots.dimensions import PERCENT, MetricDimension
 from luna_bench.plots.generics.parameter_sweep_plot import ParameterSweepPlot
 from luna_bench.plots.plot_style import Figure
 
 if TYPE_CHECKING:
-    from luna_bench.plots.plot_style import ErrorBars, PlotStyle
+    from luna_bench.plots.dimensions import Dimension, ModelDimension, ParameterDimension
+    from luna_bench.plots.plot_style import ErrorBars, Missing, PlotStyle, Theme
     from luna_bench.plots.utils import Aggregation
 
 
@@ -21,19 +22,19 @@ class ApproximationRatioVsParameterPlot(ParameterSweepPlot):
 
     The plot for "does another QAOA layer buy anything": add one algorithm entry per
     value of the parameter, and the sweep shows how close to the optimum each of them
-    got. ``1.0`` - marked by the reference line - is the optimum.
+    got. ``100%`` - marked by the reference line - is the optimum.
 
     Requires the ``ApproximationRatio`` metric.
 
-    Every display option is inherited and can be set when the plot is constructed,
-    e.g. ``ApproximationRatioVsParameterPlot(parameter="layers", hue=None)``.
+    Every display option is inherited and can be set when the plot is constructed, e.g.
+    ``ApproximationRatioVsParameterPlot(x=ParameterDimension("layers"), grouping=None)``.
     `ParameterSweepPlot` documents the sweep itself; `SeabornPlot` the figure size and
     the output formats.
 
     Attributes
     ----------
-    parameter : str
-        Attribute of the algorithm configuration that is swept, by default ``"reps"``.
+    x : ParameterDimension
+        The setting that is swept, by default ``ParameterDimension("reps")``.
     figure : Figure
         The figure, written to ``approximation_ratio_vs_parameter`` by default.
 
@@ -42,7 +43,8 @@ class ApproximationRatioVsParameterPlot(ParameterSweepPlot):
     >>> for layers in (1, 2, 3, 4):
     ...     bench.add_algorithm(f"qaoa_p{layers}", QAOA(reps=layers))
     >>> bench.add_metric(name="approx_ratio", metric=ApproximationRatio())
-    >>> bench.add_plot(name="layers", plot=ApproximationRatioVsParameterPlot(parameter="reps"))
+    >>> plot = ApproximationRatioVsParameterPlot(x=ParameterDimension("reps", label="QAOA layers (p)"))
+    >>> bench.add_plot(name="layers", plot=plot)
 
     See Also
     --------
@@ -56,9 +58,10 @@ class ApproximationRatioVsParameterPlot(ParameterSweepPlot):
 
     y: MetricDimension = MetricDimension(
         "approximation_ratio",
-        "Approximation Ratio",
-        reference=1.0,
-        reference_label="Optimal (1.0)",
+        "Approximation Ratio [%]",
+        scale=PERCENT,
+        reference=PERCENT,
+        reference_label="Optimal (100%)",
     )
 
     if TYPE_CHECKING:
@@ -68,20 +71,25 @@ class ApproximationRatioVsParameterPlot(ParameterSweepPlot):
         def __init__(  # noqa: PLR0913
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(
                 filename="approximation_ratio_vs_parameter",
                 title="Approximation Ratio over the Parameter Sweep (1.0 = optimal)",
             ),
-            parameter: str = "reps",
+            missing: Missing = Missing(),
+            x: ParameterDimension = ParameterDimension("reps"),
             y: MetricDimension = MetricDimension(
-                "approximation_ratio", "Approximation Ratio", reference=1.0, reference_label="Optimal (1.0)"
+                "approximation_ratio",
+                "Approximation Ratio [%]",
+                scale=PERCENT,
+                reference=PERCENT,
+                reference_label="Optimal (100%)",
             ),
-            xlabel: str = "",
-            hue: str | None = "model",
+            grouping: Dimension | None = ModelDimension(),
             marker: str = "o",
             aggregation: Aggregation = Aggregation.MEAN,
             errorbars: ErrorBars | None = ErrorBars(),
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...
 
 
@@ -96,15 +104,15 @@ class RuntimeVsParameterPlot(ParameterSweepPlot):
 
     Attributes
     ----------
-    parameter : str
-        Attribute of the algorithm configuration that is swept, by default ``"reps"``.
+    x : ParameterDimension
+        The setting that is swept, by default ``ParameterDimension("reps")``.
     figure : Figure
         The figure, written to ``runtime_vs_parameter`` by default.
 
     Examples
     --------
     >>> bench.add_metric(name="runtime", metric=Runtime())
-    >>> bench.add_plot(name="layer_cost", plot=RuntimeVsParameterPlot(parameter="reps"))
+    >>> bench.add_plot(name="layer_cost", plot=RuntimeVsParameterPlot(x=ParameterDimension("reps")))
     """
 
     figure: Figure = Figure(filename="runtime_vs_parameter", title="Runtime over the Parameter Sweep")
@@ -118,13 +126,14 @@ class RuntimeVsParameterPlot(ParameterSweepPlot):
         def __init__(  # noqa: PLR0913
             self,
             *,
-            style: PlotStyle | None = None,
             figure: Figure = Figure(filename="runtime_vs_parameter", title="Runtime over the Parameter Sweep"),
-            parameter: str = "reps",
+            missing: Missing = Missing(),
+            x: ParameterDimension = ParameterDimension("reps"),
             y: MetricDimension = MetricDimension("runtime_seconds", "Runtime (s)"),
-            xlabel: str = "",
-            hue: str | None = "model",
+            grouping: Dimension | None = ModelDimension(),
             marker: str = "o",
             aggregation: Aggregation = Aggregation.MEAN,
             errorbars: ErrorBars | None = ErrorBars(),
+            theme: Theme | None = Theme(),
+            style: PlotStyle | None = None,
         ) -> None: ...
