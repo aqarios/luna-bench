@@ -16,10 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          # Only one version here: this is just the interpreter that drives the job.
-          # Multi-version coverage comes from tox (py313 + py314) and from the mypy
-          # loop below, both of which run inside this single leg.
-          - "3.13"
+          - "3.13" # tox takes care of multi-version
 
     steps:
       - name: "Checkout code"
@@ -44,16 +41,10 @@ jobs:
       - name: "Ruff (Formater)"
         run: uv run ruff format --check --config ruff.toml
 
-      # Type checking is the one check that differs per interpreter version, so it
-      # runs against every version in requires-python. The test suite gets its
-      # multi-version coverage from tox below; ruff and the build do not depend on
-      # the running interpreter.
       - name: "Mypy (Type checking)"
         run: |
           for target in 3.13 3.14; do
             echo "::group::mypy --python-version $target"
-            # Close the log group even when mypy fails, otherwise `bash -e` exits
-            # here and the type errors stay collapsed and unreadable in the log.
             uv run mypy --config-file .mypy.ini --python-version "$target" ./ && rc=0 || rc=$?
             echo "::endgroup::"
             [ "$rc" -eq 0 ] || exit "$rc"
