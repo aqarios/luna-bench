@@ -74,6 +74,33 @@ class TestLunaAlgorithm:
         assert result.luna_id == "job_id"
         assert result.error_message is None
 
+    def test_run_async_does_not_pass_backend_as_solver_parameter(
+        self, demo_algorithm: FakeLunaAlgorithm, model: Model
+    ) -> None:
+        """luna-quantum forwards ``model_dump()`` to the solve API as solver parameters.
+
+        The persisted ``backend`` entry must not leak into it, or the API rejects it as an
+        unexpected parameter. The backend has to be handed over explicitly instead.
+        """
+        captured: dict[str, Any] = {}
+
+        class FakeSolveJob:
+            id = "job_id"
+
+        def capture_run(self: FakeLunaAlgorithm, *args: Any, **kwargs: Any) -> FakeSolveJob:  # noqa: ARG001
+            captured["solver_parameters"] = self.model_dump()
+            captured["backend"] = kwargs.get("backend")
+            return FakeSolveJob()
+
+        with patch.object(FakeLunaAlgorithm, "run", capture_run):
+            result = demo_algorithm.run_async(model=model)
+
+        assert result.luna_id == "job_id"
+        assert "backend" not in captured["solver_parameters"]
+        assert isinstance(captured["backend"], FakeBackend)
+        # The algorithm itself keeps its backend so it stays serializable for persistence.
+        assert demo_algorithm.model_dump().get("backend") is not None
+
     def test_run_async_error(self, demo_algorithm: FakeLunaAlgorithm, model: Model) -> None:
         def raise_run(self: FakeLunaAlgorithm, *args: Any, **kwargs: Any) -> None:  # noqa: ARG001
             raise RuntimeError("an error")  # noqa: TRY003

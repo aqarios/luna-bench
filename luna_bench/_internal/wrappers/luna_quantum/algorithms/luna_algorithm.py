@@ -59,13 +59,17 @@ class LunaAlgorithm(BaseAlgorithmAsync[LunaData], LunaQuantumAlgorithm[IBackend]
 
     def run_async(self, model: Model) -> LunaData:
         try:
-            algo_dict = self.model_dump()
+            backend = self.backend_validator(self.backend)
 
-            backend = self.backend_validator(algo_dict.pop("backend")) if algo_dict.get("backend") else None
+            # `_serialize` re-adds `backend` to the dump so luna-bench can persist it, but
+            # luna-quantum forwards that very dump to the solve API as the solver parameters,
+            # where an unknown `backend` key is rejected. Running on a copy that has no backend
+            # set keeps those parameters clean; the backend is handed over explicitly instead.
+            runner = self.model_copy(update={"backend": None})
 
             # luna_quantum types its Model as luna_quantum.lm_overwrites.model.Model, which mypy
             # sees as distinct from luna_model.Model even though they are the same at runtime.
-            solve_job: SolveJob = self.run(model, backend=backend)  # type: ignore[arg-type, unused-ignore]
+            solve_job: SolveJob = runner.run(model, backend=backend)  # type: ignore[arg-type, unused-ignore]
 
             return LunaData(luna_id=solve_job.id)
         except Exception as e:
