@@ -51,7 +51,10 @@ class WriteOnceMeta(PydanticModelMetaclass, ABCMeta):
                     # If the annotation lib doesn't exist,
                     # it means we are in python <3.14 and lazy loading doesn't exist.
 
-                    from annotationlib import (  # type: ignore[import-not-found] # noqa: PLC0415
+                    # The ignore covers both targets: on <3.14 the module is missing
+                    # (import-not-found), on 3.14+ it resolves and the ignore would
+                    # otherwise be flagged as unused.
+                    from annotationlib import (  # type: ignore[import-not-found,unused-ignore] # noqa: PLC0415
                         Format,
                         call_annotate_function,
                         get_annotate_from_class_namespace,

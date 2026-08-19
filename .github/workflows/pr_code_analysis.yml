@@ -16,7 +16,10 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.13" # Only one version here since we do the checks with tox
+          # Only one version here: this is just the interpreter that drives the job.
+          # Multi-version coverage comes from tox (py313 + py314) and from the mypy
+          # loop below, both of which run inside this single leg.
+          - "3.13"
 
     steps:
       - name: "Checkout code"
@@ -41,8 +44,20 @@ jobs:
       - name: "Ruff (Formater)"
         run: uv run ruff format --check --config ruff.toml
 
+      # Type checking is the one check that differs per interpreter version, so it
+      # runs against every version in requires-python. The test suite gets its
+      # multi-version coverage from tox below; ruff and the build do not depend on
+      # the running interpreter.
       - name: "Mypy (Type checking)"
-        run: uv run mypy --config-file .mypy.ini ./
+        run: |
+          for target in 3.13 3.14; do
+            echo "::group::mypy --python-version $target"
+            # Close the log group even when mypy fails, otherwise `bash -e` exits
+            # here and the type errors stay collapsed and unreadable in the log.
+            uv run mypy --config-file .mypy.ini --python-version "$target" ./ && rc=0 || rc=$?
+            echo "::endgroup::"
+            [ "$rc" -eq 0 ] || exit "$rc"
+          done
 
       # The built-in components carry a generated __init__ so IDEs can show their
       # options; it has to stay in sync with the pydantic fields. See issue #259.
