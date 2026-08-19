@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, ClassVar
+from pathlib import Path
+from typing import TYPE_CHECKING, ClassVar, Final
 
 from dependency_injector.wiring import Provide, inject
+from luna_model import Model
 from returns.pipeline import is_successful
 
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
@@ -15,7 +17,6 @@ from luna_bench.model_metadata import ModelMetadata
 if TYPE_CHECKING:
     from logging import Logger
 
-    from luna_model import Model
     from returns.result import Result
 
     from luna_bench._internal.usecases import ModelLoadAllUc
@@ -30,6 +31,59 @@ if TYPE_CHECKING:
     from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
     from luna_bench.errors.model_name_already_used_error import ModelNameAlreadyUsedError
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
+
+
+MODEL_FILE_SUFFIXES: Final = (".lp", ".mps")
+
+
+def _load_model_file(path: Path) -> Model:
+    """Load a single model file, naming the model after the file stem.
+
+    The name recorded *inside* an LP/MPS file is often generic or shared across a
+    whole export, so the file stem is the identity that stays unique within a
+    directory and matches what the user sees on disk.
+    """
+    model = Model.from_(path)
+    model.name = path.stem
+    return model
+
+
+def _load_models_from_path(path: Path) -> list[Model]:
+    """Load every model file at ``path``, which may be a file or a directory."""
+    suffixes = " or ".join(MODEL_FILE_SUFFIXES)
+
+    if not path.exists():
+        msg = (
+            f"No such file or directory: '{path}'. Pass a Model, an iterable of Models, or a path "
+            f"to a {suffixes} file or to a directory containing such files."
+        )
+        raise FileNotFoundError(msg)
+
+    if not path.is_dir():
+        return [_load_model_file(path)]
+
+    files = sorted(p for p in path.iterdir() if p.suffix in MODEL_FILE_SUFFIXES)
+    if not files:
+        msg = f"Directory '{path}' contains no {suffixes} files."
+        raise FileNotFoundError(msg)
+
+    return [_load_model_file(p) for p in files]
+
+
+def _as_models(candidate: Model | str | Path | Iterable[Model | str | Path]) -> list[Model]:
+    """Flatten whatever ``add`` / ``remove_model`` was given into a list of models.
+
+    Paths - single files or directories - are read from disk; iterables are
+    flattened recursively. ``str`` and ``Path`` are handled before ``Iterable``
+    so a string is read as a path rather than iterated character by character.
+    """
+    if isinstance(candidate, str | Path):
+        return _load_models_from_path(Path(candidate))
+
+    if isinstance(candidate, Iterable):
+        return [model for item in candidate for model in _as_models(item)]
+
+    return [candidate]
 
 
 class ModelSet(ModelSetEntity):
@@ -209,38 +263,68 @@ class ModelSet(ModelSetEntity):
 
     def add(
         self,
-        model: Model | Iterable[Model],
+        model: Model | str | Path | Iterable[Model | str | Path],
     ) -> None:
         """
         Add a model to this model set.
 
         Adds the specified model to this model set and updates the model set's state.
 
+        Models already present in this model set are skipped with a warning
+        instead of being duplicated, so re-running the same script is safe.
+
+        Models are added one at a time and each one is committed on its own, so
+        a failure part-way through an iterable leaves the earlier models added.
+
         Parameters
         ----------
-        model : Model | Iterable[Model]
-            The model to add to this model set. If it is an iterable of models
-            (e.g. list, tuple, generator, iterator), all models will be added.
+        model : Model | str | Path | Iterable[Model | str | Path]
+            The model to add to this model set. It can be
+
+            - a ``Model``,
+            - a path (``str`` or ``Path``) to an ``.lp`` or ``.mps`` file,
+            - a path to a directory, in which case every ``.lp`` and ``.mps``
+              file directly inside it is added, in file-name order,
+            - an iterable mixing any of the above, in which case all of them
+              are added.
+
+            Models loaded from a file are named after the file stem, not after
+            the name recorded inside the file.
+
+        Raises
+        ------
+        FileNotFoundError
+            Raised if a given path does not exist, or is a directory holding no
+            ``.lp`` or ``.mps`` files.
+        ValueError
+            Raised if a given file is neither an ``.lp`` nor an ``.mps`` file.
+        ModelNameAlreadyUsedError
+            Raised if a *different* model already uses the same name.
         """
+        for single in _as_models(model):
+            self._add_one(single)
+
+    def _add_one(self, model: Model) -> None:
+        """Add exactly one model, skipping it with a warning if it is already here."""
+        if self._holds(model):
+            ModelSet._logger.warning(f"Model '{model.name}' is already in modelset '{self.name}'. Skipping it.")
+            return
+
         modelset_add = self.__model_add_uc()
 
-        if isinstance(model, Iterable):
-            for m in model:
-                self.add(m)
-        else:
-            result: Result[ModelSetEntity, DataNotExistError | ModelNameAlreadyUsedError | UnknownLunaBenchError] = (
-                modelset_add(modelset_name=self.name, model=model)
-            )
+        result: Result[ModelSetEntity, DataNotExistError | ModelNameAlreadyUsedError | UnknownLunaBenchError] = (
+            modelset_add(modelset_name=self.name, model=model)
+        )
 
-            if not is_successful(result):
-                error = result.failure()
-                ModelSet._logger.info(f"Error adding model '{model.name}': {error}")
-                raise error
-            self._update(result.unwrap())
+        if not is_successful(result):
+            error = result.failure()
+            ModelSet._logger.info(f"Error adding model '{model.name}': {error}")
+            raise error
+        self._update(result.unwrap())
 
     def remove_model(
         self,
-        model: Model,
+        model: Model | str | Path | Iterable[Model | str | Path],
     ) -> None:
         """
         Remove a model from this model set.
@@ -249,9 +333,40 @@ class ModelSet(ModelSetEntity):
 
         Parameters
         ----------
-        model : Model
-            The model to remove from this model set.
+        model : Model | str | Path | Iterable[Model | str | Path]
+            The model to remove from this model set. It accepts everything
+            ``add`` accepts: a ``Model``, a path to an ``.lp``/``.mps`` file, a
+            path to a directory of such files, or an iterable of those.
+
+            Models are removed one at a time and each removal is committed on
+            its own. If one of them fails, the earlier ones stay removed and the
+            raised ``RuntimeError`` names them.
+
+        Raises
+        ------
+        FileNotFoundError
+            Raised if a given path does not exist, or is a directory holding no
+            ``.lp`` or ``.mps`` files.
+        ValueError
+            Raised if a given file is neither an ``.lp`` nor an ``.mps`` file.
         """
+        removed: list[str] = []
+
+        for single in _as_models(model):
+            try:
+                self._remove_one(single)
+            except RuntimeError as error:
+                if removed:
+                    msg = (
+                        f"Removal stopped at model '{single.name}': {error} Models {removed} were already "
+                        f"removed from modelset '{self.name}' and are gone; the rest were not touched."
+                    )
+                    raise RuntimeError(msg) from error
+                raise
+            removed.append(single.name)
+
+    def _remove_one(self, model: Model) -> None:
+        """Remove exactly one model from this model set."""
         modelset_remove = self.__model_remove_uc()
 
         result: Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError] = modelset_remove(
@@ -278,6 +393,30 @@ class ModelSet(ModelSetEntity):
             error = result.failure()
             ModelSet._logger.info(f"Error: {error}")
             raise RuntimeError(error)
+
+    def _holds(self, model: Model) -> bool:
+        """Return whether this model set already holds exactly this model.
+
+        Identity is the model's name plus its contents, so a changed model
+        reusing a known name is not mistaken for one already present.
+
+        ``Model.__hash__`` deliberately plays no part here: parsing one ``.mps``
+        file twice yields its constraints in a different order, which changes the
+        model's serialization and therefore its hash. ``equal_contents`` ignores
+        constraint order, so it is the identity that survives a reload.
+        """
+        for metadata in self.models:
+            if metadata.name != model.name:
+                continue
+            try:
+                stored = ModelMetadata.model_validate(metadata, from_attributes=True).model
+            except RuntimeError as error:
+                # Contents unavailable: leave the decision to the use case.
+                ModelSet._logger.debug(f"Could not read stored model '{metadata.name}': {error}")
+                return False
+            return stored.equal_contents(model)
+
+        return False
 
     def _update(self, modelset: ModelSetEntity) -> None:
         """
