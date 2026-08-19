@@ -55,6 +55,30 @@ class ModelSqlDao(ModelDao):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
+    def get_by_name(model_name: str) -> Result[ModelMetadataDomain, DataNotExistError | UnknownLunaBenchError]:
+        """
+        Retrieve a model by its name.
+
+        Parameters
+        ----------
+        model_name : str
+            The name of the model to retrieve.
+
+        Returns
+        -------
+        Result[ModelMetadataDomain, DataNotExistError]
+            On success: Contains the model metadata object
+            On failure: Contains a DataNotExistError.
+        """
+        try:
+            model = ModelMetadataTable.get(ModelMetadataTable.name == model_name)
+            return Success(ModelSqlDao.model_to_domain(model))
+        except DoesNotExist:
+            return Failure(DataNotExistError())
+        except Exception as e:  # pragma: no cover
+            return Failure(UnknownLunaBenchError(e))
+
+    @staticmethod
     def get_all() -> list[ModelMetadataDomain]:
         """Retrieve the metadata of all models from the database.
 

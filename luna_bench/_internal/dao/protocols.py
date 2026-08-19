@@ -82,6 +82,26 @@ class ModelDao(Protocol):
         """
 
     @staticmethod
+    def get_by_name(model_name: str) -> Result[ModelMetadataDomain, DataNotExistError | UnknownLunaBenchError]:
+        """Look up model metadata by model name.
+
+        Names are unique across the database, so this identifies a model just as
+        precisely as its hash - and unlike the hash it survives a model being
+        read from an ``.lp`` / ``.mps`` file again.
+
+        Parameters
+        ----------
+        model_name: str
+            The name of the model to look up.
+
+        Returns
+        -------
+        Result[ModelMetadataDomain, DataNotExistError | UnknownLunaBenchError]
+            On success: The model metadata for the given name.
+            On failure: An error if no model with that name exists.
+        """
+
+    @staticmethod
     def get_all() -> list[ModelMetadataDomain]:
         """Retrieve metadata for all stored models.
 

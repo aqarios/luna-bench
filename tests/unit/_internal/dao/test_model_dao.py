@@ -64,6 +64,27 @@ class TestModelDAO:
         elif isinstance(exp, Failure):
             TestModelDAO._check_exception(result.failure(), exp.failure())
 
+    @pytest.mark.parametrize(
+        ("model_name", "exp"),
+        [
+            ("M1", Success(simple_model("M1"))),
+            ("M2", Success(simple_model("M2"))),
+            ("nope", Failure(DataNotExistError())),
+        ],
+    )
+    def test_get_model_by_name(
+        self,
+        setup_transaction: DaoTransaction,
+        model_name: str,
+        exp: Result[Model, DataNotExistError | UnknownLunaBenchError],
+    ) -> None:
+        result = setup_transaction.model.get_by_name(model_name=model_name)
+
+        if isinstance(exp, Success):
+            TestModelDAO._check_model(exp.unwrap(), result.unwrap())
+        else:
+            TestModelDAO._check_exception(result.failure(), exp.failure())
+
     @pytest.mark.parametrize("exp", [([simple_model("M1"), simple_model("M2")])])
     def test_get_all_model(self, setup_transaction: DaoTransaction, exp: list[Model]) -> None:
         result: list[ModelMetadataDomain] = setup_transaction.model.get_all()

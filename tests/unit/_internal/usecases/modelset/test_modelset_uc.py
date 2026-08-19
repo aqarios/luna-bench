@@ -154,6 +154,19 @@ class TestModelsetUc:
         else:
             assert isinstance(result.failure(), type(exp.failure()))
 
+    def test_remove_model_falls_back_to_the_name_when_the_hash_moved(self, usecase: UsecaseContainer) -> None:
+        """A model re-read from an .mps file hashes differently but is still that model."""
+        reread = simple_model("existing")
+        reread.constraints += reread.get_variable("x") <= 3  # changes the hash, keeps the name
+
+        uc: ModelRemoveUc = usecase.model_remove_uc()
+        result: Result[ModelSetEntity, DataNotExistError | UnknownLunaBenchError] = uc(
+            modelset_name="existing", model=reread
+        )
+
+        assert is_successful(result)
+        assert result.unwrap().models == []
+
     @pytest.mark.parametrize(
         ("modelset_name", "exp"),
         [
