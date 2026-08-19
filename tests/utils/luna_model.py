@@ -33,3 +33,19 @@ def write_model_file(
     else:
         model.to(TranslationTarget.MPS, filepath=path)
     return path
+
+
+def write_encoded_model_file(
+    directory: Path,
+    stem: str,
+    suffix: str = ".bin",
+    internal_name: str = "name_inside_the_file",
+) -> Path:
+    """Write a model in the compact binary format and return its path.
+
+    ``Model.from_`` cannot read this - only ``Model.decode`` can - so it covers
+    the fallback taken for a suffix ``from_`` does not recognise.
+    """
+    path = directory / f"{stem}{suffix}"
+    path.write_bytes(simple_model(internal_name).encode())
+    return path

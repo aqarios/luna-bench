@@ -23,9 +23,10 @@ from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.modelset_not_loaded_error import ModelSetNotLoadedError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.logging import BenchLogger
-from luna_bench.model_set import ModelSet, ModelSource
+from luna_bench.model_set import MODEL_FILE_SUFFIXES, ModelSet, ModelSource
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from logging import Logger
 
     import pandas as pd
@@ -562,6 +563,8 @@ class Benchmark(BenchmarkEntity):
     def add_model(
         self,
         model: ModelSource,
+        *,
+        suffixes: Iterable[str] = MODEL_FILE_SUFFIXES,
     ) -> None:
         """
         Add a model to this benchmark's modelset.
@@ -582,33 +585,43 @@ class Benchmark(BenchmarkEntity):
             The model to add. It can be
 
             - a ``Model``,
-            - a path (``str`` or ``Path``) to an ``.lp`` or ``.mps`` file,
-            - a path to a directory, in which case every ``.lp`` and ``.mps``
-              file directly inside it is added, in file-name order,
-            - an iterable mixing any of the above, in which case all of them
-              are added.
+            - a path (``str`` or ``Path``) to a model file. ``.lp`` and ``.mps``
+              are read as such; any other suffix is read as a model encoded with
+              ``Model.encode``,
+            - a path to a directory, in which case every file whose suffix is in
+              ``suffixes`` is added, in file-name order,
+            - an iterable mixing any of the above, nested to any depth, in
+              which case all of them are added.
 
             Models loaded from a file are named after the file stem, not after
             the name recorded inside the file.
+        suffixes: Iterable[str]
+            Which file suffixes a *directory* scan picks up. Defaults to
+            ``(".lp", ".mps")``. A leading dot is optional, so ``"mps"`` works.
+            Matching is case-sensitive, as it is in ``Model.from_``. This never
+            filters a file named outright.
 
         Raises
         ------
         FileNotFoundError
             Raised if a given path does not exist, or is a directory holding no
-            ``.lp`` or ``.mps`` files.
+            file with one of ``suffixes``.
         ValueError
-            Raised if a given file is neither an ``.lp`` nor an ``.mps`` file.
+            Raised if ``suffixes`` is empty, or if a given file is neither an
+            ``.lp``/``.mps`` file nor an encoded model.
         ModelSetNotLoadedError
             Raised if this benchmark's modelset cannot be loaded from the
             database.
         ModelNameAlreadyUsedError
             Raised if a different model already uses the same name.
         """
-        self._resolve_modelset(create=True).add(model)
+        self._resolve_modelset(create=True).add(model, suffixes=suffixes)
 
     def remove_model(
         self,
         model: ModelSource,
+        *,
+        suffixes: Iterable[str] = MODEL_FILE_SUFFIXES,
     ) -> None:
         """
         Remove a model from this benchmark's modelset.
@@ -620,8 +633,12 @@ class Benchmark(BenchmarkEntity):
         ----------
         model: ModelSource
             The model to remove. It accepts everything ``add_model`` accepts: a
-            ``Model``, a path to an ``.lp``/``.mps`` file, a path to a directory
-            of such files, or an iterable of those.
+            ``Model``, a path to a model file, a path to a directory of such
+            files, or an iterable of those.
+        suffixes: Iterable[str]
+            Which file suffixes a *directory* scan picks up, as in ``add_model``.
+            Pass the same value here that was passed to ``add_model``, or the
+            models added from a directory will not be found again.
 
         Raises
         ------
@@ -629,9 +646,10 @@ class Benchmark(BenchmarkEntity):
             Raised if no modelset is configured for this benchmark.
         FileNotFoundError
             Raised if a given path does not exist, or is a directory holding no
-            ``.lp`` or ``.mps`` files.
+            file with one of ``suffixes``.
         ValueError
-            Raised if a given file is neither an ``.lp`` nor an ``.mps`` file.
+            Raised if ``suffixes`` is empty, or if a given file is neither an
+            ``.lp``/``.mps`` file nor an encoded model.
         ModelSetNotLoadedError
             Raised if this benchmark's modelset cannot be loaded from the
             database.
@@ -639,7 +657,7 @@ class Benchmark(BenchmarkEntity):
             Raised if the model (or one of the models, for an iterable) is not
             part of the modelset.
         """
-        self._resolve_modelset().remove_model(model)
+        self._resolve_modelset().remove_model(model, suffixes=suffixes)
 
     def get_feature(self, name: str) -> FeatureEntity:
         """

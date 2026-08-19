@@ -25,7 +25,7 @@ from luna_bench._internal.usecases.modelset.protocols import (
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
-from tests.utils.luna_model import simple_model, write_model_file
+from tests.utils.luna_model import simple_model, write_encoded_model_file, write_model_file
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -461,6 +461,116 @@ class TestAddFromPath:
 
         assert mock.call_count == 1
         assert mock.call_args.kwargs["model"].name == "alpha"
+
+
+class TestAddFromEncodedFile:
+    """A suffix ``Model.from_`` does not know is read as an encoded model."""
+
+    @staticmethod
+    def _add_mock(name: str = "B") -> Mock:
+        mock: Mock = Mock(spec=ModelAddUc)
+        mock.return_value = Success(ModelSetDomain(id=1, name=name, models=[]))
+        return mock
+
+    def test_encoded_file_with_any_suffix_is_read(self, tmp_path: Path) -> None:
+        path = write_encoded_model_file(tmp_path, "alpha", suffix=".whatever")
+        mock = self._add_mock()
+        modelset = ModelSet(id=1, name="B", models=[])
+
+        with luna_bench._usecase_container.model_add_uc.override(mock):
+            modelset.add(path)
+
+        assert [call.kwargs["model"].name for call in mock.call_args_list] == ["alpha"]
+
+    def test_named_file_is_read_even_if_its_suffix_is_not_in_suffixes(self, tmp_path: Path) -> None:
+        """Naming a file outright is instruction enough; ``suffixes`` only filters directories."""
+        path = write_model_file(tmp_path, "alpha", suffix=".mps")
+        mock = self._add_mock()
+        modelset = ModelSet(id=1, name="B", models=[])
+
+        with luna_bench._usecase_container.model_add_uc.override(mock):
+            modelset.add(path, suffixes=(".lp",))
+
+        assert [call.kwargs["model"].name for call in mock.call_args_list] == ["alpha"]
+
+    def test_file_that_is_neither_names_both_attempts(self, tmp_path: Path) -> None:
+        path = tmp_path / "alpha.txt"
+        path.write_text("not a model")
+        modelset = ModelSet(id=1, name="B", models=[])
+
+        with pytest.raises(ValueError, match=r"alpha\.txt") as excinfo:
+            modelset.add(path)
+
+        message = str(excinfo.value)
+        assert "not an encoded model" in message
+        assert "Model.encode" in message
+
+    def test_text_model_under_a_wrong_suffix_is_not_sniffed(self, tmp_path: Path) -> None:
+        """Passing file contents to ``Model.from_`` parses any text into an empty model.
+
+        Sniffing would therefore turn a README into a model, so a mis-suffixed
+        text model must raise rather than be guessed at.
+        """
+        source = write_model_file(tmp_path, "real", suffix=".mps")
+        path = tmp_path / "alpha.model"
+        path.write_bytes(source.read_bytes())
+        modelset = ModelSet(id=1, name="B", models=[])
+
+        with pytest.raises(ValueError, match=r"alpha\.model"):
+            modelset.add(path)
+
+
+class TestAddDirectorySuffixes:
+    """``suffixes`` decides what a directory scan picks up."""
+
+    @staticmethod
+    def _add_mock(name: str = "B") -> Mock:
+        mock: Mock = Mock(spec=ModelAddUc)
+        mock.return_value = Success(ModelSetDomain(id=1, name=name, models=[]))
+        return mock
+
+    def test_custom_suffix_is_picked_up(self, tmp_path: Path) -> None:
+        write_encoded_model_file(tmp_path, "alpha", suffix=".model")
+        write_model_file(tmp_path, "beta", suffix=".mps")
+        mock = self._add_mock()
+        modelset = ModelSet(id=1, name="B", models=[])
+
+        with luna_bench._usecase_container.model_add_uc.override(mock):
+            modelset.add(tmp_path, suffixes=(".model",))
+
+        assert [call.kwargs["model"].name for call in mock.call_args_list] == ["alpha"]
+
+    @pytest.mark.parametrize("given", [(".mps",), ("mps",)])
+    def test_leading_dot_is_optional(self, tmp_path: Path, given: tuple[str, ...]) -> None:
+        write_model_file(tmp_path, "alpha", suffix=".mps")
+        mock = self._add_mock()
+        modelset = ModelSet(id=1, name="B", models=[])
+
+        with luna_bench._usecase_container.model_add_uc.override(mock):
+            modelset.add(tmp_path, suffixes=given)
+
+        assert [call.kwargs["model"].name for call in mock.call_args_list] == ["alpha"]
+
+    def test_matching_is_case_sensitive_like_from_(self, tmp_path: Path) -> None:
+        """``Model.from_`` rejects ``.MPS``, so discovery must not offer it up."""
+        write_model_file(tmp_path, "alpha", suffix=".MPS")
+        modelset = ModelSet(id=1, name="B", models=[])
+
+        with pytest.raises(FileNotFoundError, match="contains no"):
+            modelset.add(tmp_path)
+
+    def test_empty_suffixes_raises_value_error(self, tmp_path: Path) -> None:
+        modelset = ModelSet(id=1, name="B", models=[])
+
+        with pytest.raises(ValueError, match="suffixes is empty"):
+            modelset.add(tmp_path, suffixes=())
+
+    def test_directory_error_points_at_suffixes(self, tmp_path: Path) -> None:
+        (tmp_path / "notes.txt").write_text("no models here")
+        modelset = ModelSet(id=1, name="B", models=[])
+
+        with pytest.raises(FileNotFoundError, match="suffixes"):
+            modelset.add(tmp_path)
 
 
 class TestAddIsRerunnable:

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, ClassVar, Final
 
 from dependency_injector.wiring import Provide, inject
 from luna_model import Model
+from luna_model.errors import DecodeError
 from returns.pipeline import is_successful
 
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
@@ -41,6 +42,24 @@ type ModelSource = Model | str | Path | Iterable[ModelSource]
 nested to any depth."""
 
 
+def _normalize_suffixes(suffixes: Iterable[str]) -> tuple[str, ...]:
+    """Give each of the given suffixes a leading dot.
+
+    Accepting ``"mps"`` alongside ``".mps"`` costs one line and spares the caller
+    a ``FileNotFoundError`` that would otherwise just say the directory holds no
+    model files.
+
+    Case is left alone on purpose. ``Model.from_`` dispatches on the suffix
+    case-sensitively, so matching ``.MPS`` here would find files that then could
+    not be read.
+    """
+    normalized = tuple(f".{s.lstrip('.')}" for s in suffixes)
+    if not normalized:
+        msg = "suffixes is empty, so no file could ever match. Pass at least one suffix, e.g. ('.mps',)."
+        raise ValueError(msg)
+    return normalized
+
+
 def _load_model_file(path: Path) -> Model:
     """Load a single model file, naming the model after the file stem.
 
@@ -54,34 +73,68 @@ def _load_model_file(path: Path) -> Model:
     place to keep provenance, and it is capped at 45 characters. That waits for
     ``Model`` to support metadata.
     """
-    model = Model.from_(path)
+    model = _read_model(path)
     model.name = path.stem
     return model
 
 
-def _load_models_from_path(path: Path) -> list[Model]:
-    """Load every model file at ``path``, which may be a file or a directory."""
-    suffixes = " or ".join(MODEL_FILE_SUFFIXES)
+def _read_model(path: Path) -> Model:
+    """Read a model from a file, whatever its suffix.
+
+    ``Model.from_`` dispatches on the suffix and handles ``.lp`` and ``.mps``
+    only. Anything else falls back to ``Model.decode``, which reads the compact
+    binary format written by ``Model.encode`` and validates what it reads.
+
+    The text form is deliberately not tried as a further fallback. Passing file
+    *contents* to ``Model.from_`` parses any text at all into an empty model -
+    a README, a CSV and the empty string all yield ``"unnamed"`` with no
+    objective - so sniffing would silently store empty models instead of
+    raising. A mis-suffixed text model therefore has to be renamed.
+    """
+    try:
+        return Model.from_(path)
+    except ValueError as unknown_suffix:
+        try:
+            return Model.decode(path.read_bytes())
+        except DecodeError as not_encoded:
+            msg = (
+                f"Could not read a model from '{path}': {unknown_suffix} It is not an encoded model "
+                f"either ({not_encoded}). Rename the file to the format it holds, or write it with "
+                f"`Model.encode`."
+            )
+            raise ValueError(msg) from not_encoded
+
+
+def _load_models_from_path(path: Path, suffixes: tuple[str, ...]) -> list[Model]:
+    """Load every model file at ``path``, which may be a file or a directory.
+
+    ``suffixes`` filters a directory scan only. A file named outright is always
+    read, since naming it is instruction enough.
+    """
+    listed = " or ".join(suffixes)
 
     if not path.exists():
         msg = (
             f"No such file or directory: '{path}'. Pass a Model, an iterable of Models, or a path "
-            f"to a {suffixes} file or to a directory containing such files."
+            f"to a {listed} file or to a directory containing such files."
         )
         raise FileNotFoundError(msg)
 
     if not path.is_dir():
         return [_load_model_file(path)]
 
-    files = sorted(p for p in path.iterdir() if p.suffix in MODEL_FILE_SUFFIXES)
+    files = sorted(p for p in path.iterdir() if p.suffix in suffixes)
     if not files:
-        msg = f"Directory '{path}' contains no {suffixes} files."
+        msg = (
+            f"Directory '{path}' contains no {listed} files. Pass `suffixes` if the models there "
+            f"use a different extension."
+        )
         raise FileNotFoundError(msg)
 
     return [_load_model_file(p) for p in files]
 
 
-def _as_models(candidate: ModelSource) -> list[Model]:
+def _as_models(candidate: ModelSource, suffixes: tuple[str, ...]) -> list[Model]:
     """Flatten whatever ``add`` / ``remove_model`` was given into a list of models.
 
     Paths - single files or directories - are read from disk; iterables are
@@ -89,10 +142,10 @@ def _as_models(candidate: ModelSource) -> list[Model]:
     so a string is read as a path rather than iterated character by character.
     """
     if isinstance(candidate, str | Path):
-        return _load_models_from_path(Path(candidate))
+        return _load_models_from_path(Path(candidate), suffixes)
 
     if isinstance(candidate, Iterable):
-        return [model for item in candidate for model in _as_models(item)]
+        return [model for item in candidate for model in _as_models(item, suffixes)]
 
     return [candidate]
 
@@ -275,6 +328,8 @@ class ModelSet(ModelSetEntity):
     def add(
         self,
         model: ModelSource,
+        *,
+        suffixes: Iterable[str] = MODEL_FILE_SUFFIXES,
     ) -> None:
         """
         Add a model to this model set.
@@ -293,26 +348,34 @@ class ModelSet(ModelSetEntity):
             The model to add to this model set. It can be
 
             - a ``Model``,
-            - a path (``str`` or ``Path``) to an ``.lp`` or ``.mps`` file,
-            - a path to a directory, in which case every ``.lp`` and ``.mps``
-              file directly inside it is added, in file-name order,
+            - a path (``str`` or ``Path``) to a model file. ``.lp`` and ``.mps``
+              are read as such; any other suffix is read as a model encoded with
+              ``Model.encode``,
+            - a path to a directory, in which case every file whose suffix is in
+              ``suffixes`` is added, in file-name order,
             - an iterable mixing any of the above, nested to any depth, in
               which case all of them are added.
 
             Models loaded from a file are named after the file stem, not after
             the name recorded inside the file.
+        suffixes : Iterable[str]
+            Which file suffixes a *directory* scan picks up. Defaults to
+            ``(".lp", ".mps")``. A leading dot is optional, so ``"mps"`` works.
+            Matching is case-sensitive, as it is in ``Model.from_``. This never
+            filters a file named outright.
 
         Raises
         ------
         FileNotFoundError
             Raised if a given path does not exist, or is a directory holding no
-            ``.lp`` or ``.mps`` files.
+            file with one of ``suffixes``.
         ValueError
-            Raised if a given file is neither an ``.lp`` nor an ``.mps`` file.
+            Raised if ``suffixes`` is empty, or if a given file is neither an
+            ``.lp``/``.mps`` file nor an encoded model.
         ModelNameAlreadyUsedError
             Raised if a *different* model already uses the same name.
         """
-        for single in _as_models(model):
+        for single in _as_models(model, _normalize_suffixes(suffixes)):
             self._add_one(single)
 
     def _add_one(self, model: Model) -> None:
@@ -336,6 +399,8 @@ class ModelSet(ModelSetEntity):
     def remove_model(
         self,
         model: ModelSource,
+        *,
+        suffixes: Iterable[str] = MODEL_FILE_SUFFIXES,
     ) -> None:
         """
         Remove a model from this model set.
@@ -346,24 +411,29 @@ class ModelSet(ModelSetEntity):
         ----------
         model : ModelSource
             The model to remove from this model set. It accepts everything
-            ``add`` accepts: a ``Model``, a path to an ``.lp``/``.mps`` file, a
-            path to a directory of such files, or an iterable of those.
+            ``add`` accepts: a ``Model``, a path to a model file, a path to a
+            directory of such files, or an iterable of those.
 
             Models are removed one at a time and each removal is committed on
             its own. If one of them fails, the earlier ones stay removed and the
             raised ``RuntimeError`` names them.
+        suffixes : Iterable[str]
+            Which file suffixes a *directory* scan picks up, as in ``add``. Pass
+            the same value here that was passed to ``add``, or the models added
+            from a directory will not be found again.
 
         Raises
         ------
         FileNotFoundError
             Raised if a given path does not exist, or is a directory holding no
-            ``.lp`` or ``.mps`` files.
+            file with one of ``suffixes``.
         ValueError
-            Raised if a given file is neither an ``.lp`` nor an ``.mps`` file.
+            Raised if ``suffixes`` is empty, or if a given file is neither an
+            ``.lp``/``.mps`` file nor an encoded model.
         """
         removed: list[str] = []
 
-        for single in _as_models(model):
+        for single in _as_models(model, _normalize_suffixes(suffixes)):
             try:
                 self._remove_one(single)
             except RuntimeError as error:

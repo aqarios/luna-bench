@@ -33,6 +33,7 @@ from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissi
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.exporters import DataFrameExporter
+from luna_bench.model_set import MODEL_FILE_SUFFIXES
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockFeature, MockMetric, MockPlot
 from tests.unit.fixtures.mock_entities import make_algo_entity, make_feature_entity, make_metric_entity
 from tests.utils.luna_model import simple_model
@@ -779,7 +780,7 @@ class TestBenchmark:
 
         empty_benchmark.add_model(model)
 
-        live_modelset.add.assert_called_once_with(model)
+        live_modelset.add.assert_called_once_with(model, suffixes=MODEL_FILE_SUFFIXES)
         mocked_usecases["modelset_create_uc"].assert_not_called()
         mocked_usecases["modelset_load_uc"].assert_not_called()
 
@@ -791,7 +792,7 @@ class TestBenchmark:
 
         empty_benchmark.add_model(models)
 
-        live_modelset.add.assert_called_once_with(models)
+        live_modelset.add.assert_called_once_with(models, suffixes=MODEL_FILE_SUFFIXES)
 
     def test_add_model_promotes_a_data_only_modelset(
         self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
@@ -830,7 +831,7 @@ class TestBenchmark:
 
         empty_benchmark.remove_model(model)
 
-        live_modelset.remove_model.assert_called_once_with(model)
+        live_modelset.remove_model.assert_called_once_with(model, suffixes=MODEL_FILE_SUFFIXES)
 
     def test_remove_model_with_iterable_delegates_whole_iterable(self, empty_benchmark: Benchmark) -> None:
         live_modelset = MagicMock(spec=ModelSet)
@@ -840,7 +841,7 @@ class TestBenchmark:
 
         empty_benchmark.remove_model(models)
 
-        live_modelset.remove_model.assert_called_once_with(models)
+        live_modelset.remove_model.assert_called_once_with(models, suffixes=MODEL_FILE_SUFFIXES)
 
     def test_remove_model_without_modelset_raises(
         self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
