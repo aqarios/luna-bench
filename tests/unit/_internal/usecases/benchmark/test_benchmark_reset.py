@@ -17,6 +17,7 @@ from luna_bench.entities.feature_result_entity import FeatureResultEntity
 from luna_bench.entities.metric_result_entity import MetricResultEntity
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockFeature, MockMetric
+from tests.utils.luna_model import simple_model
 
 if TYPE_CHECKING:
     from luna_bench._internal.usecases.usecase_container import UsecaseContainer
@@ -426,6 +427,25 @@ class TestBenchmarkReset:
         assert len(bench.algorithms[0].results) > 0
 
         bench.run(retry_uncompleted=True)
+
+    def test_reset_preserves_live_modelset_handle(
+        self,
+        usecase: UsecaseContainer,
+        setup_benchmark: SetupBenchmark,
+    ) -> None:
+        from luna_bench import Benchmark, ModelSet
+
+        entity = usecase.benchmark_load_uc()("existing").unwrap()
+        bench = Benchmark.model_validate(entity, from_attributes=True)
+        bench.set_modelset(ModelSet.load(setup_benchmark.modelset_name))
+        assert isinstance(bench.modelset, ModelSet)
+
+        bench.reset(mode="All")
+
+        # The live handle survives the refresh, so add_model keeps working.
+        assert isinstance(bench.modelset, ModelSet)
+        bench.add_model(simple_model("new_model"))
+        assert "new_model" in {m.name for m in bench.modelset.models}
 
 
 class TestGetResetComponentNames:

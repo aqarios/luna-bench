@@ -1,4 +1,5 @@
 import json
+import logging
 from collections.abc import Generator
 from contextlib import ExitStack
 from pathlib import Path
@@ -18,10 +19,13 @@ from luna_bench.entities import (
     FeatureEntity,
     JobStatus,
     MetricEntity,
+    ModelMetadataEntity,
+    ModelSetEntity,
     PlotEntity,
 )
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.modelset_not_loaded_error import ModelSetNotLoadedError
 from luna_bench.errors.registry.unknown_id_error import UnknownIdError
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
 from luna_bench.errors.run_errors.run_feature_missing_error import RunFeatureMissingError
@@ -31,6 +35,7 @@ from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.exporters import DataFrameExporter
 from tests.unit.fixtures.mock_components import MockAlgorithm, MockFeature, MockMetric, MockPlot
 from tests.unit.fixtures.mock_entities import make_algo_entity, make_feature_entity, make_metric_entity
+from tests.utils.luna_model import simple_model
 
 
 class TestBenchmark:
@@ -710,6 +715,211 @@ class TestBenchmark:
         assert len(empty_benchmark.features) == 1
         mocked_usecases["benchmark_add_metric_uc"].assert_called_once()
         mocked_usecases["benchmark_add_feature_uc"].assert_called_once()
+
+    def test_add_model_creates_modelset_named_after_benchmark(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        mocked_usecases["modelset_create_uc"].return_value = Success(
+            ModelSetEntity(id=1, name=empty_benchmark.name, models=[])
+        )
+        mocked_usecases["benchmark_set_modelset_uc"].return_value = Success(None)
+        mocked_usecases["model_add_uc"].return_value = Success(
+            ModelSetEntity(id=1, name=empty_benchmark.name, models=[])
+        )
+        model = simple_model("m1")
+
+        empty_benchmark.add_model(model)
+
+        mocked_usecases["modelset_create_uc"].assert_called_once_with(modelset_name="test")
+        mocked_usecases["benchmark_set_modelset_uc"].assert_called_once_with("test", "test")
+        mocked_usecases["model_add_uc"].assert_called_once_with(modelset_name="test", model=model)
+
+    def test_add_model_says_so_when_it_adopts_a_modelset_that_already_has_models(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        # ModelSet.create falls back to loading when the name is taken, so a
+        # benchmark with no modelset can pick up one that is already populated.
+        model = simple_model("m1")
+        existing = ModelSetEntity(
+            id=1, name=empty_benchmark.name, models=[ModelMetadataEntity(id=1, name="older", hash=1)]
+        )
+        mocked_usecases["modelset_create_uc"].return_value = Failure(DataNotUniqueError())
+        mocked_usecases["modelset_load_uc"].return_value = Success(existing)
+        mocked_usecases["benchmark_set_modelset_uc"].return_value = Success(None)
+        mocked_usecases["model_add_uc"].return_value = Success(existing)
+
+        with caplog.at_level(logging.WARNING):
+            empty_benchmark.add_model(model)
+
+        assert "test" in caplog.text
+        assert "older" in caplog.text
+        assert "adopt" in caplog.text.lower()
+
+    def test_add_model_is_quiet_when_the_adopted_modelset_is_empty(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        empty = ModelSetEntity(id=1, name=empty_benchmark.name, models=[])
+        mocked_usecases["modelset_create_uc"].return_value = Failure(DataNotUniqueError())
+        mocked_usecases["modelset_load_uc"].return_value = Success(empty)
+        mocked_usecases["benchmark_set_modelset_uc"].return_value = Success(None)
+        mocked_usecases["model_add_uc"].return_value = Success(empty)
+
+        with caplog.at_level(logging.WARNING):
+            empty_benchmark.add_model(simple_model("m1"))
+
+        assert "adopt" not in caplog.text.lower()
+
+    def test_add_model_uses_live_modelset_without_reloading(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        live_modelset = MagicMock(spec=ModelSet)
+        live_modelset.name = "existing_set"
+        empty_benchmark.modelset = live_modelset
+        model = simple_model("m1")
+
+        empty_benchmark.add_model(model)
+
+        live_modelset.add.assert_called_once_with(model)
+        mocked_usecases["modelset_create_uc"].assert_not_called()
+        mocked_usecases["modelset_load_uc"].assert_not_called()
+
+    def test_add_model_with_iterable_delegates_whole_iterable(self, empty_benchmark: Benchmark) -> None:
+        live_modelset = MagicMock(spec=ModelSet)
+        live_modelset.name = "existing_set"
+        empty_benchmark.modelset = live_modelset
+        models = [simple_model("m1"), simple_model("m2")]
+
+        empty_benchmark.add_model(models)
+
+        live_modelset.add.assert_called_once_with(models)
+
+    def test_add_model_promotes_a_data_only_modelset(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        modelset_entity = ModelSetEntity(id=1, name="loaded_set", models=[])
+        empty_benchmark.modelset = modelset_entity
+        mocked_usecases["modelset_load_uc"].return_value = Success(modelset_entity)
+        mocked_usecases["model_add_uc"].return_value = Success(modelset_entity)
+        model = simple_model("m1")
+
+        empty_benchmark.add_model(model)
+
+        mocked_usecases["modelset_load_uc"].assert_called_once_with(modelset_name="loaded_set")
+        mocked_usecases["model_add_uc"].assert_called_once_with(modelset_name="loaded_set", model=model)
+        assert isinstance(empty_benchmark.modelset, ModelSet)
+        mocked_usecases["modelset_create_uc"].assert_not_called()
+
+    def test_add_model_raises_when_the_modelset_cannot_be_loaded(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        empty_benchmark.modelset = ModelSetEntity(id=1, name="loaded_set", models=[])
+        mocked_usecases["modelset_load_uc"].return_value = Failure(DataNotExistError())
+
+        with pytest.raises(ModelSetNotLoadedError) as exc_info:
+            empty_benchmark.add_model(simple_model("m1"))
+
+        assert exc_info.value.benchmark_name == "test"
+        assert exc_info.value.modelset_name == "loaded_set"
+        mocked_usecases["model_add_uc"].assert_not_called()
+
+    def test_remove_model_delegates_to_live_modelset(self, empty_benchmark: Benchmark) -> None:
+        live_modelset = MagicMock(spec=ModelSet)
+        live_modelset.name = "existing_set"
+        empty_benchmark.modelset = live_modelset
+        model = simple_model("m1")
+
+        empty_benchmark.remove_model(model)
+
+        live_modelset.remove_model.assert_called_once_with(model)
+
+    def test_remove_model_with_iterable_delegates_whole_iterable(self, empty_benchmark: Benchmark) -> None:
+        live_modelset = MagicMock(spec=ModelSet)
+        live_modelset.name = "existing_set"
+        empty_benchmark.modelset = live_modelset
+        models = [simple_model("m1"), simple_model("m2")]
+
+        empty_benchmark.remove_model(models)
+
+        live_modelset.remove_model.assert_called_once_with(models)
+
+    def test_remove_model_without_modelset_raises(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        with pytest.raises(DataNotExistError) as exc_info:
+            empty_benchmark.remove_model(simple_model("m1"))
+
+        # The generic "requested data does not exist" says nothing useful here.
+        assert "test" in str(exc_info.value)
+        assert "modelset" in str(exc_info.value)
+        mocked_usecases["modelset_create_uc"].assert_not_called()
+        mocked_usecases["model_remove_uc"].assert_not_called()
+
+    def test_remove_model_promotes_a_data_only_modelset(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        model = simple_model("m1")
+        modelset_entity = ModelSetEntity(
+            id=1, name="loaded_set", models=[ModelMetadataEntity(id=1, name="m1", hash=model.__hash__())]
+        )
+        empty_benchmark.modelset = modelset_entity
+        mocked_usecases["modelset_load_uc"].return_value = Success(modelset_entity)
+        mocked_usecases["model_remove_uc"].return_value = Success(ModelSetEntity(id=1, name="loaded_set", models=[]))
+
+        empty_benchmark.remove_model(model)
+
+        mocked_usecases["modelset_load_uc"].assert_called_once_with(modelset_name="loaded_set")
+        mocked_usecases["model_remove_uc"].assert_called_once_with(modelset_name="loaded_set", model=model)
+
+    def test_remove_model_raises_when_the_modelset_cannot_be_loaded(
+        self, mocked_usecases: dict[str, MagicMock], empty_benchmark: Benchmark
+    ) -> None:
+        empty_benchmark.modelset = ModelSetEntity(id=1, name="loaded_set", models=[])
+        mocked_usecases["modelset_load_uc"].return_value = Failure(DataNotExistError())
+
+        with pytest.raises(ModelSetNotLoadedError) as exc_info:
+            empty_benchmark.remove_model(simple_model("m1"))
+
+        assert exc_info.value.modelset_name == "loaded_set"
+        mocked_usecases["model_remove_uc"].assert_not_called()
+
+    def test_load_promotes_a_data_only_modelset_to_a_live_handle(self, mocked_usecases: dict[str, MagicMock]) -> None:
+        modelset_entity = ModelSetEntity(id=1, name="loaded_set", models=[])
+        mocked_usecases["benchmark_load_uc"].return_value = Success(
+            BenchmarkEntity(name="test", modelset=modelset_entity, features=[], algorithms=[], metrics=[], plots=[])
+        )
+        mocked_usecases["modelset_load_uc"].return_value = Success(modelset_entity)
+
+        benchmark = Benchmark.load("test")
+
+        assert isinstance(benchmark.modelset, ModelSet)
+        mocked_usecases["modelset_load_uc"].assert_called_once_with(modelset_name="loaded_set")
+
+    def test_open_promotes_a_data_only_modelset_to_a_live_handle(self, mocked_usecases: dict[str, MagicMock]) -> None:
+        modelset_entity = ModelSetEntity(id=1, name="loaded_set", models=[])
+        mocked_usecases["benchmark_load_uc"].return_value = Success(
+            BenchmarkEntity(name="test", modelset=modelset_entity, features=[], algorithms=[], metrics=[], plots=[])
+        )
+        mocked_usecases["modelset_load_uc"].return_value = Success(modelset_entity)
+
+        benchmark = Benchmark.open("test")
+
+        assert isinstance(benchmark.modelset, ModelSet)
+
+    def test_load_keeps_going_when_the_modelset_cannot_be_loaded(
+        self, mocked_usecases: dict[str, MagicMock], caplog: pytest.LogCaptureFixture
+    ) -> None:
+        modelset_entity = ModelSetEntity(id=1, name="vanished_set", models=[])
+        mocked_usecases["benchmark_load_uc"].return_value = Success(
+            BenchmarkEntity(name="test", modelset=modelset_entity, features=[], algorithms=[], metrics=[], plots=[])
+        )
+        mocked_usecases["modelset_load_uc"].return_value = Failure(DataNotExistError())
+
+        with caplog.at_level(logging.WARNING):
+            benchmark = Benchmark.load("test")
+
+        assert benchmark.modelset is not None
+        assert not isinstance(benchmark.modelset, ModelSet)
+        assert "vanished_set" in caplog.text
 
 
 class TestToDataframe:
