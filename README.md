@@ -43,7 +43,7 @@ pip install luna-bench
 
 ```python
 from luna_model import Model, Variable
-from luna_bench.components import ModelSet
+from luna_bench import ModelSet
 
 # Build a simple optimization model
 model = Model("example")
@@ -54,9 +54,16 @@ model.objective = x * y + x
 model.constraints += x >= 0
 model.constraints += y <= 5
 
-# Group models into a set
+# Group models into a set to share it across benchmarks
 modelset = ModelSet.create("my_models")
 modelset.add(model)
+
+# Models can also come straight from disk. A path may point at a single
+# .lp / .mps file or at a directory, in which case every .lp and .mps file
+# inside it is added. Such models are named after their file stem, so
+# data/max_cut.mps becomes the model "max_cut".
+modelset.add("data/max_cut.mps")
+modelset.add("data")
 ```
 
 ### Run a benchmark
@@ -71,6 +78,19 @@ from luna_quantum.algorithms import FlexQAOA
 
 benchmark = Benchmark.create("my_benchmark")
 benchmark.set_modelset(modelset)
+
+# Instead of the set_modelset call above, you could skip the ModelSet
+# entirely and add models straight to the benchmark, which creates a
+# modelset named after it. This works on any benchmark, including one
+# read back from the database with Benchmark.load / Benchmark.open:
+#   benchmark.add_model(model)
+#   benchmark.add_model([model_a, model_b])
+#   benchmark.add_model("data")  # every .lp / .mps file in the folder
+# ModelSet remains the way to share the same models across benchmarks.
+#
+# Re-running this script is safe: existing benchmarks, modelsets and models
+# are reused, and models already in the modelset are skipped with a warning
+# instead of being duplicated.
 
 # Add a solver
 benchmark.add_algorithm("scip", ScipAlgorithm(max_runtime=60))
