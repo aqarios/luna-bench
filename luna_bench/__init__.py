@@ -71,12 +71,13 @@ _mapper_container.wire(
 
 from luna_bench.benchmark import Benchmark  # noqa: E402
 from luna_bench.model_metadata import ModelMetadata  # noqa: E402
-from luna_bench.model_set import ModelSet  # noqa: E402
+from luna_bench.model_set import ModelSet, ModelSource  # noqa: E402
 
 __all__ = (
     "Benchmark",
     "ModelMetadata",
     "ModelSet",
+    "ModelSource",
 )
 
 # Import and wrapping after the wiring is done,

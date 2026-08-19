@@ -23,14 +23,12 @@ from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.modelset_not_loaded_error import ModelSetNotLoadedError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.logging import BenchLogger
-from luna_bench.model_set import ModelSet
+from luna_bench.model_set import ModelSet, ModelSource
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
     from logging import Logger
 
     import pandas as pd
-    from luna_model import Model
     from returns.result import Result
 
     from luna_bench._internal.usecases.benchmark.protocols import (
@@ -563,7 +561,7 @@ class Benchmark(BenchmarkEntity):
 
     def add_model(
         self,
-        model: Model | str | Path | Iterable[Model | str | Path],
+        model: ModelSource,
     ) -> None:
         """
         Add a model to this benchmark's modelset.
@@ -580,7 +578,7 @@ class Benchmark(BenchmarkEntity):
 
         Parameters
         ----------
-        model: Model | str | Path | Iterable[Model | str | Path]
+        model: ModelSource
             The model to add. It can be
 
             - a ``Model``,
@@ -610,7 +608,7 @@ class Benchmark(BenchmarkEntity):
 
     def remove_model(
         self,
-        model: Model | str | Path | Iterable[Model | str | Path],
+        model: ModelSource,
     ) -> None:
         """
         Remove a model from this benchmark's modelset.
@@ -620,7 +618,7 @@ class Benchmark(BenchmarkEntity):
 
         Parameters
         ----------
-        model: Model | str | Path | Iterable[Model | str | Path]
+        model: ModelSource
             The model to remove. It accepts everything ``add_model`` accepts: a
             ``Model``, a path to an ``.lp``/``.mps`` file, a path to a directory
             of such files, or an iterable of those.

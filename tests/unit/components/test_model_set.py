@@ -439,6 +439,17 @@ class TestAddFromPath:
 
         assert [call.kwargs["model"].name for call in mock.call_args_list] == ["handmade", "alpha"]
 
+    def test_iterable_may_be_nested(self, tmp_path: Path) -> None:
+        """Nesting is flattened to any depth, so a list of batches needs no unpacking."""
+        path = write_model_file(tmp_path, "alpha")
+        mock = self._add_mock()
+        modelset = ModelSet(id=1, name="B", models=[])
+
+        with luna_bench._usecase_container.model_add_uc.override(mock):
+            modelset.add([[simple_model("handmade"), [path]], simple_model("outer")])
+
+        assert [call.kwargs["model"].name for call in mock.call_args_list] == ["handmade", "alpha", "outer"]
+
     def test_remove_model_accepts_a_path(self, tmp_path: Path) -> None:
         path = write_model_file(tmp_path, "alpha")
         mock: Mock = Mock(spec=ModelRemoveUc)

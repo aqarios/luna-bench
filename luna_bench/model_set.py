@@ -35,13 +35,24 @@ if TYPE_CHECKING:
 
 MODEL_FILE_SUFFIXES: Final = (".lp", ".mps")
 
+type ModelSource = Model | str | Path | Iterable[ModelSource]
+"""Anything that can be turned into models: a ``Model``, a path to an ``.lp`` or
+``.mps`` file, a path to a directory of such files, or an iterable of those,
+nested to any depth."""
+
 
 def _load_model_file(path: Path) -> Model:
     """Load a single model file, naming the model after the file stem.
 
-    The name recorded *inside* an LP/MPS file is often generic or shared across a
-    whole export, so the file stem is the identity that stays unique within a
-    directory and matches what the user sees on disk.
+    The stem wins over the name recorded *inside* the file because it is a
+    function of the path alone, so ``remove_model(path)`` resolves to the same
+    name ``add(path)`` stored it under. It also keeps a batch unique: a file
+    carrying no name at all loads as ``"unnamed"``, and model names are unique
+    across the database, so the second such file in a folder would clash.
+
+    The path itself is deliberately not folded into the name - a name is not a
+    place to keep provenance, and it is capped at 45 characters. That waits for
+    ``Model`` to support metadata.
     """
     model = Model.from_(path)
     model.name = path.stem
@@ -70,7 +81,7 @@ def _load_models_from_path(path: Path) -> list[Model]:
     return [_load_model_file(p) for p in files]
 
 
-def _as_models(candidate: Model | str | Path | Iterable[Model | str | Path]) -> list[Model]:
+def _as_models(candidate: ModelSource) -> list[Model]:
     """Flatten whatever ``add`` / ``remove_model`` was given into a list of models.
 
     Paths - single files or directories - are read from disk; iterables are
@@ -263,7 +274,7 @@ class ModelSet(ModelSetEntity):
 
     def add(
         self,
-        model: Model | str | Path | Iterable[Model | str | Path],
+        model: ModelSource,
     ) -> None:
         """
         Add a model to this model set.
@@ -278,15 +289,15 @@ class ModelSet(ModelSetEntity):
 
         Parameters
         ----------
-        model : Model | str | Path | Iterable[Model | str | Path]
+        model : ModelSource
             The model to add to this model set. It can be
 
             - a ``Model``,
             - a path (``str`` or ``Path``) to an ``.lp`` or ``.mps`` file,
             - a path to a directory, in which case every ``.lp`` and ``.mps``
               file directly inside it is added, in file-name order,
-            - an iterable mixing any of the above, in which case all of them
-              are added.
+            - an iterable mixing any of the above, nested to any depth, in
+              which case all of them are added.
 
             Models loaded from a file are named after the file stem, not after
             the name recorded inside the file.
@@ -324,7 +335,7 @@ class ModelSet(ModelSetEntity):
 
     def remove_model(
         self,
-        model: Model | str | Path | Iterable[Model | str | Path],
+        model: ModelSource,
     ) -> None:
         """
         Remove a model from this model set.
@@ -333,7 +344,7 @@ class ModelSet(ModelSetEntity):
 
         Parameters
         ----------
-        model : Model | str | Path | Iterable[Model | str | Path]
+        model : ModelSource
             The model to remove from this model set. It accepts everything
             ``add`` accepts: a ``Model``, a path to an ``.lp``/``.mps`` file, a
             path to a directory of such files, or an iterable of those.
