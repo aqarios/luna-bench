@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.13" # Only one version here since we do the checks with tox
+          - "3.13" # tox takes care of multi-version
 
     steps:
       - name: "Checkout code"
@@ -42,7 +42,13 @@ jobs:
         run: uv run ruff format --check --config ruff.toml
 
       - name: "Mypy (Type checking)"
-        run: uv run mypy --config-file .mypy.ini ./
+        run: |
+          for target in 3.13 3.14; do
+            echo "::group::mypy --python-version $target"
+            uv run mypy --config-file .mypy.ini --python-version "$target" ./ && rc=0 || rc=$?
+            echo "::endgroup::"
+            [ "$rc" -eq 0 ] || exit "$rc"
+          done
 
       # The built-in components carry a generated __init__ so IDEs can show their
       # options; it has to stay in sync with the pydantic fields. See issue #259.

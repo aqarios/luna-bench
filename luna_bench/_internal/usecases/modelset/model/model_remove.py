@@ -38,7 +38,8 @@ class ModelRemoveUcImpl(ModelRemoveUc):
         """
         Remove a model from a model set.
 
-        Retrieves the model metadata using the model hash and removes it from the specified model set.
+        Retrieves the model metadata using the model hash - falling back to the model name, which is
+        unique as well - and removes it from the specified model set.
 
         Parameters
         ----------
@@ -57,6 +58,11 @@ class ModelRemoveUcImpl(ModelRemoveUc):
             get_result: Result[ModelMetadataDomain, DataNotExistError | UnknownLunaBenchError] = t.model.get(
                 model_hash=model.__hash__()
             )
+
+            if not is_successful(get_result):
+                # A model read from an `.lp` / `.mps` file hashes differently on
+                # every load, so fall back to the name, which is unique too.
+                get_result = t.model.get_by_name(model_name=model.name)
 
             if not is_successful(get_result):
                 return Failure(get_result.failure())

@@ -20,11 +20,13 @@ from luna_bench.entities import (
 from luna_bench.entities.enums import ResetLevel
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
+from luna_bench.errors.modelset_not_loaded_error import ModelSetNotLoadedError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 from luna_bench.logging import BenchLogger
-from luna_bench.model_set import ModelSet
+from luna_bench.model_set import MODEL_FILE_SUFFIXES, ModelSet, ModelSource
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from logging import Logger
 
     import pandas as pd
@@ -239,6 +241,28 @@ class Benchmark(BenchmarkEntity):
         elif benchmark.data_dir_logs:
             BenchLogger.setup_file_logging(benchmark.data_dir_logs)
 
+    def _promote_modelset(self) -> None:
+        """Replace a data-only modelset with a live ``ModelSet`` handle.
+
+        A benchmark read from the database carries its modelset as a plain
+        ``ModelSetEntity``. Acquiring the live handle here means models can be
+        added to and removed from any benchmark, however it was obtained.
+
+        A modelset that cannot be loaded is left as data: the benchmark itself
+        stays usable, and the failure surfaces as ``ModelSetNotLoadedError``
+        only if models are actually added or removed.
+        """
+        if self.modelset is None or isinstance(self.modelset, ModelSet):
+            return
+
+        modelset_name = self.modelset.name
+        try:
+            self.modelset = ModelSet.load(modelset_name)
+        except RuntimeError as error:
+            Benchmark._logger.warning(
+                f"Benchmark '{self.name}' references modelset '{modelset_name}', which could not be loaded: {error}"
+            )
+
     @staticmethod
     def create(
         name: str,
@@ -306,6 +330,7 @@ class Benchmark(BenchmarkEntity):
         if is_successful(result):
             benchmark = Benchmark.model_validate(result.unwrap(), from_attributes=True)
             Benchmark._setup_data_dir(benchmark)
+            benchmark._promote_modelset()  # noqa: SLF001
             return benchmark
 
         if not isinstance(result.failure(), DataNotExistError):
@@ -354,6 +379,7 @@ class Benchmark(BenchmarkEntity):
 
         result_entity = Benchmark.model_validate(result.unwrap(), from_attributes=True)
         Benchmark._setup_data_dir(result_entity)
+        result_entity._promote_modelset()  # noqa: SLF001
         return result_entity
 
     @staticmethod
@@ -477,6 +503,161 @@ class Benchmark(BenchmarkEntity):
                 raise error.error()
             raise error
         self.modelset = None
+
+    def _resolve_modelset(self, *, create: bool = False) -> ModelSet:
+        """
+        Return this benchmark's modelset as a usable ``ModelSet`` handle.
+
+        Parameters
+        ----------
+        create: bool
+            If True and no modelset is configured, create one named after this
+            benchmark and attach it. If False, a missing modelset is an error.
+            Defaults to False.
+
+        Returns
+        -------
+        ModelSet
+            The modelset attached to this benchmark.
+
+        Raises
+        ------
+        DataNotExistError
+            Raised if no modelset is configured and ``create`` is False.
+        ModelSetNotLoadedError
+            Raised if the benchmark holds its modelset as data only and that
+            modelset cannot be loaded from the database.
+        """
+        if self.modelset is None:
+            if not create:
+                msg = (
+                    f"Benchmark '{self.name}' has no modelset, so it holds no models. "
+                    f"Add models with `benchmark.add_model(...)`, or attach an existing "
+                    f"modelset with `benchmark.set_modelset(...)`."
+                )
+                raise DataNotExistError(msg)
+            modelset = ModelSet.create(self.name)
+            if modelset.models:
+                # ModelSet.create falls back to loading when the name is taken,
+                # so this benchmark just adopted a modelset somebody else filled
+                # - possibly one another benchmark is using.
+                held = [m.name for m in modelset.models]
+                Benchmark._logger.warning(
+                    f"Benchmark '{self.name}' had no modelset and adopted the existing modelset "
+                    f"'{modelset.name}', which already holds {len(held)} model(s): {held}. "
+                    f"Attach a different one with `benchmark.set_modelset(...)` if that is not intended."
+                )
+            self.set_modelset(modelset)
+            return modelset
+
+        if isinstance(self.modelset, ModelSet):
+            return self.modelset
+
+        modelset_name = self.modelset.name
+        self._promote_modelset()
+        if isinstance(self.modelset, ModelSet):
+            return self.modelset
+
+        raise ModelSetNotLoadedError(self.name, modelset_name)
+
+    def add_model(
+        self,
+        model: ModelSource,
+        *,
+        suffixes: Iterable[str] = MODEL_FILE_SUFFIXES,
+    ) -> None:
+        """
+        Add a model to this benchmark's modelset.
+
+        Convenience wrapper around ``ModelSet.add``. If the benchmark has no
+        modelset yet, one named after the benchmark is created and attached, so
+        ``Benchmark.create("my_bench").add_model(m)`` puts ``m`` into the
+        modelset ``"my_bench"``. This modelset is created even if ``model`` is
+        an empty iterable, so ``add_model([])`` on a benchmark with no modelset
+        still creates and attaches an empty one named after the benchmark.
+
+        Models already in the modelset are skipped with a warning rather than
+        duplicated, so the same script can be run again safely.
+
+        Parameters
+        ----------
+        model: ModelSource
+            The model to add. It can be
+
+            - a ``Model``,
+            - a path (``str`` or ``Path``) to a model file. ``.lp`` and ``.mps``
+              are read as such; any other suffix is read as a model encoded with
+              ``Model.encode``,
+            - a path to a directory, in which case every file whose suffix is in
+              ``suffixes`` is added, in file-name order,
+            - an iterable mixing any of the above, nested to any depth, in
+              which case all of them are added.
+
+            Models loaded from a file are named after the file stem, not after
+            the name recorded inside the file.
+        suffixes: Iterable[str]
+            Which file suffixes a *directory* scan picks up. Defaults to
+            ``(".lp", ".mps")``. A leading dot is optional, so ``"mps"`` works.
+            Matching is case-sensitive, as it is in ``Model.from_``. This never
+            filters a file named outright.
+
+        Raises
+        ------
+        FileNotFoundError
+            Raised if a given path does not exist, or is a directory holding no
+            file with one of ``suffixes``.
+        ValueError
+            Raised if ``suffixes`` is empty, or if a given file is neither an
+            ``.lp``/``.mps`` file nor an encoded model.
+        ModelSetNotLoadedError
+            Raised if this benchmark's modelset cannot be loaded from the
+            database.
+        ModelNameAlreadyUsedError
+            Raised if a different model already uses the same name.
+        """
+        self._resolve_modelset(create=True).add(model, suffixes=suffixes)
+
+    def remove_model(
+        self,
+        model: ModelSource,
+        *,
+        suffixes: Iterable[str] = MODEL_FILE_SUFFIXES,
+    ) -> None:
+        """
+        Remove a model from this benchmark's modelset.
+
+        Convenience wrapper around ``ModelSet.remove_model``. Unlike
+        ``add_model``, this never creates a modelset.
+
+        Parameters
+        ----------
+        model: ModelSource
+            The model to remove. It accepts everything ``add_model`` accepts: a
+            ``Model``, a path to a model file, a path to a directory of such
+            files, or an iterable of those.
+        suffixes: Iterable[str]
+            Which file suffixes a *directory* scan picks up, as in ``add_model``.
+            Pass the same value here that was passed to ``add_model``, or the
+            models added from a directory will not be found again.
+
+        Raises
+        ------
+        DataNotExistError
+            Raised if no modelset is configured for this benchmark.
+        FileNotFoundError
+            Raised if a given path does not exist, or is a directory holding no
+            file with one of ``suffixes``.
+        ValueError
+            Raised if ``suffixes`` is empty, or if a given file is neither an
+            ``.lp``/``.mps`` file nor an encoded model.
+        ModelSetNotLoadedError
+            Raised if this benchmark's modelset cannot be loaded from the
+            database.
+        RuntimeError
+            Raised if the model (or one of the models, for an iterable) is not
+            part of the modelset.
+        """
+        self._resolve_modelset().remove_model(model, suffixes=suffixes)
 
     def get_feature(self, name: str) -> FeatureEntity:
         """

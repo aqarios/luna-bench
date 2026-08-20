@@ -25,6 +25,10 @@ keywords = [
     "optimization",
     "benchmarking",
 ]
+classifiers = [
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
 dependencies = [
     "cloudpickle>=3.1.2",
     "dependency-injector>=4.48.2",
