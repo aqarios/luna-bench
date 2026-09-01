@@ -25,5 +25,5 @@ class BackgroundRunAlgorithmAsyncUcImpl(BackgroundRunAlgorithmAsyncUc):
         """
         self._bg_algorithm_runner = bg_algorithm_runner
 
-    def __call__(self, algorithm: BaseAlgorithmAsync[Any], model_id: int) -> str:
-        return self._bg_algorithm_runner.run_async(algorithm, model_id)  # pragma: no cover
+    def __call__(self, algorithm: BaseAlgorithmAsync[Any], model_id: int, algorithm_name: str) -> str:
+        return self._bg_algorithm_runner.run_async(algorithm, model_id, algorithm_name)  # pragma: no cover

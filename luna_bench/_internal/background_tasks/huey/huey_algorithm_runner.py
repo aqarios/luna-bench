@@ -49,11 +49,18 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
         return Success(model)
 
     @staticmethod
+    def _label(algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any], algorithm_name: str) -> str:
+        """Build a log label that identifies the benchmark entry and its algorithm class."""
+        return f"'{algorithm_name}' ({algorithm.__class__.__name__})"
+
+    @staticmethod
     def _run_sync(
         algorithm: BaseAlgorithmSync,
         model_id: int,
+        algorithm_name: str,
     ) -> Result[Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]:
-        HueyAlgorithmRunner._logger.info(f"Running algorithm '{algorithm.__class__.__name__}' on model '{model_id}'")
+        label = HueyAlgorithmRunner._label(algorithm, algorithm_name)
+        HueyAlgorithmRunner._logger.info(f"Running algorithm {label} on model '{model_id}'")
 
         model = HueyAlgorithmRunner._load_model(model_id)
 
@@ -63,26 +70,27 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
         try:
             return Success(algorithm.run(model.unwrap()))
         except Exception as e:
-            HueyAlgorithmRunner._logger.error(
-                f"Algorithm '{algorithm.__class__.__name__}' failed on model '{model_id}':", exc_info=True
-            )
+            HueyAlgorithmRunner._logger.error(f"Algorithm {label} failed on model '{model_id}':", exc_info=True)
             return Failure(RunAlgorithmRuntimeError(e))
 
     @staticmethod
     def _run_sync_huey_task(
         algorithm: BaseAlgorithmSync,
         model_id: int,
+        algorithm_name: str,
     ) -> Result[
         Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError
     ]:  # pragma: no cover
-        return HueyAlgorithmRunner._run_sync(algorithm, model_id)
+        return HueyAlgorithmRunner._run_sync(algorithm, model_id, algorithm_name)
 
     @staticmethod
     def _run_async[T: BaseModel](
         algorithm: BaseAlgorithmAsync[T],
         model_id: int,
+        algorithm_name: str,
     ) -> Result[T, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]:
-        HueyAlgorithmRunner._logger.info(f"Running algorithm {algorithm.__class__.__name__} on model {model_id}")
+        label = HueyAlgorithmRunner._label(algorithm, algorithm_name)
+        HueyAlgorithmRunner._logger.info(f"Running algorithm {label} on model '{model_id}'")
         model = HueyAlgorithmRunner._load_model(model_id)
 
         if not is_successful(model):
@@ -91,9 +99,7 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
         try:
             return Success(algorithm.run_async(model.unwrap()))
         except Exception as e:
-            HueyAlgorithmRunner._logger.error(
-                f"Algorithm '{algorithm.__class__.__name__}' failed on model '{model_id}':", exc_info=True
-            )
+            HueyAlgorithmRunner._logger.error(f"Algorithm {label} failed on model '{model_id}':", exc_info=True)
             return Failure(RunAlgorithmRuntimeError(e))
 
     @staticmethod
@@ -101,10 +107,11 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
     def _run_async_huey_task[T: BaseModel](
         algorithm: BaseAlgorithmAsync[T],
         model_id: int,
+        algorithm_name: str,
     ) -> Result[
         T, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError
     ]:  # pragma: no cover
-        return HueyAlgorithmRunner._run_async(algorithm, model_id)
+        return HueyAlgorithmRunner._run_async(algorithm, model_id, algorithm_name)
 
     @staticmethod
     def register_tasks(
@@ -122,6 +129,7 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
     def run_sync(
         algorithm: BaseAlgorithmSync,
         model_id: int,
+        algorithm_name: str,
     ) -> str:  # pragma: no cover
         if HueyAlgorithmRunner._sync_task is None:
             HueyAlgorithmRunner._sync_task = HueyBackgroundTaskClient.huey().task()(
@@ -129,20 +137,21 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
             )
 
         return str(
-            HueyAlgorithmRunner._sync_task(algorithm, model_id).id
+            HueyAlgorithmRunner._sync_task(algorithm, model_id, algorithm_name).id
         )  # Different type because of the Huey task decorator
 
     @staticmethod
     def run_async[T: BaseModel](
         algorithm: BaseAlgorithmAsync[T],
         model_id: int,
+        algorithm_name: str,
     ) -> str:  # pragma: no cover
         if HueyAlgorithmRunner._async_task is None:
             HueyAlgorithmRunner._async_task = HueyBackgroundTaskClient.huey().task()(
                 HueyAlgorithmRunner._run_async_huey_task
             )
         return str(
-            HueyAlgorithmRunner._async_task(algorithm, model_id).id
+            HueyAlgorithmRunner._async_task(algorithm, model_id, algorithm_name).id
         )  # Different type because of the Huey task decorator
 
     @staticmethod
