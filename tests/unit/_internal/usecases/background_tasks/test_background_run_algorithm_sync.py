@@ -12,7 +12,8 @@ class TestBackgroundRunAlgorithmSync:
         bg_runner.run_sync.return_value = "task_42"
 
         uc = BackgroundRunAlgorithmSyncUcImpl(bg_algorithm_runner=bg_runner)
-        result = uc(MagicMock(spec=BaseAlgorithmSync), model_id=1)
+        algorithm = MagicMock(spec=BaseAlgorithmSync)
+        result = uc(algorithm, model_id=1, algorithm_name="my_algorithm")
 
         assert result == "task_42"
-        bg_runner.run_sync.assert_called_once()
+        bg_runner.run_sync.assert_called_once_with(algorithm, 1, "my_algorithm")

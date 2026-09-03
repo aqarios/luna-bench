@@ -38,6 +38,7 @@ class BackgroundAlgorithmRunner(Protocol):
     def run_async[T: BaseModel](
         algorithm: BaseAlgorithmAsync[T],
         model_id: int,
+        algorithm_name: str,
     ) -> str:
         """
         Enqueue an async algorithm for execution and return immediately.
@@ -48,6 +49,10 @@ class BackgroundAlgorithmRunner(Protocol):
             The algorithm to execute asynchronously.
         model_id: int
             The id of the model to run the algorithm on.
+        algorithm_name: str
+            The name the algorithm was added to the benchmark under. Used to
+            distinguish differently configured instances of the same algorithm
+            class in the logs.
 
         Returns
         -------
@@ -77,6 +82,7 @@ class BackgroundAlgorithmRunner(Protocol):
     def run_sync(
         algorithm: BaseAlgorithmSync,
         model_id: int,
+        algorithm_name: str,
     ) -> str:
         """
         Enqueue a synchronous algorithm for deferred execution and return immediately.
@@ -90,6 +96,10 @@ class BackgroundAlgorithmRunner(Protocol):
             The algorithm to execute synchronously.
         model_id: int
             The id of the model to run the algorithm on.
+        algorithm_name: str
+            The name the algorithm was added to the benchmark under. Used to
+            distinguish differently configured instances of the same algorithm
+            class in the logs.
 
         Returns
         -------

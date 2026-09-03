@@ -632,7 +632,7 @@ class PlotsRunUc(Protocol):
 class BackgroundRunAlgorithmAsyncUc(Protocol):
     """Protocol for running an async algorithm in the background."""
 
-    def __call__(self, algorithm: BaseAlgorithmAsync[Any], model_id: int) -> str:
+    def __call__(self, algorithm: BaseAlgorithmAsync[Any], model_id: int, algorithm_name: str) -> str:
         """Delegate to ``BackgroundAlgorithmRunner.run_async()`` and return the task ID.
 
         Parameters
@@ -641,6 +641,8 @@ class BackgroundRunAlgorithmAsyncUc(Protocol):
             The async algorithm to run.
         model_id: int
             Identifier of the model to run against.
+        algorithm_name: str
+            The name the algorithm was added to the benchmark under, used for logging.
 
         Returns
         -------
@@ -652,7 +654,7 @@ class BackgroundRunAlgorithmAsyncUc(Protocol):
 class BackgroundRunAlgorithmSyncUc(Protocol):
     """Protocol for running a sync algorithm in the background."""
 
-    def __call__(self, algorithm: BaseAlgorithmSync, model_id: int) -> str:
+    def __call__(self, algorithm: BaseAlgorithmSync, model_id: int, algorithm_name: str) -> str:
         """Delegate to ``BackgroundAlgorithmRunner.run_sync()`` and return the task ID.
 
         Parameters
@@ -661,6 +663,8 @@ class BackgroundRunAlgorithmSyncUc(Protocol):
             The sync algorithm to run.
         model_id: int
             Identifier of the model to run against.
+        algorithm_name: str
+            The name the algorithm was added to the benchmark under, used for logging.
 
         Returns
         -------

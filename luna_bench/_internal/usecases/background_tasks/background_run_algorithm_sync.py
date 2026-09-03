@@ -23,5 +23,5 @@ class BackgroundRunAlgorithmSyncUcImpl(BackgroundRunAlgorithmSyncUc):
         """
         self._bg_algorithm_runner = bg_algorithm_runner
 
-    def __call__(self, algorithm: BaseAlgorithmSync, model_id: int) -> str:
-        return self._bg_algorithm_runner.run_sync(algorithm, model_id)  # pragma: no cover
+    def __call__(self, algorithm: BaseAlgorithmSync, model_id: int, algorithm_name: str) -> str:
+        return self._bg_algorithm_runner.run_sync(algorithm, model_id, algorithm_name)  # pragma: no cover
