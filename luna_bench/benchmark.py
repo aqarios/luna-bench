@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, overload
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
@@ -10,6 +11,7 @@ from returns.pipeline import is_successful
 
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
 from luna_bench._internal.wrappers import LunaAlgorithmWrapper
+from luna_bench.algorithms.variants import AlgorithmGrid, ParameterList, Variants, apply_parameters
 from luna_bench.entities import (
     AlgorithmEntity,
     BenchmarkEntity,
@@ -894,7 +896,129 @@ class Benchmark(BenchmarkEntity):
                 return algorithm
         raise DataNotExistError
 
+    @overload
     def add_algorithm(
+        self,
+        name: str,
+        algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+    ) -> AlgorithmEntity: ...
+
+    @overload
+    def add_algorithm(
+        self,
+        name: str,
+        algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+        *,
+        variants: Variants,
+    ) -> AlgorithmGrid: ...
+
+    def add_algorithm(
+        self,
+        name: str,
+        algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+        *,
+        variants: Variants | None = None,
+    ) -> AlgorithmEntity | AlgorithmGrid:
+        """
+        Add an algorithm to the benchmark, on its own or as a grid of variants.
+
+        Without *variants* this adds the one algorithm under *name*, as it always has.
+        With them, *algorithm* is the default version every variant starts from, and one
+        entry is registered per variant - the layer counts of a QAOA crossed with the
+        pipeline blocks it runs, say:
+
+        .. code-block:: python
+
+            grid = bench.add_algorithm(
+                "flex_qaoa",
+                FlexQAOA(backend=AqariosGpu()),
+                variants=ParameterGrid({"reps": [2, 4, 6], "pipeline.xy_mixer.enable": [False, True]}),
+            )
+
+        Every variant is built and checked before anything is registered, so a
+        misspelled parameter costs an error rather than half a benchmark.
+
+        Parameters
+        ----------
+        name: str
+            The name of the algorithm to add. With *variants* it is the stem each
+            entry's name is built on.
+        algorithm: IAlgorithm[Any] | AlgorithmSync | AlgorithmAsync[Any]
+            An instance of the algorithm to add, or with *variants* the default version
+            they vary.
+        variants: Variants, optional
+            How the algorithm is varied: a generator such as `ParameterGrid`, or a plain
+            list of complete configurations. ``None``, the default, adds the one
+            algorithm.
+
+        Returns
+        -------
+        AlgorithmEntity | AlgorithmGrid
+            The added algorithm, or - with *variants* - the grid of entries and the axes
+            that produced them.
+
+        Raises
+        ------
+        UnknownParameterPathError
+            If a variant names a parameter the algorithm does not have.
+        pydantic.ValidationError
+            If a variant sets a parameter to a value that does not fit its field.
+
+        See Also
+        --------
+        luna_bench.algorithms.variants : The generators, and what they yield.
+        """
+        if variants is None:
+            return self._add_single_algorithm(name, algorithm)
+
+        return self._add_algorithm_variants(name, algorithm, variants)
+
+    def _add_algorithm_variants(
+        self,
+        name: str,
+        algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+        variants: Variants,
+    ) -> AlgorithmGrid:
+        """Register one entry per variant of *algorithm*, and return them with their axes.
+
+        Parameters
+        ----------
+        name: str
+            Stem each entry's name is built on.
+        algorithm: IAlgorithm[Any] | AlgorithmSync | AlgorithmAsync[Any]
+            The default version the variants start from.
+        variants: Variants
+            The generator, or a plain list of complete configurations.
+
+        Returns
+        -------
+        AlgorithmGrid
+            The registered entries and the axes that produced them.
+        """
+        # A plain list is the direct form; anything else yields its own dictionaries.
+        # Checked as a Sequence rather than against the generator protocol, because a
+        # list satisfies that protocol too - it is iterable and sized.
+        generator = ParameterList(variants) if isinstance(variants, Sequence) else variants
+
+        # Built in full first: a variant that cannot be applied has to fail before any
+        # of its siblings reaches the database, or a typo leaves half a benchmark behind.
+        prepared = [
+            (f"{name}[{','.join(f'{path}={value}' for path, value in parameters.items())}]", parameters, applied)
+            for parameters, applied in (
+                (parameters, apply_parameters(algorithm, parameters)) for parameters in generator
+            )
+        ]
+
+        entities = [self._add_single_algorithm(entry_name, applied) for entry_name, _, applied in prepared]
+
+        axes: dict[str, dict[str, Any]] = {}
+        for entry_name, parameters, _ in prepared:
+            for path, value in parameters.items():
+                axes.setdefault(path, {})[entry_name] = value
+
+        return AlgorithmGrid(entities=entities, axes=axes)
+
+    def _add_single_algorithm(
         self,
         name: str,
         algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],

@@ -53,7 +53,7 @@ class ApproximationRatioVsParameterPlot(ParameterSweepPlot):
 
     figure: Figure = Figure(
         filename="approximation_ratio_vs_parameter",
-        title="Approximation Ratio over the Parameter Sweep (1.0 = optimal)",
+        title="Approximation Ratio over the Parameter Sweep (100% = optimal)",
     )
 
     y: MetricDimension = MetricDimension(
@@ -73,7 +73,7 @@ class ApproximationRatioVsParameterPlot(ParameterSweepPlot):
             *,
             figure: Figure = Figure(
                 filename="approximation_ratio_vs_parameter",
-                title="Approximation Ratio over the Parameter Sweep (1.0 = optimal)",
+                title="Approximation Ratio over the Parameter Sweep (100% = optimal)",
             ),
             missing: Missing = Missing(),
             x: ParameterDimension = ParameterDimension("reps"),
