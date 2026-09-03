@@ -58,9 +58,9 @@ class AlgorithmRunAsBackgroundTasksUcImpl(AlgorithmRunAsBackgroundTasksUc):
 
             task_id: str
             if isinstance(a.algorithm, BaseAlgorithmSync):
-                task_id = self._background_start_sync(a.algorithm, m.id)
+                task_id = self._background_start_sync(a.algorithm, m.id, a.name)
             elif isinstance(a.algorithm, BaseAlgorithmAsync):
-                task_id = self._background_start_async(a.algorithm, m.id)
+                task_id = self._background_start_async(a.algorithm, m.id, a.name)
             else:  # pragma: no cover This should never happen. There are only two types of algorithms at the moment
                 raise TypeError(type(a))
 

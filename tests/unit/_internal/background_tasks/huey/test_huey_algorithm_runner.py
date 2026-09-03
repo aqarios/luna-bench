@@ -106,7 +106,7 @@ class TestHueyAlgorithmRunner:
         algorithm: BaseAlgorithmSync,
         exp: Result[Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError],
     ) -> None:
-        result = HueyAlgorithmRunner._run_sync(algorithm, model_id)
+        result = HueyAlgorithmRunner._run_sync(algorithm, model_id, "my_algorithm")
 
         assert type(result) is type(exp)
         if is_successful(result):
@@ -132,7 +132,7 @@ class TestHueyAlgorithmRunner:
         algorithm: BaseAlgorithmAsync[Any],
         exp: Result[BaseModel, ModelDecodingError | DataNotExistError | UnknownLunaBenchError],
     ) -> None:
-        result = HueyAlgorithmRunner._run_async(algorithm, model_id)
+        result = HueyAlgorithmRunner._run_async(algorithm, model_id, "my_algorithm")
         assert type(result) is type(exp)
         if is_successful(result):
             unwrapped_result = result.unwrap()
