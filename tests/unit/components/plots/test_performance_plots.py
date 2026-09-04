@@ -89,7 +89,7 @@ RUN_CASES = [
         ApproximationRatioResult(approximation_ratio=0.9),
         {"algorithm": "algo_1", "model": "model_a", "approximation_ratio": 90.0},
         {
-            "title": "Approximation Ratio per Solver (1.0 = optimal)",
+            "title": "Approximation Ratio per Solver (100% = optimal)",
             "hline": 100.0,
             "hline_label": "Optimal (100%)",
             "y": "approximation_ratio",
