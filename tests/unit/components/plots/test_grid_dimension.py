@@ -57,7 +57,7 @@ class TestGridDimension:
     def test_round_trips_through_the_dimension_union_as_stored_plot_config(self) -> None:
         """Plot configuration is persisted with the benchmark, so a dimension must survive JSON."""
         dimension = GridDimension(labels={"a[reps=2]": "2"}, label="reps")
-        adapter = TypeAdapter(Dimension)
+        adapter: TypeAdapter[Dimension] = TypeAdapter(Dimension)
 
         restored = adapter.validate_json(adapter.dump_json(dimension))
 

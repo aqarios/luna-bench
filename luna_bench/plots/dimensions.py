@@ -171,8 +171,8 @@ class ModelDimension(ColumnDimension):
         # Never executed: pydantic builds the real ``__init__``.
         def __init__(
             self,
-            *,
             label: str | None = None,
+            *,
             kind: Literal["model"] = "model",
         ) -> None: ...
 
@@ -194,8 +194,8 @@ class AlgorithmDimension(ColumnDimension):
         # Never executed: pydantic builds the real ``__init__``.
         def __init__(
             self,
-            *,
             label: str | None = None,
+            *,
             kind: Literal["algorithm"] = "algorithm",
         ) -> None: ...
 
@@ -482,8 +482,8 @@ class GridDimension(BaseDimension):
         # Never executed: pydantic builds the real ``__init__``.
         def __init__(
             self,
-            *,
             label: str | None = None,
+            *,
             kind: Literal["grid"] = "grid",
             labels: dict[str, str] = {},  # noqa: B006
         ) -> None: ...

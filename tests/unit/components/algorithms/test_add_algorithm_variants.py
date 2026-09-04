@@ -1,7 +1,9 @@
 """Tests for registering a whole grid of algorithm variants in one call."""
 
-from collections.abc import Generator
+from __future__ import annotations
+
 from contextlib import ExitStack
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
@@ -10,9 +12,15 @@ from returns.result import Success
 
 from luna_bench import Benchmark
 from luna_bench.algorithms.variants import AlgorithmGrid, ParameterGrid
+from luna_bench.custom import BaseAlgorithmSync
 from luna_bench.entities import AlgorithmEntity, BenchmarkEntity
 from luna_bench.errors.components.algorithms.unknown_parameter_path_error import UnknownParameterPathError
 from tests.unit.fixtures.mock_components import MockAlgorithm
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from luna_model import Model, Solution
 
 
 class Pipeline(BaseModel):
@@ -21,11 +29,14 @@ class Pipeline(BaseModel):
     enable: bool = True
 
 
-class Algo(BaseModel):
+class Algo(BaseAlgorithmSync):
     """Algorithm-shaped model, varied by the tests below."""
 
     reps: int = 1
     pipeline: Pipeline = Pipeline()
+
+    def run(self, model: Model) -> Solution:
+        raise NotImplementedError
 
 
 class TestAddAlgorithmWithVariants:
