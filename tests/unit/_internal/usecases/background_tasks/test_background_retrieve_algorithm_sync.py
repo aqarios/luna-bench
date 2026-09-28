@@ -6,6 +6,7 @@ from returns.maybe import Maybe, Nothing, Some
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
+from luna_bench._internal.background_tasks import SyncRunPayload
 from luna_bench._internal.usecases.background_tasks.background_retrieve_algorithm_sync import (
     BackgroundRetrieveAlgorithmSyncUcImpl,
 )
@@ -14,13 +15,14 @@ from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
 
 solution = MagicMock(spec=Solution)
+payload = (solution, None)
 
 
 class TestBackgroundRetrieveAlgorithmSync:
     @pytest.mark.parametrize(
         ("uc", "mocked_return", "exp"),
         [
-            (BackgroundRetrieveAlgorithmSyncUcImpl(), Success(solution), Some(Success(solution))),
+            (BackgroundRetrieveAlgorithmSyncUcImpl(), Success(payload), Some(Success(payload))),
             (BackgroundRetrieveAlgorithmSyncUcImpl(), None, Nothing),
             (
                 BackgroundRetrieveAlgorithmSyncUcImpl(),
@@ -38,8 +40,8 @@ class TestBackgroundRetrieveAlgorithmSync:
         self,
         bg_algorithm_runner: MagicMock,
         uc: BackgroundRetrieveAlgorithmSyncUc,
-        mocked_return: Result[Solution, Exception],
-        exp: Maybe[Result[Solution, Exception]],
+        mocked_return: Result[SyncRunPayload, Exception],
+        exp: Maybe[Result[SyncRunPayload, Exception]],
     ) -> None:
         bg_algorithm_runner.retrieve_task_result = MagicMock()
         bg_algorithm_runner.retrieve_task_result.return_value = mocked_return

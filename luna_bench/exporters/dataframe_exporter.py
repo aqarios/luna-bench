@@ -39,7 +39,7 @@ class DataFrameExporter(BaseExporter["pd.DataFrame"]):
         Returns
         -------
         pd.DataFrame
-            A DataFrame with columns ``algorithm``, ``model``, ``meta_data``,
+            A DataFrame with columns ``algorithm``, ``model``, ``metadata``,
             ``solution`` (optional), ``algorithm_config``, plus one column per
             result field of each metric and feature.
 
@@ -78,7 +78,7 @@ class DataFrameExporter(BaseExporter["pd.DataFrame"]):
                 row: dict[str, Any] = {
                     "algorithm": algorithm_name,
                     "model": model_name,
-                    "meta_data": run_result.meta_data,
+                    "metadata": run_result.metadata,
                 }
                 if self.include_solution:
                     row["solution"] = run_result.solution.serialize() if run_result.solution is not None else None

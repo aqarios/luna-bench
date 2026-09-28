@@ -61,7 +61,7 @@ def make_algo_entity(name: str, model_names: list[str]) -> AlgorithmEntity:
         algorithm=MockAlgorithm(),
         results={
             m: AlgorithmResultEntity(
-                meta_data=None,
+                metadata=None,
                 status=JobStatus.DONE,
                 error=None,
                 solution=None,

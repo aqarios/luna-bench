@@ -9,8 +9,10 @@ from .meta_classes.registered_class_meta import RegisteredClassMeta
 from .registerable_component import RegisterableComponent
 
 if TYPE_CHECKING:
-    from luna_model import Model, Solution
+    from luna_model import Model
     from returns.result import Result
+
+    from luna_bench.custom.types import SolveOutcome
 
 T_co = TypeVar("T_co", bound=BaseModel, covariant=True)
 
@@ -52,7 +54,7 @@ class BaseAlgorithmAsync[T_co](ABC, RegisterableComponent, metaclass=RegisteredC
         """
 
     @abstractmethod
-    def fetch_result(self, model: Model, retrieval_data: T_co) -> Result[Solution, str]:
+    def fetch_result(self, model: Model, retrieval_data: T_co) -> Result[SolveOutcome, str]:
         """
         Fetch the result of the algorithm.
 
@@ -65,7 +67,9 @@ class BaseAlgorithmAsync[T_co](ABC, RegisterableComponent, metaclass=RegisteredC
 
         Returns
         -------
-        Result[Solution, str]
-            The result of the algorithm. if it fails, an error message is returned.
+        Result[SolveOutcome, str]
+            The result of the algorithm, either the solution on its own or a
+            ``(solution, metadata)`` pair carrying what the solver reported about the run.
+            If it fails, an error message is returned.
 
         """

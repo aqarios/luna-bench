@@ -20,5 +20,5 @@ class AlgorithmResultContainer(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     solution: Solution | None = None
-    meta_data: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
     algorithm: SkipValidation[BaseAlgorithmSync | BaseAlgorithmAsync[Any]]

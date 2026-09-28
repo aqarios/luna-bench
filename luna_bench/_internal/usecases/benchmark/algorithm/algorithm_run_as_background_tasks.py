@@ -65,7 +65,6 @@ class AlgorithmRunAsBackgroundTasksUcImpl(AlgorithmRunAsBackgroundTasksUc):
                 raise TypeError(type(a))
 
             result = AlgorithmResultDomain.model_construct(
-                meta_data=None,
                 model_id=m.id,
                 status=JobStatus.RUNNING,
                 error=None,

@@ -13,7 +13,9 @@ from .enums import JobStatus
 class AlgorithmResultEntity(BaseModel):
     """Represents a result of an algorithm execution."""
 
-    meta_data: ArbitraryDataDomain | None
+    #: What the algorithm reported about this run beyond the solution - the device it ran on,
+    #: the shots it took, a provider job id. ``None`` when it returned a bare ``Solution``.
+    metadata: dict[str, Any] | None
     status: JobStatus
     error: str | None
 

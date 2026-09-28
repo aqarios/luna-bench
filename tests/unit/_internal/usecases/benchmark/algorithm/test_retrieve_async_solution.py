@@ -1,7 +1,9 @@
 from typing import TYPE_CHECKING
+from unittest.mock import patch
 
 from luna_model import Solution
 from returns.pipeline import is_successful
+from returns.result import Success
 
 from luna_bench import MapperContainer  # type: ignore[attr-defined]
 from luna_bench._internal.domain_models import AlgorithmResultDomain
@@ -41,7 +43,7 @@ class TestRetrieveAsyncSolution:
         assert benchmark.modelset is not None, "Failed to load modelset"
 
         fake_result_data = AlgorithmResultEntity(
-            meta_data=None,
+            metadata=None,
             status=JobStatus.RUNNING,
             error=None,
             solution=None,
@@ -94,6 +96,49 @@ class TestRetrieveAsyncSolution:
             else:
                 assert a.results["default_model"].solution is None
                 assert a.results["default_model"].status is JobStatus.RUNNING
+
+    def test_metadata_travels_with_the_fetched_solution(
+        self,
+        setup_benchmark: SetupBenchmark,
+        mapper: MapperContainer,
+    ) -> None:
+        """An async algorithm reports metadata by returning it next to the solution."""
+        benchmark = TestRetrieveAsyncSolution._configure_benchmark(
+            setup_benchmark=setup_benchmark,
+            mapper=mapper,
+            retrival_data=ArbitraryDataDomain(),
+        )
+        metadata = {"device": "qpu-7", "queue_time_s": 12.5}
+
+        uc = AlgorithmRetrieveAsyncSolutionsUcImpl(transaction=setup_benchmark.transaction)
+
+        with patch.object(MockAsyncAlgorithm, "fetch_result", lambda *_: Success((_solution, metadata))):
+            assert is_successful(uc(benchmark=benchmark))
+
+        for a in benchmark.algorithms:
+            if isinstance(a.algorithm, BaseAlgorithmAsync):
+                assert a.results["default_model"].metadata == metadata
+                assert a.results["default_model"].status is JobStatus.DONE
+
+    def test_a_solution_without_metadata_leaves_it_empty(
+        self,
+        setup_benchmark: SetupBenchmark,
+        mapper: MapperContainer,
+    ) -> None:
+        """The shape every async algorithm had before metadata existed still works."""
+        benchmark = TestRetrieveAsyncSolution._configure_benchmark(
+            setup_benchmark=setup_benchmark,
+            mapper=mapper,
+            retrival_data=ArbitraryDataDomain(),
+        )
+
+        uc = AlgorithmRetrieveAsyncSolutionsUcImpl(transaction=setup_benchmark.transaction)
+        assert is_successful(uc(benchmark=benchmark))
+
+        for a in benchmark.algorithms:
+            if isinstance(a.algorithm, BaseAlgorithmAsync):
+                assert a.results["default_model"].metadata is None
+                assert a.results["default_model"].status is JobStatus.DONE
 
     def test_missing_retrieval_data(
         self,

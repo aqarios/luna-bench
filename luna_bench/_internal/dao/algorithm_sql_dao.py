@@ -134,7 +134,7 @@ class AlgorithmSqlDao(AlgorithmDao):
                 status=result.status,
                 error=result.error,
                 encoded_solution=result.solution_bytes,
-                meta_data=result.meta_data,
+                meta_data=result.metadata_bytes,
                 task_id=result.task_id,
                 retrival_data=result.retrival_data,
             )
@@ -163,7 +163,6 @@ class AlgorithmSqlDao(AlgorithmDao):
     def algorithm_to_domain(algorithm: AlgorithmTable) -> AlgorithmDomain:
         def to_domain(result: AlgorithmResultTable) -> AlgorithmResultDomain:
             to_return = AlgorithmResultDomain.model_construct(
-                meta_data=result.meta_data,
                 model_id=result.model_metadata.id,
                 status=JobStatus(result.status),
                 error=result.error,
@@ -172,6 +171,7 @@ class AlgorithmSqlDao(AlgorithmDao):
             )
 
             to_return.solution = result.encoded_solution
+            to_return.metadata_bytes = result.meta_data
             return to_return
 
         result_data: dict[str, AlgorithmResultDomain] = {

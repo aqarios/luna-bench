@@ -794,7 +794,7 @@ class Benchmark(BenchmarkEntity):
     def add_metric(
         self,
         name: str,
-        metric: BaseMetric,
+        metric: BaseMetric[Any],
     ) -> MetricEntity:
         """
         Add a metric to the benchmark with a given name.

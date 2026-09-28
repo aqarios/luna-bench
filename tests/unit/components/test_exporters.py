@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import base64
 import json
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 import pytest
@@ -54,7 +54,7 @@ def _algo_with_solution(solution: Solution) -> AlgorithmEntity:
         algorithm=MockAlgorithm(),
         results={
             "model1": AlgorithmResultEntity(
-                meta_data=None,
+                metadata=None,
                 status=JobStatus.DONE,
                 error=None,
                 solution=solution,
@@ -101,7 +101,7 @@ class TestDataFrameExporter:
     def test_merges_algorithms_metrics_and_features(self) -> None:
         df = DataFrameExporter().export(_default_container())
 
-        expected_columns = ["algorithm", "model", "meta_data", "algorithm_config", "accuracy/score", "num_vars/count"]
+        expected_columns = ["algorithm", "model", "metadata", "algorithm_config", "accuracy/score", "num_vars/count"]
         assert len(df) == 1
         assert list(df.columns) == expected_columns
         assert df.iloc[0]["algorithm"] == "algo1"
@@ -160,7 +160,7 @@ class TestDataFrameExporter:
         algo = _algo_with_solution(solution)
         df = DataFrameExporter(include_solution=True).export(_make_container(algorithms=[algo]))
 
-        assert list(df.columns) == ["algorithm", "model", "meta_data", "solution", "algorithm_config"]
+        assert list(df.columns) == ["algorithm", "model", "metadata", "solution", "algorithm_config"]
         assert df.iloc[0]["solution"] == solution.serialize()
 
     def test_algorithm_config_is_dumped(self) -> None:
@@ -174,7 +174,7 @@ class TestCsvExporter:
         csv_str = CsvExporter().export(_default_container())
         header, row = csv_str.strip().split("\n")
 
-        assert header == "algorithm,model,meta_data,algorithm_config,accuracy/score,num_vars/count"
+        assert header == "algorithm,model,metadata,algorithm_config,accuracy/score,num_vars/count"
         assert row.startswith("algo1,model1,")
 
     def test_custom_delimiter(self) -> None:
@@ -199,6 +199,24 @@ class TestCsvExporter:
             CsvExporter().export(_make_container())
 
 
+def _algo_with_metadata(metadata: dict[str, Any]) -> AlgorithmEntity:
+    return AlgorithmEntity(
+        name="algo1",
+        algorithm=MockAlgorithm(),
+        results={
+            "model1": AlgorithmResultEntity(
+                metadata=metadata,
+                status=JobStatus.DONE,
+                error=None,
+                solution=None,
+                task_id=None,
+                retrival_data=None,
+                model_id=1,
+            )
+        },
+    )
+
+
 class TestJsonExporter:
     def test_default_records_orient(self) -> None:
         json_str = JsonExporter().export(_default_container())
@@ -218,6 +236,24 @@ class TestJsonExporter:
         records = json.loads(JsonExporter().export(container))
 
         assert records[1]["accuracy/score"] is None
+
+    def test_metadata_is_exported_as_an_object(self) -> None:
+        container = _make_container(algorithms=[_algo_with_metadata({"device": "qpu-7", "shots": 4096})])
+        records = json.loads(JsonExporter().export(container))
+
+        assert records[0]["metadata"] == {"device": "qpu-7", "shots": 4096}
+
+    def test_metadata_values_json_has_no_form_for_are_rendered_as_text(self) -> None:
+        """A provider puts its own objects in metadata, and they have to stay readable."""
+
+        class ProviderHandle:
+            def __str__(self) -> str:
+                return "provider-handle-7"
+
+        container = _make_container(algorithms=[_algo_with_metadata({"handle": ProviderHandle()})])
+        records = json.loads(JsonExporter().export(container))
+
+        assert records[0]["metadata"]["handle"] == "provider-handle-7"
 
     def test_columns_orient(self) -> None:
         json_str = JsonExporter(orient="columns").export(_default_container())

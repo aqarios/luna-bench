@@ -132,6 +132,37 @@ class MyAlgorithm(BaseAlgorithmSync):
         ...
 ```
 
+### Report what the solver knows about a run
+
+A run is more than its solution: the device it went to, the shots it took, how long it sat in a
+provider's queue. Return a `(solution, metadata)` pair instead of a bare `Solution` and luna-bench
+stores that mapping with the run. Returning the solution alone stays valid and leaves the metadata
+empty, so no existing algorithm has to change.
+
+```python
+from luna_bench.custom import BaseAlgorithmSync, SolveOutcome, algorithm
+from luna_model import Model, Solution
+
+
+@algorithm()
+class MyAlgorithm(BaseAlgorithmSync):
+    def run(self, model: Model) -> SolveOutcome:
+        solution = ...
+        return solution, {"device": "qpu-7", "shots": 4096}
+```
+
+The metadata is a plain dict, serialized as bytes, so it holds what JSON cannot: datetimes, enums,
+sets. It has to be picklable — an object bound to an open connection or a file handle is not, and
+that run is recorded as failed with an error saying so. Algorithms from luna_quantum report their
+solve job's metadata on their own, with no code of yours involved.
+
+It reaches you through the benchmark's results and its exports:
+
+```python
+benchmark.get_algorithm("my_algo").results["max_cut"].metadata  # {"device": "qpu-7", ...}
+benchmark.to_dataframe()["metadata"]
+```
+
 ### Write your own feature
 
 Features extract properties from models. They run before algorithms and metrics.
@@ -221,6 +252,37 @@ class MyMetric(BaseMetric):
         score = solution.expectation_value()
         return MyMetricResult(score=score)
 ```
+
+### Write a metric that reads solver metadata
+
+A metric that reports on the run rather than on the solution needs one more argument than
+`BaseMetric.run` gives it. Subclass `BaseMetadataMetric` and implement `run_with_metadata`:
+
+```python
+from luna_bench.custom import BaseMetadataMetric, FeatureResultContainer, MetricResult, SolveMetadata, metric
+from luna_model import Solution
+
+
+class QueueTimeResult(MetricResult):
+    queue_time_s: float
+
+
+@metric()
+class QueueTime(BaseMetadataMetric[QueueTimeResult]):
+    def run_with_metadata(
+        self,
+        solution: Solution,
+        feature_results: FeatureResultContainer,
+        metadata: SolveMetadata,
+    ) -> QueueTimeResult:
+        return QueueTimeResult(queue_time_s=metadata["queue_time_s"])
+```
+
+`SolveMetadata` separates the two ways a value can be missing. Reading anything from a run whose
+algorithm reported no metadata raises `MetadataNotAvailableError`; a key missing from metadata that
+was reported raises `KeyError`, or falls back to `metadata.get(key, default)`. Either way only that
+one (model, algorithm) pair is recorded as a failed metric result, and the rest of the benchmark
+carries on. Check `metadata.available` or `key in metadata` first to handle it yourself.
 
 ## Development
 

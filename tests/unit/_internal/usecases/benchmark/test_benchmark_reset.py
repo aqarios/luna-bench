@@ -30,7 +30,7 @@ def _algo(name: str, status: JobStatus) -> AlgorithmEntity:
         algorithm=MockAlgorithm(),
         results={
             "model1": AlgorithmResultEntity.model_construct(
-                meta_data=None,
+                metadata=None,
                 status=status,
                 error=None,
                 solution=None,
@@ -109,7 +109,6 @@ class TestBenchmarkReset:
             benchmark_name,
             "existing",
             AlgorithmResultDomain.model_construct(
-                meta_data=None,
                 model_id=setup_benchmark.model_metadata.id,
                 status=JobStatus.DONE,
                 error=None,
@@ -165,7 +164,6 @@ class TestBenchmarkReset:
             "existing",
             "existing",
             AlgorithmResultDomain.model_construct(
-                meta_data=None,
                 model_id=setup_benchmark.model_metadata.id,
                 status=JobStatus.FAILED,
                 error=None,
@@ -206,7 +204,6 @@ class TestBenchmarkReset:
             "existing",
             "existing",
             AlgorithmResultDomain.model_construct(
-                meta_data=None,
                 model_id=setup_benchmark.model_metadata.id,
                 status=JobStatus.DONE,
                 error=None,
@@ -248,7 +245,6 @@ class TestBenchmarkReset:
             "existing",
             "existing",
             AlgorithmResultDomain.model_construct(
-                meta_data=None,
                 model_id=setup_benchmark.model_metadata.id,
                 status=JobStatus.DONE,
                 error=None,
@@ -276,7 +272,6 @@ class TestBenchmarkReset:
             "existing",
             "existing",
             AlgorithmResultDomain.model_construct(
-                meta_data=None,
                 model_id=setup_benchmark.model_metadata.id,
                 status=JobStatus.FAILED,
                 error=None,
@@ -317,7 +312,6 @@ class TestBenchmarkReset:
             "existing",
             "existing",
             AlgorithmResultDomain.model_construct(
-                meta_data=None,
                 model_id=setup_benchmark.model_metadata.id,
                 status=JobStatus.DONE,
                 error=None,
@@ -347,7 +341,6 @@ class TestBenchmarkReset:
             "existing",
             "existing",
             AlgorithmResultDomain.model_construct(
-                meta_data=None,
                 model_id=setup_benchmark.model_metadata.id,
                 status=JobStatus.DONE,
                 error=None,
@@ -413,7 +406,6 @@ class TestBenchmarkReset:
             "existing",
             "existing",
             AlgorithmResultDomain.model_construct(
-                meta_data=None,
                 model_id=setup_benchmark.model_metadata.id,
                 status=JobStatus.FAILED,
                 error=None,
