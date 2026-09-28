@@ -1,7 +1,6 @@
 from typing import Any
 from unittest.mock import MagicMock
 
-from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench.custom.result_containers.benchmark_result_container import BenchmarkResultContainer
 from luna_bench.entities import (
     AlgorithmEntity,
@@ -85,7 +84,7 @@ class TestFromBenchmark:
             algorithm=MockAlgorithm(),
             results={
                 "model_1": AlgorithmResultEntity(
-                    meta_data=ArbitraryDataDomain.model_validate({"runtime": 1.5}),
+                    metadata={"runtime": 1.5},
                     status=JobStatus.FAILED,
                     error="boom",
                     solution=None,
@@ -99,7 +98,7 @@ class TestFromBenchmark:
 
         run_result = container.algorithms["model_1"]["algo_1"]
         assert run_result.solution is None
-        assert run_result.meta_data == {"runtime": 1.5}
+        assert run_result.metadata == {"runtime": 1.5}
         assert run_result.algorithm is algo.algorithm
 
     def test_multiple_algorithms_and_models(self) -> None:

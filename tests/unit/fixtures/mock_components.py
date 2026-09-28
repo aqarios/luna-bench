@@ -6,7 +6,15 @@ from luna_model import Solution
 from pydantic import BaseModel
 from returns.result import Result, Success
 
-from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot
+from luna_bench.custom import (
+    BaseAlgorithmAsync,
+    BaseAlgorithmSync,
+    BaseFeature,
+    BaseMetadataMetric,
+    BaseMetric,
+    BasePlot,
+    SolveMetadata,
+)
 from luna_bench.custom.base_results.feature_result import FeatureResult
 from luna_bench.custom.base_results.metric_result import MetricResult
 from luna_bench.custom.decorators.algorithm import algorithm
@@ -93,6 +101,23 @@ class MockMetric(BaseMetric[MetricResult]):
 class MockMetricError(BaseMetric[MetricResult]):
     def run(self, solution: Solution, feature_results: FeatureResultContainer) -> MetricResult:
         raise NotImplementedError
+
+
+class MockMetadataMetricResult(MetricResult):
+    device: str
+
+
+@metric
+class MockMetadataMetric(BaseMetadataMetric[MockMetadataMetricResult]):
+    """Reads one value out of the metadata of the run it evaluates."""
+
+    def run_with_metadata(
+        self,
+        solution: Solution,  # noqa: ARG002
+        feature_results: FeatureResultContainer,  # noqa: ARG002
+        metadata: SolveMetadata,
+    ) -> MockMetadataMetricResult:
+        return MockMetadataMetricResult(device=metadata["device"])
 
 
 class UnregisteredMetric(BaseMetric[MetricResult]):

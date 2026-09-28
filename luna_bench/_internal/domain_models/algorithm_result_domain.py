@@ -1,14 +1,17 @@
+from typing import Any
+
 from luna_model import Solution
 
 from luna_bench.entities.enums.job_status_enum import JobStatus
+from luna_bench.helpers.metadata import decode_metadata, encode_metadata
 
 from .arbitrary_data_domain import ArbitraryDataDomain
 from .base_domain import BaseDomain
 
 
 class AlgorithmResultDomain(BaseDomain):
-    meta_data: ArbitraryDataDomain | None = None
     _solution_bytes: bytes | None = None
+    _metadata_bytes: bytes | None = None
 
     model_id: int
 
@@ -41,3 +44,24 @@ class AlgorithmResultDomain(BaseDomain):
     @solution_bytes.setter
     def solution_bytes(self, value: bytes) -> None:
         self._solution_bytes = value
+
+    @property
+    def metadata(self) -> dict[str, Any] | None:
+        """What the algorithm reported about the run, decoded from storage."""
+        return decode_metadata(self._metadata_bytes)
+
+    @metadata.setter
+    def metadata(self, value: bytes | dict[str, Any] | None) -> None:
+        """Accept the metadata as a mapping or as the bytes the database holds."""
+        if isinstance(value, bytes | bytearray):
+            self._metadata_bytes = bytes(value)
+        else:
+            self._metadata_bytes = encode_metadata(value)
+
+    @property
+    def metadata_bytes(self) -> bytes | None:
+        return self._metadata_bytes
+
+    @metadata_bytes.setter
+    def metadata_bytes(self, value: bytes | None) -> None:
+        self._metadata_bytes = bytes(value) if value is not None else None

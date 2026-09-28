@@ -14,7 +14,12 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
 from luna_bench.errors.registry.unknown_component_error import UnknownComponentError
 from luna_bench.errors.run_errors.run_metric_missing_error import RunMetricMissingError
-from tests.unit.fixtures.mock_components import MockMetric, MockMetricError, UnregisteredMetric
+from tests.unit.fixtures.mock_components import (
+    MockMetadataMetric,
+    MockMetric,
+    MockMetricError,
+    UnregisteredMetric,
+)
 
 if TYPE_CHECKING:
     from luna_model import Solution
@@ -135,7 +140,7 @@ class TestMetric:
             for model in benchmark.modelset.models:
                 num_metrics_to_calculate += 1
                 a.results[model.name] = AlgorithmResultEntity(
-                    meta_data=None,
+                    metadata=None,
                     status=JobStatus.DONE,
                     error=None,
                     solution=solution,
@@ -180,7 +185,7 @@ class TestMetric:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
                 a.results[model.name] = AlgorithmResultEntity(
-                    meta_data=None,
+                    metadata=None,
                     status=JobStatus.DONE,
                     error=None,
                     solution=solution,
@@ -216,7 +221,7 @@ class TestMetric:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
                 a.results[model.name] = AlgorithmResultEntity(
-                    meta_data=None,
+                    metadata=None,
                     status=JobStatus.RUNNING,
                     error=None,
                     solution=solution,
@@ -241,7 +246,7 @@ class TestMetric:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
                 a.results[model.name] = AlgorithmResultEntity(
-                    meta_data=None,
+                    metadata=None,
                     status=JobStatus.DONE,
                     error=None,
                     solution=None,
@@ -266,7 +271,7 @@ class TestMetric:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
                 a.results[model.name] = AlgorithmResultEntity(
-                    meta_data=None,
+                    metadata=None,
                     status=JobStatus.DONE,
                     error=None,
                     solution=None,
@@ -286,6 +291,71 @@ class TestMetric:
         for m in benchmark.metrics:
             assert len(m.results) == 0
 
+    def _run_metadata_metric(
+        self,
+        usecase: UsecaseContainer,
+        setup_benchmark: SetupBenchmark,
+        mapper: MapperContainer,
+        solution: Solution,
+        metadata: dict[str, str] | None,
+    ) -> MetricEntity:
+        """Run a metadata metric against algorithm results reporting *metadata*."""
+        benchmark = mapper.benchmark_mapper().to_user_model(setup_benchmark.benchmark).unwrap()
+        for a in benchmark.algorithms:
+            assert benchmark.modelset is not None
+            for model in benchmark.modelset.models:
+                a.results[model.name] = AlgorithmResultEntity(
+                    metadata=metadata,
+                    status=JobStatus.DONE,
+                    error=None,
+                    solution=solution,
+                    task_id=None,
+                    retrival_data=None,
+                    model_id=model.id,
+                )
+        metric_result = usecase.benchmark_add_metric_uc()(
+            benchmark_name=benchmark.name, name="device", metric=MockMetadataMetric()
+        )
+        assert is_successful(metric_result)
+        metric = metric_result.unwrap()
+        benchmark.metrics.append(metric)
+
+        assert is_successful(usecase.benchmark_run_metric_uc()(benchmark=benchmark, metric=metric))
+        return metric
+
+    def test_run_metadata_metric_reads_the_metadata_of_its_run(
+        self,
+        usecase: UsecaseContainer,
+        setup_benchmark: SetupBenchmark,
+        mapper: MapperContainer,
+        solution: Solution,
+    ) -> None:
+        metric = self._run_metadata_metric(usecase, setup_benchmark, mapper, solution, metadata={"device": "qpu-7"})
+
+        assert len(metric.results) > 0
+        for model_results in metric.results.values():
+            for r in model_results.values():
+                assert r.status == JobStatus.DONE
+                assert r.result is not None
+                assert r.result.model_dump()["device"] == "qpu-7"
+
+    def test_run_metadata_metric_fails_for_a_run_that_reported_none(
+        self,
+        usecase: UsecaseContainer,
+        setup_benchmark: SetupBenchmark,
+        mapper: MapperContainer,
+        solution: Solution,
+    ) -> None:
+        """Only that one pair fails: the metric is recorded as failed, the run is untouched."""
+        metric = self._run_metadata_metric(usecase, setup_benchmark, mapper, solution, metadata=None)
+
+        assert len(metric.results) > 0
+        for model_results in metric.results.values():
+            for r in model_results.values():
+                assert r.status == JobStatus.FAILED
+                assert r.error is not None
+                assert "No metadata is available" in r.error
+
     def test_run_metric_raises_during_execution(
         self,
         usecase: UsecaseContainer,
@@ -298,7 +368,7 @@ class TestMetric:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
                 a.results[model.name] = AlgorithmResultEntity(
-                    meta_data=None,
+                    metadata=None,
                     status=JobStatus.DONE,
                     error=None,
                     solution=solution,

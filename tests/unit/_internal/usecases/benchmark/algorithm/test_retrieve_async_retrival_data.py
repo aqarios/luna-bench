@@ -36,7 +36,7 @@ class TestRetrieveAsyncRetrivalData:
         assert benchmark.modelset is not None, "Failed to load modelset"
 
         fake_result_data = AlgorithmResultEntity(
-            meta_data=None,
+            metadata=None,
             status=JobStatus.RUNNING,
             error=None,
             solution=None,

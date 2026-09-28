@@ -106,7 +106,7 @@ class BenchmarkResultContainer(BaseModel):
             for model_name, algo_result_entity in a.results.items():
                 algorithms.setdefault(model_name, {})[a.name] = AlgorithmResultContainer(
                     solution=algo_result_entity.solution,
-                    meta_data=algo_result_entity.meta_data.model_dump() if algo_result_entity.meta_data else None,
+                    metadata=algo_result_entity.metadata,
                     algorithm=a.algorithm,
                 )
         return algorithms

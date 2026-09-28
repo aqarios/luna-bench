@@ -13,8 +13,9 @@ from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.helper import FeatureResultBuilder
 from luna_bench._internal.usecases.benchmark.protocols import MetricRunUc
-from luna_bench.custom import BaseMetric
+from luna_bench.custom import BaseMetadataMetric, BaseMetric
 from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
+from luna_bench.custom.result_containers.solve_metadata import SolveMetadata
 from luna_bench.entities import AlgorithmResultEntity, BenchmarkEntity, MetricEntity, MetricResultEntity
 from luna_bench.entities.enums import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
@@ -84,7 +85,17 @@ class MetricRunUcImpl(MetricRunUc):
         start = time.perf_counter_ns()
 
         try:
-            user_result = metric.metric.run(algorithm_result.solution, feature_results)
+            if isinstance(metric.metric, BaseMetadataMetric):
+                # Only a metadata metric is told which run it is looking at. One that reads
+                # metadata a run never reported raises, and lands in the except below as a
+                # failed result for this pair alone.
+                user_result = metric.metric.run_with_metadata(
+                    algorithm_result.solution,
+                    feature_results,
+                    SolveMetadata.of(algorithm_result.metadata),
+                )
+            else:
+                user_result = metric.metric.run(algorithm_result.solution, feature_results)
             status = JobStatus.DONE
         except Exception as e:
             self._logger.error(

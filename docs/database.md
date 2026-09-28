@@ -64,7 +64,7 @@ erDiagram
 
     AlgorithmResult {
         int id PK
-        JSONField meta_data
+        bytes meta_data "serialized metadata the run reported"
         bytes encoded_solution
     }
 

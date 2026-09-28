@@ -17,7 +17,9 @@ class JsonExporter(BaseExporter[str]):
 
     Thin configuration layer over ``DataFrameExporter``: the merged results
     DataFrame is rendered with ``DataFrame.to_json``. Serialized solutions
-    (bytes) are encoded as base64 strings to stay JSON-compatible.
+    (bytes) are encoded as base64 strings to stay JSON-compatible, and values
+    JSON has no form for, such as a provider's own object in a run's metadata,
+    are rendered as their string form.
 
     Attributes
     ----------
@@ -52,4 +54,7 @@ class JsonExporter(BaseExporter[str]):
             df["solution"] = df["solution"].map(
                 lambda value: base64.b64encode(value).decode("ascii") if isinstance(value, bytes) else value
             )
-        return df.to_json(orient=self.orient, indent=self.indent)
+        # Metadata is whatever the solver reported, a provider's own objects included. Left to
+        # itself pandas renders an object it does not recognise from its attributes, which for
+        # many of them is an empty `{}`; its string form at least says what the value was.
+        return df.to_json(orient=self.orient, indent=self.indent, default_handler=str)

@@ -24,7 +24,6 @@ class AlgorithmMapper(ModelListMixin[AlgorithmDomain, AlgorithmEntity]):
     @staticmethod
     def result_to_domain_model(result: AlgorithmResultEntity) -> AlgorithmResultDomain:
         to_return = AlgorithmResultDomain.model_construct(
-            meta_data=result.meta_data,
             status=result.status,
             error=result.error,
             task_id=result.task_id,
@@ -32,13 +31,14 @@ class AlgorithmMapper(ModelListMixin[AlgorithmDomain, AlgorithmEntity]):
             model_id=result.model_id,
         )
         to_return.solution = result.solution
+        to_return.metadata = result.metadata
 
         return to_return
 
     @staticmethod
     def result_to_user_model(result: AlgorithmResultDomain) -> AlgorithmResultEntity:
         return AlgorithmResultEntity.model_construct(
-            meta_data=result.meta_data,
+            metadata=result.metadata,
             status=result.status,
             error=result.error,
             solution=result.solution,

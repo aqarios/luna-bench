@@ -17,11 +17,11 @@ class AlgorithmResultTable(BaseTable):
 
     encoded_solution: bytes | None = BlobField(null=True)  # type: ignore[assignment]
 
-    meta_data: ArbitraryDataDomain | None = JSONField(  # type: ignore[assignment]
-        json_loads=ArbitraryDataDomain.model_validate_json,
-        json_dumps=lambda x: x.model_dump_json(),
-        null=True,
-    )
+    # The metadata a run reported, serialized the same way the solution is: a solver fills it
+    # with whatever it likes, and JSON would not hold all of it. The column keeps its original
+    # name because luna-bench has no migrations - databases written before metadata existed
+    # have NULL here, which reads back as "no metadata" either way.
+    meta_data: bytes | None = BlobField(null=True)  # type: ignore[assignment]
 
     task_id: str | None = FixedCharField(36, null=True)  # type: ignore[assignment]
     retrival_data: ArbitraryDataDomain | None = JSONField(  # type: ignore[assignment]
