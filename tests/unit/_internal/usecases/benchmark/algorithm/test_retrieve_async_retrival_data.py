@@ -36,7 +36,7 @@ class TestRetrieveAsyncRetrivalData:
         assert benchmark.modelset is not None, "Failed to load modelset"
 
         fake_result_data = AlgorithmResultEntity(
-            meta_data=None,
+            metadata=None,
             status=JobStatus.RUNNING,
             error=None,
             solution=None,
@@ -53,7 +53,7 @@ class TestRetrieveAsyncRetrivalData:
                     )
 
         for b in benchmark.algorithms:
-            b.results = {"default_model": fake_result_data.model_copy()}
+            b.results = {"default_model": [fake_result_data.model_copy()]}
         return benchmark
 
     @pytest.mark.parametrize(
@@ -107,20 +107,20 @@ class TestRetrieveAsyncRetrivalData:
         for a in benchmark.algorithms:
             if is_successful(exp):
                 if isinstance(a.algorithm, BaseAlgorithmAsync):
-                    assert a.results["default_model"].solution is None
-                    assert a.results["default_model"].retrival_data == return_values[1].unwrap().unwrap()
-                    assert a.results["default_model"].status is JobStatus.RUNNING
+                    assert a.results["default_model"][0].solution is None
+                    assert a.results["default_model"][0].retrival_data == return_values[1].unwrap().unwrap()
+                    assert a.results["default_model"][0].status is JobStatus.RUNNING
                 else:
-                    assert a.results["default_model"].solution is None
-                    assert a.results["default_model"].retrival_data is None
-                    assert a.results["default_model"].status is JobStatus.RUNNING
+                    assert a.results["default_model"][0].solution is None
+                    assert a.results["default_model"][0].retrival_data is None
+                    assert a.results["default_model"][0].status is JobStatus.RUNNING
             else:
                 if isinstance(a.algorithm, BaseAlgorithmAsync):
-                    assert a.results["default_model"].solution is None
-                    assert a.results["default_model"].retrival_data is None
-                    assert a.results["default_model"].status is JobStatus.FAILED
-                    assert a.results["default_model"].error == exp.failure()
+                    assert a.results["default_model"][0].solution is None
+                    assert a.results["default_model"][0].retrival_data is None
+                    assert a.results["default_model"][0].status is JobStatus.FAILED
+                    assert a.results["default_model"][0].error == exp.failure()
                 else:
-                    assert a.results["default_model"].solution is None
-                    assert a.results["default_model"].retrival_data is None
-                    assert a.results["default_model"].status is JobStatus.RUNNING
+                    assert a.results["default_model"][0].solution is None
+                    assert a.results["default_model"][0].retrival_data is None
+                    assert a.results["default_model"][0].status is JobStatus.RUNNING

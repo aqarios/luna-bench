@@ -24,32 +24,39 @@ class AlgorithmMapper(ModelListMixin[AlgorithmDomain, AlgorithmEntity]):
     @staticmethod
     def result_to_domain_model(result: AlgorithmResultEntity) -> AlgorithmResultDomain:
         to_return = AlgorithmResultDomain.model_construct(
-            meta_data=result.meta_data,
             status=result.status,
             error=result.error,
             task_id=result.task_id,
             retrival_data=result.retrival_data,
             model_id=result.model_id,
+            repetition=result.repetition,
         )
         to_return.solution = result.solution
+        to_return.metadata = result.metadata
 
         return to_return
 
     @staticmethod
     def result_to_user_model(result: AlgorithmResultDomain) -> AlgorithmResultEntity:
         return AlgorithmResultEntity.model_construct(
-            meta_data=result.meta_data,
+            metadata=result.metadata,
             status=result.status,
             error=result.error,
             solution=result.solution,
             task_id=result.task_id,
             retrival_data=result.retrival_data,
             model_id=result.model_id,
+            repetition=result.repetition,
         )
 
     @staticmethod
-    def result_to_user_model_dict(results: dict[str, AlgorithmResultDomain]) -> dict[str, AlgorithmResultEntity]:
-        return {k: AlgorithmMapper.result_to_user_model(result) for k, result in results.items()}
+    def result_to_user_model_dict(
+        results: dict[str, list[AlgorithmResultDomain]],
+    ) -> dict[str, list[AlgorithmResultEntity]]:
+        return {
+            model_name: [AlgorithmMapper.result_to_user_model(result) for result in runs]
+            for model_name, runs in results.items()
+        }
 
     def to_user_model(
         self,
@@ -84,6 +91,7 @@ class AlgorithmMapper(ModelListMixin[AlgorithmDomain, AlgorithmEntity]):
             AlgorithmEntity.model_construct(
                 name=domain.name,
                 algorithm=user_config.unwrap(),
+                repetitions=domain.repetitions,
                 results=self.result_to_user_model_dict(domain.results),
             )
         )

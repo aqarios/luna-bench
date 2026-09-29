@@ -21,6 +21,7 @@ from .protocols import FeatureDao
 from .tables import BenchmarkTable, FeatureResultTable, FeatureTable
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
     from logging import Logger
 
     from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
@@ -109,14 +110,19 @@ class FeatureSqlDao(FeatureDao):
 
     @staticmethod
     def remove_result(
-        benchmark_name: str, feature_name: str
+        benchmark_name: str, feature_name: str, statuses: Collection[JobStatus] | None = None
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)
+            query = FeatureResultTable.delete().where(FeatureResultTable.feature == feature)
+            if statuses is not None:
+                # Per row, so a feature that failed on one model is recomputed without the
+                # models it already holds being thrown away.
+                query = query.where(FeatureResultTable.status.in_([s.value for s in statuses]))
             # peewee stubs leave `execute` untyped; `unused-ignore` keeps environments where mypy
             # does not flag the call (with `warn_unused_ignores`) passing as well.
-            FeatureResultTable.delete().where(FeatureResultTable.feature == feature).execute()  # type: ignore[no-untyped-call, unused-ignore]
+            query.execute()  # type: ignore[no-untyped-call, unused-ignore]
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())

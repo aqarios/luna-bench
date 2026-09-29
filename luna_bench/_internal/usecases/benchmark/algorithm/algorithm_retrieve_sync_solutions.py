@@ -3,10 +3,10 @@ from time import sleep
 
 from dependency_injector.wiring import Provide, inject
 from huey.api import partial
-from luna_model import Solution
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
+from luna_bench._internal.background_tasks import SyncRunPayload
 from luna_bench._internal.dao import DaoContainer, DaoTransaction
 from luna_bench._internal.mappers.algorithm_mapper import AlgorithmMapper
 from luna_bench._internal.usecases.benchmark.protocols import (
@@ -21,6 +21,7 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.helpers.metadata import decode_metadata
 from luna_bench.logging import BenchLogger
 
 
@@ -53,12 +54,14 @@ class AlgorithmRetrieveSyncSolutionsUcImpl(AlgorithmRetrieveSyncSolutionsUc):
         benchmark: BenchmarkEntity,
         algorithm: AlgorithmEntity,
         result: AlgorithmResultEntity,
-        s: Solution,
+        payload: SyncRunPayload,
     ) -> Result[
         None,
         ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError,
     ]:
-        result.solution = s
+        solution, metadata = payload
+        result.solution = solution
+        result.metadata = decode_metadata(metadata)
         result.status = JobStatus.DONE
         domain_model = AlgorithmMapper.result_to_domain_model(result)
         with self._transaction as t:
@@ -82,6 +85,7 @@ class AlgorithmRetrieveSyncSolutionsUcImpl(AlgorithmRetrieveSyncSolutionsUc):
         else:
             error_msg = f"{error.__class__.__name__}: {error}"
         result.solution = None
+        result.metadata = None
         result.status = JobStatus.FAILED
         result.error = error_msg
         domain_model = AlgorithmMapper.result_to_domain_model(result)
@@ -99,7 +103,8 @@ class AlgorithmRetrieveSyncSolutionsUcImpl(AlgorithmRetrieveSyncSolutionsUc):
             (a, r)
             for a in benchmark.algorithms
             if isinstance(a.algorithm, BaseAlgorithmSync)
-            for r in a.results.values()
+            for runs in a.results.values()
+            for r in runs
             if r.status == JobStatus.RUNNING and r.task_id is not None
         )
 

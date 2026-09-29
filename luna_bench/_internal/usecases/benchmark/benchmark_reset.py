@@ -25,15 +25,42 @@ class BenchmarkResetUcImpl(BenchmarkResetUc):
     _logger = BenchLogger.get_logger(__name__)
 
     @staticmethod
+    def _statuses(mode: ResetLevel) -> frozenset[JobStatus] | None:
+        """Return the states *mode* clears, or ``None`` when it clears every result.
+
+        Parameters
+        ----------
+        mode : ResetLevel
+            What the reset was asked to clear.
+
+        Returns
+        -------
+        frozenset[JobStatus] | None
+            The states to delete, or ``None`` for all of them.
+        """
+        match mode:
+            case ResetLevel.ALL:
+                return None
+            case ResetLevel.UNFINISHED:
+                return frozenset(s for s in JobStatus if s != JobStatus.DONE)
+            case ResetLevel.FAILED:
+                return frozenset({JobStatus.FAILED})
+
+    @staticmethod
     def _get_reset_component_names(
         benchmark: BenchmarkEntity,
         mode: ResetLevel,
     ) -> tuple[list[str], list[str], list[str]]:
-        """Collect component names to clear based on *mode*.
+        """Collect the components holding a result *mode* clears.
 
-        Metrics are cascaded: whenever any algorithm result is included,
-        all metric results are included (since metrics depend on algorithm
-        outputs).
+        Each component is named because it holds at least one matching result, not
+        because all of its results match: which rows go is decided per result when they
+        are deleted, so a failed repetition is cleared without the runs that finished
+        going with it.
+
+        The metrics computed on a cleared run are removed as well, but they are not
+        found here - they are the runs that are gone once the algorithms have been
+        cleared, which `_cascade_metrics` deletes afterwards.
         """
         pred: Callable[[JobStatus], bool]
         match mode:
@@ -44,13 +71,14 @@ class BenchmarkResetUcImpl(BenchmarkResetUc):
             case ResetLevel.FAILED:
                 pred = lambda s: s == JobStatus.FAILED  # noqa: E731
 
-        algorithms = [a.name for a in benchmark.algorithms if any(pred(r.status) for r in a.results.values())]
+        algorithms = [
+            a.name for a in benchmark.algorithms if any(pred(r.status) for runs in a.results.values() for r in runs)
+        ]
         features = [f.name for f in benchmark.features if any(pred(r.status) for r in f.results.values())]
-        cascade_metrics = len(algorithms) > 0
         metrics = [
             m.name
             for m in benchmark.metrics
-            if cascade_metrics or any(pred(r.status) for inner in m.results.values() for r in inner.values())
+            if any(pred(r.status) for inner in m.results.values() for runs in inner.values() for r in runs)
         ]
         return algorithms, features, metrics
 
@@ -68,6 +96,37 @@ class BenchmarkResetUcImpl(BenchmarkResetUc):
         """
         self._transaction = transaction
 
+    def _cascade_metrics(
+        self,
+        t: DaoTransaction,
+        benchmark: BenchmarkEntity,
+    ) -> DataNotExistError | UnknownLunaBenchError | None:
+        """Drop what every metric computed on a run that has just been cleared.
+
+        Asked of every metric of the benchmark rather than only the ones selected on
+        their own status: a metric result is stale because its run is gone, which says
+        nothing about the state the result itself is in.
+
+        Parameters
+        ----------
+        t : DaoTransaction
+            The open transaction the results are deleted in.
+        benchmark : BenchmarkEntity
+            The benchmark being reset.
+
+        Returns
+        -------
+        DataNotExistError | UnknownLunaBenchError | None
+            The last failure, or ``None`` if every metric was cleaned.
+        """
+        last_error: DataNotExistError | UnknownLunaBenchError | None = None
+        for m in benchmark.metrics:
+            r = t.metric.remove_orphaned_results(benchmark.name, m.name)
+            if not is_successful(r):
+                self._logger.warning(f"Failed to reset the results of metric '{m.name}': {r.failure()}")
+                last_error = r.failure()
+        return last_error
+
     def __call__(
         self,
         benchmark: BenchmarkEntity,
@@ -79,6 +138,7 @@ class BenchmarkResetUcImpl(BenchmarkResetUc):
         last_error: DataNotExistError | UnknownLunaBenchError | None = None
 
         algorithms, features, metrics = self._get_reset_component_names(benchmark, mode)
+        statuses = self._statuses(mode)
 
         if not algorithms and not features and not metrics:
             self._logger.debug(f"'{mode}' reset: nothing to clear for benchmark '{benchmark.name}'")
@@ -91,19 +151,22 @@ class BenchmarkResetUcImpl(BenchmarkResetUc):
 
         with self._transaction as t:
             for name in algorithms:
-                r = t.algorithm.remove_result(benchmark.name, name)
+                r = t.algorithm.remove_result(benchmark.name, name, statuses)
                 if not is_successful(r):
                     self._logger.warning(f"Failed to reset algorithm '{name}': {r.failure()}")
                     last_error = r.failure()
 
             for name in metrics:
-                r = t.metric.remove_result(benchmark.name, name)
+                r = t.metric.remove_result(benchmark.name, name, statuses)
                 if not is_successful(r):
                     self._logger.warning(f"Failed to reset metric '{name}': {r.failure()}")
                     last_error = r.failure()
 
+            if algorithms:
+                last_error = self._cascade_metrics(t, benchmark) or last_error
+
             for name in features:
-                r = t.feature.remove_result(benchmark.name, name)
+                r = t.feature.remove_result(benchmark.name, name, statuses)
                 if not is_successful(r):
                     self._logger.warning(f"Failed to reset feature '{name}': {r.failure()}")
                     last_error = r.failure()

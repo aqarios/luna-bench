@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, overload
 
 from dependency_injector.wiring import Provide, inject
 from luna_quantum.solve.interfaces.algorithm_i import IAlgorithm
@@ -10,6 +11,7 @@ from returns.pipeline import is_successful
 
 from luna_bench._internal.usecases.usecase_container import UsecaseContainer
 from luna_bench._internal.wrappers import LunaAlgorithmWrapper
+from luna_bench.algorithms.variants import AlgorithmGrid, ParameterList, Variants, apply_parameters
 from luna_bench.entities import (
     AlgorithmEntity,
     BenchmarkEntity,
@@ -792,7 +794,7 @@ class Benchmark(BenchmarkEntity):
     def add_metric(
         self,
         name: str,
-        metric: BaseMetric,
+        metric: BaseMetric[Any],
     ) -> MetricEntity:
         """
         Add a metric to the benchmark with a given name.
@@ -894,10 +896,159 @@ class Benchmark(BenchmarkEntity):
                 return algorithm
         raise DataNotExistError
 
+    @overload
     def add_algorithm(
         self,
         name: str,
         algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+        *,
+        repetitions: int = 1,
+    ) -> AlgorithmEntity: ...
+
+    @overload
+    def add_algorithm(
+        self,
+        name: str,
+        algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+        *,
+        variants: Variants,
+        repetitions: int = 1,
+    ) -> AlgorithmGrid: ...
+
+    def add_algorithm(
+        self,
+        name: str,
+        algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+        *,
+        variants: Variants | None = None,
+        repetitions: int = 1,
+    ) -> AlgorithmEntity | AlgorithmGrid:
+        """
+        Add an algorithm to the benchmark, on its own or as a grid of variants.
+
+        Without *variants* this adds the one algorithm under *name*, as it always has.
+        With them, *algorithm* is the default version every variant starts from, and one
+        entry is registered per variant - the layer counts of a QAOA crossed with the
+        pipeline blocks it runs, say:
+
+        .. code-block:: python
+
+            grid = bench.add_algorithm(
+                "flex_qaoa",
+                FlexQAOA(backend=AqariosGpu()),
+                variants=ParameterGrid({"reps": [2, 4, 6], "pipeline.xy_mixer.enable": [False, True]}),
+            )
+
+        Every variant is built and checked before anything is registered, so a
+        misspelled parameter costs an error rather than half a benchmark.
+
+        *repetitions* runs the same configuration more than once per model, which is what
+        a stochastic solver needs to be judged on more than a single draw:
+
+        .. code-block:: python
+
+            bench.add_algorithm("flex_qaoa", FlexQAOA(), repetitions=10)
+
+        The runs are one entry's results, not ten entries: every one of them is evaluated
+        by the metrics on its own, and the plots and exports aggregate over them.
+        Combined with *variants*, each variant is repeated that often.
+
+        Parameters
+        ----------
+        name: str
+            The name of the algorithm to add. With *variants* it is the stem each
+            entry's name is built on.
+        algorithm: IAlgorithm[Any] | AlgorithmSync | AlgorithmAsync[Any]
+            An instance of the algorithm to add, or with *variants* the default version
+            they vary.
+        variants: Variants, optional
+            How the algorithm is varied: a generator such as `ParameterGrid`, or a plain
+            list of complete configurations. ``None``, the default, adds the one
+            algorithm.
+        repetitions: int, optional
+            How often to run the algorithm on every model, by default once.
+
+        Returns
+        -------
+        AlgorithmEntity | AlgorithmGrid
+            The added algorithm, or - with *variants* - the grid of entries and the axes
+            that produced them.
+
+        Raises
+        ------
+        ValueError
+            If *repetitions* is not at least 1.
+        UnknownParameterPathError
+            If a variant names a parameter the algorithm does not have.
+        pydantic.ValidationError
+            If a variant sets a parameter to a value that does not fit its field.
+
+        See Also
+        --------
+        luna_bench.algorithms.variants : The generators, and what they yield.
+        """
+        if repetitions < 1:
+            msg = f"An algorithm runs at least once, so repetitions has to be 1 or more, got {repetitions}."
+            raise ValueError(msg)
+
+        if variants is None:
+            return self._add_single_algorithm(name, algorithm, repetitions)
+
+        return self._add_algorithm_variants(name, algorithm, variants, repetitions)
+
+    def _add_algorithm_variants(
+        self,
+        name: str,
+        algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+        variants: Variants,
+        repetitions: int = 1,
+    ) -> AlgorithmGrid:
+        """Register one entry per variant of *algorithm*, and return them with their axes.
+
+        Parameters
+        ----------
+        name: str
+            Stem each entry's name is built on.
+        algorithm: IAlgorithm[Any] | AlgorithmSync | AlgorithmAsync[Any]
+            The default version the variants start from.
+        variants: Variants
+            The generator, or a plain list of complete configurations.
+        repetitions: int
+            How often each variant is run on every model, by default once.
+
+        Returns
+        -------
+        AlgorithmGrid
+            The registered entries and the axes that produced them.
+        """
+        # A plain list is the direct form; anything else yields its own dictionaries.
+        # Checked as a Sequence rather than against the generator protocol, because a
+        # list satisfies that protocol too - it is iterable and sized.
+        generator = ParameterList(variants) if isinstance(variants, Sequence) else variants
+
+        # Built in full first: a variant that cannot be applied has to fail before any
+        # of its siblings reaches the database, or a typo leaves half a benchmark behind.
+        prepared = [
+            (f"{name}[{','.join(f'{path}={value}' for path, value in parameters.items())}]", parameters, applied)
+            for parameters, applied in (
+                (parameters, apply_parameters(algorithm, parameters)) for parameters in generator
+            )
+        ]
+
+        entities = [self._add_single_algorithm(entry_name, applied, repetitions) for entry_name, _, applied in prepared]
+
+        axes: dict[str, dict[str, Any]] = {}
+        for entry_name, parameters, _ in prepared:
+            for path, value in parameters.items():
+                axes.setdefault(path, {})[entry_name] = value
+
+        return AlgorithmGrid(entities=entities, axes=axes)
+
+    def _add_single_algorithm(
+        self,
+        name: str,
+        algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+        repetitions: int = 1,
     ) -> AlgorithmEntity:
         """
         Add an algorithm to the benchmark with a given name.
@@ -914,6 +1065,8 @@ class Benchmark(BenchmarkEntity):
             The name of the algorithm to add.
         algorithm: IAlgorithm[Any] | AlgorithmSync | AlgorithmAsync[Any]
             An instance of the algorithm to add.
+        repetitions: int
+            How often the algorithm is run on every model, by default once.
 
         Returns
         -------
@@ -932,7 +1085,7 @@ class Benchmark(BenchmarkEntity):
             | UnknownComponentError
             | UnknownIdError
             | ValidationError,
-        ] = benchmark_add_algorithm(self.name, name, algorithm)
+        ] = benchmark_add_algorithm(self.name, name, algorithm, repetitions)
 
         if not is_successful(result):
             error = result.failure()
@@ -940,7 +1093,15 @@ class Benchmark(BenchmarkEntity):
             match error:
                 case DataNotUniqueError():
                     Benchmark._logger.warning(f"Loading existing Algorithm ('{name}').")
-                    return self.get_algorithm(name)
+                    existing = self.get_algorithm(name)
+                    if existing.repetitions != repetitions:
+                        # Changing the count would leave the results already stored meaning
+                        # something else, so the stored entry wins and says so.
+                        Benchmark._logger.warning(
+                            f"Algorithm ('{name}') stays at {existing.repetitions} repetition(s); "
+                            f"{repetitions} was requested. Remove it first to run it a different number of times."
+                        )
+                    return existing
                 case _:
                     Benchmark._logger.error(f"Failed to add algorithm to benchmark: {error}")
                     if isinstance(error, UnknownLunaBenchError):
@@ -1231,6 +1392,7 @@ class Benchmark(BenchmarkEntity):
         delimiter: str = ",",
         quoting: CsvQuoting = "minimal",
         include_solution: bool = False,
+        drop: Sequence[str] = (),
     ) -> str | None:
         """
         Render all benchmark results as CSV.
@@ -1253,6 +1415,11 @@ class Benchmark(BenchmarkEntity):
         include_solution: bool
             Whether to include the serialized solution column (base64-encoded).
             Defaults to False.
+        drop: Sequence[str]
+            Columns to leave out, by their name in the exported table - ``"metadata"``,
+            ``"algorithm_config"``, or a result column such as
+            ``"approx_ratio/approximation_ratio"``. Empty by default, and a name no
+            column has is warned about rather than raised.
 
         Returns
         -------
@@ -1263,7 +1430,9 @@ class Benchmark(BenchmarkEntity):
         """
         from luna_bench.exporters import CsvExporter  # noqa: PLC0415
 
-        payload = self.export(CsvExporter(delimiter=delimiter, quoting=quoting, include_solution=include_solution))
+        payload = self.export(
+            CsvExporter(delimiter=delimiter, quoting=quoting, include_solution=include_solution, drop=drop)
+        )
         if path is None:
             return payload
         Path(path).write_text(payload, encoding="utf-8")
@@ -1276,6 +1445,7 @@ class Benchmark(BenchmarkEntity):
         indent: int | None = None,
         orient: JsonOrient = "records",
         include_solution: bool = False,
+        drop: Sequence[str] = (),
     ) -> str | None:
         """
         Render all benchmark results as JSON.
@@ -1298,6 +1468,9 @@ class Benchmark(BenchmarkEntity):
         include_solution: bool
             Whether to include the serialized solution column (base64-encoded).
             Defaults to False.
+        drop: Sequence[str]
+            Columns to leave out, by their name in the exported table. Empty by
+            default; see `Benchmark.to_csv`.
 
         Returns
         -------
@@ -1308,7 +1481,7 @@ class Benchmark(BenchmarkEntity):
         """
         from luna_bench.exporters import JsonExporter  # noqa: PLC0415
 
-        payload = self.export(JsonExporter(indent=indent, orient=orient, include_solution=include_solution))
+        payload = self.export(JsonExporter(indent=indent, orient=orient, include_solution=include_solution, drop=drop))
         if path is None:
             return payload
         Path(path).write_text(payload, encoding="utf-8")
@@ -1375,13 +1548,13 @@ class Benchmark(BenchmarkEntity):
             title=title,
         )
 
-    def to_dataframe(self, *, include_solution: bool = False) -> pd.DataFrame:
+    def to_dataframe(self, *, include_solution: bool = False, drop: Sequence[str] = ()) -> pd.DataFrame:
         """
         Return all benchmark results as a single DataFrame.
 
         Convenience wrapper for ``self.export(DataFrameExporter(...))``: algorithm
-        results form the row spine (one row per ``(algorithm, model)``), metrics
-        merge on ``(algorithm, model)``, and features merge on ``model``. Feature
+        results form the row spine (one row per ``(algorithm, model, repetition)``),
+        metrics merge on those three, and features merge on ``model``. Feature
         values are repeated across algorithms for the same model since features
         are model-level.
 
@@ -1390,17 +1563,21 @@ class Benchmark(BenchmarkEntity):
         include_solution: bool
             Whether to include the serialized solution as a ``solution`` column.
             Defaults to False.
+        drop: Sequence[str]
+            Columns to leave out, by their name in the exported table. Empty by
+            default; see `Benchmark.to_csv`.
 
         Returns
         -------
         pd.DataFrame
-            A DataFrame with columns ``algorithm``, ``model``, plus one column per
-            result field of each feature and metric.
+            A DataFrame with columns ``algorithm``, ``model``, ``repetition``, plus
+            one column per result field of each feature and metric, less whatever
+            *drop* names.
 
         """
         from luna_bench.exporters import DataFrameExporter  # noqa: PLC0415
 
-        return self.export(DataFrameExporter(include_solution=include_solution))
+        return self.export(DataFrameExporter(include_solution=include_solution, drop=drop))
 
     def list_feature_classes(self) -> list[type[BaseFeature]]:
         """Return the feature classes registered on this benchmark."""

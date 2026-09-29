@@ -37,38 +37,50 @@ def make_metric_entity(
     *algo_model_results: tuple[str, str, dict[str, object]],
     status: JobStatus = JobStatus.DONE,
     error: str | None = None,
+    repetitions: int = 1,
 ) -> MetricEntity:
-    """Create a MetricEntity with results from (algo, model, {field: value}) tuples."""
-    results: dict[str, dict[str, MetricResultEntity]] = {}
+    """Create a MetricEntity with results from (algo, model, {field: value}) tuples.
+
+    Each tuple becomes one result per repetition, so a metric of an algorithm that ran
+    more than once is written the same way as one that ran once.
+    """
+    results: dict[str, dict[str, list[MetricResultEntity]]] = {}
     for algo, model, fields in algo_model_results:
-        if model not in results:
-            results[model] = {}
-        results[model][algo] = MetricResultEntity(
-            processing_time_ms=100,
-            model_name=model,
-            algorithm_name=algo,
-            status=status,
-            error=error,
-            result=MetricResult.model_construct(**fields) if fields else None,  # type: ignore[arg-type]
-        )
+        results.setdefault(model, {})[algo] = [
+            MetricResultEntity(
+                processing_time_ms=100,
+                model_name=model,
+                algorithm_name=algo,
+                repetition=repetition,
+                status=status,
+                error=error,
+                result=MetricResult.model_construct(**fields) if fields else None,  # type: ignore[arg-type]
+            )
+            for repetition in range(repetitions)
+        ]
     return MetricEntity(name=name, metric=MockMetric(), results=results)
 
 
-def make_algo_entity(name: str, model_names: list[str]) -> AlgorithmEntity:
-    """Create an AlgorithmEntity with empty results for given models."""
+def make_algo_entity(name: str, model_names: list[str], repetitions: int = 1) -> AlgorithmEntity:
+    """Create an AlgorithmEntity with empty results for given models, one per repetition."""
     return AlgorithmEntity(
         name=name,
         algorithm=MockAlgorithm(),
+        repetitions=repetitions,
         results={
-            m: AlgorithmResultEntity(
-                meta_data=None,
-                status=JobStatus.DONE,
-                error=None,
-                solution=None,
-                task_id=None,
-                retrival_data=None,
-                model_id=i,
-            )
+            m: [
+                AlgorithmResultEntity(
+                    metadata=None,
+                    status=JobStatus.DONE,
+                    error=None,
+                    solution=None,
+                    task_id=None,
+                    retrival_data=None,
+                    model_id=i,
+                    repetition=repetition,
+                )
+                for repetition in range(repetitions)
+            ]
             for i, m in enumerate(model_names)
         },
     )

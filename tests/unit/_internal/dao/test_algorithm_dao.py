@@ -21,7 +21,6 @@ if TYPE_CHECKING:
     from tests.unit.fixtures.mock_database import SetupBenchmark
 
 _result_obj = AlgorithmResultDomain.model_construct(
-    meta_data=ArbitraryDataDomain.model_validate(MockConfig(something="xD").model_dump(), from_attributes=True),
     model_id=1,
     status=JobStatus.DONE,
     error=None,
@@ -29,6 +28,7 @@ _result_obj = AlgorithmResultDomain.model_construct(
     retrival_data=None,
 )
 _result_obj.solution = b"abc"
+_result_obj.metadata = {"something": "xD"}
 
 
 class TestAlgorithmDAO:
@@ -200,20 +200,22 @@ class TestAlgorithmDAO:
         exp: Result[None, DataNotExistError],
     ) -> None:
         result_to_store = AlgorithmResultDomain.model_construct(
-            meta_data=ArbitraryDataDomain.model_validate(MockConfig(something="xD").model_dump(), from_attributes=True),
             model_id=setup_benchmark.model_metadata.id,
             status=JobStatus.DONE,
             error=None,
             task_id=None,
             retrival_data=None,
         )
+        result_to_store.metadata = {"something": "xD"}
 
         set_result = setup_benchmark.transaction.algorithm.set_result(benchmark_name, algorithm_name, result_to_store)
         assert type(set_result) is type(exp)
         if is_successful(exp):
             a = setup_benchmark.transaction.algorithm.load(benchmark_name, algorithm_name)
 
-            assert a.unwrap().results == {setup_benchmark.model_metadata.name: result_to_store}
+            assert a.unwrap().results == {setup_benchmark.model_metadata.name: [result_to_store]}
+            stored = a.unwrap().results[setup_benchmark.model_metadata.name][0]
+            assert stored.metadata == {"something": "xD"}
 
         else:
             assert isinstance(set_result.failure(), type(exp.failure()))

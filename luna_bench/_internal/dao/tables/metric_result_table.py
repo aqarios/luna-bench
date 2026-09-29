@@ -14,6 +14,10 @@ class MetricResultTable(BaseTable):
 
     processing_time_ms = IntegerField(null=False)
 
+    # The run of the algorithm this metric was computed on, counted from 0. A metric is
+    # evaluated once per repetition, so the repetition is part of what identifies a result.
+    repetition = IntegerField(default=0)
+
     status = CharField(max_length=16, choices=[(s.value, s.name) for s in JobStatus])
     error = CharField(max_length=255, null=True)
 
@@ -34,4 +38,4 @@ class MetricResultTable(BaseTable):
     )
 
     class Meta:
-        indexes = ((("model_metadata", "metric", "algorithm"), True),)
+        indexes = ((("model_metadata", "metric", "algorithm", "repetition"), True),)

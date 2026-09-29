@@ -3,12 +3,19 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, Protocol
 
+from luna_model import Solution
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
     from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync
+
+#: What a finished synchronous run hands back: the solution, and the metadata the algorithm
+#: reported with it, already serialized. The worker encodes it rather than passing the mapping
+#: on, so metadata the serializer cannot handle fails as an ordinary failed run instead of
+#: breaking the queue's own result handling, where no one is left to report it.
+type SyncRunPayload = tuple[Solution, bytes | None]
 
 
 class BackgroundTaskClient(Protocol):

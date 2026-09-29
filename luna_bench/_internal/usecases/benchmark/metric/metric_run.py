@@ -1,4 +1,5 @@
 import time
+from itertools import product
 from typing import TYPE_CHECKING
 
 from dependency_injector.wiring import Provide, inject
@@ -13,8 +14,9 @@ from luna_bench._internal.registries import PydanticRegistry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench._internal.usecases.benchmark.helper import FeatureResultBuilder
 from luna_bench._internal.usecases.benchmark.protocols import MetricRunUc
-from luna_bench.custom import BaseMetric
+from luna_bench.custom import BaseMetadataMetric, BaseMetric
 from luna_bench.custom.result_containers.feature_result_container import FeatureResultContainer
+from luna_bench.custom.result_containers.solve_metadata import SolveMetadata
 from luna_bench.entities import AlgorithmResultEntity, BenchmarkEntity, MetricEntity, MetricResultEntity
 from luna_bench.entities.enums import JobStatus
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
@@ -62,12 +64,14 @@ class MetricRunUcImpl(MetricRunUc):
     ) -> Result[MetricResultEntity, AlgorithmNotDoneError | DataNotExistError | UnknownLunaBenchError]:
         # CHECK if result for metric and algorithm already exists and if it should be updated/recalulated or not.
 
-        result: MetricResultEntity | None = metric.results.get(model_name, {}).get(algorithm_name, None)
+        repetition = algorithm_result.repetition
+        existing: list[MetricResultEntity] = metric.results.get(model_name, {}).get(algorithm_name, [])
+        result: MetricResultEntity | None = next((r for r in existing if r.repetition == repetition), None)
 
         if result is not None and result.status == JobStatus.DONE:
             self._logger.info(
-                f"Metric {metric.name} for model {model_name} and algorithm {algorithm_name} "
-                f"already exists and is done."
+                f"Metric {metric.name} for model {model_name}, algorithm {algorithm_name} and "
+                f"repetition {repetition} already exists and is done."
             )
             return Success(result)
 
@@ -84,11 +88,22 @@ class MetricRunUcImpl(MetricRunUc):
         start = time.perf_counter_ns()
 
         try:
-            user_result = metric.metric.run(algorithm_result.solution, feature_results)
+            if isinstance(metric.metric, BaseMetadataMetric):
+                # Only a metadata metric is told which run it is looking at. One that reads
+                # metadata a run never reported raises, and lands in the except below as a
+                # failed result for this pair alone.
+                user_result = metric.metric.run_with_metadata(
+                    algorithm_result.solution,
+                    feature_results,
+                    SolveMetadata.of(algorithm_result.metadata),
+                )
+            else:
+                user_result = metric.metric.run(algorithm_result.solution, feature_results)
             status = JobStatus.DONE
         except Exception as e:
             self._logger.error(
-                f"Metric '{metric.name}' failed on model '{model_name}' for algorithm '{algorithm_name}':",
+                f"Metric '{metric.name}' failed on model '{model_name}' for algorithm '{algorithm_name}' "
+                f"(repetition {repetition}):",
                 exc_info=True,
             )
             status = JobStatus.FAILED
@@ -103,6 +118,7 @@ class MetricRunUcImpl(MetricRunUc):
             processing_time_ms=delta_time,
             model_name=model_name,
             algorithm_name=algorithm_name,
+            repetition=repetition,
             result=ArbitraryDataDomain.model_construct(**user_result.model_dump()) if user_result else None,
             status=status,
             error=exception,
@@ -117,9 +133,17 @@ class MetricRunUcImpl(MetricRunUc):
             return Failure(r.failure())
 
         result = MetricMapper.result_to_user_model(result_domain)
-        if model_name not in metric.results:
-            metric.results[model_name] = {}
-        metric.results[model_name][algorithm_name] = result
+        per_repetition = metric.results.setdefault(model_name, {}).setdefault(algorithm_name, [])
+        # A repetition that failed before is replaced rather than appended, so re-running
+        # a benchmark leaves one result per run instead of a growing pile of attempts.
+        replaced = next((i for i, r in enumerate(per_repetition) if r.repetition == repetition), None)
+        if replaced is None:
+            per_repetition.append(result)
+            # A repetition whose result was computed late - it failed to store the first
+            # time, while later ones went through - belongs where a reload would put it.
+            per_repetition.sort(key=lambda r: r.repetition)
+        else:
+            per_repetition[replaced] = result
         return Success(result)
 
     def __call__(
@@ -137,8 +161,8 @@ class MetricRunUcImpl(MetricRunUc):
         feature_builder = FeatureResultBuilder(benchmark)
 
         for a in benchmark.algorithms:
-            for model_name, result in a.results.items():
-                for m in metrics:
+            for model_name, runs in a.results.items():
+                for result, m in product(runs, metrics):
                     feature_results = feature_builder.results(model_name, m.metric.required_features)
 
                     if not is_successful(feature_results):

@@ -7,6 +7,7 @@ from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
 from luna_bench import MapperContainer  # type: ignore[attr-defined]
+from luna_bench._internal.background_tasks import SyncRunPayload
 from luna_bench._internal.domain_models import AlgorithmResultDomain
 from luna_bench._internal.usecases.benchmark import (
     AlgorithmRetrieveSyncSolutionsUcImpl,
@@ -19,9 +20,11 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.helpers.metadata import decode_metadata, encode_metadata
 from tests.unit.fixtures.mock_database import SetupBenchmark
 
 _solution = Solution([])
+_encoded_metadata = encode_metadata({"device": "qpu-7"})
 
 
 class TestRetrieveSyncSolution:
@@ -37,7 +40,7 @@ class TestRetrieveSyncSolution:
         assert benchmark.modelset is not None, "Failed to load modelset"
 
         fake_result_data = AlgorithmResultEntity(
-            meta_data=None,
+            metadata=None,
             status=JobStatus.RUNNING,
             error=None,
             solution=None,
@@ -54,13 +57,14 @@ class TestRetrieveSyncSolution:
                     )
 
         for b in benchmark.algorithms:
-            b.results = {"default_model": fake_result_data.model_copy()}
+            b.results = {"default_model": [fake_result_data.model_copy()]}
         return benchmark
 
     @pytest.mark.parametrize(
         ("return_values", "exp"),
         [
-            ([Nothing, Some(Success(_solution))], Success(None)),
+            ([Nothing, Some(Success((_solution, None)))], Success(None)),
+            ([Nothing, Some(Success((_solution, _encoded_metadata)))], Success(None)),
             ([Nothing, Some(Failure(RuntimeError("an error")))], Failure("RuntimeError: an error")),
             (
                 [Nothing, Some(Failure(RunAlgorithmRuntimeError(RuntimeError("an error"))))],
@@ -75,7 +79,8 @@ class TestRetrieveSyncSolution:
         return_values: list[
             Maybe[
                 Result[
-                    Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError
+                    SyncRunPayload,
+                    ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError,
                 ]
             ]
         ],
@@ -103,15 +108,18 @@ class TestRetrieveSyncSolution:
         for a in benchmark.algorithms:
             if is_successful(exp):
                 if isinstance(a.algorithm, BaseAlgorithmSync):
-                    assert a.results["default_model"].solution is return_values[1].unwrap().unwrap()
-                    assert a.results["default_model"].status is JobStatus.DONE
+                    solution, metadata = return_values[1].unwrap().unwrap()
+                    assert a.results["default_model"][0].solution is solution
+                    assert a.results["default_model"][0].metadata == decode_metadata(metadata)
+                    assert a.results["default_model"][0].status is JobStatus.DONE
                 else:
-                    assert a.results["default_model"].solution is None
-                    assert a.results["default_model"].status is JobStatus.RUNNING
+                    assert a.results["default_model"][0].solution is None
+                    assert a.results["default_model"][0].status is JobStatus.RUNNING
             else:
                 if isinstance(a.algorithm, BaseAlgorithmSync):
-                    assert a.results["default_model"].status is JobStatus.FAILED
-                    assert a.results["default_model"].error == exp.failure()
+                    assert a.results["default_model"][0].status is JobStatus.FAILED
+                    assert a.results["default_model"][0].error == exp.failure()
+                    assert a.results["default_model"][0].metadata is None
                 else:
-                    assert a.results["default_model"].solution is None
-                    assert a.results["default_model"].status is JobStatus.RUNNING
+                    assert a.results["default_model"][0].solution is None
+                    assert a.results["default_model"][0].status is JobStatus.RUNNING
