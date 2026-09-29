@@ -215,6 +215,48 @@ class TestMetric:
 
         assert benchmark.metrics == benchmark2.metrics
 
+    def test_a_recovered_repetition_lands_in_repetition_order(
+        self,
+        usecase: UsecaseContainer,
+        setup_benchmark: SetupBenchmark,
+        mapper: MapperContainer,
+        solution: Solution,
+    ) -> None:
+        """Repetition 1 was evaluated first; computing 0 afterwards still leaves [0, 1]."""
+        benchmark = mapper.benchmark_mapper().to_user_model(setup_benchmark.benchmark).unwrap()
+        assert benchmark.modelset is not None
+        model = benchmark.modelset.models[0]
+
+        for a in benchmark.algorithms:
+            a.repetitions = 2
+            a.results[model.name] = [
+                AlgorithmResultEntity(
+                    metadata=None,
+                    status=JobStatus.DONE,
+                    error=None,
+                    solution=solution,
+                    task_id=None,
+                    retrival_data=None,
+                    model_id=model.id,
+                    repetition=repetition,
+                )
+                for repetition in (0, 1)
+            ]
+
+        metric = benchmark.metrics[0]
+        # Only the later run has a result so far, which is what a metric that failed to
+        # store for repetition 0 leaves behind.
+        assert is_successful(usecase.benchmark_run_metric_uc()(benchmark=benchmark, metric=metric))
+        for algo_results in metric.results.values():
+            for per_repetition in algo_results.values():
+                del per_repetition[0]
+
+        assert is_successful(usecase.benchmark_run_metric_uc()(benchmark=benchmark, metric=metric))
+
+        for algo_results in metric.results.values():
+            for per_repetition in algo_results.values():
+                assert [r.repetition for r in per_repetition] == [0, 1]
+
     def test_run_algorithm_not_done(
         self,
         usecase: UsecaseContainer,

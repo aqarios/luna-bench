@@ -198,6 +198,31 @@ Notes:
   entry that was already registered does nothing - the stored count wins and a warning says so.
   Remove the algorithm and add it again to change it.
 - Databases written before repetitions existed keep working: their runs read back as repetition 0.
+- `reset(mode="Failed")` clears the failed runs only, so the samples that succeeded are kept and
+  re-running fills in the rest. The metrics computed on a cleared run go with it.
+
+### Export the results
+
+```python
+benchmark.to_dataframe()          # one row per (algorithm, model, repetition)
+benchmark.to_csv("results.csv")   # writes the file; without a path it returns the string
+benchmark.to_json(indent=2)
+```
+
+Every export carries the same columns: `algorithm`, `model`, `repetition`, `metadata`,
+`algorithm_config`, and one `"<name>/<field>"` column per metric and feature result. `drop` leaves
+out the ones you do not want, by their name in that table:
+
+```python
+benchmark.to_csv("results.csv", drop=["metadata", "algorithm_config"])
+benchmark.to_dataframe(drop=["approx_ratio/approximation_ratio"])
+```
+
+It works the same on `to_dataframe`, `to_csv` and `to_json`, and on the exporters behind them
+(`DataFrameExporter(drop=...)`). Columns are dropped after the table is assembled, so leaving out
+`model` or `repetition` does not disturb how metrics and features were matched to their runs. A name
+no column has is logged as a warning and otherwise ignored, so a metric that failed everywhere does
+not turn an export into an error.
 
 ### Write your own feature
 

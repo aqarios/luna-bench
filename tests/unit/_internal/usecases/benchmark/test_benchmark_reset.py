@@ -268,6 +268,94 @@ class TestBenchmarkReset:
         reloaded = usecase.benchmark_load_uc()("existing").unwrap()
         assert len(reloaded.algorithms[0].results) > 0
 
+    def test_failed_reset_keeps_the_repetitions_that_finished(
+        self,
+        usecase: UsecaseContainer,
+        setup_benchmark: SetupBenchmark,
+    ) -> None:
+        """The point of repeating a stochastic solver: a failed run costs only that run."""
+        tx = setup_benchmark.transaction
+        for repetition, status in enumerate((JobStatus.DONE, JobStatus.FAILED, JobStatus.DONE)):
+            tx.algorithm.set_result(
+                "existing",
+                "existing",
+                AlgorithmResultDomain.model_construct(
+                    model_id=setup_benchmark.model_metadata.id,
+                    repetition=repetition,
+                    status=status,
+                    error=None,
+                    task_id=None,
+                    retrival_data=None,
+                ),
+            )
+            tx.metric.set_result(
+                "existing",
+                "existing",
+                MetricResultDomain.model_construct(
+                    processing_time_ms=100,
+                    model_name=setup_benchmark.model_name,
+                    algorithm_name="existing",
+                    repetition=repetition,
+                    result=None,
+                    status=JobStatus.DONE,
+                    error=None,
+                ),
+            )
+
+        entity = usecase.benchmark_load_uc()("existing").unwrap()
+        result = usecase.benchmark_reset_uc()(entity, mode=ResetLevel.FAILED)
+        assert is_successful(result)
+
+        reloaded = usecase.benchmark_load_uc()("existing").unwrap()
+        runs = reloaded.algorithms[0].results[setup_benchmark.model_name]
+        assert [r.repetition for r in runs] == [0, 2]
+
+        # The metric computed on the run that went is gone with it; the other two stay.
+        metric_results = reloaded.metrics[0].results[setup_benchmark.model_name]["existing"]
+        assert [r.repetition for r in metric_results] == [0, 2]
+
+    def test_failed_reset_keeps_the_models_that_solved(
+        self,
+        usecase: UsecaseContainer,
+        setup_benchmark: SetupBenchmark,
+    ) -> None:
+        """The same holds across models: one failure does not undo the rest of the entry."""
+        tx = setup_benchmark.transaction
+        second = simple_model("second_model")
+        second_model_id = tx.model.get_or_create(
+            model_name="second_model", model_hash=hash(second), binary=second.encode()
+        ).unwrap()
+        tx.modelset.add_model(modelset_name=setup_benchmark.modelset_name, model_id=second_model_id.id)
+
+        tx.algorithm.set_result(
+            "existing",
+            "existing",
+            AlgorithmResultDomain.model_construct(
+                model_id=setup_benchmark.model_metadata.id,
+                status=JobStatus.DONE,
+                error=None,
+                task_id=None,
+                retrival_data=None,
+            ),
+        )
+        tx.algorithm.set_result(
+            "existing",
+            "existing",
+            AlgorithmResultDomain.model_construct(
+                model_id=second_model_id.id,
+                status=JobStatus.FAILED,
+                error=None,
+                task_id=None,
+                retrival_data=None,
+            ),
+        )
+
+        entity = usecase.benchmark_load_uc()("existing").unwrap()
+        assert is_successful(usecase.benchmark_reset_uc()(entity, mode=ResetLevel.FAILED))
+
+        reloaded = usecase.benchmark_load_uc()("existing").unwrap()
+        assert list(reloaded.algorithms[0].results) == [setup_benchmark.model_name]
+
     def test_failed_reset(
         self,
         usecase: UsecaseContainer,
@@ -483,7 +571,7 @@ class TestGetResetComponentNames:
                 [_metric("m", JobStatus.DONE)],
                 ["failed", "created"],
                 [],
-                ["m"],  # metric cascaded
+                [],  # the metric is DONE; what it computed from a cleared run goes with it
                 id="unfinished-returns-only-non-done",
             ),
             pytest.param(
@@ -516,8 +604,10 @@ class TestGetResetComponentNames:
                 [_metric("m", JobStatus.DONE)],
                 ["failed"],
                 [],
-                ["m"],  # metric cascaded
-                id="failed-metric-cascade",
+                # Not selected on its own status - it is cleared only if the run it was
+                # computed on is one of the ones deleted, which happens per row.
+                [],
+                id="failed-metric-not-selected-when-done",
             ),
             pytest.param(
                 ResetLevel.FAILED,

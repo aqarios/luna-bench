@@ -102,4 +102,10 @@ class AlgorithmRunAsBackgroundTasksUcImpl(AlgorithmRunAsBackgroundTasksUc):
         )
         with self._transaction as t:
             t.algorithm.set_result(benchmark_name=benchmark_name, algorithm_name=a.name, result=result)
-        a.results.setdefault(m.name, []).append(AlgorithmMapper.result_to_user_model(result))
+
+        runs = a.results.setdefault(m.name, [])
+        runs.append(AlgorithmMapper.result_to_user_model(result))
+        # Sorted rather than appended to, because a run queued into a gap - repetition 0
+        # started again while 1 and 2 are still there - would otherwise land at the end
+        # and leave the list in an order a reload does not reproduce.
+        runs.sort(key=lambda r: r.repetition)

@@ -139,6 +139,9 @@ class MetricRunUcImpl(MetricRunUc):
         replaced = next((i for i, r in enumerate(per_repetition) if r.repetition == repetition), None)
         if replaced is None:
             per_repetition.append(result)
+            # A repetition whose result was computed late - it failed to store the first
+            # time, while later ones went through - belongs where a reload would put it.
+            per_repetition.sort(key=lambda r: r.repetition)
         else:
             per_repetition[replaced] = result
         return Success(result)

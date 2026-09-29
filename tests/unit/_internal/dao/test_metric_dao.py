@@ -247,3 +247,49 @@ class TestMetricDAO:
             assert setup_benchmark.transaction.metric.load(benchmark_name, metric_name).unwrap().results == exp.unwrap()
         else:
             assert isinstance(remove.failure(), type(exp.failure()))
+
+    def test_setting_a_result_twice_updates_the_row(self, setup_benchmark: SetupBenchmark) -> None:
+        """What a metric retried after a failure needs: one row per run, not one per attempt."""
+        tx = setup_benchmark.transaction
+
+        def result(status: JobStatus, processing_time_ms: int) -> MetricResultDomain:
+            return MetricResultDomain.model_construct(
+                processing_time_ms=processing_time_ms,
+                model_name=setup_benchmark.model_name,
+                algorithm_name="existing",
+                repetition=0,
+                result=ArbitraryDataDomain(),
+                status=status,
+                error=None,
+            )
+
+        assert is_successful(tx.metric.set_result("existing", "existing", result(JobStatus.FAILED, 1)))
+        assert is_successful(tx.metric.set_result("existing", "existing", result(JobStatus.DONE, 42)))
+
+        stored = tx.metric.load("existing", "existing").unwrap().results[setup_benchmark.model_name]["existing"]
+        assert len(stored) == 1
+        assert stored[0].status == JobStatus.DONE
+        assert stored[0].processing_time_ms == 42
+
+    def test_a_second_repetition_is_its_own_row(self, setup_benchmark: SetupBenchmark) -> None:
+        """The upsert is keyed by the repetition, so another run does not overwrite the first."""
+        tx = setup_benchmark.transaction
+        for repetition in (0, 1):
+            assert is_successful(
+                tx.metric.set_result(
+                    "existing",
+                    "existing",
+                    MetricResultDomain.model_construct(
+                        processing_time_ms=repetition,
+                        model_name=setup_benchmark.model_name,
+                        algorithm_name="existing",
+                        repetition=repetition,
+                        result=ArbitraryDataDomain(),
+                        status=JobStatus.DONE,
+                        error=None,
+                    ),
+                )
+            )
+
+        stored = tx.metric.load("existing", "existing").unwrap().results[setup_benchmark.model_name]["existing"]
+        assert [r.repetition for r in stored] == [0, 1]

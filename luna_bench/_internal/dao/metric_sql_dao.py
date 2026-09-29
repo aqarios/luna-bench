@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from peewee import DoesNotExist, IntegrityError
+from peewee import DoesNotExist, IntegrityError, fn
 from returns.result import Failure, Success
 
-from luna_bench._internal.dao.tables import AlgorithmTable
+from luna_bench._internal.dao.tables import AlgorithmResultTable, AlgorithmTable
 from luna_bench._internal.domain_models import MetricDomain, MetricResultDomain
 from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
 from luna_bench._internal.domain_models.registered_data_domain import RegisteredDataDomain
@@ -23,6 +23,7 @@ from .tables import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
     from logging import Logger
 
     from pydantic import BaseModel
@@ -127,13 +128,65 @@ class MetricSqlDao(MetricDao):
             return Failure(UnknownLunaBenchError(e))
 
     @staticmethod
-    def remove_result(benchmark_name: str, metric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+    def remove_result(
+        benchmark_name: str, metric_name: str, statuses: Collection[JobStatus] | None = None
+    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)
+            query = MetricResultTable.delete().where(MetricResultTable.metric == metric)
+            if statuses is not None:
+                # Per row: a metric that failed on one run is recomputed without the runs
+                # it was already evaluated on losing their results.
+                query = query.where(MetricResultTable.status.in_([s.value for s in statuses]))
             # peewee stubs leave `execute` untyped; `unused-ignore` keeps environments where mypy
             # does not flag the call (with `warn_unused_ignores`) passing as well.
-            MetricResultTable.delete().where(MetricResultTable.metric == metric).execute()  # type: ignore[no-untyped-call, unused-ignore]
+            query.execute()  # type: ignore[no-untyped-call, unused-ignore]
+            return Success(None)
+        except DoesNotExist:
+            return Failure(DataNotExistError())
+        except Exception as e:  # pragma: no cover
+            return Failure(UnknownLunaBenchError(e))
+
+    @staticmethod
+    def remove_orphaned_results(
+        benchmark_name: str, metric_name: str
+    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+        """Delete the results of runs that are no longer there.
+
+        A metric result describes one run of one algorithm on one model. When that run is
+        cleared - a failed repetition reset so it can be tried again - what was computed
+        from it no longer describes anything, so it goes with it. This is the cascade a
+        reset needs, and it is expressed as "the run is gone" rather than as a list of
+        identities so that it stays right however the runs were removed.
+
+        Parameters
+        ----------
+        benchmark_name: str
+            The benchmark the metric belongs to.
+        metric_name: str
+            The name of the metric.
+
+        Returns
+        -------
+        Result[None, DataNotExistError | UnknownLunaBenchError]
+            On success: Nothing.
+            On failure: An error if the metric was not found.
+        """
+        try:
+            benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
+            metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)
+
+            run = AlgorithmResultTable.select(AlgorithmResultTable.id).where(
+                (AlgorithmResultTable.algorithm == MetricResultTable.algorithm)
+                & (AlgorithmResultTable.model_metadata == MetricResultTable.model_metadata)
+                & (AlgorithmResultTable.repetition == MetricResultTable.repetition)
+            )
+            # peewee stubs leave `execute` untyped; `unused-ignore` keeps environments where mypy
+            # does not flag the call (with `warn_unused_ignores`) passing as well.
+            MetricResultTable.delete().where(  # type: ignore[no-untyped-call, unused-ignore]
+                (MetricResultTable.metric == metric) & ~fn.EXISTS(run)
+            ).execute()
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())

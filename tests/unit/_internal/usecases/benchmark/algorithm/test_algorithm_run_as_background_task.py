@@ -130,3 +130,32 @@ class TestAlgorithmRunAsBackgroundTask:
         models_nr = len(benchmark.modelset.models)
         assert first_round == 2 * models_nr * len(benchmark.algorithms)
         assert second_round == models_nr * len(benchmark.algorithms)
+
+    def test_a_run_queued_into_a_gap_keeps_the_list_ordered(
+        self,
+        setup_benchmark: SetupBenchmark,
+        mapper: MapperContainer,
+    ) -> None:
+        """A failed repetition 0 that was reset is queued again and belongs first."""
+        benchmark = mapper.benchmark_mapper().to_user_model(setup_benchmark.benchmark).unwrap()
+        assert benchmark.modelset is not None
+
+        uc = AlgorithmRunAsBackgroundTasksUcImpl(
+            background_start_async=MagicMock(spec=BackgroundRunAlgorithmAsyncUc, return_value="taskId"),
+            background_start_sync=MagicMock(spec=BackgroundRunAlgorithmSyncUc, return_value="taskId"),
+            transaction=setup_benchmark.transaction,
+        )
+
+        for a in benchmark.algorithms:
+            a.repetitions = 3
+        uc(benchmark_name=benchmark.name, models=benchmark.modelset.models, algorithms=benchmark.algorithms)
+
+        # Drop repetition 0, as a reset of a failed run would.
+        model_name = benchmark.modelset.models[0].name
+        for a in benchmark.algorithms:
+            a.results[model_name] = [r for r in a.results[model_name] if r.repetition != 0]
+
+        uc(benchmark_name=benchmark.name, models=benchmark.modelset.models, algorithms=benchmark.algorithms)
+
+        for a in benchmark.algorithms:
+            assert [r.repetition for r in a.results[model_name]] == [0, 1, 2]

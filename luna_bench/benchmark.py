@@ -1392,6 +1392,7 @@ class Benchmark(BenchmarkEntity):
         delimiter: str = ",",
         quoting: CsvQuoting = "minimal",
         include_solution: bool = False,
+        drop: Sequence[str] = (),
     ) -> str | None:
         """
         Render all benchmark results as CSV.
@@ -1414,6 +1415,11 @@ class Benchmark(BenchmarkEntity):
         include_solution: bool
             Whether to include the serialized solution column (base64-encoded).
             Defaults to False.
+        drop: Sequence[str]
+            Columns to leave out, by their name in the exported table - ``"metadata"``,
+            ``"algorithm_config"``, or a result column such as
+            ``"approx_ratio/approximation_ratio"``. Empty by default, and a name no
+            column has is warned about rather than raised.
 
         Returns
         -------
@@ -1424,7 +1430,9 @@ class Benchmark(BenchmarkEntity):
         """
         from luna_bench.exporters import CsvExporter  # noqa: PLC0415
 
-        payload = self.export(CsvExporter(delimiter=delimiter, quoting=quoting, include_solution=include_solution))
+        payload = self.export(
+            CsvExporter(delimiter=delimiter, quoting=quoting, include_solution=include_solution, drop=drop)
+        )
         if path is None:
             return payload
         Path(path).write_text(payload, encoding="utf-8")
@@ -1437,6 +1445,7 @@ class Benchmark(BenchmarkEntity):
         indent: int | None = None,
         orient: JsonOrient = "records",
         include_solution: bool = False,
+        drop: Sequence[str] = (),
     ) -> str | None:
         """
         Render all benchmark results as JSON.
@@ -1459,6 +1468,9 @@ class Benchmark(BenchmarkEntity):
         include_solution: bool
             Whether to include the serialized solution column (base64-encoded).
             Defaults to False.
+        drop: Sequence[str]
+            Columns to leave out, by their name in the exported table. Empty by
+            default; see `Benchmark.to_csv`.
 
         Returns
         -------
@@ -1469,7 +1481,7 @@ class Benchmark(BenchmarkEntity):
         """
         from luna_bench.exporters import JsonExporter  # noqa: PLC0415
 
-        payload = self.export(JsonExporter(indent=indent, orient=orient, include_solution=include_solution))
+        payload = self.export(JsonExporter(indent=indent, orient=orient, include_solution=include_solution, drop=drop))
         if path is None:
             return payload
         Path(path).write_text(payload, encoding="utf-8")
@@ -1536,7 +1548,7 @@ class Benchmark(BenchmarkEntity):
             title=title,
         )
 
-    def to_dataframe(self, *, include_solution: bool = False) -> pd.DataFrame:
+    def to_dataframe(self, *, include_solution: bool = False, drop: Sequence[str] = ()) -> pd.DataFrame:
         """
         Return all benchmark results as a single DataFrame.
 
@@ -1551,17 +1563,21 @@ class Benchmark(BenchmarkEntity):
         include_solution: bool
             Whether to include the serialized solution as a ``solution`` column.
             Defaults to False.
+        drop: Sequence[str]
+            Columns to leave out, by their name in the exported table. Empty by
+            default; see `Benchmark.to_csv`.
 
         Returns
         -------
         pd.DataFrame
             A DataFrame with columns ``algorithm``, ``model``, ``repetition``, plus
-            one column per result field of each feature and metric.
+            one column per result field of each feature and metric, less whatever
+            *drop* names.
 
         """
         from luna_bench.exporters import DataFrameExporter  # noqa: PLC0415
 
-        return self.export(DataFrameExporter(include_solution=include_solution))
+        return self.export(DataFrameExporter(include_solution=include_solution, drop=drop))
 
     def list_feature_classes(self) -> list[type[BaseFeature]]:
         """Return the feature classes registered on this benchmark."""

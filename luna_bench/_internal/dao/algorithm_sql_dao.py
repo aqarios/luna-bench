@@ -26,6 +26,7 @@ from .tables import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
     from logging import Logger
 
     from returns.result import Result
@@ -152,14 +153,22 @@ class AlgorithmSqlDao(AlgorithmDao):
 
     @staticmethod
     def remove_result(
-        benchmark_name: str, algorithm_name: str
+        benchmark_name: str, algorithm_name: str, statuses: Collection[JobStatus] | None = None
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)
+            query = AlgorithmResultTable.delete().where(AlgorithmResultTable.algorithm == algorithm)
+            if statuses is not None:
+                # Filtered per row rather than per algorithm, so the runs worth keeping -
+                # a repetition that finished, a model that solved - survive a reset aimed
+                # at the ones that did not.
+                # The column is annotated as the enum it holds, so the type checker does
+                # not see peewee's field behind it.
+                query = query.where(AlgorithmResultTable.status.in_([s.value for s in statuses]))  # type: ignore[attr-defined]
             # peewee stubs leave `execute` untyped; `unused-ignore` keeps environments where mypy
             # does not flag the call (with `warn_unused_ignores`) passing as well.
-            AlgorithmResultTable.delete().where(AlgorithmResultTable.algorithm == algorithm).execute()  # type: ignore[no-untyped-call, unused-ignore]
+            query.execute()  # type: ignore[no-untyped-call, unused-ignore]
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
