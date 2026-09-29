@@ -14,6 +14,7 @@ class AlgorithmResultDomain(BaseDomain):
     _metadata_bytes: bytes | None = None
 
     model_id: int
+    repetition: int = 0
 
     status: JobStatus
     error: str | None

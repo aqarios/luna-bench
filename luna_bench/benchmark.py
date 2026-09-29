@@ -901,6 +901,8 @@ class Benchmark(BenchmarkEntity):
         self,
         name: str,
         algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+        *,
+        repetitions: int = 1,
     ) -> AlgorithmEntity: ...
 
     @overload
@@ -910,6 +912,7 @@ class Benchmark(BenchmarkEntity):
         algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
         *,
         variants: Variants,
+        repetitions: int = 1,
     ) -> AlgorithmGrid: ...
 
     def add_algorithm(
@@ -918,6 +921,7 @@ class Benchmark(BenchmarkEntity):
         algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
         *,
         variants: Variants | None = None,
+        repetitions: int = 1,
     ) -> AlgorithmEntity | AlgorithmGrid:
         """
         Add an algorithm to the benchmark, on its own or as a grid of variants.
@@ -938,6 +942,17 @@ class Benchmark(BenchmarkEntity):
         Every variant is built and checked before anything is registered, so a
         misspelled parameter costs an error rather than half a benchmark.
 
+        *repetitions* runs the same configuration more than once per model, which is what
+        a stochastic solver needs to be judged on more than a single draw:
+
+        .. code-block:: python
+
+            bench.add_algorithm("flex_qaoa", FlexQAOA(), repetitions=10)
+
+        The runs are one entry's results, not ten entries: every one of them is evaluated
+        by the metrics on its own, and the plots and exports aggregate over them.
+        Combined with *variants*, each variant is repeated that often.
+
         Parameters
         ----------
         name: str
@@ -950,6 +965,8 @@ class Benchmark(BenchmarkEntity):
             How the algorithm is varied: a generator such as `ParameterGrid`, or a plain
             list of complete configurations. ``None``, the default, adds the one
             algorithm.
+        repetitions: int, optional
+            How often to run the algorithm on every model, by default once.
 
         Returns
         -------
@@ -959,6 +976,8 @@ class Benchmark(BenchmarkEntity):
 
         Raises
         ------
+        ValueError
+            If *repetitions* is not at least 1.
         UnknownParameterPathError
             If a variant names a parameter the algorithm does not have.
         pydantic.ValidationError
@@ -968,16 +987,21 @@ class Benchmark(BenchmarkEntity):
         --------
         luna_bench.algorithms.variants : The generators, and what they yield.
         """
-        if variants is None:
-            return self._add_single_algorithm(name, algorithm)
+        if repetitions < 1:
+            msg = f"An algorithm runs at least once, so repetitions has to be 1 or more, got {repetitions}."
+            raise ValueError(msg)
 
-        return self._add_algorithm_variants(name, algorithm, variants)
+        if variants is None:
+            return self._add_single_algorithm(name, algorithm, repetitions)
+
+        return self._add_algorithm_variants(name, algorithm, variants, repetitions)
 
     def _add_algorithm_variants(
         self,
         name: str,
         algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
         variants: Variants,
+        repetitions: int = 1,
     ) -> AlgorithmGrid:
         """Register one entry per variant of *algorithm*, and return them with their axes.
 
@@ -989,6 +1013,8 @@ class Benchmark(BenchmarkEntity):
             The default version the variants start from.
         variants: Variants
             The generator, or a plain list of complete configurations.
+        repetitions: int
+            How often each variant is run on every model, by default once.
 
         Returns
         -------
@@ -1009,7 +1035,7 @@ class Benchmark(BenchmarkEntity):
             )
         ]
 
-        entities = [self._add_single_algorithm(entry_name, applied) for entry_name, _, applied in prepared]
+        entities = [self._add_single_algorithm(entry_name, applied, repetitions) for entry_name, _, applied in prepared]
 
         axes: dict[str, dict[str, Any]] = {}
         for entry_name, parameters, _ in prepared:
@@ -1022,6 +1048,7 @@ class Benchmark(BenchmarkEntity):
         self,
         name: str,
         algorithm: IAlgorithm[Any] | BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+        repetitions: int = 1,
     ) -> AlgorithmEntity:
         """
         Add an algorithm to the benchmark with a given name.
@@ -1038,6 +1065,8 @@ class Benchmark(BenchmarkEntity):
             The name of the algorithm to add.
         algorithm: IAlgorithm[Any] | AlgorithmSync | AlgorithmAsync[Any]
             An instance of the algorithm to add.
+        repetitions: int
+            How often the algorithm is run on every model, by default once.
 
         Returns
         -------
@@ -1056,7 +1085,7 @@ class Benchmark(BenchmarkEntity):
             | UnknownComponentError
             | UnknownIdError
             | ValidationError,
-        ] = benchmark_add_algorithm(self.name, name, algorithm)
+        ] = benchmark_add_algorithm(self.name, name, algorithm, repetitions)
 
         if not is_successful(result):
             error = result.failure()
@@ -1064,7 +1093,15 @@ class Benchmark(BenchmarkEntity):
             match error:
                 case DataNotUniqueError():
                     Benchmark._logger.warning(f"Loading existing Algorithm ('{name}').")
-                    return self.get_algorithm(name)
+                    existing = self.get_algorithm(name)
+                    if existing.repetitions != repetitions:
+                        # Changing the count would leave the results already stored meaning
+                        # something else, so the stored entry wins and says so.
+                        Benchmark._logger.warning(
+                            f"Algorithm ('{name}') stays at {existing.repetitions} repetition(s); "
+                            f"{repetitions} was requested. Remove it first to run it a different number of times."
+                        )
+                    return existing
                 case _:
                     Benchmark._logger.error(f"Failed to add algorithm to benchmark: {error}")
                     if isinstance(error, UnknownLunaBenchError):
@@ -1355,6 +1392,7 @@ class Benchmark(BenchmarkEntity):
         delimiter: str = ",",
         quoting: CsvQuoting = "minimal",
         include_solution: bool = False,
+        drop: Sequence[str] = (),
     ) -> str | None:
         """
         Render all benchmark results as CSV.
@@ -1377,6 +1415,11 @@ class Benchmark(BenchmarkEntity):
         include_solution: bool
             Whether to include the serialized solution column (base64-encoded).
             Defaults to False.
+        drop: Sequence[str]
+            Columns to leave out, by their name in the exported table - ``"metadata"``,
+            ``"algorithm_config"``, or a result column such as
+            ``"approx_ratio/approximation_ratio"``. Empty by default, and a name no
+            column has is warned about rather than raised.
 
         Returns
         -------
@@ -1387,7 +1430,9 @@ class Benchmark(BenchmarkEntity):
         """
         from luna_bench.exporters import CsvExporter  # noqa: PLC0415
 
-        payload = self.export(CsvExporter(delimiter=delimiter, quoting=quoting, include_solution=include_solution))
+        payload = self.export(
+            CsvExporter(delimiter=delimiter, quoting=quoting, include_solution=include_solution, drop=drop)
+        )
         if path is None:
             return payload
         Path(path).write_text(payload, encoding="utf-8")
@@ -1400,6 +1445,7 @@ class Benchmark(BenchmarkEntity):
         indent: int | None = None,
         orient: JsonOrient = "records",
         include_solution: bool = False,
+        drop: Sequence[str] = (),
     ) -> str | None:
         """
         Render all benchmark results as JSON.
@@ -1422,6 +1468,9 @@ class Benchmark(BenchmarkEntity):
         include_solution: bool
             Whether to include the serialized solution column (base64-encoded).
             Defaults to False.
+        drop: Sequence[str]
+            Columns to leave out, by their name in the exported table. Empty by
+            default; see `Benchmark.to_csv`.
 
         Returns
         -------
@@ -1432,7 +1481,7 @@ class Benchmark(BenchmarkEntity):
         """
         from luna_bench.exporters import JsonExporter  # noqa: PLC0415
 
-        payload = self.export(JsonExporter(indent=indent, orient=orient, include_solution=include_solution))
+        payload = self.export(JsonExporter(indent=indent, orient=orient, include_solution=include_solution, drop=drop))
         if path is None:
             return payload
         Path(path).write_text(payload, encoding="utf-8")
@@ -1499,13 +1548,13 @@ class Benchmark(BenchmarkEntity):
             title=title,
         )
 
-    def to_dataframe(self, *, include_solution: bool = False) -> pd.DataFrame:
+    def to_dataframe(self, *, include_solution: bool = False, drop: Sequence[str] = ()) -> pd.DataFrame:
         """
         Return all benchmark results as a single DataFrame.
 
         Convenience wrapper for ``self.export(DataFrameExporter(...))``: algorithm
-        results form the row spine (one row per ``(algorithm, model)``), metrics
-        merge on ``(algorithm, model)``, and features merge on ``model``. Feature
+        results form the row spine (one row per ``(algorithm, model, repetition)``),
+        metrics merge on those three, and features merge on ``model``. Feature
         values are repeated across algorithms for the same model since features
         are model-level.
 
@@ -1514,17 +1563,21 @@ class Benchmark(BenchmarkEntity):
         include_solution: bool
             Whether to include the serialized solution as a ``solution`` column.
             Defaults to False.
+        drop: Sequence[str]
+            Columns to leave out, by their name in the exported table. Empty by
+            default; see `Benchmark.to_csv`.
 
         Returns
         -------
         pd.DataFrame
-            A DataFrame with columns ``algorithm``, ``model``, plus one column per
-            result field of each feature and metric.
+            A DataFrame with columns ``algorithm``, ``model``, ``repetition``, plus
+            one column per result field of each feature and metric, less whatever
+            *drop* names.
 
         """
         from luna_bench.exporters import DataFrameExporter  # noqa: PLC0415
 
-        return self.export(DataFrameExporter(include_solution=include_solution))
+        return self.export(DataFrameExporter(include_solution=include_solution, drop=drop))
 
     def list_feature_classes(self) -> list[type[BaseFeature]]:
         """Return the feature classes registered on this benchmark."""

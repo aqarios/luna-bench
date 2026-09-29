@@ -14,6 +14,9 @@ class MetricResultEntity(BaseModel):
     model_name: str
     algorithm_name: str
 
+    #: The run of the algorithm this metric was computed on, counted from 0.
+    repetition: int = 0
+
     status: JobStatus
     error: str | None
     result: MetricResult | None

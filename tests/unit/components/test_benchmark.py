@@ -1055,8 +1055,22 @@ class TestExport:
         assert csv_str is not None
         header, row = csv_str.strip().split("\n")
 
-        assert header == "algorithm,model,metadata,algorithm_config,accuracy/score,num_vars/count"
+        assert header == "algorithm,model,repetition,metadata,algorithm_config,accuracy/score,num_vars/count"
         assert row.startswith("algo1,model1,")
+
+    def test_to_csv_drops_the_named_columns(self) -> None:
+        csv_str = self._default_benchmark().to_csv(drop=["metadata", "algorithm_config"])
+        assert csv_str is not None
+        header, _row = csv_str.strip().split("\n")
+
+        assert header == "algorithm,model,repetition,accuracy/score,num_vars/count"
+
+    def test_to_dataframe_and_to_json_drop_too(self) -> None:
+        benchmark = self._default_benchmark()
+
+        assert "metadata" not in benchmark.to_dataframe(drop=["metadata"]).columns
+        records = json.loads(benchmark.to_json(drop=["metadata"]) or "[]")
+        assert "metadata" not in records[0]
 
     def test_to_csv_with_options(self) -> None:
         csv_str = self._default_benchmark().to_csv(delimiter=";", quoting="all")
@@ -1073,6 +1087,7 @@ class TestExport:
             {
                 "algorithm": "algo1",
                 "model": "model1",
+                "repetition": 0,
                 "metadata": None,
                 "algorithm_config": {},
                 "accuracy/score": 0.95,

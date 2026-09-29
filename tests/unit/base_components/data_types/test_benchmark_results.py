@@ -69,8 +69,24 @@ class TestFromBenchmark:
         container = BenchmarkResultContainer.from_benchmark(_make_benchmark(metrics=[metric]))
 
         assert set(container.metrics["model_1"]) == {"algo_1", "algo_2"}
-        result = container.metrics["model_1"]["algo_1"].get(MockMetric, "accuracy")
-        assert result.model_dump() == {"score": 0.9}
+        (container_algo_1,) = container.metrics["model_1"]["algo_1"]
+        assert container_algo_1.get(MockMetric, "accuracy").model_dump() == {"score": 0.9}
+
+    def test_metrics_of_a_repeated_algorithm_are_one_container_per_run(self) -> None:
+        metric = make_metric_entity("accuracy", ("algo_1", "model_1", {"score": 0.9}), repetitions=3)
+        container = BenchmarkResultContainer.from_benchmark(_make_benchmark(metrics=[metric]))
+
+        per_repetition = container.metrics["model_1"]["algo_1"]
+        assert [c.repetition for c in per_repetition] == [0, 1, 2]
+        # Every run is yielded, so what aggregates over them sees all three.
+        assert len(list(container.get_all_metrics())) == 3
+
+    def test_algorithm_runs_of_a_repeated_algorithm_are_one_container_per_run(self) -> None:
+        algo = make_algo_entity("algo_1", ["model_1"], repetitions=3)
+        container = BenchmarkResultContainer.from_benchmark(_make_benchmark(algorithms=[algo]))
+
+        assert [c.repetition for c in container.algorithms["model_1"]["algo_1"]] == [0, 1, 2]
+        assert len(list(container.get_all_algorithms())) == 3
 
     def test_metric_without_result_is_skipped(self) -> None:
         metric = make_metric_entity("accuracy", ("algo_1", "model_1", {}), status=JobStatus.FAILED, error="boom")
@@ -83,20 +99,22 @@ class TestFromBenchmark:
             name="algo_1",
             algorithm=MockAlgorithm(),
             results={
-                "model_1": AlgorithmResultEntity(
-                    metadata={"runtime": 1.5},
-                    status=JobStatus.FAILED,
-                    error="boom",
-                    solution=None,
-                    task_id=None,
-                    retrival_data=None,
-                    model_id=1,
-                )
+                "model_1": [
+                    AlgorithmResultEntity(
+                        metadata={"runtime": 1.5},
+                        status=JobStatus.FAILED,
+                        error="boom",
+                        solution=None,
+                        task_id=None,
+                        retrival_data=None,
+                        model_id=1,
+                    )
+                ]
             },
         )
         container = BenchmarkResultContainer.from_benchmark(_make_benchmark(algorithms=[algo]))
 
-        run_result = container.algorithms["model_1"]["algo_1"]
+        (run_result,) = container.algorithms["model_1"]["algo_1"]
         assert run_result.solution is None
         assert run_result.metadata == {"runtime": 1.5}
         assert run_result.algorithm is algo.algorithm
@@ -110,9 +128,9 @@ class TestFromBenchmark:
         assert set(container.algorithms["model_1"]) == {"algo_1", "algo_2"}
         assert set(container.algorithms["model_2"]) == {"algo_1"}
         assert list(container.get_all_algorithms()) == [
-            ("model_1", "algo_1", container.algorithms["model_1"]["algo_1"]),
-            ("model_1", "algo_2", container.algorithms["model_1"]["algo_2"]),
-            ("model_2", "algo_1", container.algorithms["model_2"]["algo_1"]),
+            ("model_1", "algo_1", container.algorithms["model_1"]["algo_1"][0]),
+            ("model_1", "algo_2", container.algorithms["model_1"]["algo_2"][0]),
+            ("model_2", "algo_1", container.algorithms["model_2"]["algo_1"][0]),
         ]
 
 
@@ -140,8 +158,8 @@ class TestBenchmarkResults:
             features={},
             metrics={},
             algorithms={
-                "model1": {"algo1": run1, "algo2": run2},
-                "model2": {"algo1": run3},
+                "model1": {"algo1": [run1], "algo2": [run2]},
+                "model2": {"algo1": [run3]},
             },
         )
         algorithm_list = list(results.get_all_algorithms())
@@ -153,7 +171,7 @@ class TestBenchmarkResults:
         feature_results: Any = MagicMock()
         metric_results: Any = MagicMock()
         features: dict[str, Any] = {"model1": feature_results}
-        metrics: dict[str, dict[str, Any]] = {"model1": {"algo1": metric_results}}
+        metrics: dict[str, dict[str, Any]] = {"model1": {"algo1": [metric_results]}}
         results = BenchmarkResultContainer.model_construct(features=features, metrics=metrics)
         assert results.features == features
         assert results.metrics == metrics
@@ -164,7 +182,7 @@ class TestBenchmarkResults:
         assert list(results.get_all_metrics()) == []
 
         mr1: Any = MagicMock()
-        metrics: dict[str, dict[str, Any]] = {"model1": {"algo1": mr1}}
+        metrics: dict[str, dict[str, Any]] = {"model1": {"algo1": [mr1]}}
         results = BenchmarkResultContainer.model_construct(features={}, metrics=metrics)
         metric_list: list[Any] = list(results.get_all_metrics())
         assert len(metric_list) == 1
@@ -173,8 +191,8 @@ class TestBenchmarkResults:
         mr2: Any = MagicMock()
         mr3: Any = MagicMock()
         metrics = {
-            "model1": {"algo1": mr1, "algo2": mr2},
-            "model2": {"algo1": mr3},
+            "model1": {"algo1": [mr1], "algo2": [mr2]},
+            "model2": {"algo1": [mr3]},
         }
         results = BenchmarkResultContainer.model_construct(features={}, metrics=metrics)
         metric_list = list(results.get_all_metrics())
@@ -193,7 +211,7 @@ class TestBenchmarkResults:
         metric_results_container: Any = MagicMock()
         metric_results_container.__contains__.return_value = True
         metric_results_container.get_all.return_value = {"metric1": mr}
-        metrics: dict[str, dict[str, Any]] = {"model1": {"algo1": metric_results_container}}
+        metrics: dict[str, dict[str, Any]] = {"model1": {"algo1": [metric_results_container]}}
         results = BenchmarkResultContainer.model_construct(features={}, metrics=metrics)
         metric_list = list(results.get_all_metrics_of_type(metric_cls))
         assert len(metric_list) == 1
@@ -211,8 +229,8 @@ class TestBenchmarkResults:
         mr3_container.__contains__.return_value = True
         mr3_container.get_all.return_value = {"metric3": mr3}
         metrics = {
-            "model1": {"algo1": mr1_container, "algo2": mr2_container},
-            "model2": {"algo1": mr3_container},
+            "model1": {"algo1": [mr1_container], "algo2": [mr2_container]},
+            "model2": {"algo1": [mr3_container]},
         }
         results = BenchmarkResultContainer.model_construct(features={}, metrics=metrics)
         metric_list = list(results.get_all_metrics_of_type(metric_cls))
@@ -234,7 +252,7 @@ class TestBenchmarkResults:
         with_result.get_all.return_value = {"metric1": MagicMock()}
 
         results = BenchmarkResultContainer.model_construct(
-            features={}, metrics={"model1": {"failed": without, "solved": with_result}}
+            features={}, metrics={"model1": {"failed": [without], "solved": [with_result]}}
         )
 
         assert [algorithm for _, algorithm, _ in results.get_all_metrics_of_type(MagicMock())] == ["solved"]
@@ -246,10 +264,10 @@ class TestBenchmarkResults:
         metric_results: Any = MagicMock()
         result = BenchmarkResultContainer.model_construct(
             features={"model1": feature_results},
-            metrics={"model1": {"algo1": metric_results}},
+            metrics={"model1": {"algo1": [metric_results]}},
         )
         assert result.features["model1"] == feature_results
-        assert result.metrics["model1"]["algo1"] == metric_results
+        assert result.metrics["model1"]["algo1"] == [metric_results]
 
     def test_features_and_metrics_independence(self) -> None:
         """Test that features and metrics are independent."""
@@ -257,10 +275,10 @@ class TestBenchmarkResults:
         metric1: Any = MagicMock()
         results = BenchmarkResultContainer.model_construct(
             features={"model1": feature1},
-            metrics={"model1": {"algo1": metric1}},
+            metrics={"model1": {"algo1": [metric1]}},
         )
         assert results.features["model1"] == feature1
-        assert results.metrics["model1"]["algo1"] == metric1
+        assert results.metrics["model1"]["algo1"] == [metric1]
 
         feature2: Any = MagicMock()
         results.features["model2"] = feature2
@@ -269,7 +287,7 @@ class TestBenchmarkResults:
     def test_generator_behavior(self) -> None:
         """Test that get_all_metrics and get_all_metrics_of_type return generators."""
         mr1: Any = MagicMock()
-        metrics: dict[str, dict[str, Any]] = {"model1": {"algo1": mr1}}
+        metrics: dict[str, dict[str, Any]] = {"model1": {"algo1": [mr1]}}
         results = BenchmarkResultContainer.model_construct(features={}, metrics=metrics)
 
         gen1: Any = results.get_all_metrics()
@@ -279,7 +297,7 @@ class TestBenchmarkResults:
         metric_cls: Any = MagicMock()
         metric_results_container: Any = MagicMock()
         metric_results_container.get_all.return_value = {"metric1": mr1}
-        metrics = {"model1": {"algo1": metric_results_container}}
+        metrics = {"model1": {"algo1": [metric_results_container]}}
         results = BenchmarkResultContainer.model_construct(features={}, metrics=metrics)
         gen2: Any = results.get_all_metrics_of_type(metric_cls)
         assert hasattr(gen2, "__iter__")
@@ -293,7 +311,7 @@ class TestBenchmarkResults:
             for a in range(2):
                 algo_name = f"algo{a}"
                 mock_result: Any = MagicMock()
-                metric_results.setdefault(model_name, {})[algo_name] = mock_result
+                metric_results.setdefault(model_name, {})[algo_name] = [mock_result]
 
         results = BenchmarkResultContainer.model_construct(features={}, metrics=metric_results)
         metric_list = list(results.get_all_metrics())
@@ -315,8 +333,8 @@ class TestBenchmarkResults:
         mr1: Any = MagicMock()
         mr2: Any = MagicMock()
         metrics: dict[str, dict[str, Any]] = {
-            "model1": {"algo1": mr1},
-            "model2": {"algo1": mr2},
+            "model1": {"algo1": [mr1]},
+            "model2": {"algo1": [mr2]},
         }
         results = BenchmarkResultContainer.model_construct(features={}, metrics=metrics)
         assert len(results.features) == 0

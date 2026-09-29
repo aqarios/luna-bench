@@ -27,6 +27,10 @@ class AlgorithmResultEntity(BaseModel):
     retrival_data: ArbitraryDataDomain | None
     model_id: int
 
+    #: Which run on this model produced the result, counted from 0. Always 0 for an
+    #: algorithm added without ``repetitions``.
+    repetition: int = 0
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def result_dump(self, exclude: set[str] | None = None) -> dict[str, Any]:

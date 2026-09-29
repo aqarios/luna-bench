@@ -437,8 +437,12 @@ class ParameterDimension(BaseDimension):
         """
         settings: dict[str, float] = {}
         for runs in benchmark_results.algorithms.values():
-            for algorithm_name, run in runs.items():
-                value = getattr(run.algorithm, self.parameter, None)
+            for algorithm_name, per_repetition in runs.items():
+                # Every repetition of an entry ran the same configuration, so the first
+                # one answers what it was set to.
+                if not per_repetition:
+                    continue
+                value = getattr(per_repetition[0].algorithm, self.parameter, None)
                 # A bool is an int in Python, but not a setting a group reads as a number.
                 if isinstance(value, bool) or not isinstance(value, (int, float)):
                     continue

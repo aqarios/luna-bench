@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
@@ -53,15 +54,17 @@ def _algo_with_solution(solution: Solution) -> AlgorithmEntity:
         name="algo1",
         algorithm=MockAlgorithm(),
         results={
-            "model1": AlgorithmResultEntity(
-                metadata=None,
-                status=JobStatus.DONE,
-                error=None,
-                solution=solution,
-                task_id=None,
-                retrival_data=None,
-                model_id=1,
-            )
+            "model1": [
+                AlgorithmResultEntity(
+                    metadata=None,
+                    status=JobStatus.DONE,
+                    error=None,
+                    solution=solution,
+                    task_id=None,
+                    retrival_data=None,
+                    model_id=1,
+                )
+            ]
         },
     )
 
@@ -101,7 +104,15 @@ class TestDataFrameExporter:
     def test_merges_algorithms_metrics_and_features(self) -> None:
         df = DataFrameExporter().export(_default_container())
 
-        expected_columns = ["algorithm", "model", "metadata", "algorithm_config", "accuracy/score", "num_vars/count"]
+        expected_columns = [
+            "algorithm",
+            "model",
+            "repetition",
+            "metadata",
+            "algorithm_config",
+            "accuracy/score",
+            "num_vars/count",
+        ]
         assert len(df) == 1
         assert list(df.columns) == expected_columns
         assert df.iloc[0]["algorithm"] == "algo1"
@@ -160,8 +171,62 @@ class TestDataFrameExporter:
         algo = _algo_with_solution(solution)
         df = DataFrameExporter(include_solution=True).export(_make_container(algorithms=[algo]))
 
-        assert list(df.columns) == ["algorithm", "model", "metadata", "solution", "algorithm_config"]
+        assert list(df.columns) == ["algorithm", "model", "repetition", "metadata", "solution", "algorithm_config"]
         assert df.iloc[0]["solution"] == solution.serialize()
+
+    def test_a_repeated_algorithm_gets_one_row_per_run(self) -> None:
+        container = _make_container(
+            metrics=[make_metric_entity("accuracy", ("algo1", "model1", {"score": 0.95}), repetitions=3)],
+            algorithms=[make_algo_entity("algo1", ["model1"], repetitions=3)],
+        )
+        df = DataFrameExporter().export(container)
+
+        assert list(df["repetition"]) == [0, 1, 2]
+        # The metric of each run lands on that run's row rather than on all of them.
+        assert list(df["accuracy/score"]) == [0.95, 0.95, 0.95]
+
+    def test_drop_leaves_the_named_columns_out(self) -> None:
+        df = DataFrameExporter(drop=["metadata", "algorithm_config"]).export(_default_container())
+
+        assert list(df.columns) == ["algorithm", "model", "repetition", "accuracy/score", "num_vars/count"]
+
+    def test_drop_reaches_result_columns(self) -> None:
+        df = DataFrameExporter(drop=["accuracy/score"]).export(_default_container())
+
+        assert "accuracy/score" not in df.columns
+        assert "num_vars/count" in df.columns
+
+    def test_a_column_the_table_is_built_on_can_be_dropped(self) -> None:
+        """Dropped after the merges, so leaving out a join key does not break them."""
+        container = _make_container(
+            metrics=[make_metric_entity("accuracy", ("algo1", "model1", {"score": 0.95}))],
+            algorithms=[make_algo_entity("algo1", ["model1"])],
+        )
+        df = DataFrameExporter(drop=["repetition", "model"]).export(container)
+
+        assert "repetition" not in df.columns
+        assert "model" not in df.columns
+        # The metric still found its row, which is what the merge needed those for.
+        assert list(df["accuracy/score"]) == [0.95]
+
+    def test_dropping_an_unknown_column_warns_and_exports_the_rest(self, caplog: pytest.LogCaptureFixture) -> None:
+        with caplog.at_level(logging.WARNING):
+            df = DataFrameExporter(drop=["no_such_column", "metadata"]).export(_default_container())
+
+        assert "metadata" not in df.columns
+        assert "no_such_column" in caplog.text
+
+    def test_dropping_the_solution_is_not_undone_by_including_it(self, solution: Solution) -> None:
+        """The two options contradict each other; the explicit drop is the later word."""
+        algo = _algo_with_solution(solution)
+        container = _make_container(algorithms=[algo])
+
+        df = DataFrameExporter(include_solution=True, drop=["solution"]).export(container)
+        assert "solution" not in df.columns
+
+        # And the exporters that post-process that column do not trip over its absence.
+        assert "solution" not in CsvExporter(include_solution=True, drop=["solution"]).export(container)
+        assert "solution" not in json.loads(JsonExporter(include_solution=True, drop=["solution"]).export(container))[0]
 
     def test_algorithm_config_is_dumped(self) -> None:
         df = DataFrameExporter().export(_default_container())
@@ -174,8 +239,8 @@ class TestCsvExporter:
         csv_str = CsvExporter().export(_default_container())
         header, row = csv_str.strip().split("\n")
 
-        assert header == "algorithm,model,metadata,algorithm_config,accuracy/score,num_vars/count"
-        assert row.startswith("algo1,model1,")
+        assert header == "algorithm,model,repetition,metadata,algorithm_config,accuracy/score,num_vars/count"
+        assert row.startswith("algo1,model1,0,")
 
     def test_custom_delimiter(self) -> None:
         csv_str = CsvExporter(delimiter=";").export(_default_container())
@@ -204,15 +269,17 @@ def _algo_with_metadata(metadata: dict[str, Any]) -> AlgorithmEntity:
         name="algo1",
         algorithm=MockAlgorithm(),
         results={
-            "model1": AlgorithmResultEntity(
-                metadata=metadata,
-                status=JobStatus.DONE,
-                error=None,
-                solution=None,
-                task_id=None,
-                retrival_data=None,
-                model_id=1,
-            )
+            "model1": [
+                AlgorithmResultEntity(
+                    metadata=metadata,
+                    status=JobStatus.DONE,
+                    error=None,
+                    solution=None,
+                    task_id=None,
+                    retrival_data=None,
+                    model_id=1,
+                )
+            ]
         },
     )
 

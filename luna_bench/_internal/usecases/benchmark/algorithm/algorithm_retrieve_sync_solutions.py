@@ -103,7 +103,8 @@ class AlgorithmRetrieveSyncSolutionsUcImpl(AlgorithmRetrieveSyncSolutionsUc):
             (a, r)
             for a in benchmark.algorithms
             if isinstance(a.algorithm, BaseAlgorithmSync)
-            for r in a.results.values()
+            for runs in a.results.values()
+            for r in runs
             if r.status == JobStatus.RUNNING and r.task_id is not None
         )
 

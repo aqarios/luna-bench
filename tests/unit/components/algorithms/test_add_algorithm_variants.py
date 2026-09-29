@@ -63,8 +63,8 @@ class TestAddAlgorithmWithVariants:
     def registers(self, mocked_usecases: dict[str, MagicMock]) -> MagicMock:
         """Make the add-algorithm usecase echo back an entity per call."""
         mock = mocked_usecases["benchmark_add_algorithm_uc"]
-        mock.side_effect = lambda _b, name, _a: Success(
-            AlgorithmEntity(name=name, algorithm=MockAlgorithm(), results={})
+        mock.side_effect = lambda _b, name, _a, repetitions=1: Success(
+            AlgorithmEntity(name=name, algorithm=MockAlgorithm(), repetitions=repetitions, results={})
         )
         return mock
 
@@ -104,6 +104,12 @@ class TestAddAlgorithmWithVariants:
         grid = bench.add_algorithm("algo", Algo(), variants=[{"reps": 2}, {"reps": 6}])
 
         assert [entity.name for entity in grid.entities] == ["algo[reps=2]", "algo[reps=6]"]
+
+    def test_every_variant_is_repeated_as_often_as_asked(self, bench: Benchmark, registers: MagicMock) -> None:
+        grid = bench.add_algorithm("algo", Algo(), variants=ParameterGrid({"reps": [2, 4]}), repetitions=5)
+
+        assert [entity.repetitions for entity in grid.entities] == [5, 5]
+        assert [call.args[3] for call in registers.call_args_list] == [5, 5]
 
     def test_an_unknown_path_registers_nothing_at_all(self, bench: Benchmark, registers: MagicMock) -> None:
         with pytest.raises(UnknownParameterPathError):

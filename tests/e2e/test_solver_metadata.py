@@ -109,14 +109,14 @@ class TestSolverMetadataInBenchmark:
         benchmark.run_algorithms()
         benchmark.run_metrics()
 
-        result = benchmark.get_algorithm("reporting").results["a_model"]
+        (result,) = benchmark.get_algorithm("reporting").results["a_model"]
         assert result.metadata == _METADATA
 
         # Reloaded from the database, so the bytes really made the round trip.
         reloaded = Benchmark.load("metadata_benchmark")
-        assert reloaded.get_algorithm("reporting").results["a_model"].metadata == _METADATA
+        assert reloaded.get_algorithm("reporting").results["a_model"][0].metadata == _METADATA
 
-        metric_result = reloaded.get_metric("device").results["a_model"]["reporting"]
+        (metric_result,) = reloaded.get_metric("device").results["a_model"]["reporting"]
         assert metric_result.result is not None
         assert metric_result.result.model_dump() == {"device": "qpu-7", "shots": 4096}
 
@@ -127,10 +127,10 @@ class TestSolverMetadataInBenchmark:
 
         benchmark.run_algorithms()
 
-        result = benchmark.get_algorithm("silent").results["a_model"]
+        (result,) = benchmark.get_algorithm("silent").results["a_model"]
         assert result.solution is not None
         assert result.metadata is None
-        assert Benchmark.load("silent_benchmark").get_algorithm("silent").results["a_model"].metadata is None
+        assert Benchmark.load("silent_benchmark").get_algorithm("silent").results["a_model"][0].metadata is None
 
     def test_a_metadata_metric_fails_only_for_the_run_that_reported_nothing(self, queue: _Queue) -> None:
         """One silent algorithm does not take the metric down for the reporting one."""
@@ -144,9 +144,9 @@ class TestSolverMetadataInBenchmark:
         benchmark.run_metrics()
 
         results = benchmark.get_metric("device").results["a_model"]
-        assert results["reporting"].result is not None
-        assert results["silent"].error is not None
-        assert "No metadata is available" in results["silent"].error
+        assert results["reporting"][0].result is not None
+        assert results["silent"][0].error is not None
+        assert "No metadata is available" in results["silent"][0].error
 
     def test_the_exported_table_carries_the_metadata(self, queue: _Queue) -> None:
         _ = queue
