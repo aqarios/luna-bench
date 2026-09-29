@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from peewee import AutoField, CharField, ForeignKeyField, ModelSelect
+from peewee import AutoField, CharField, ForeignKeyField, IntegerField, ModelSelect
 from playhouse.sqlite_ext import JSONField
 
 from luna_bench._internal.dao.tables.base_table import BaseTable
@@ -18,6 +18,10 @@ class AlgorithmTable(BaseTable):
     name = CharField(max_length=45, collation="NOCASE")
 
     algorithm_type = CharField(max_length=16, choices=[(s.value, s.name) for s in AlgorithmType])
+
+    # How often the algorithm is run on every model of the benchmark. One by default,
+    # which is what a database written before repetitions existed reads back as.
+    repetitions = IntegerField(default=1)
 
     registered_id = CharField(max_length=255)
     benchmark = ForeignKeyField(

@@ -8,6 +8,7 @@ class MetricResultDomain(BaseDomain):
     processing_time_ms: int  # time in ms
     model_name: str
     algorithm_name: str
+    repetition: int = 0
 
     status: JobStatus
     error: str | None

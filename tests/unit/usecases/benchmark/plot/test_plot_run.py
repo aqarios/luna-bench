@@ -212,7 +212,7 @@ class TestPlotsRunUcImpl:
             patch("luna_bench._internal.usecases.benchmark.plot.plot_run.MetricResultBuilder") as mock_builder,
             patch.object(self.use_case._logger, "warning"),
         ):
-            mock_builder.return_value.results.return_value = Success(metric_container)
+            mock_builder.return_value.results.return_value = Success([metric_container])
             result = self.use_case._run_plot(plot_entity, benchmark)
 
         assert result == Success(None)
@@ -237,7 +237,7 @@ class TestPlotsRunUcImpl:
             def side_effect(model: str, algo: str, metrics: list[str]) -> Failure[Any] | Success[Any]:  # noqa: ARG001
                 if algo == "algo_fail":
                     return Failure(RunMetricMissingError("metric1", model))
-                return Success(metric_container)
+                return Success([metric_container])
 
             mock_builder.return_value.results.side_effect = side_effect
             result = self.use_case._run_plot(plot_entity, benchmark)

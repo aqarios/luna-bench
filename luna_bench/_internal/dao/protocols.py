@@ -505,12 +505,13 @@ class AlgorithmDao(Protocol):
     """Protocol for algorithm persistence."""
 
     @staticmethod
-    def add(
+    def add(  # noqa: PLR0913, PLR0917 # One argument per column of the row being written.
         benchmark_name: str,
         algorithm_name: str,
         registered_id: str,
         algorithm_type: AlgorithmType,
         algorithm: ArbitraryDataDomain,
+        repetitions: int = 1,
     ) -> Result[AlgorithmDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         """Create a new algorithm under a benchmark.
 
@@ -526,6 +527,8 @@ class AlgorithmDao(Protocol):
             Whether this is a ``SYNC`` or ``ASYNC`` algorithm.
         algorithm: ArbitraryDataDomain
             The serialized algorithm configuration.
+        repetitions: int
+            How often the algorithm is run on every model, by default once.
 
         Returns
         -------
@@ -603,7 +606,7 @@ class AlgorithmDao(Protocol):
     def set_result(
         benchmark_name: str, algorithm_name: str, result: AlgorithmResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Store a per-model algorithm result (upsert semantics).
+        """Store a per-model, per-repetition algorithm result (upsert semantics).
 
         Parameters
         ----------

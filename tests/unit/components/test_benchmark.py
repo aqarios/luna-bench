@@ -1055,7 +1055,7 @@ class TestExport:
         assert csv_str is not None
         header, row = csv_str.strip().split("\n")
 
-        assert header == "algorithm,model,metadata,algorithm_config,accuracy/score,num_vars/count"
+        assert header == "algorithm,model,repetition,metadata,algorithm_config,accuracy/score,num_vars/count"
         assert row.startswith("algo1,model1,")
 
     def test_to_csv_with_options(self) -> None:
@@ -1073,6 +1073,7 @@ class TestExport:
             {
                 "algorithm": "algo1",
                 "model": "model1",
+                "repetition": 0,
                 "metadata": None,
                 "algorithm_config": {},
                 "accuracy/score": 0.95,

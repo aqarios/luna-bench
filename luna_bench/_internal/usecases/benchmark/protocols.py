@@ -295,7 +295,11 @@ class AlgorithmAddUc(Protocol):
     """Protocol for adding an algorithm to a benchmark."""
 
     def __call__(
-        self, benchmark_name: str, name: str, algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any]
+        self,
+        benchmark_name: str,
+        name: str,
+        algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+        repetitions: int = 1,
     ) -> Result[
         AlgorithmEntity,
         DataNotUniqueError
@@ -318,6 +322,8 @@ class AlgorithmAddUc(Protocol):
             Name to assign to the algorithm.
         algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any]
             The algorithm instance to register and persist.
+        repetitions: int
+            How often the algorithm is run on every model, by default once.
 
         Returns
         -------

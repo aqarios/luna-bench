@@ -116,7 +116,19 @@ class TestMetricResultBuilder:
         expected = num_models * num_algos if (num_metrics > 0 and num_models > 0 and num_algos > 0) else 0
         assert len(builder._lookup_map) == expected
         for inner in builder._lookup_map.values():
-            assert len(inner) == 3
+            # One repetition, holding the (result, config, name) triple.
+            assert len(inner) == 1
+            assert len(inner[0]) == 3
+
+    def test_one_container_per_repetition(self) -> None:
+        """An algorithm run more than once is looked up as one container per run."""
+        metric = make_metric_entity("metric_a", ("algo_1", "model_1", {"value": 1}), repetitions=3)
+        builder = MetricResultBuilder(self._make_benchmark([metric]))
+
+        containers = builder.results("model_1", "algo_1", [MockMetric]).unwrap()
+
+        assert [c.repetition for c in containers] == [0, 1, 2]
+        assert all(c.get(MockMetric, "metric_a").model_dump()["value"] == 1 for c in containers)
 
     def test_results_multiple_calls_independent(self) -> None:
         metric = make_metric_entity("metric_a", ("algo_1", "model_1", {"value": 1}))

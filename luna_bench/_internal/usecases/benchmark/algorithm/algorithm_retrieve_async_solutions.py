@@ -47,7 +47,7 @@ class AlgorithmRetrieveAsyncSolutionsUcImpl(AlgorithmRetrieveAsyncSolutionsUc):
         for a in benchmark.algorithms:
             if not isinstance(a.algorithm, BaseAlgorithmAsync):
                 continue
-            for r in a.results.values():
+            for r in (run for runs in a.results.values() for run in runs):
                 if r.status == JobStatus.RUNNING and r.task_id is not None:
                     with self._transaction as t:
                         model = Model.decode(t.model.load(r.model_id).unwrap())

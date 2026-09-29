@@ -53,15 +53,17 @@ def _algo_with_solution(solution: Solution) -> AlgorithmEntity:
         name="algo1",
         algorithm=MockAlgorithm(),
         results={
-            "model1": AlgorithmResultEntity(
-                metadata=None,
-                status=JobStatus.DONE,
-                error=None,
-                solution=solution,
-                task_id=None,
-                retrival_data=None,
-                model_id=1,
-            )
+            "model1": [
+                AlgorithmResultEntity(
+                    metadata=None,
+                    status=JobStatus.DONE,
+                    error=None,
+                    solution=solution,
+                    task_id=None,
+                    retrival_data=None,
+                    model_id=1,
+                )
+            ]
         },
     )
 
@@ -101,7 +103,15 @@ class TestDataFrameExporter:
     def test_merges_algorithms_metrics_and_features(self) -> None:
         df = DataFrameExporter().export(_default_container())
 
-        expected_columns = ["algorithm", "model", "metadata", "algorithm_config", "accuracy/score", "num_vars/count"]
+        expected_columns = [
+            "algorithm",
+            "model",
+            "repetition",
+            "metadata",
+            "algorithm_config",
+            "accuracy/score",
+            "num_vars/count",
+        ]
         assert len(df) == 1
         assert list(df.columns) == expected_columns
         assert df.iloc[0]["algorithm"] == "algo1"
@@ -160,8 +170,19 @@ class TestDataFrameExporter:
         algo = _algo_with_solution(solution)
         df = DataFrameExporter(include_solution=True).export(_make_container(algorithms=[algo]))
 
-        assert list(df.columns) == ["algorithm", "model", "metadata", "solution", "algorithm_config"]
+        assert list(df.columns) == ["algorithm", "model", "repetition", "metadata", "solution", "algorithm_config"]
         assert df.iloc[0]["solution"] == solution.serialize()
+
+    def test_a_repeated_algorithm_gets_one_row_per_run(self) -> None:
+        container = _make_container(
+            metrics=[make_metric_entity("accuracy", ("algo1", "model1", {"score": 0.95}), repetitions=3)],
+            algorithms=[make_algo_entity("algo1", ["model1"], repetitions=3)],
+        )
+        df = DataFrameExporter().export(container)
+
+        assert list(df["repetition"]) == [0, 1, 2]
+        # The metric of each run lands on that run's row rather than on all of them.
+        assert list(df["accuracy/score"]) == [0.95, 0.95, 0.95]
 
     def test_algorithm_config_is_dumped(self) -> None:
         df = DataFrameExporter().export(_default_container())
@@ -174,8 +195,8 @@ class TestCsvExporter:
         csv_str = CsvExporter().export(_default_container())
         header, row = csv_str.strip().split("\n")
 
-        assert header == "algorithm,model,metadata,algorithm_config,accuracy/score,num_vars/count"
-        assert row.startswith("algo1,model1,")
+        assert header == "algorithm,model,repetition,metadata,algorithm_config,accuracy/score,num_vars/count"
+        assert row.startswith("algo1,model1,0,")
 
     def test_custom_delimiter(self) -> None:
         csv_str = CsvExporter(delimiter=";").export(_default_container())
@@ -204,15 +225,17 @@ def _algo_with_metadata(metadata: dict[str, Any]) -> AlgorithmEntity:
         name="algo1",
         algorithm=MockAlgorithm(),
         results={
-            "model1": AlgorithmResultEntity(
-                metadata=metadata,
-                status=JobStatus.DONE,
-                error=None,
-                solution=None,
-                task_id=None,
-                retrival_data=None,
-                model_id=1,
-            )
+            "model1": [
+                AlgorithmResultEntity(
+                    metadata=metadata,
+                    status=JobStatus.DONE,
+                    error=None,
+                    solution=None,
+                    task_id=None,
+                    retrival_data=None,
+                    model_id=1,
+                )
+            ]
         },
     )
 

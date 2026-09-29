@@ -159,9 +159,45 @@ solve job's metadata on their own, with no code of yours involved.
 It reaches you through the benchmark's results and its exports:
 
 ```python
-benchmark.get_algorithm("my_algo").results["max_cut"].metadata  # {"device": "qpu-7", ...}
+# results["max_cut"] holds one entry per run of that model, so [0] is the first one.
+benchmark.get_algorithm("my_algo").results["max_cut"][0].metadata  # {"device": "qpu-7", ...}
 benchmark.to_dataframe()["metadata"]
 ```
+
+### Run a stochastic solver more than once
+
+A solver that samples gives a different answer every time it runs, so a single run says little about
+it. `repetitions` runs the same configuration that often on every model:
+
+```python
+benchmark.add_algorithm("flexqaoa", FlexQAOA(), repetitions=10)
+```
+
+The ten runs stay one algorithm entry, not ten. Each is solved on its own, each gets its own metric
+results, and everything that aggregates - the plots, `to_dataframe`, the CSV and JSON exports - sees
+all of them, so the error bars on a bar plot become the spread over runs and models rather than over
+models alone.
+
+The runs of a model reach you as a list, ordered by repetition:
+
+```python
+runs = benchmark.get_algorithm("flexqaoa").results["max_cut"]  # [run 0, run 1, ... run 9]
+runs[0].solution
+benchmark.get_algorithm("flexqaoa").run("max_cut", repetition=3)  # that one run, or None
+
+benchmark.to_dataframe()  # one row per (algorithm, model, repetition)
+```
+
+An algorithm added without `repetitions` runs once and has a single-entry list, with `repetition` 0.
+
+Notes:
+
+- Repetitions combine with variants: `variants=ParameterGrid(...)` crossed with `repetitions=10` runs
+  every variant ten times.
+- Re-running a benchmark starts only the runs that have no result yet, so raising `repetitions` on an
+  entry that was already registered does nothing - the stored count wins and a warning says so.
+  Remove the algorithm and add it again to change it.
+- Databases written before repetitions existed keep working: their runs read back as repetition 0.
 
 ### Write your own feature
 

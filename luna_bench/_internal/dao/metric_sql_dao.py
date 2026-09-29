@@ -97,10 +97,22 @@ class MetricSqlDao(MetricDao):
             algorithm = AlgorithmTable.get(
                 AlgorithmTable.name == result.algorithm_name, AlgorithmTable.benchmark == benchmark
             )
+            # Upsert, as the algorithm results are written: a metric that failed on one
+            # run and is computed again replaces that row instead of colliding with it on
+            # the unique index over (model, metric, algorithm, repetition).
+            existing_id = MetricResultTable.get_or_none(
+                (MetricResultTable.metric == metric)
+                & (MetricResultTable.algorithm == algorithm)
+                & (MetricResultTable.model_metadata == model_metadata)
+                & (MetricResultTable.repetition == result.repetition)
+            )
+
             metric_result = MetricResultTable(
+                id=existing_id,
                 metric=metric,
                 algorithm=algorithm,
                 model_metadata=model_metadata,
+                repetition=result.repetition,
                 processing_time_ms=result.processing_time_ms,
                 result_data=result.result,
                 status=result.status.value,
@@ -142,17 +154,20 @@ class MetricSqlDao(MetricDao):
 
     @staticmethod
     def metric_to_domain(metric: MetricTable) -> MetricDomain:
-        result_data: dict[ModelName, dict[AlgorithmName, MetricResultDomain]] = {}
-        for m in list(metric.results):
-            if m.model_metadata.name not in result_data:
-                result_data[m.model_metadata.name] = {}
-            result_data[m.model_metadata.name][m.algorithm.name] = MetricResultDomain.model_construct(
-                processing_time_ms=m.processing_time_ms,
-                model_name=m.model_metadata.name,
-                algorithm_name=m.algorithm.name,
-                result=m.result_data,
-                status=JobStatus(m.status),
-                error=m.error,
+        # One entry per repetition of the algorithm, ordered by it, so a caller reading
+        # results[model][algorithm] gets the runs in the order they were made.
+        result_data: dict[ModelName, dict[AlgorithmName, list[MetricResultDomain]]] = {}
+        for m in sorted(metric.results, key=lambda m: m.repetition):
+            result_data.setdefault(m.model_metadata.name, {}).setdefault(m.algorithm.name, []).append(
+                MetricResultDomain.model_construct(
+                    processing_time_ms=m.processing_time_ms,
+                    model_name=m.model_metadata.name,
+                    algorithm_name=m.algorithm.name,
+                    repetition=m.repetition,
+                    result=m.result_data,
+                    status=JobStatus(m.status),
+                    error=m.error,
+                )
             )
 
         return MetricDomain(

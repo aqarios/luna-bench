@@ -37,12 +37,13 @@ class AlgorithmSqlDao(AlgorithmDao):
     _logger: Logger = BenchLogger.get_logger(__name__)
 
     @staticmethod
-    def add(
+    def add(  # noqa: PLR0913, PLR0917 # One argument per column of the row being written.
         benchmark_name: str,
         algorithm_name: str,
         registered_id: str,
         algorithm_type: AlgorithmType,
         algorithm: ArbitraryDataDomain,
+        repetitions: int = 1,
     ) -> Result[AlgorithmDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
@@ -52,6 +53,7 @@ class AlgorithmSqlDao(AlgorithmDao):
                 benchmark=benchmark,
                 config_data=algorithm,
                 registered_id=registered_id,
+                repetitions=repetitions,
             )
             algorithm_db.save()
             return Success(AlgorithmSqlDao.algorithm_to_domain(algorithm_db))
@@ -123,14 +125,19 @@ class AlgorithmSqlDao(AlgorithmDao):
             if algorithm is None:
                 return Failure(DataNotExistError())
 
+            # A run is identified by its repetition as well, so the two runs of the same
+            # algorithm on the same model update their own row rather than each other's.
             existing_id = AlgorithmResultTable.get_or_none(
-                (AlgorithmResultTable.algorithm == algorithm) & (AlgorithmResultTable.model_metadata == model_metadata)
+                (AlgorithmResultTable.algorithm == algorithm)
+                & (AlgorithmResultTable.model_metadata == model_metadata)
+                & (AlgorithmResultTable.repetition == result.repetition)
             )
 
             algorithm_result = AlgorithmResultTable(
                 id=existing_id,
                 algorithm=algorithm,
                 model_metadata=model_metadata,
+                repetition=result.repetition,
                 status=result.status,
                 error=result.error,
                 encoded_solution=result.solution_bytes,
@@ -164,6 +171,7 @@ class AlgorithmSqlDao(AlgorithmDao):
         def to_domain(result: AlgorithmResultTable) -> AlgorithmResultDomain:
             to_return = AlgorithmResultDomain.model_construct(
                 model_id=result.model_metadata.id,
+                repetition=result.repetition,
                 status=JobStatus(result.status),
                 error=result.error,
                 task_id=result.task_id,
@@ -174,13 +182,16 @@ class AlgorithmSqlDao(AlgorithmDao):
             to_return.metadata_bytes = result.meta_data
             return to_return
 
-        result_data: dict[str, AlgorithmResultDomain] = {
-            r.model_metadata.name: to_domain(r) for r in list(algorithm.results)
-        }
+        # Ordered by repetition rather than by row id, so the runs of a model read back in
+        # the order they were asked for even when a reset left the table with gaps in it.
+        result_data: dict[str, list[AlgorithmResultDomain]] = {}
+        for r in sorted(algorithm.results, key=lambda r: r.repetition):
+            result_data.setdefault(r.model_metadata.name, []).append(to_domain(r))
 
         return AlgorithmDomain(
             name=algorithm.name,
             algorithm_type=AlgorithmType(algorithm.algorithm_type),
+            repetitions=algorithm.repetitions,
             results=result_data,
             config_data=RegisteredDataDomain(
                 registered_id=algorithm.registered_id,

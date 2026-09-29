@@ -232,8 +232,8 @@ class TestMetricDAO:
         assert type(set_result) is type(exp)
         if is_successful(exp):
             for r in setup_benchmark.transaction.metric.load(benchmark_name, metric_name).unwrap().results.values():
-                for d in r.values():
-                    assert d == result
+                for per_repetition in r.values():
+                    assert per_repetition == [result]
 
         else:
             x = type(exp.failure())

@@ -29,15 +29,18 @@ def _algo(name: str, status: JobStatus) -> AlgorithmEntity:
         name=name,
         algorithm=MockAlgorithm(),
         results={
-            "model1": AlgorithmResultEntity.model_construct(
-                metadata=None,
-                status=status,
-                error=None,
-                solution=None,
-                task_id=None,
-                retrival_data=None,
-                model_id=0,
-            )
+            "model1": [
+                AlgorithmResultEntity.model_construct(
+                    metadata=None,
+                    status=status,
+                    error=None,
+                    solution=None,
+                    task_id=None,
+                    retrival_data=None,
+                    model_id=0,
+                    repetition=0,
+                )
+            ]
         },
     )
 
@@ -64,14 +67,17 @@ def _metric(name: str, status: JobStatus) -> MetricEntity:
         metric=MockMetric(),
         results={
             "model1": {
-                "algo1": MetricResultEntity.model_construct(
-                    processing_time_ms=0,
-                    model_name="model1",
-                    algorithm_name="algo1",
-                    status=status,
-                    error=None,
-                    result=None,
-                )
+                "algo1": [
+                    MetricResultEntity.model_construct(
+                        processing_time_ms=0,
+                        model_name="model1",
+                        algorithm_name="algo1",
+                        repetition=0,
+                        status=status,
+                        error=None,
+                        result=None,
+                    )
+                ]
             }
         },
     )

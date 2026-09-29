@@ -57,7 +57,7 @@ class TestRetrieveSyncSolution:
                     )
 
         for b in benchmark.algorithms:
-            b.results = {"default_model": fake_result_data.model_copy()}
+            b.results = {"default_model": [fake_result_data.model_copy()]}
         return benchmark
 
     @pytest.mark.parametrize(
@@ -109,17 +109,17 @@ class TestRetrieveSyncSolution:
             if is_successful(exp):
                 if isinstance(a.algorithm, BaseAlgorithmSync):
                     solution, metadata = return_values[1].unwrap().unwrap()
-                    assert a.results["default_model"].solution is solution
-                    assert a.results["default_model"].metadata == decode_metadata(metadata)
-                    assert a.results["default_model"].status is JobStatus.DONE
+                    assert a.results["default_model"][0].solution is solution
+                    assert a.results["default_model"][0].metadata == decode_metadata(metadata)
+                    assert a.results["default_model"][0].status is JobStatus.DONE
                 else:
-                    assert a.results["default_model"].solution is None
-                    assert a.results["default_model"].status is JobStatus.RUNNING
+                    assert a.results["default_model"][0].solution is None
+                    assert a.results["default_model"][0].status is JobStatus.RUNNING
             else:
                 if isinstance(a.algorithm, BaseAlgorithmSync):
-                    assert a.results["default_model"].status is JobStatus.FAILED
-                    assert a.results["default_model"].error == exp.failure()
-                    assert a.results["default_model"].metadata is None
+                    assert a.results["default_model"][0].status is JobStatus.FAILED
+                    assert a.results["default_model"][0].error == exp.failure()
+                    assert a.results["default_model"][0].metadata is None
                 else:
-                    assert a.results["default_model"].solution is None
-                    assert a.results["default_model"].status is JobStatus.RUNNING
+                    assert a.results["default_model"][0].solution is None
+                    assert a.results["default_model"][0].status is JobStatus.RUNNING

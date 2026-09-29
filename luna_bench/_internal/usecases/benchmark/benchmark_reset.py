@@ -44,13 +44,16 @@ class BenchmarkResetUcImpl(BenchmarkResetUc):
             case ResetLevel.FAILED:
                 pred = lambda s: s == JobStatus.FAILED  # noqa: E731
 
-        algorithms = [a.name for a in benchmark.algorithms if any(pred(r.status) for r in a.results.values())]
+        algorithms = [
+            a.name for a in benchmark.algorithms if any(pred(r.status) for runs in a.results.values() for r in runs)
+        ]
         features = [f.name for f in benchmark.features if any(pred(r.status) for r in f.results.values())]
         cascade_metrics = len(algorithms) > 0
         metrics = [
             m.name
             for m in benchmark.metrics
-            if cascade_metrics or any(pred(r.status) for inner in m.results.values() for r in inner.values())
+            if cascade_metrics
+            or any(pred(r.status) for inner in m.results.values() for runs in inner.values() for r in runs)
         ]
         return algorithms, features, metrics
 

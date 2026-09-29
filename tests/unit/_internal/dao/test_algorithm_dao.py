@@ -213,8 +213,8 @@ class TestAlgorithmDAO:
         if is_successful(exp):
             a = setup_benchmark.transaction.algorithm.load(benchmark_name, algorithm_name)
 
-            assert a.unwrap().results == {setup_benchmark.model_metadata.name: result_to_store}
-            stored = a.unwrap().results[setup_benchmark.model_metadata.name]
+            assert a.unwrap().results == {setup_benchmark.model_metadata.name: [result_to_store]}
+            stored = a.unwrap().results[setup_benchmark.model_metadata.name][0]
             assert stored.metadata == {"something": "xD"}
 
         else:

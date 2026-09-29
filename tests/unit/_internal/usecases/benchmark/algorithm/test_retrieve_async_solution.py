@@ -59,7 +59,7 @@ class TestRetrieveAsyncSolution:
                         m.name, a.name, AlgorithmResultDomain.model_construct(**fake_result_data.model_dump())
                     )
         for b in benchmark.algorithms:
-            b.results = {"default_model": fake_result_data.model_copy()}
+            b.results = {"default_model": [fake_result_data.model_copy()]}
 
         return benchmark
 
@@ -87,15 +87,15 @@ class TestRetrieveAsyncSolution:
         # Check user model set correct
         for a in benchmark.algorithms:
             if isinstance(a.algorithm, BaseAlgorithmAsync):
-                solution = a.results["default_model"].solution
+                solution = a.results["default_model"][0].solution
                 fetch_result = MockAsyncAlgorithm().fetch_result(None, None)  # type: ignore[arg-type] # Using none for simplicity. The fake algorithm does nothing with this data anyway.
                 assert solution is not None
                 assert is_successful(fetch_result)
                 assert solution == fetch_result.unwrap()
-                assert a.results["default_model"].status is JobStatus.DONE
+                assert a.results["default_model"][0].status is JobStatus.DONE
             else:
-                assert a.results["default_model"].solution is None
-                assert a.results["default_model"].status is JobStatus.RUNNING
+                assert a.results["default_model"][0].solution is None
+                assert a.results["default_model"][0].status is JobStatus.RUNNING
 
     def test_metadata_travels_with_the_fetched_solution(
         self,
@@ -117,8 +117,8 @@ class TestRetrieveAsyncSolution:
 
         for a in benchmark.algorithms:
             if isinstance(a.algorithm, BaseAlgorithmAsync):
-                assert a.results["default_model"].metadata == metadata
-                assert a.results["default_model"].status is JobStatus.DONE
+                assert a.results["default_model"][0].metadata == metadata
+                assert a.results["default_model"][0].status is JobStatus.DONE
 
     def test_a_solution_without_metadata_leaves_it_empty(
         self,
@@ -137,8 +137,8 @@ class TestRetrieveAsyncSolution:
 
         for a in benchmark.algorithms:
             if isinstance(a.algorithm, BaseAlgorithmAsync):
-                assert a.results["default_model"].metadata is None
-                assert a.results["default_model"].status is JobStatus.DONE
+                assert a.results["default_model"][0].metadata is None
+                assert a.results["default_model"][0].status is JobStatus.DONE
 
     def test_missing_retrieval_data(
         self,
@@ -161,8 +161,8 @@ class TestRetrieveAsyncSolution:
 
         for a in benchmark.algorithms:
             if isinstance(a.algorithm, BaseAlgorithmAsync):
-                assert a.results["default_model"].error is not None
-                assert a.results["default_model"].status is JobStatus.FAILED
+                assert a.results["default_model"][0].error is not None
+                assert a.results["default_model"][0].status is JobStatus.FAILED
             else:
-                assert a.results["default_model"].solution is None
-                assert a.results["default_model"].status is JobStatus.RUNNING
+                assert a.results["default_model"][0].solution is None
+                assert a.results["default_model"][0].status is JobStatus.RUNNING

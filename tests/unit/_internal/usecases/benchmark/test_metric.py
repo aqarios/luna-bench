@@ -139,15 +139,17 @@ class TestMetric:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
                 num_metrics_to_calculate += 1
-                a.results[model.name] = AlgorithmResultEntity(
-                    metadata=None,
-                    status=JobStatus.DONE,
-                    error=None,
-                    solution=solution,
-                    task_id=None,
-                    retrival_data=None,
-                    model_id=model.id,
-                )
+                a.results[model.name] = [
+                    AlgorithmResultEntity(
+                        metadata=None,
+                        status=JobStatus.DONE,
+                        error=None,
+                        solution=solution,
+                        task_id=None,
+                        retrival_data=None,
+                        model_id=model.id,
+                    )
+                ]
 
         if isinstance(metric, str):
             metric = next((f for f in benchmark.metrics if f.name == metric), None)
@@ -165,8 +167,9 @@ class TestMetric:
                     assert len(m.results) == len(benchmark.modelset.models)
                     for model in benchmark.modelset.models:
                         assert len(m.results[model.name]) == num_metrics_to_calculate
-                        for r in m.results[model.name].values():
-                            assert r.status == JobStatus.DONE
+                        for per_repetition in m.results[model.name].values():
+                            for r in per_repetition:
+                                assert r.status == JobStatus.DONE
                 else:
                     assert len(m.results) == 0
 
@@ -184,22 +187,25 @@ class TestMetric:
         for a in benchmark.algorithms:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
-                a.results[model.name] = AlgorithmResultEntity(
-                    metadata=None,
-                    status=JobStatus.DONE,
-                    error=None,
-                    solution=solution,
-                    task_id=None,
-                    retrival_data=None,
-                    model_id=model.id,
-                )
+                a.results[model.name] = [
+                    AlgorithmResultEntity(
+                        metadata=None,
+                        status=JobStatus.DONE,
+                        error=None,
+                        solution=solution,
+                        task_id=None,
+                        retrival_data=None,
+                        model_id=model.id,
+                    )
+                ]
         result = usecase.benchmark_run_metric_uc()(benchmark=benchmark, metric=benchmark.metrics[0])
 
         assert is_successful(result)
         for m in benchmark.metrics:
             for r in m.results.values():
-                for metric_result in r.values():
-                    assert metric_result.status is JobStatus.DONE
+                for per_repetition in r.values():
+                    for metric_result in per_repetition:
+                        assert metric_result.status is JobStatus.DONE
 
         result_2 = usecase.benchmark_run_metric_uc()(benchmark=benchmark, metric=benchmark.metrics[0])
 
@@ -220,15 +226,17 @@ class TestMetric:
         for a in benchmark.algorithms:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
-                a.results[model.name] = AlgorithmResultEntity(
-                    metadata=None,
-                    status=JobStatus.RUNNING,
-                    error=None,
-                    solution=solution,
-                    task_id=None,
-                    retrival_data=None,
-                    model_id=model.id,
-                )
+                a.results[model.name] = [
+                    AlgorithmResultEntity(
+                        metadata=None,
+                        status=JobStatus.RUNNING,
+                        error=None,
+                        solution=solution,
+                        task_id=None,
+                        retrival_data=None,
+                        model_id=model.id,
+                    )
+                ]
         result = usecase.benchmark_run_metric_uc()(benchmark=benchmark, metric=benchmark.metrics[0])
 
         assert is_successful(result)
@@ -245,15 +253,17 @@ class TestMetric:
         for a in benchmark.algorithms:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
-                a.results[model.name] = AlgorithmResultEntity(
-                    metadata=None,
-                    status=JobStatus.DONE,
-                    error=None,
-                    solution=None,
-                    task_id=None,
-                    retrival_data=None,
-                    model_id=model.id,
-                )
+                a.results[model.name] = [
+                    AlgorithmResultEntity(
+                        metadata=None,
+                        status=JobStatus.DONE,
+                        error=None,
+                        solution=None,
+                        task_id=None,
+                        retrival_data=None,
+                        model_id=model.id,
+                    )
+                ]
         result = usecase.benchmark_run_metric_uc()(benchmark=benchmark, metric=benchmark.metrics[0])
 
         assert is_successful(result)
@@ -270,15 +280,17 @@ class TestMetric:
         for a in benchmark.algorithms:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
-                a.results[model.name] = AlgorithmResultEntity(
-                    metadata=None,
-                    status=JobStatus.DONE,
-                    error=None,
-                    solution=None,
-                    task_id=None,
-                    retrival_data=None,
-                    model_id=model.id,
-                )
+                a.results[model.name] = [
+                    AlgorithmResultEntity(
+                        metadata=None,
+                        status=JobStatus.DONE,
+                        error=None,
+                        solution=None,
+                        task_id=None,
+                        retrival_data=None,
+                        model_id=model.id,
+                    )
+                ]
         metric_result = usecase.benchmark_add_metric_uc()(
             benchmark_name=benchmark.name, name="error metric", metric=MockMetricError()
         )
@@ -304,15 +316,17 @@ class TestMetric:
         for a in benchmark.algorithms:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
-                a.results[model.name] = AlgorithmResultEntity(
-                    metadata=metadata,
-                    status=JobStatus.DONE,
-                    error=None,
-                    solution=solution,
-                    task_id=None,
-                    retrival_data=None,
-                    model_id=model.id,
-                )
+                a.results[model.name] = [
+                    AlgorithmResultEntity(
+                        metadata=metadata,
+                        status=JobStatus.DONE,
+                        error=None,
+                        solution=solution,
+                        task_id=None,
+                        retrival_data=None,
+                        model_id=model.id,
+                    )
+                ]
         metric_result = usecase.benchmark_add_metric_uc()(
             benchmark_name=benchmark.name, name="device", metric=MockMetadataMetric()
         )
@@ -334,10 +348,11 @@ class TestMetric:
 
         assert len(metric.results) > 0
         for model_results in metric.results.values():
-            for r in model_results.values():
-                assert r.status == JobStatus.DONE
-                assert r.result is not None
-                assert r.result.model_dump()["device"] == "qpu-7"
+            for per_repetition in model_results.values():
+                for r in per_repetition:
+                    assert r.status == JobStatus.DONE
+                    assert r.result is not None
+                    assert r.result.model_dump()["device"] == "qpu-7"
 
     def test_run_metadata_metric_fails_for_a_run_that_reported_none(
         self,
@@ -351,10 +366,11 @@ class TestMetric:
 
         assert len(metric.results) > 0
         for model_results in metric.results.values():
-            for r in model_results.values():
-                assert r.status == JobStatus.FAILED
-                assert r.error is not None
-                assert "No metadata is available" in r.error
+            for per_repetition in model_results.values():
+                for r in per_repetition:
+                    assert r.status == JobStatus.FAILED
+                    assert r.error is not None
+                    assert "No metadata is available" in r.error
 
     def test_run_metric_raises_during_execution(
         self,
@@ -367,15 +383,17 @@ class TestMetric:
         for a in benchmark.algorithms:
             assert benchmark.modelset is not None
             for model in benchmark.modelset.models:
-                a.results[model.name] = AlgorithmResultEntity(
-                    metadata=None,
-                    status=JobStatus.DONE,
-                    error=None,
-                    solution=solution,
-                    task_id=None,
-                    retrival_data=None,
-                    model_id=model.id,
-                )
+                a.results[model.name] = [
+                    AlgorithmResultEntity(
+                        metadata=None,
+                        status=JobStatus.DONE,
+                        error=None,
+                        solution=solution,
+                        task_id=None,
+                        retrival_data=None,
+                        model_id=model.id,
+                    )
+                ]
         metric_result = usecase.benchmark_add_metric_uc()(
             benchmark_name=benchmark.name, name="error metric", metric=MockMetricError()
         )
@@ -389,6 +407,7 @@ class TestMetric:
         error_metric = next(m for m in benchmark.metrics if m.name == "error metric")
         assert len(error_metric.results) > 0
         for model_results in error_metric.results.values():
-            for r in model_results.values():
-                assert r.status == JobStatus.FAILED
-                assert r.error is not None
+            for per_repetition in model_results.values():
+                for r in per_repetition:
+                    assert r.status == JobStatus.FAILED
+                    assert r.error is not None
