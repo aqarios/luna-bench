@@ -119,9 +119,9 @@ class MetricSqlDao(MetricDao):
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)
-            # peewee stubs leave `execute` untyped; `unused-ignore` keeps environments where mypy
-            # does not flag the call (with `warn_unused_ignores`) passing as well.
-            MetricResultTable.delete().where(MetricResultTable.metric == metric).execute()  # type: ignore[no-untyped-call, unused-ignore]
+            # peewee stubs leave `execute` untyped and type `Model.delete` via a `Self`-generic descriptor
+            # (`misc`); `unused-ignore` keeps environments where mypy does not flag these passing as well.
+            MetricResultTable.delete().where(MetricResultTable.metric == metric).execute()  # type: ignore[misc, no-untyped-call, unused-ignore]
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())

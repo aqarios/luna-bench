@@ -114,9 +114,9 @@ class FeatureSqlDao(FeatureDao):
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)
-            # peewee stubs leave `execute` untyped; `unused-ignore` keeps environments where mypy
-            # does not flag the call (with `warn_unused_ignores`) passing as well.
-            FeatureResultTable.delete().where(FeatureResultTable.feature == feature).execute()  # type: ignore[no-untyped-call, unused-ignore]
+            # peewee stubs leave `execute` untyped and type `Model.delete` via a `Self`-generic descriptor
+            # (`misc`); `unused-ignore` keeps environments where mypy does not flag these passing as well.
+            FeatureResultTable.delete().where(FeatureResultTable.feature == feature).execute()  # type: ignore[misc, no-untyped-call, unused-ignore]
             return Success(None)
         except DoesNotExist:
             return Failure(DataNotExistError())
