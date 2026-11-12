@@ -204,8 +204,8 @@ Notes:
 ### Export the results
 
 ```python
-benchmark.to_dataframe()          # one row per (algorithm, model, repetition)
-benchmark.to_csv("results.csv")   # writes the file; without a path it returns the string
+benchmark.to_dataframe()  # one row per (algorithm, model, repetition)
+benchmark.to_csv("results.csv")  # writes the file; without a path it returns the string
 benchmark.to_json(indent=2)
 ```
 
