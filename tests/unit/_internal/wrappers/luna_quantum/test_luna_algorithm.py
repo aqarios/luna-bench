@@ -47,11 +47,18 @@ class FakeLunaAlgorithm(LunaAlgorithm):
 
 
 class FakeSolveJob:
-    def __init__(self, status: StatusEnum, error_message: str | None = None, solution: Solution | None = None) -> None:
+    def __init__(
+        self,
+        status: StatusEnum,
+        error_message: str | None = None,
+        solution: Solution | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
         self.id = "job_id"
         self.status = status
         self.error_message = error_message
         self.solution = solution
+        self.metadata = metadata
 
     def result(self) -> Solution | None:
         return self.solution
@@ -157,6 +164,7 @@ class TestLunaAlgorithm:
     def test_fetch_result_success_returns_solution(
         self, demo_algorithm: FakeLunaAlgorithm, model: Model, solution: Solution
     ) -> None:
+        """A job without metadata returns the bare solution, as every algorithm did before."""
         with patch.object(
             SolveJob, "get_by_id", classmethod(lambda _, _id: FakeSolveJob(status=StatusEnum.DONE, solution=solution))
         ):
@@ -164,6 +172,21 @@ class TestLunaAlgorithm:
 
         assert is_successful(result)
         assert result.unwrap() is solution
+
+    def test_fetch_result_success_passes_on_the_job_metadata(
+        self, demo_algorithm: FakeLunaAlgorithm, model: Model, solution: Solution
+    ) -> None:
+        """What the provider reported about the run travels with the solution."""
+        metadata = {"device": "qpu-7", "queue_time_s": 12.5}
+        with patch.object(
+            SolveJob,
+            "get_by_id",
+            classmethod(lambda _, _id: FakeSolveJob(status=StatusEnum.DONE, solution=solution, metadata=metadata)),
+        ):
+            result = demo_algorithm.fetch_result(model=model, retrieval_data=LunaData(luna_id="jid"))
+
+        assert is_successful(result)
+        assert result.unwrap() == (solution, metadata)
 
     def test_data_type(self, demo_algorithm: FakeLunaAlgorithm) -> None:
         assert demo_algorithm.model_type == LunaData

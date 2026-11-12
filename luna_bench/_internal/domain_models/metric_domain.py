@@ -8,6 +8,6 @@ from .registered_data_domain import RegisteredDataDomain
 class MetricDomain(BaseDomain):
     name: str
 
-    results: dict[ModelName, dict[AlgorithmName, MetricResultDomain]]
+    results: dict[ModelName, dict[AlgorithmName, list[MetricResultDomain]]]
 
     config_data: RegisteredDataDomain

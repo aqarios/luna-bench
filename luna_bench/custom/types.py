@@ -1,4 +1,7 @@
-from typing import TYPE_CHECKING
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
+
+from luna_model import Solution
 
 if TYPE_CHECKING:
     from luna_bench.custom.base_components.base_feature import BaseFeature
@@ -13,6 +16,13 @@ else:
     # without needing TYPE_CHECKING-only symbols.
     type FeatureClass = type[object]
     type MetricClass = type[object]
+
+#: What an algorithm may hand back. The bare ``Solution`` is the shape every algorithm had
+#: before metadata existed and still the right one for a solver with nothing to add; the pair
+#: reports what the solver knows about the run itself. ``Solution`` is imported at runtime
+#: rather than under ``TYPE_CHECKING`` because this alias appears in the return annotation of
+#: user-written algorithms, where it may be resolved.
+type SolveOutcome = Solution | tuple[Solution, Mapping[str, Any]]
 
 type AlgorithmName = str
 type BenchmarkName = str

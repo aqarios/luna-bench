@@ -13,7 +13,9 @@ from .enums import JobStatus
 class AlgorithmResultEntity(BaseModel):
     """Represents a result of an algorithm execution."""
 
-    meta_data: ArbitraryDataDomain | None
+    #: What the algorithm reported about this run beyond the solution - the device it ran on,
+    #: the shots it took, a provider job id. ``None`` when it returned a bare ``Solution``.
+    metadata: dict[str, Any] | None
     status: JobStatus
     error: str | None
 
@@ -24,6 +26,10 @@ class AlgorithmResultEntity(BaseModel):
     task_id: str | None
     retrival_data: ArbitraryDataDomain | None
     model_id: int
+
+    #: Which run on this model produced the result, counted from 0. Always 0 for an
+    #: algorithm added without ``repetitions``.
+    repetition: int = 0
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 

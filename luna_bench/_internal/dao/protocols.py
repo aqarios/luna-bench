@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, Self
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
     from types import TracebackType
 
     from pydantic import BaseModel
@@ -22,6 +23,7 @@ if TYPE_CHECKING:
     from luna_bench._internal.domain_models.arbitrary_data_domain import ArbitraryDataDomain
     from luna_bench._internal.domain_models.feature_domain import FeatureDomain
     from luna_bench._internal.domain_models.metric_domain import MetricDomain
+    from luna_bench.entities.enums.job_status_enum import JobStatus
     from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
     from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
     from luna_bench.errors.unknown_error import UnknownLunaBenchError
@@ -334,9 +336,9 @@ class FeatureDao(Protocol):
 
     @staticmethod
     def remove_result(
-        benchmark_name: str, feature_name: str
+        benchmark_name: str, feature_name: str, statuses: Collection[JobStatus] | None = None
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Delete all results for a feature.
+        """Delete the results of a feature, all of them or the ones in a given state.
 
         Parameters
         ----------
@@ -344,6 +346,9 @@ class FeatureDao(Protocol):
             The benchmark the feature belongs to.
         feature_name: str
             The name of the feature.
+        statuses: Collection[JobStatus] | None
+            Delete only the results in one of these states; ``None``, the default,
+            deletes every result of the feature.
 
         Returns
         -------
@@ -465,8 +470,36 @@ class MetricDao(Protocol):
         """
 
     @staticmethod
-    def remove_result(benchmark_name: str, metric_name: str) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Delete all results for a metric.
+    def remove_result(
+        benchmark_name: str, metric_name: str, statuses: Collection[JobStatus] | None = None
+    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+        """Delete the results of a metric, all of them or the ones in a given state.
+
+        Parameters
+        ----------
+        benchmark_name: str
+            The benchmark the metric belongs to.
+        metric_name: str
+            The name of the metric.
+        statuses: Collection[JobStatus] | None
+            Delete only the results in one of these states; ``None``, the default,
+            deletes every result of the metric.
+
+        Returns
+        -------
+        Result[None, DataNotExistError | UnknownLunaBenchError]
+            On success: Nothing.
+            On failure: An error.
+        """
+
+    @staticmethod
+    def remove_orphaned_results(
+        benchmark_name: str, metric_name: str
+    ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
+        """Delete the results of a metric whose algorithm run is no longer stored.
+
+        The cascade a reset needs: what was computed from a run that has been cleared
+        describes nothing any more.
 
         Parameters
         ----------
@@ -505,12 +538,13 @@ class AlgorithmDao(Protocol):
     """Protocol for algorithm persistence."""
 
     @staticmethod
-    def add(
+    def add(  # noqa: PLR0913, PLR0917 # One argument per column of the row being written.
         benchmark_name: str,
         algorithm_name: str,
         registered_id: str,
         algorithm_type: AlgorithmType,
         algorithm: ArbitraryDataDomain,
+        repetitions: int = 1,
     ) -> Result[AlgorithmDomain, DataNotUniqueError | DataNotExistError | UnknownLunaBenchError]:
         """Create a new algorithm under a benchmark.
 
@@ -526,6 +560,8 @@ class AlgorithmDao(Protocol):
             Whether this is a ``SYNC`` or ``ASYNC`` algorithm.
         algorithm: ArbitraryDataDomain
             The serialized algorithm configuration.
+        repetitions: int
+            How often the algorithm is run on every model, by default once.
 
         Returns
         -------
@@ -603,7 +639,7 @@ class AlgorithmDao(Protocol):
     def set_result(
         benchmark_name: str, algorithm_name: str, result: AlgorithmResultDomain
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Store a per-model algorithm result (upsert semantics).
+        """Store a per-model, per-repetition algorithm result (upsert semantics).
 
         Parameters
         ----------
@@ -623,9 +659,9 @@ class AlgorithmDao(Protocol):
 
     @staticmethod
     def remove_result(
-        benchmark_name: str, algorithm_name: str
+        benchmark_name: str, algorithm_name: str, statuses: Collection[JobStatus] | None = None
     ) -> Result[None, DataNotExistError | UnknownLunaBenchError]:
-        """Delete all results for an algorithm.
+        """Delete the runs of an algorithm, all of them or the ones in a given state.
 
         Parameters
         ----------
@@ -633,6 +669,9 @@ class AlgorithmDao(Protocol):
             The benchmark the algorithm belongs to.
         algorithm_name: str
             The name of the algorithm.
+        statuses: Collection[JobStatus] | None
+            Delete only the runs in one of these states; ``None``, the default, deletes
+            every run of the algorithm.
 
         Returns
         -------

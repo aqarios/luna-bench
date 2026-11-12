@@ -25,6 +25,7 @@ class MetricMapper(ModelListMixin[MetricDomain, MetricEntity]):
             processing_time_ms=result.processing_time_ms,
             model_name=result.model_name,
             algorithm_name=result.algorithm_name,
+            repetition=result.repetition,
             status=result.status,
             error=result.error,
             result=MetricResult.model_construct(**result.result.model_dump()) if result.result else None,
@@ -32,11 +33,12 @@ class MetricMapper(ModelListMixin[MetricDomain, MetricEntity]):
 
     @staticmethod
     def result_to_user_model_dict(
-        results: dict[ModelName, dict[AlgorithmName, MetricResultDomain]],
-    ) -> dict[ModelName, dict[AlgorithmName, MetricResultEntity]]:
+        results: dict[ModelName, dict[AlgorithmName, list[MetricResultDomain]]],
+    ) -> dict[ModelName, dict[AlgorithmName, list[MetricResultEntity]]]:
         return {
             model_name: {
-                algorithm_name: MetricMapper.result_to_user_model(result) for algorithm_name, result in r.items()
+                algorithm_name: [MetricMapper.result_to_user_model(result) for result in per_repetition]
+                for algorithm_name, per_repetition in r.items()
             }
             for model_name, r in results.items()
         }

@@ -4,14 +4,15 @@ from typing import Any, Protocol, cast, overload
 
 import cloudpickle
 from dependency_injector.wiring import Provide, inject
-from luna_model import Model, Solution
+from luna_model import Model
 
 from luna_bench._internal.registries.protocols import Registry
 from luna_bench._internal.registries.registry_container import RegistryContainer
 from luna_bench.custom.base_components.base_algorithm_async import BaseAlgorithmAsync
 from luna_bench.custom.base_components.base_algorithm_sync import BaseAlgorithmSync
-from luna_bench.errors.decorators.invalid_return_type_error import InvalidReturnTypeError
+from luna_bench.custom.types import SolveOutcome
 from luna_bench.errors.incompatible_class_error import IncompatibleClassError
+from luna_bench.helpers.metadata import split_solve_outcome
 
 from .decorator_utilities import DecoratorUtilities
 
@@ -27,12 +28,10 @@ def _rebuild_algorithm(func_bytes: bytes) -> BaseAlgorithmSync:
     name = func.__name__
 
     @functools.wraps(func)
-    def run(self: BaseAlgorithmSync, model: Model) -> Solution:
+    def run(self: BaseAlgorithmSync, model: Model) -> SolveOutcome:
         _ = self
-        result = func(model)
-        if not isinstance(result, Solution):
-            raise InvalidReturnTypeError(name, Solution, type(result))
-        return result
+        solution, metadata = split_solve_outcome(func(model), name)
+        return solution if metadata is None else (solution, metadata)
 
     cls = type(
         name,
@@ -57,7 +56,7 @@ class AlgorithmDecorator(Protocol):
     ) -> type[TAlgorithm]: ...
 
     @overload
-    def __call__(self, target: Callable[[Model], Solution], /) -> type[BaseAlgorithmSync]: ...
+    def __call__(self, target: Callable[[Model], SolveOutcome], /) -> type[BaseAlgorithmSync]: ...
 
 
 @overload
@@ -70,7 +69,7 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
 
 @overload
 def algorithm(
-    _cls: Callable[[Model], Solution],
+    _cls: Callable[[Model], SolveOutcome],
     *,
     algorithm_id: str | None = None,
 ) -> type[BaseAlgorithmSync]: ...
@@ -86,7 +85,7 @@ def algorithm(
 
 @inject
 def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
-    _cls: type[T] | Callable[[Model], Solution] | None = None,
+    _cls: type[T] | Callable[[Model], SolveOutcome] | None = None,
     *,
     algorithm_id: str | None = None,
     algorithm_sync_registry: Registry[BaseAlgorithmSync] = Provide[RegistryContainer.algorithm_sync_registry],
@@ -114,16 +113,14 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
             raise IncompatibleClassError((BaseAlgorithmAsync, BaseAlgorithmSync))
         return cls
 
-    def _algorithm_function(func: Callable[[Model], Solution]) -> type[BaseAlgorithmSync]:
+    def _algorithm_function(func: Callable[[Model], SolveOutcome]) -> type[BaseAlgorithmSync]:
         DecoratorUtilities.validate_signature(func, parameter_map={"model": Model})
 
         @functools.wraps(func)
-        def run(self: BaseAlgorithmSync, model: Model) -> Solution:
+        def run(self: BaseAlgorithmSync, model: Model) -> SolveOutcome:
             _ = self
-            result = func(model)
-            if not isinstance(result, Solution):
-                raise InvalidReturnTypeError(func.__name__, Solution, type(result))
-            return result
+            solution, metadata = split_solve_outcome(func(model), func.__name__)
+            return solution if metadata is None else (solution, metadata)
 
         dynamic_class = type(
             func.__name__,
@@ -142,7 +139,7 @@ def algorithm[T: BaseAlgorithmAsync[Any] | BaseAlgorithmSync](
         return _do_register_class(dynamic_class)
 
     def _do_register(
-        obj: type[T] | Callable[[Model], Solution],
+        obj: type[T] | Callable[[Model], SolveOutcome],
     ) -> type[T] | type[BaseAlgorithmSync]:
         if isinstance(obj, type):
             return _do_register_class(obj)

@@ -9,7 +9,7 @@ from returns.result import Result, Success
 
 from luna_bench._internal.registries import Registry
 from luna_bench._internal.registries.arbitrary_data_registry import ArbitraryDataRegistry
-from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync
+from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync, SolveOutcome
 from luna_bench.custom.decorators.algorithm import _rebuild_algorithm, algorithm
 from luna_bench.errors.decorators.invalid_return_type_error import InvalidReturnTypeError
 from luna_bench.errors.incompatible_class_error import IncompatibleClassError
@@ -73,6 +73,33 @@ class TestAlgorithmSyncDecorator:
         algo_inst = executable_algo()
         result = algo_inst.run(cast("Model", {}))
         assert isinstance(result, Solution)
+
+    def test_algorithm_sync_function_may_report_metadata(self) -> None:
+        """A function algorithm reports metadata the same way a class one does."""
+
+        @algorithm
+        def algo_with_metadata(model: Model) -> SolveOutcome:
+            _ = model
+            return Solution(samples=[]), {"device": "qpu-7"}
+
+        result = algo_with_metadata().run(cast("Model", {}))
+
+        assert isinstance(result, tuple)
+        solution, metadata = result
+        assert isinstance(solution, Solution)
+        assert metadata == {"device": "qpu-7"}
+
+    def test_rebuilt_algorithm_may_report_metadata(self) -> None:
+        """The same holds after the function crossed into the worker process."""
+
+        def func_with_metadata(_model: Model) -> SolveOutcome:
+            return Solution(samples=[]), {"device": "qpu-7"}
+
+        restored = _rebuild_algorithm(cloudpickle.dumps(func_with_metadata))
+        result = restored.run(cast("Model", {}))
+
+        assert isinstance(result, tuple)
+        assert result[1] == {"device": "qpu-7"}
 
     def test_algorithm_sync_function_invalid_return_type(self) -> None:
         @algorithm  # type: ignore[arg-type]

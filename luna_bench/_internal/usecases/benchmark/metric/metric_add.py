@@ -1,3 +1,5 @@
+from typing import Any
+
 from dependency_injector.wiring import Provide, inject
 from pydantic import ValidationError
 from returns.pipeline import is_successful
@@ -39,7 +41,7 @@ class MetricAddUcImpl(MetricAddUc):
         self._registry = registry
 
     def __call__(
-        self, benchmark_name: str, name: str, metric: BaseMetric
+        self, benchmark_name: str, name: str, metric: BaseMetric[Any]
     ) -> Result[
         MetricEntity,
         DataNotUniqueError

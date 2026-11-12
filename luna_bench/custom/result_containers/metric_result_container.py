@@ -15,11 +15,19 @@ if TYPE_CHECKING:
 
 
 class MetricResultContainer(BaseModel):
-    """Metric results container."""
+    """Metric results container.
+
+    Holds the metrics computed on a single run: an algorithm added with ``repetitions``
+    has one container per repetition for the same (model, algorithm) pair, told apart by
+    :attr:`repetition`.
+    """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     data: Mapping[MetricClass, Mapping[MetricName, MetricComputed]]
+
+    #: The run of the algorithm these metrics were computed on, counted from 0.
+    repetition: int = 0
 
     def __contains__(self, metric_cls: object) -> bool:
         """Return whether this container holds any result of *metric_cls*.

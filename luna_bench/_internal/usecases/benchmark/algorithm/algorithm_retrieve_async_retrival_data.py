@@ -104,7 +104,8 @@ class AlgorithmRetrieveAsyncRetrivalDataUcImpl(AlgorithmRetrieveAsyncRetrivalDat
             (a, r)
             for a in benchmark.algorithms
             if isinstance(a.algorithm, BaseAlgorithmAsync)
-            for r in a.results.values()
+            for runs in a.results.values()
+            for r in runs
             if r.status == JobStatus.RUNNING and r.task_id is not None
         )
 

@@ -3,6 +3,7 @@ from .base_components.base_algorithm_sync import BaseAlgorithmSync
 from .base_components.base_exporter import BaseExporter, Exporter
 from .base_components.base_feature import BaseFeature
 from .base_components.base_lookup_feature import BaseModelLookupFeature, BaseValueLookupFeature
+from .base_components.base_metadata_metric import BaseMetadataMetric
 from .base_components.base_metric import BaseMetric
 from .base_components.base_plot import BasePlot
 from .base_components.metric_direction_enum import MetricDirection
@@ -19,6 +20,7 @@ from .result_containers.algorithm_result_container import AlgorithmResultContain
 from .result_containers.benchmark_result_container import BenchmarkResultContainer
 from .result_containers.feature_result_container import FeatureResultContainer
 from .result_containers.metric_result_container import MetricResultContainer
+from .result_containers.solve_metadata import SolveMetadata
 from .types import (
     AlgorithmName,
     BenchmarkName,
@@ -29,6 +31,7 @@ from .types import (
     ModelName,
     ModelSetName,
     PlotName,
+    SolveOutcome,
 )
 
 __all__ = [
@@ -38,6 +41,7 @@ __all__ = [
     "BaseAlgorithmSync",
     "BaseExporter",
     "BaseFeature",
+    "BaseMetadataMetric",
     "BaseMetric",
     "BaseModelLookupFeature",
     "BasePlot",
@@ -60,6 +64,8 @@ __all__ = [
     "ModelSetName",
     "PlotName",
     "RegistryInfo",
+    "SolveMetadata",
+    "SolveOutcome",
     "algorithm",
     "feature",
     "metric",

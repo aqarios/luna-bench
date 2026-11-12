@@ -65,7 +65,9 @@ def _with_algorithms(configurations: dict[str, object]) -> MagicMock:
     benchmark_results = MagicMock(spec=BenchmarkResultContainer)
     benchmark_results.algorithms = {
         "m1": {
-            name: MagicMock(spec=AlgorithmResultContainer, algorithm=configuration)
+            # Two runs of the same entry, as an algorithm added with repetitions has:
+            # both carry the configuration, and the setting is read once.
+            name: [MagicMock(spec=AlgorithmResultContainer, algorithm=configuration) for _ in range(2)]
             for name, configuration in configurations.items()
         }
     }

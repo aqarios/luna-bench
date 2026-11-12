@@ -5,6 +5,7 @@ from typing import Any
 
 from peewee import Database, IntegrityError, Model, SqliteDatabase, sqlite3  # type: ignore[attr-defined]
 
+from luna_bench._internal.dao.database.migrations import migrate_schema
 from luna_bench.configs.config import config
 from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.dao.data_not_unique_error import DataNotUniqueError
@@ -25,6 +26,9 @@ def setup_db_proxy(tables: list[Any]) -> Database:
                 ("foreign_keys", 1),  # Enforce foreign-key constraints.
             ),
         )
+        # Older databases first, so that the tables below add what is still missing -
+        # including the unique indexes whose narrower versions the migration dropped.
+        migrate_schema(_database)
         _database.create_tables(tables, safe=True)
 
     return _database

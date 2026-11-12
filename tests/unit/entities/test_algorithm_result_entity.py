@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 @pytest.fixture()
 def entity(solution: Solution) -> AlgorithmResultEntity:
     return AlgorithmResultEntity(
-        meta_data=None,
+        metadata=None,
         status=JobStatus.DONE,
         error=None,
         solution=solution,

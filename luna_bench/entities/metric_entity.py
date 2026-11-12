@@ -13,4 +13,5 @@ class MetricEntity(BaseModel):
     name: MetricName
 
     metric: BaseMetric
-    results: dict[ModelName, dict[AlgorithmName, MetricResultEntity]]
+    #: One result per repetition of the algorithm, ordered by repetition.
+    results: dict[ModelName, dict[AlgorithmName, list[MetricResultEntity]]]

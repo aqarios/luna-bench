@@ -1,10 +1,10 @@
 from typing import Any, Protocol
 
-from luna_model import Solution
 from pydantic import BaseModel, ValidationError
 from returns.maybe import Maybe
 from returns.result import Result
 
+from luna_bench._internal.background_tasks.protocols import SyncRunPayload
 from luna_bench._internal.domain_models.algorithm_type_enum import AlgorithmType
 from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync, BaseFeature, BaseMetric, BasePlot, Exporter
 from luna_bench.entities import (
@@ -134,7 +134,7 @@ class MetricAddUc(Protocol):
     """Protocol for adding a metric to a benchmark."""
 
     def __call__(
-        self, benchmark_name: str, name: str, metric: BaseMetric
+        self, benchmark_name: str, name: str, metric: BaseMetric[Any]
     ) -> Result[
         MetricEntity,
         DataNotUniqueError
@@ -295,7 +295,11 @@ class AlgorithmAddUc(Protocol):
     """Protocol for adding an algorithm to a benchmark."""
 
     def __call__(
-        self, benchmark_name: str, name: str, algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any]
+        self,
+        benchmark_name: str,
+        name: str,
+        algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+        repetitions: int = 1,
     ) -> Result[
         AlgorithmEntity,
         DataNotUniqueError
@@ -318,6 +322,8 @@ class AlgorithmAddUc(Protocol):
             Name to assign to the algorithm.
         algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any]
             The algorithm instance to register and persist.
+        repetitions: int
+            How often the algorithm is run on every model, by default once.
 
         Returns
         -------
@@ -709,9 +715,11 @@ class BackgroundRetrieveAlgorithmSyncUc(Protocol):
     def __call__(
         self, task_id: str
     ) -> Maybe[
-        Result[Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]
+        Result[
+            SyncRunPayload, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError
+        ]
     ]:
-        """Poll a sync background task for its result, expected to be a ``Solution``.
+        """Poll a sync background task for its result, expected to be a ``SyncRunPayload``.
 
         Parameters
         ----------
@@ -722,14 +730,14 @@ class BackgroundRetrieveAlgorithmSyncUc(Protocol):
         -------
         Maybe[
             Result[
-                Solution,
+                SyncRunPayload,
                 ModelDecodingError | DataNotExistError | UnknownLunaBenchError
                 | RunAlgorithmRuntimeError,
             ]
         ]
-            A ``Maybe`` containing the solution on completion, or ``Nothing`` if
-            the task is still running. The inner ``Result`` holds either the
-            ``Solution`` or an error.
+            A ``Maybe`` containing the finished run on completion, or ``Nothing`` if
+            the task is still running. The inner ``Result`` holds either the solution
+            with its serialized metadata, or an error.
         """
 
 

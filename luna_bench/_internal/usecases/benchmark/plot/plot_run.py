@@ -111,7 +111,7 @@ class PlotsRunUcImpl(PlotsRunUc):
         self, plot_entity: PlotEntity, benchmark: BenchmarkEntity
     ) -> Result[None, RunFeatureMissingError | RunMetricMissingError | PlotExecutionError]:
         features: dict[ModelName, FeatureResultContainer] = {}
-        metrics: dict[ModelName, dict[AlgorithmName, MetricResultContainer]] = {}
+        metrics: dict[ModelName, dict[AlgorithmName, list[MetricResultContainer]]] = {}
         if benchmark.modelset is None:
             self._logger.warning(f"Modelset is missing for benchmark '{benchmark.name}'")
             return Success(None)

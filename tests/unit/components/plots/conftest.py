@@ -19,18 +19,18 @@ def mock_metric_entity(
     status: JobStatus = JobStatus.DONE,
     error: str | None = None,
 ) -> MetricEntity:
-    results: dict[str, dict[str, MetricResultEntity]] = {}
+    results: dict[str, dict[str, list[MetricResultEntity]]] = {}
     for algo, model, val in values:
-        if model not in results:
-            results[model] = {}
-        results[model][algo] = MetricResultEntity(
-            processing_time_ms=10,
-            model_name=model,
-            algorithm_name=algo,
-            status=status,
-            error=error,
-            result=result_factory(val),
-        )
+        results.setdefault(model, {})[algo] = [
+            MetricResultEntity(
+                processing_time_ms=10,
+                model_name=model,
+                algorithm_name=algo,
+                status=status,
+                error=error,
+                result=result_factory(val),
+            )
+        ]
     return MetricEntity(name=name, metric=metric, results=results)
 
 

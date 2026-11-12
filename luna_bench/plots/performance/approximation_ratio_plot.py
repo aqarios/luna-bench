@@ -49,7 +49,7 @@ class ApproximationRatioPlot(MetricBarPlot):
 
     figure: Figure = Figure(
         filename="approximation_ratio",
-        title="Approximation Ratio per Solver (1.0 = optimal)",
+        title="Approximation Ratio per Solver (100% = optimal)",
     )
 
     y: MetricDimension = MetricDimension(
@@ -68,7 +68,7 @@ class ApproximationRatioPlot(MetricBarPlot):
             self,
             *,
             figure: Figure = Figure(
-                filename="approximation_ratio", title="Approximation Ratio per Solver (1.0 = optimal)"
+                filename="approximation_ratio", title="Approximation Ratio per Solver (100% = optimal)"
             ),
             missing: Missing = Missing(),
             x: Dimension = AlgorithmDimension(),

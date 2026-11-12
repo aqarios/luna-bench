@@ -52,7 +52,11 @@ class AlgorithmAddUcImpl(AlgorithmAddUc):
         self._registry_async = registry_async
 
     def __call__(
-        self, benchmark_name: str, name: str, algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any]
+        self,
+        benchmark_name: str,
+        name: str,
+        algorithm: BaseAlgorithmSync | BaseAlgorithmAsync[Any],
+        repetitions: int = 1,
     ) -> Result[
         AlgorithmEntity,
         DataNotUniqueError
@@ -81,6 +85,7 @@ class AlgorithmAddUcImpl(AlgorithmAddUc):
                     dm.registered_id,
                     AlgorithmType.SYNC if isinstance(algorithm, BaseAlgorithmSync) else AlgorithmType.ASYNC,
                     dm.data,
+                    repetitions,
                 )
             )
             if not is_successful(result):
@@ -99,4 +104,11 @@ class AlgorithmAddUcImpl(AlgorithmAddUc):
 
             if not is_successful(config):
                 return Failure(config.failure())
-            return Success(AlgorithmEntity.model_construct(name=name, algorithm=config.unwrap(), results={}))
+            return Success(
+                AlgorithmEntity.model_construct(
+                    name=name,
+                    algorithm=config.unwrap(),
+                    repetitions=domain_model.repetitions,
+                    results={},
+                )
+            )

@@ -28,7 +28,8 @@ def _benchmark_results(
     benchmark_results.get_all_metrics_of_type.return_value = metric_results
     benchmark_results.algorithms = {
         model_name: {
-            algorithm_name: MagicMock(spec=AlgorithmResultContainer, algorithm=configuration)
+            # A list, since an entry holds one run per repetition.
+            algorithm_name: [MagicMock(spec=AlgorithmResultContainer, algorithm=configuration)]
             for algorithm_name, configuration in configurations.items()
         }
         for model_name, _, _ in metric_results

@@ -9,7 +9,7 @@ erDiagram
     Benchmark }o--|| Metric: "0 or n metrics"
     Benchmark }o--|| Plot: "0 or n plots"
     Feature |o--|| FeatureResult: "if calculated"
-    Algorithm }o--|| AlgorithmResult: "if calculated"
+    Algorithm }o--|| AlgorithmResult: "one per model and repetition"
     Metric }o--|| MetricResult: "if calculated"
 
     Model {
@@ -53,18 +53,21 @@ erDiagram
 
     MetricResult {
         int id PK
+        int repetition "the run it was computed on, UK (model, metric, algorithm, repetition)"
         JSONField result_data
     }
 
     Algorithm {
         int id PK
         string name UK "UK (benchmark, name), max 45chars"
+        int repetitions "how often it runs on every model, 1 by default"
         JSONField config_data
     }
 
     AlgorithmResult {
         int id PK
-        JSONField meta_data
+        int repetition "which run this is, UK (model, algorithm, repetition)"
+        bytes meta_data "serialized metadata the run reported"
         bytes encoded_solution
     }
 

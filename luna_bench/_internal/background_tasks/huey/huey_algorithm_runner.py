@@ -3,12 +3,12 @@ from typing import Any
 from dependency_injector.wiring import Provide, inject
 from huey import MemoryHuey, SqliteHuey
 from huey.api import logging
-from luna_model import Model, Solution
+from luna_model import Model
 from pydantic import BaseModel
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
-from luna_bench._internal.background_tasks.protocols import BackgroundAlgorithmRunner
+from luna_bench._internal.background_tasks.protocols import BackgroundAlgorithmRunner, SyncRunPayload
 from luna_bench._internal.dao import DaoTransaction
 from luna_bench._internal.dao.dao_container import DaoContainer
 from luna_bench.custom import BaseAlgorithmAsync, BaseAlgorithmSync
@@ -16,6 +16,7 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.model_decoding_error import ModelDecodingError
 from luna_bench.errors.run_errors.run_algorithm_runtime_error import RunAlgorithmRuntimeError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.helpers.metadata import encode_metadata, split_solve_outcome
 from luna_bench.logging import BenchLogger
 
 from .huey_background_task_client import HueyBackgroundTaskClient
@@ -58,7 +59,9 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
         algorithm: BaseAlgorithmSync,
         model_id: int,
         algorithm_name: str,
-    ) -> Result[Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError]:
+    ) -> Result[
+        SyncRunPayload, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError
+    ]:
         label = HueyAlgorithmRunner._label(algorithm, algorithm_name)
         HueyAlgorithmRunner._logger.info(f"Running algorithm {label} on model '{model_id}'")
 
@@ -68,7 +71,12 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
             return Failure(model.failure())
 
         try:
-            return Success(algorithm.run(model.unwrap()))
+            # Splitting and serializing here, inside the process that ran the algorithm, keeps a
+            # return value of the wrong shape and metadata that cannot be serialized on the same
+            # footing as an algorithm that raised: a failed run with a message, rather than a
+            # queue result no one can decode.
+            solution, metadata = split_solve_outcome(algorithm.run(model.unwrap()), algorithm_name)
+            return Success((solution, encode_metadata(metadata, algorithm_name)))
         except Exception as e:
             HueyAlgorithmRunner._logger.error(f"Algorithm {label} failed on model '{model_id}':", exc_info=True)
             return Failure(RunAlgorithmRuntimeError(e))
@@ -79,7 +87,7 @@ class HueyAlgorithmRunner(BackgroundAlgorithmRunner):
         model_id: int,
         algorithm_name: str,
     ) -> Result[
-        Solution, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError
+        SyncRunPayload, ModelDecodingError | DataNotExistError | UnknownLunaBenchError | RunAlgorithmRuntimeError
     ]:  # pragma: no cover
         return HueyAlgorithmRunner._run_sync(algorithm, model_id, algorithm_name)
 

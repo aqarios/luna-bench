@@ -1,5 +1,7 @@
+from typing import TYPE_CHECKING
+
 from dependency_injector.wiring import Provide, inject
-from luna_model import Model, Solution
+from luna_model import Model
 from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 
@@ -13,7 +15,11 @@ from luna_bench.errors.dao.data_not_exist_error import DataNotExistError
 from luna_bench.errors.run_errors.run_algorithm_missing_error import RunAlgorithmMissingError
 from luna_bench.errors.run_errors.run_modelset_missing_error import RunModelsetMissingError
 from luna_bench.errors.unknown_error import UnknownLunaBenchError
+from luna_bench.helpers.metadata import split_solve_outcome
 from luna_bench.logging import BenchLogger
+
+if TYPE_CHECKING:
+    from luna_bench.custom.types import SolveOutcome
 
 
 class AlgorithmRetrieveAsyncSolutionsUcImpl(AlgorithmRetrieveAsyncSolutionsUc):
@@ -41,12 +47,12 @@ class AlgorithmRetrieveAsyncSolutionsUcImpl(AlgorithmRetrieveAsyncSolutionsUc):
         for a in benchmark.algorithms:
             if not isinstance(a.algorithm, BaseAlgorithmAsync):
                 continue
-            for r in a.results.values():
+            for r in (run for runs in a.results.values() for run in runs):
                 if r.status == JobStatus.RUNNING and r.task_id is not None:
                     with self._transaction as t:
                         model = Model.decode(t.model.load(r.model_id).unwrap())
 
-                    result: Solution | str | Result[Solution, str]
+                    result: SolveOutcome | str | Result[SolveOutcome, str]
                     if r.retrival_data is None:
                         result = Failure("No retrival data provided")
                     else:
@@ -55,7 +61,7 @@ class AlgorithmRetrieveAsyncSolutionsUcImpl(AlgorithmRetrieveAsyncSolutionsUc):
                         result = Failure(result) if isinstance(result, str) else Success(result)
 
                     if is_successful(result):
-                        r.solution = result.unwrap()
+                        r.solution, r.metadata = split_solve_outcome(result.unwrap(), a.name)
                         r.status = JobStatus.DONE
                     else:
                         r.error = result.failure()

@@ -12,6 +12,7 @@ from returns.result import Failure, Result, Success
 
 from luna_bench.configs.config import config
 from luna_bench.custom import BaseAlgorithmAsync
+from luna_bench.custom.types import SolveOutcome
 
 config.LB_LOG_DISABLE_SPINNER = True
 
@@ -77,7 +78,7 @@ class LunaAlgorithm(BaseAlgorithmAsync[LunaData], LunaQuantumAlgorithm[IBackend]
             self._logger.info(f"There was an exception while running the luna algorithm: {error_message}")
             return LunaData(error_message=error_message)
 
-    def fetch_result(self, model: Model, retrieval_data: LunaData) -> Result[Solution, str]:
+    def fetch_result(self, model: Model, retrieval_data: LunaData) -> Result[SolveOutcome, str]:
         if not retrieval_data.luna_id:
             if retrieval_data.error_message:
                 return Failure(retrieval_data.error_message)
@@ -89,7 +90,10 @@ class LunaAlgorithm(BaseAlgorithmAsync[LunaData], LunaQuantumAlgorithm[IBackend]
         solution: Solution | None = solve_job.result()
 
         if solution:
-            return Success(solution)
+            # luna-quantum fills `metadata` while polling for the result, so by the time
+            # `result()` returns it holds what the provider reported about the run.
+            metadata = solve_job.metadata
+            return Success(solution if metadata is None else (solution, metadata))
 
         error_message: str
         match solve_job.status:
