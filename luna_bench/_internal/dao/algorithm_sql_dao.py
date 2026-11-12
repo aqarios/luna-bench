@@ -158,7 +158,9 @@ class AlgorithmSqlDao(AlgorithmDao):
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             algorithm = AlgorithmTable.get(AlgorithmTable.name == algorithm_name, AlgorithmTable.benchmark == benchmark)
-            query = AlgorithmResultTable.delete().where(AlgorithmResultTable.algorithm == algorithm)
+            # peewee stubs type `Model.delete` via a `Self`-generic descriptor (`misc`); `unused-ignore`
+            # keeps environments where mypy does not flag it passing as well.
+            query = AlgorithmResultTable.delete().where(AlgorithmResultTable.algorithm == algorithm)  # type: ignore[misc, unused-ignore]
             if statuses is not None:
                 # Filtered per row rather than per algorithm, so the runs worth keeping -
                 # a repetition that finished, a model that solved - survive a reset aimed

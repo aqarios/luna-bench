@@ -115,7 +115,9 @@ class FeatureSqlDao(FeatureDao):
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             feature = FeatureTable.get(FeatureTable.name == feature_name, FeatureTable.benchmark == benchmark)
-            query = FeatureResultTable.delete().where(FeatureResultTable.feature == feature)
+            # peewee stubs type `Model.delete` via a `Self`-generic descriptor (`misc`); `unused-ignore`
+            # keeps environments where mypy does not flag it passing as well.
+            query = FeatureResultTable.delete().where(FeatureResultTable.feature == feature)  # type: ignore[misc, unused-ignore]
             if statuses is not None:
                 # Per row, so a feature that failed on one model is recomputed without the
                 # models it already holds being thrown away.

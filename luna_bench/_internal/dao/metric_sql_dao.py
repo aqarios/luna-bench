@@ -134,7 +134,9 @@ class MetricSqlDao(MetricDao):
         try:
             benchmark = BenchmarkTable.select(BenchmarkTable.id).where(BenchmarkTable.name == benchmark_name)
             metric = MetricTable.get(MetricTable.name == metric_name, MetricTable.benchmark == benchmark)
-            query = MetricResultTable.delete().where(MetricResultTable.metric == metric)
+            # peewee stubs type `Model.delete` via a `Self`-generic descriptor (`misc`); `unused-ignore`
+            # keeps environments where mypy does not flag it passing as well.
+            query = MetricResultTable.delete().where(MetricResultTable.metric == metric)  # type: ignore[misc, unused-ignore]
             if statuses is not None:
                 # Per row: a metric that failed on one run is recomputed without the runs
                 # it was already evaluated on losing their results.
@@ -182,9 +184,9 @@ class MetricSqlDao(MetricDao):
                 & (AlgorithmResultTable.model_metadata == MetricResultTable.model_metadata)
                 & (AlgorithmResultTable.repetition == MetricResultTable.repetition)
             )
-            # peewee stubs leave `execute` untyped; `unused-ignore` keeps environments where mypy
-            # does not flag the call (with `warn_unused_ignores`) passing as well.
-            MetricResultTable.delete().where(  # type: ignore[no-untyped-call, unused-ignore]
+            # peewee stubs leave `execute` untyped and type `Model.delete` via a `Self`-generic descriptor
+            # (`misc`); `unused-ignore` keeps environments where mypy does not flag these passing as well.
+            MetricResultTable.delete().where(  # type: ignore[misc, no-untyped-call, unused-ignore]
                 (MetricResultTable.metric == metric) & ~fn.EXISTS(run)
             ).execute()
             return Success(None)
